@@ -1,0 +1,84 @@
+{
+  "agent": "SEO Full Audit/Analyst Agent",
+  "summary": "The anonymized production-style sample shows a high-value service page with weak internal support and a blog page generating impressions but limited conversions.",
+  "evidence": [
+    {
+      "source": "examples/anonymized-production-style-example/inputs/crawl.csv",
+      "type": "crawl_export",
+      "date_checked": "2026-07-03",
+      "notes": "Crawler-style export with status, indexability, canonical, depth, and internal link counts."
+    },
+    {
+      "source": "examples/anonymized-production-style-example/inputs/gsc.csv",
+      "type": "first_party_data",
+      "date_checked": "2026-07-03",
+      "notes": "Anonymized search performance export for priority pages and queries."
+    },
+    {
+      "source": "examples/anonymized-production-style-example/inputs/ga4.csv",
+      "type": "first_party_data",
+      "date_checked": "2026-07-03",
+      "notes": "Anonymized analytics-style landing page performance export."
+    }
+  ],
+  "confidence": "Medium",
+  "findings": [
+    {
+      "id": "prod-style-001",
+      "severity": "Medium",
+      "finding": "The scheduling software page ranks near page one for commercial queries but has only 31 internal links compared with stronger site sections.",
+      "affected_scope": "Service page template and commercial software cluster",
+      "evidence_refs": [
+        "crawl.csv",
+        "gsc.csv"
+      ]
+    },
+    {
+      "id": "prod-style-002",
+      "severity": "Medium",
+      "finding": "The dispatch tools article earns impressions but has low conversion alignment, suggesting the page needs a clearer next step for commercial visitors.",
+      "affected_scope": "Blog article and related internal links",
+      "evidence_refs": [
+        "gsc.csv",
+        "ga4.csv"
+      ]
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Add contextual links from service, comparison, and blog pages to the scheduling software page using natural commercial anchors.",
+      "priority": "P1",
+      "owner": "SEO Information Architecture Agent",
+      "success_metric": "Priority service page receives at least 20 new relevant internal links and improves average position for target commercial queries."
+    },
+    {
+      "action": "Update the dispatch tools article with a practical comparison section and a soft CTA to the scheduling software page.",
+      "priority": "P2",
+      "owner": "SEO Copywriter/Content Agent",
+      "success_metric": "Article conversion rate and assisted clicks to the service page increase after reindexing."
+    }
+  ],
+  "impact": "Improves the ability of commercial pages to rank and converts informational demand into qualified product interest.",
+  "effort": "Medium",
+  "risks": [
+    "Internal links must remain useful and not read as forced anchor manipulation.",
+    "Performance conclusions are limited because the example uses anonymized synthetic data."
+  ],
+  "owner": "Senior SEO Strategist Agent",
+  "dependencies": [
+    "CMS access",
+    "Internal link placement approval",
+    "Content owner review"
+  ],
+  "acceptance_criteria": [
+    "New links are crawlable HTML links.",
+    "Updated article copy adds original comparison value.",
+    "No redirected or non-canonical URLs are added to the internal link plan."
+  ],
+  "verification": [
+    "Recrawl updated pages.",
+    "Validate links in rendered HTML.",
+    "Monitor GSC query and page performance after reindexing."
+  ],
+  "follow_up": "Review GSC and analytics movement 28 days after the updated pages are crawled."
+}

@@ -12,9 +12,12 @@ This is not a prompt dump. It is a structured SEO operating system made of:
 - Reusable SEO skills
 - Shared evidence standards
 - Cross-agent workflows
+- Lightweight executable runtime and router
+- Tool adapter contracts and offline-safe parsers
 - Knowledge-source rules
 - Quality gates and anti-patterns
 - JSON output schemas
+- Semantic validation and tests
 - Practical report and implementation templates
 - LLM-specific operating guides for Codex, ChatGPT, Claude, Claude Code, Replit, and Manus
 
@@ -49,11 +52,14 @@ World-Class-SEO-Agent-System/
 |-- Manus.md
 |-- SYSTEM_SPEC.md
 |-- agents/
+|-- adapters/
 |-- skills/
 |-- workflows/
 |-- knowledge/
 |-- schemas/
 |-- orchestration/
+|-- runtime/
+|-- tests/
 |-- examples/
 |-- scripts/
 `-- templates/
@@ -68,6 +74,7 @@ World-Class-SEO-Agent-System/
 5. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
 6. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
 7. For multi-agent work, use [`orchestration/README.md`](orchestration/README.md) and [`orchestration/session-state.schema.json`](orchestration/session-state.schema.json).
+8. For executable routing or integration work, use [`main.py`](main.py), [`runtime/`](runtime/), and [`adapters/`](adapters/).
 
 ## Agent Roster
 
@@ -196,6 +203,7 @@ See [`examples/`](examples/) for worked sample outputs:
 - Technical deployment example
 - Plain-language SEO report example
 - Diagnostic infrastructure example
+- Anonymized production-style example with crawl, GSC, and GA4-style inputs
 
 ## Validation
 
@@ -205,7 +213,19 @@ Run repository validation locally with:
 ./scripts/validate-repository.ps1
 ```
 
-The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workflows/validate.yml) validates JSON, internal markdown links, agent skill references, and template references.
+Run semantic schema validation and tests with:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python scripts/validate_schema_examples.py
+pytest -q
+```
+
+The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workflows/validate.yml) validates JSON, internal markdown links, agent skill references, template references, schema conformance for example outputs, runtime routing, adapter behavior, and semantic repository contracts.
+
+## Runtime and Adapters
+
+The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, and an orchestrator facade. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
 
 ## Templates
 

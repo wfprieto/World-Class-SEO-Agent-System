@@ -89,3 +89,4 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `strategy-governance-skills.md`: roadmap, prioritization, debate, experimentation, compliance, and knowledge skills.
 - `missing-skills.md`: complete definitions for additional referenced skills.
 - `skill-execution-playbooks.md`: procedural playbooks that add step-by-step execution depth to grouped skills.
+- `deep-skill-procedures.md`: tool-aware procedures, decision points, failure handling, and time estimates for the original grouped skills.

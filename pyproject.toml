@@ -1,0 +1,18 @@
+[project]
+name = "world-class-seo-agent-system"
+version = "1.2.0"
+description = "Model-agnostic SEO agent operating system with runtime contracts, adapters, schemas, workflows, and validation tests."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "jsonschema>=4.22.0",
+  "pytest>=8.0.0",
+  "PyYAML>=6.0.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+

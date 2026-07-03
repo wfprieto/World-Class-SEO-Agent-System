@@ -70,6 +70,27 @@ The diagnostic setup must:
 - Define setup effort, data quality checks, alert thresholds, and reporting cadence.
 - Avoid overlapping paid tools unless each tool has a distinct role.
 
+## Runtime and Adapter Standard
+
+The system must be usable as both a documentation-first operating system and an executable integration layer.
+
+The runtime layer must:
+
+- Route requests to the correct lead and support agents.
+- Create session state with business context, evidence inventory, decisions, risks, and outputs.
+- Keep orchestration model-agnostic so Codex, ChatGPT, Claude, Replit, Manus, or another runtime can use the same contracts.
+- Preserve human approval gates for high-risk SEO actions.
+
+The adapter layer must:
+
+- Normalize first-party and diagnostic data into predictable outputs.
+- Support local exports for safe testing and credential-free operation.
+- Keep live API credentials outside the repository.
+- Distinguish unavailable data from clean data.
+- Return warnings when fields are missing, stale, sampled, or incomplete.
+
+Required adapter categories include GSC, GA4, crawler exports, server logs, Lighthouse/PageSpeed payloads, schema validation, rank tracking, and backlink data.
+
 ## Risk Classes
 
 Critical:

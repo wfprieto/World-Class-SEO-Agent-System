@@ -1,0 +1,7 @@
+url,status,indexable,canonical,title,h1,depth,inlinks,outlinks
+https://www.example-client.test/,200,true,https://www.example-client.test/,Home | Example Client,Modern Field Service Software,0,842,64
+https://www.example-client.test/services/,200,true,https://www.example-client.test/services/,Services | Example Client,Services,1,126,42
+https://www.example-client.test/services/scheduling-software/,200,true,https://www.example-client.test/services/scheduling-software/,Scheduling Software,Field Service Scheduling Software,2,31,28
+https://www.example-client.test/blog/best-dispatch-tools/,200,true,https://www.example-client.test/blog/best-dispatch-tools/,Best Dispatch Tools,Best Dispatch Tools for Field Teams,4,3,16
+https://www.example-client.test/old-pricing/,301,false,https://www.example-client.test/pricing/,Old Pricing,Old Pricing,2,18,1
+https://www.example-client.test/pricing/,200,true,https://www.example-client.test/pricing/,Pricing,Plans and Pricing,1,74,22

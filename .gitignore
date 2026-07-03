@@ -16,6 +16,8 @@ Thumbs.db
 
 # Dependencies and build outputs
 node_modules/
+__pycache__/
+*.py[cod]
 dist/
 build/
 .next/
@@ -25,4 +27,3 @@ coverage/
 outputs/
 reports/generated/
 tmp/
-
