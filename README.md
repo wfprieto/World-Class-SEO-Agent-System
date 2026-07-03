@@ -16,9 +16,9 @@ This is not a prompt dump. It is a structured SEO operating system made of:
 - Quality gates and anti-patterns
 - JSON output schemas
 - Practical report and implementation templates
-- LLM-specific operating guides for Codex and ChatGPT
+- LLM-specific operating guides for Codex, ChatGPT, Claude, Claude Code, Replit, and Manus
 
-The core system is LLM agnostic. Any capable coding or reasoning model can use the files. `Codex.md` and `ChatGPT.md` provide model-specific operating guidance without changing the system itself.
+The core system is LLM agnostic. Any capable coding or reasoning model can use the files. The top-level model control files provide environment-specific operating guidance without changing the system itself.
 
 ## Who It Is For
 
@@ -43,6 +43,10 @@ World-Class-SEO-Agent-System/
 |-- README.md
 |-- Codex.md
 |-- ChatGPT.md
+|-- Claude.md
+|-- Claudecode.md
+|-- Replit.md
+|-- Manus.md
 |-- SYSTEM_SPEC.md
 |-- agents/
 |-- skills/
@@ -145,6 +149,13 @@ Recommended flow:
 2. Route the request.
 3. Ask for missing first-party evidence when needed.
 4. Produce a structured recommendation with assumptions and risks clearly labeled.
+
+## Other Model Control Files
+
+- [`Claude.md`](Claude.md): conversation-first Claude strategy, review, and orchestration.
+- [`Claudecode.md`](Claudecode.md): Claude Code technical SEO implementation in codebases.
+- [`Replit.md`](Replit.md): SEO-ready app building, previewing, and rapid implementation.
+- [`Manus.md`](Manus.md): autonomous multi-step SEO project coordination and execution.
 
 ## Workflows
 
