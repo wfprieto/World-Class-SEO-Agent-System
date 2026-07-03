@@ -48,16 +48,16 @@ The agents are intentionally LLM agnostic. Any capable coding or reasoning model
 
 ```text
 World-Class-SEO-Agent-System/
-├── README.md
-├── Codex.md
-├── ChatGPT.md
-├── SYSTEM_SPEC.md
-├── agents/
-├── skills/
-├── workflows/
-├── knowledge/
-├── schemas/
-└── templates/
+|-- README.md
+|-- Codex.md
+|-- ChatGPT.md
+|-- SYSTEM_SPEC.md
+|-- agents/
+|-- skills/
+|-- workflows/
+|-- knowledge/
+|-- schemas/
+`-- templates/
 ```
 
 ## Core Operating Rule
@@ -94,4 +94,3 @@ Every SEO recommendation must be evidence-backed, user-first, policy-safe, techn
 - Do not hide text or create content that differs materially for bots and users.
 - Do not auto-apply indexation, canonical, redirect, robots, disavow, or legal/compliance changes without explicit approval.
 - Do not claim certainty when evidence is incomplete.
-
