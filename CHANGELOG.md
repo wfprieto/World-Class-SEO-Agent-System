@@ -8,6 +8,17 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.2.1] - 2026-07-03
+
+### Added
+
+- Anti-AI public-facing writing skill for visitor-visible website and app copy.
+- Public-facing writing standard requiring the skill for headings, metadata, body copy, buttons, forms, alt text, captions, transcripts, onboarding text and error messages.
+
+### Changed
+
+- SEO Copywriter/Content Agent now requires `anti-ai-public-writing` before visitor-facing text is published.
+
 ## [1.2.0] - 2026-07-03
 
 ### Added

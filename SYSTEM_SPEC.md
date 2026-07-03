@@ -56,6 +56,14 @@ The plain-language report must clearly separate:
 
 The report must avoid jargon, avoid guaranteed ranking claims, and explain missing evidence in simple language.
 
+## Public-Facing Writing Standard
+
+Any text a website or app visitor can read must pass `anti-ai-public-writing` before publication. This includes page copy, headings, metadata, navigation labels, button text, form helper text, alt text, captions, transcripts, local landing page copy, product/service copy, blog content, error messages and onboarding text.
+
+The writing must be clear, direct, useful, specific and natural when read out loud. It must avoid obvious AI phrasing, generic SEO filler, fake polish, hype, stiff corporate wording, em dashes, unsupported claims and keyword stuffing.
+
+If proof is missing, write the safer version and mark the missing proof. If the copy includes legal, medical, financial, privacy, pricing, guarantee or regulated claims, route it to the SEO Compliance & Legal Agent before publication.
+
 ## Diagnostic Infrastructure Standard
 
 SEO audits and monitoring are only as reliable as the diagnostic setup behind them. When a project requires tool selection, reporting infrastructure, audit systems, dashboards, grading tools, or recurring monitoring, use the SEO Diagnostic Infrastructure Agent.

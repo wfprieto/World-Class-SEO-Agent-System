@@ -149,6 +149,7 @@ ChatGPT is best for:
 
 - SEO strategy synthesis
 - Content briefs
+- Public-facing copy cleanup with `anti-ai-public-writing`
 - Agent debate simulation
 - Competitive analysis summaries
 - Local and international SEO planning
@@ -186,6 +187,10 @@ Recommended flow:
 - [`knowledge/knowledge-sources.md`](knowledge/knowledge-sources.md): source hierarchy and trusted references.
 - [`knowledge/anti-patterns.md`](knowledge/anti-patterns.md): tactics the system must reject.
 - [`knowledge/scoring-model.md`](knowledge/scoring-model.md): default scoring model for audits.
+
+## Public-Facing Writing Rule
+
+Any text a website or app visitor can read should pass [`skills/public-facing-writing-skills.md`](skills/public-facing-writing-skills.md). Use `anti-ai-public-writing` for page copy, headings, metadata, buttons, form text, alt text, captions, transcripts, local pages, product/service copy, blog content, error messages and onboarding text.
 
 ## Output Schemas
 

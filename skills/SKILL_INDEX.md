@@ -29,6 +29,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `content-brief`
 - `content-audit`
 - `content-decay`
+- `anti-ai-public-writing`
 - `keyword-cluster`
 - `content-inventory`
 - `sxo-page-fit`
@@ -88,5 +89,6 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `specialist-skills.md`: local, international, media, GEO, entity, and authority skills.
 - `strategy-governance-skills.md`: roadmap, prioritization, debate, experimentation, compliance, and knowledge skills.
 - `missing-skills.md`: complete definitions for additional referenced skills.
+- `public-facing-writing-skills.md`: required writing quality gate for anything a website or app visitor can read.
 - `skill-execution-playbooks.md`: procedural playbooks that add step-by-step execution depth to grouped skills.
 - `deep-skill-procedures.md`: tool-aware procedures, decision points, failure handling, and time estimates for the original grouped skills.
