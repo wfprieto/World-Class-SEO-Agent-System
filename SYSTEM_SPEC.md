@@ -102,7 +102,7 @@ Debate Mode:
 - Indexed valuable URLs
 - Reduced technical defects
 - Improved crawl efficiency
-- Improved Core Web Vitals where relevant
+- Improved Core Web Vitals where relevant, explicitly including LCP, INP, and CLS
 - More qualified organic clicks
 - Higher conversion rate from organic traffic
 - Higher content quality and information gain
@@ -111,4 +111,3 @@ Debate Mode:
 - Improved AI citation and brand mention visibility
 - Reduced security, spam, and compliance risk
 - Faster SEO engineering throughput
-

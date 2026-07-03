@@ -63,3 +63,45 @@ Escalate to SEO Scrummaster Agent when:
 - The change affects revenue-critical pages
 - The request involves compliance, security, or legal exposure
 
+## Ambiguous Request Rules
+
+If a request matches multiple agents:
+
+1. Choose the agent that owns the final deliverable as lead.
+2. Add supporting agents for specialist checks.
+3. If the request involves implementation, include Senior SEO Engineer Agent.
+4. If the request involves risk, include SEO Scrummaster Agent.
+5. If the request involves claims, legal, privacy, regulated topics, or spam-policy risk, include SEO Compliance & Legal Agent.
+6. If the request involves AI search visibility, include GEO / AIO Optimization Agent.
+
+## Conditional Routing Decision Tree
+
+```mermaid
+flowchart TD
+  A["Incoming SEO request"] --> B{"Is it implementation?"}
+  B -->|Yes| C["Senior SEO Engineer Agent"]
+  B -->|No| D{"Is it full-site or multi-area?"}
+  D -->|Yes| E["SEO Full Audit/Analyst Agent"]
+  D -->|No| F{"Primary domain?"}
+  F -->|Technical| G["SEO Technical Agent"]
+  F -->|Content| H["SEO Copywriter/Content Agent"]
+  F -->|IA| I["SEO Information Architecture Agent"]
+  F -->|Local| J["Local SEO Agent"]
+  F -->|International| K["International & Multilingual SEO Agent"]
+  F -->|GEO/AIO| L["GEO / AIO Optimization Agent"]
+  F -->|Security| M["Negative SEO & Security Agent"]
+  F -->|Strategy| N["Senior SEO Strategist Agent"]
+  C --> O{"High or critical risk?"}
+  E --> O
+  G --> O
+  H --> O
+  I --> O
+  J --> O
+  K --> O
+  L --> O
+  M --> O
+  N --> O
+  O -->|Yes| P["SEO Scrummaster Agent challenge"]
+  O -->|No| Q["Proceed with selected workflow"]
+  P --> Q
+```

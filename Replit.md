@@ -51,7 +51,12 @@ When finished, include:
 - Known limitations
 - Next SEO improvement
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System for an SEO-ready app build. Read SYSTEM_SPEC.md and Replit.md, load Senior SEO Engineer Agent, SEO Technical Agent, SEO Accessibility Agent, and SEO Copywriter/Content Agent as needed, then build with metadata, schema, crawlable content, accessibility basics, performance awareness, and verification.
+```
+
 ## Safety Notes
 
 Do not create fake business information, reviews, locations, credentials, or testimonials for demo content unless clearly marked as placeholder content.
-

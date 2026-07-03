@@ -1,0 +1,38 @@
+{
+  "agent": "SEO Full Audit/Analyst Agent",
+  "summary": "Fictional example.com audit found medium-priority technical and IA issues that limit discovery and topical clarity.",
+  "evidence": [
+    {
+      "source": "fictional-crawl-sample.csv",
+      "type": "crawl_export",
+      "date_checked": "2026-07-03",
+      "notes": "Sample crawl used for example output."
+    }
+  ],
+  "confidence": "Medium",
+  "findings": [
+    {
+      "id": "audit-001",
+      "severity": "Medium",
+      "finding": "XML sitemap contains redirected URLs.",
+      "affected_scope": "Sitemap sample",
+      "evidence_refs": ["fictional-crawl-sample.csv"]
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Regenerate sitemap with only 200-status canonical URLs.",
+      "priority": "P1",
+      "owner": "SEO Technical Agent",
+      "success_metric": "Sitemap sample contains no redirected URLs."
+    }
+  ],
+  "impact": "Improves crawler clarity and reduces wasted discovery hints.",
+  "effort": "Low",
+  "risks": ["Incorrect sitemap generation could omit valuable URLs."],
+  "owner": "SEO Technical Agent",
+  "dependencies": ["Sitemap generator access"],
+  "acceptance_criteria": ["All sampled sitemap URLs return 200", "All sampled sitemap URLs self-canonicalize"],
+  "verification": ["Recrawl sitemap", "Inspect canonical tags"]
+}
+

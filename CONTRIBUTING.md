@@ -16,6 +16,9 @@ Every contribution must improve the system's SEO capability, operating clarity, 
 - Define purpose, inputs, outputs, and quality gate.
 - Update `skills/SKILL_INDEX.md`.
 - Avoid duplicating another skill.
+- Follow `skills/skill-definition-standard.md`.
+- Include Purpose, System Prompt, Required Inputs, Execution Steps, Output Format, Quality Gate, Failure Conditions, and Fallback.
+- Link to a template or schema when the skill produces a durable deliverable.
 
 ## Required for Workflow Changes
 
@@ -38,4 +41,3 @@ Every contribution must improve the system's SEO capability, operating clarity, 
 - Hidden text or cloaking
 - Unsupported ranking-factor claims
 - Model-specific lock-in outside `Codex.md` and `ChatGPT.md`
-

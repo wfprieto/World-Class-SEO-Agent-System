@@ -26,3 +26,30 @@
 - Verification methods defined
 - Roadmap ready
 
+## Decision Tree
+
+```mermaid
+flowchart TD
+  A["Full audit request"] --> B["Collect business context"]
+  B --> C{"First-party data available?"}
+  C -->|Yes| D["Use first-party data as Tier 1 evidence"]
+  C -->|No| E["Mark missing data and lower confidence"]
+  D --> F["Run crawl and technical evidence collection"]
+  E --> F
+  F --> G["Run specialist agents"]
+  G --> H{"Critical risk found?"}
+  H -->|Yes| I["SEO Scrummaster Agent challenge"]
+  H -->|No| J["Normalize scores"]
+  I --> J
+  J --> K{"Implementation needed?"}
+  K -->|Yes| L["Create handoff to Senior SEO Engineer Agent"]
+  K -->|No| M["Create roadmap"]
+  L --> M
+  M --> N["Publish audit report"]
+```
+
+## Failure Handling
+
+- If crawl data is incomplete, scope findings to sampled URLs and request a complete crawl.
+- If analytics are missing, separate technical findings from performance claims.
+- If agents disagree, create a decision record before scoring.

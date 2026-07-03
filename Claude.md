@@ -49,7 +49,12 @@ For SEO work, include:
 - Verification method
 - Next action
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System. Read SYSTEM_SPEC.md and workflows/request-routing.md, select the lead agent from agents/AGENT_INDEX.md, load only relevant skills, apply quality gates, and produce a structured output with evidence, confidence, risk, owner, acceptance criteria, and verification.
+```
+
 ## Safety Notes
 
 Do not recommend spam tactics, fake reviews, fake locations, doorway pages, cloaking, hidden text, manipulative links, or unsupported claims.
-

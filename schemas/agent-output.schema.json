@@ -1,7 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SEO Agent Output",
+  "description": "Standard structured output contract for every specialist agent in the World-Class SEO Agent System.",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "agent",
     "summary",
@@ -9,29 +11,187 @@
     "confidence",
     "findings",
     "recommended_actions",
+    "impact",
+    "effort",
     "risks",
+    "owner",
+    "dependencies",
+    "acceptance_criteria",
     "verification"
   ],
   "properties": {
-    "agent": { "type": "string" },
-    "summary": { "type": "string" },
+    "agent": {
+      "type": "string",
+      "description": "Exact agent name responsible for this output."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Concise summary of the agent's conclusion."
+    },
     "evidence": {
       "type": "array",
+      "description": "Evidence sources used to support the findings.",
       "items": {
         "type": "object",
-        "required": ["source", "type"],
+        "additionalProperties": false,
+        "required": ["source", "type", "date_checked", "notes"],
         "properties": {
-          "source": { "type": "string" },
-          "type": { "type": "string" },
-          "date_checked": { "type": "string" }
+          "source": {
+            "type": "string",
+            "description": "URL, file, export, report, crawl, API, or user-provided source."
+          },
+          "type": {
+            "type": "string",
+            "description": "Evidence tier or data type, such as first_party_data, rendered_dom, official_guidance, crawl_export, serp_snapshot, or backlink_data."
+          },
+          "date_checked": {
+            "type": "string",
+            "description": "Date the evidence was checked, preferably YYYY-MM-DD."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Short note explaining relevance, limitations, or confidence."
+          }
         }
       }
     },
-    "confidence": { "enum": ["High", "Medium", "Low"] },
-    "findings": { "type": "array", "items": { "type": "string" } },
-    "recommended_actions": { "type": "array", "items": { "type": "string" } },
-    "risks": { "type": "array", "items": { "type": "string" } },
-    "verification": { "type": "array", "items": { "type": "string" } }
-  }
+    "confidence": {
+      "type": "string",
+      "description": "Confidence level based on evidence quality.",
+      "enum": ["High", "Medium", "Low"]
+    },
+    "findings": {
+      "type": "array",
+      "description": "Structured findings with evidence, severity, and affected scope.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "finding", "affected_scope", "evidence_refs"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable finding identifier."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low"],
+            "description": "Severity based on impact and risk."
+          },
+          "finding": {
+            "type": "string",
+            "description": "What is wrong or what opportunity exists."
+          },
+          "affected_scope": {
+            "type": "string",
+            "description": "URLs, templates, sections, markets, or workflows affected."
+          },
+          "evidence_refs": {
+            "type": "array",
+            "description": "References to evidence items by source or short label.",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "recommended_actions": {
+      "type": "array",
+      "description": "Structured actions downstream agents or humans can execute.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "priority", "owner", "success_metric"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Specific action to take."
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "Execution priority."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Agent or team responsible for execution."
+          },
+          "success_metric": {
+            "type": "string",
+            "description": "Metric or observable condition proving the action worked."
+          }
+        }
+      }
+    },
+    "impact": {
+      "type": "string",
+      "description": "Expected SEO, UX, conversion, risk-reduction, or operational impact."
+    },
+    "effort": {
+      "type": "string",
+      "description": "Estimated effort.",
+      "enum": ["Low", "Medium", "High"]
+    },
+    "risks": {
+      "type": "array",
+      "description": "Known risks, tradeoffs, or failure modes.",
+      "items": { "type": "string" }
+    },
+    "owner": {
+      "type": "string",
+      "description": "Primary owner for the next step."
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Data, approvals, agents, teams, or systems required before completion.",
+      "items": { "type": "string" }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "description": "Conditions that must be true for this work to be accepted.",
+      "items": { "type": "string" }
+    },
+    "verification": {
+      "type": "array",
+      "description": "Checks that prove the recommendation was correctly implemented or validated.",
+      "items": { "type": "string" }
+    }
+  },
+  "examples": [
+    {
+      "agent": "SEO Technical Agent",
+      "summary": "The product template emits conflicting canonical and hreflang signals.",
+      "evidence": [
+        {
+          "source": "crawl-export-2026-07-03.csv",
+          "type": "crawl_export",
+          "date_checked": "2026-07-03",
+          "notes": "Sample of 50 product URLs showed canonical conflicts."
+        }
+      ],
+      "confidence": "High",
+      "findings": [
+        {
+          "id": "tech-001",
+          "severity": "High",
+          "finding": "Localized product pages canonicalize to the US page while also declaring hreflang alternates.",
+          "affected_scope": "Product template, 423 localized URLs",
+          "evidence_refs": ["crawl-export-2026-07-03.csv"]
+        }
+      ],
+      "recommended_actions": [
+        {
+          "action": "Update localized product template so each locale self-canonicalizes and hreflang alternates remain reciprocal.",
+          "priority": "P1",
+          "owner": "Senior SEO Engineer Agent",
+          "success_metric": "Sampled localized URLs return self-canonical plus reciprocal hreflang."
+        }
+      ],
+      "impact": "Improves international targeting and reduces duplicate/incorrect canonical consolidation risk.",
+      "effort": "Medium",
+      "risks": ["Incorrect rollout could affect indexation across all localized product pages."],
+      "owner": "Senior SEO Engineer Agent",
+      "dependencies": ["International & Multilingual SEO Agent validation", "Template access"],
+      "acceptance_criteria": ["Self-canonical is present on sampled localized URLs", "Return hreflang tags validate", "No unexpected noindex or robots blocks"],
+      "verification": ["Run hreflang audit on sample URLs", "Inspect rendered HTML", "Submit sample URLs for indexation validation when available"]
+    }
+  ]
 }
-

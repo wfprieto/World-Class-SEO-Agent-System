@@ -1,26 +1,80 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SEO Decision Record",
+  "description": "Structured record for SEO Scrummaster decisions, debate outcomes, and approval gates.",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "decision_id",
     "proposal",
     "decision",
     "evidence",
+    "counterarguments",
     "risk",
     "owner",
-    "verification"
+    "conditions",
+    "verification",
+    "rollback"
   ],
   "properties": {
-    "decision_id": { "type": "string" },
-    "proposal": { "type": "string" },
-    "decision": { "enum": ["Approve", "Revise", "Reject", "Defer"] },
-    "evidence": { "type": "array", "items": { "type": "string" } },
-    "counterarguments": { "type": "array", "items": { "type": "string" } },
-    "risk": { "enum": ["Critical", "High", "Medium", "Low"] },
-    "owner": { "type": "string" },
-    "verification": { "type": "string" },
-    "rollback": { "type": "string" }
-  }
+    "decision_id": {
+      "type": "string",
+      "description": "Stable decision identifier."
+    },
+    "proposal": {
+      "type": "string",
+      "description": "The proposed SEO action or rule."
+    },
+    "decision": {
+      "type": "string",
+      "description": "Decision outcome.",
+      "enum": ["Approve", "Revise", "Reject", "Defer"]
+    },
+    "evidence": {
+      "type": "array",
+      "description": "Evidence supporting the decision.",
+      "items": { "type": "string" }
+    },
+    "counterarguments": {
+      "type": "array",
+      "description": "Key objections, risks, or dissenting agent views.",
+      "items": { "type": "string" }
+    },
+    "risk": {
+      "type": "string",
+      "description": "Risk level.",
+      "enum": ["Critical", "High", "Medium", "Low"]
+    },
+    "owner": {
+      "type": "string",
+      "description": "Owner responsible for next action."
+    },
+    "conditions": {
+      "type": "array",
+      "description": "Conditions attached to approval or revision.",
+      "items": { "type": "string" }
+    },
+    "verification": {
+      "type": "string",
+      "description": "How the decision outcome will be verified."
+    },
+    "rollback": {
+      "type": "string",
+      "description": "Rollback or reversal plan if the decision causes harm."
+    }
+  },
+  "examples": [
+    {
+      "decision_id": "decision-20260703-001",
+      "proposal": "Update canonical logic for localized product pages.",
+      "decision": "Approve",
+      "evidence": ["tech-001", "hreflang-audit-sample"],
+      "counterarguments": ["Template-level change can affect many pages."],
+      "risk": "High",
+      "owner": "Senior SEO Engineer Agent",
+      "conditions": ["Patch must include sample tests", "International SEO Agent must validate hreflang"],
+      "verification": "Rendered sample pages self-canonicalize and pass hreflang validation.",
+      "rollback": "Revert template change and redeploy previous canonical logic."
+    }
+  ]
 }
-

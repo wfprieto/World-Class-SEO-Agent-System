@@ -33,6 +33,10 @@ Scale organic visibility across languages and regions while avoiding duplicate-c
 - `localized-content-review`
 - `regional-keyword-map`
 
+## Required Knowledge
+
+- `knowledge/regional-search-engines.md`
+
 ## Output
 
 Use `templates/international-seo-report.md`.
@@ -48,4 +52,3 @@ Use `templates/international-seo-report.md`.
 - Senior SEO Engineer Agent for hreflang/sitemap implementation
 - SEO Copywriter/Content Agent for localization
 - SEO Technical Agent for validation
-

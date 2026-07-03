@@ -25,3 +25,28 @@
 - Conversion path
 - Measurement plan
 
+## Decision Tree
+
+```mermaid
+flowchart TD
+  A["Content request"] --> B{"New content or refresh?"}
+  B -->|New| C["Competitive Intelligence Agent identifies opportunity"]
+  B -->|Refresh| D["SEO Copywriter/Content Agent runs content-decay"]
+  C --> E["SEO Information Architecture Agent maps page"]
+  D --> E
+  E --> F["SEO Copywriter/Content Agent creates brief"]
+  F --> G{"Claims or regulated topic?"}
+  G -->|Yes| H["SEO Compliance & Legal Agent"]
+  G -->|No| I{"AI search target?"}
+  H --> I
+  I -->|Yes| J["GEO / AIO Optimization Agent"]
+  I -->|No| K["SEO CRO Agent checks CTA fit"]
+  J --> K
+  K --> L["SEO Scrummaster Agent publish gate"]
+```
+
+## Failure Handling
+
+- If no unique value can be defined, do not create the page.
+- If topic cannibalizes an existing page, refresh or consolidate instead.
+- If claims cannot be supported, revise or block publication.

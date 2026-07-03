@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Agent Handoff Payload",
+  "description": "Minimum contract for passing work from one SEO agent to another.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_id",
+    "from_agent",
+    "to_agent",
+    "reason",
+    "context_summary",
+    "evidence_refs",
+    "requested_action",
+    "risk_level",
+    "acceptance_criteria",
+    "due_trigger"
+  ],
+  "properties": {
+    "handoff_id": {
+      "type": "string",
+      "description": "Stable handoff identifier."
+    },
+    "from_agent": {
+      "type": "string",
+      "description": "Agent initiating the handoff."
+    },
+    "to_agent": {
+      "type": "string",
+      "description": "Agent receiving the handoff."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why this handoff is required."
+    },
+    "context_summary": {
+      "type": "string",
+      "description": "Compressed context the receiving agent needs."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "Evidence artifacts or labels that support the handoff.",
+      "items": { "type": "string" }
+    },
+    "requested_action": {
+      "type": "string",
+      "description": "Specific action requested from the receiving agent."
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["Critical", "High", "Medium", "Low"],
+      "description": "Risk level of the requested action."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "description": "Conditions the receiving agent must satisfy.",
+      "items": { "type": "string" }
+    },
+    "due_trigger": {
+      "type": "string",
+      "description": "Time, workflow step, or condition that determines when this handoff is due."
+    }
+  },
+  "examples": [
+    {
+      "handoff_id": "handoff-technical-to-engineer-001",
+      "from_agent": "SEO Technical Agent",
+      "to_agent": "Senior SEO Engineer Agent",
+      "reason": "Template-level canonical bug requires code implementation.",
+      "context_summary": "Localized product pages emit canonical URLs pointing to the US version.",
+      "evidence_refs": ["tech-001", "crawl-export-2026-07-03.csv"],
+      "requested_action": "Patch product template canonical generation and add regression test.",
+      "risk_level": "High",
+      "acceptance_criteria": ["Localized sample URLs self-canonicalize", "Existing US product URLs unchanged"],
+      "due_trigger": "Before international sitemap resubmission"
+    }
+  ]
+}

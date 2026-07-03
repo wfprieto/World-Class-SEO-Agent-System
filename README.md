@@ -53,6 +53,9 @@ World-Class-SEO-Agent-System/
 |-- workflows/
 |-- knowledge/
 |-- schemas/
+|-- orchestration/
+|-- examples/
+|-- scripts/
 `-- templates/
 ```
 
@@ -64,6 +67,7 @@ World-Class-SEO-Agent-System/
 4. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
 5. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
 6. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
+7. For multi-agent work, use [`orchestration/README.md`](orchestration/README.md) and [`orchestration/session-state.schema.json`](orchestration/session-state.schema.json).
 
 ## Agent Roster
 
@@ -164,6 +168,7 @@ Recommended flow:
 - [`content-production-workflow.md`](workflows/content-production-workflow.md): produce search-ready, user-first content.
 - [`technical-deployment-workflow.md`](workflows/technical-deployment-workflow.md): safely ship SEO code changes.
 - [`continuous-learning-workflow.md`](workflows/continuous-learning-workflow.md): keep the system current.
+- [`monitoring-workflow.md`](workflows/monitoring-workflow.md): monitor drift, anomalies, security issues, and competitor movement.
 - [`system-improvement-loop.md`](workflows/system-improvement-loop.md): improve the agent system itself.
 
 ## Knowledge and Governance
@@ -176,8 +181,27 @@ Recommended flow:
 ## Output Schemas
 
 - [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json): standard agent response.
+- [`schemas/handoff-payload.schema.json`](schemas/handoff-payload.schema.json): agent-to-agent handoff contract.
 - [`schemas/decision-record.schema.json`](schemas/decision-record.schema.json): Scrummaster decision record.
 - [`schemas/rule-update.schema.json`](schemas/rule-update.schema.json): knowledge-base rule update.
+
+## Examples
+
+See [`examples/`](examples/) for worked sample outputs:
+
+- Full audit example
+- Content brief example
+- Technical deployment example
+
+## Validation
+
+Run repository validation locally with:
+
+```powershell
+./scripts/validate-repository.ps1
+```
+
+The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workflows/validate.yml) validates JSON, internal markdown links, agent skill references, and template references.
 
 ## Templates
 

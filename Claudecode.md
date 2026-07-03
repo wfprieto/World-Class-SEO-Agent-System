@@ -47,7 +47,12 @@ When finished, report:
 - Remaining risk
 - Suggested follow-up
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System in implementation mode. Read SYSTEM_SPEC.md, Codex.md, and workflows/technical-deployment-workflow.md. Inspect the codebase before changing anything, make the smallest safe SEO change, and verify rendered output, tests, schema, crawl signals, or performance signals as appropriate.
+```
+
 ## Safety Notes
 
 Never silently deploy high-risk SEO changes. Never fabricate analytics, crawl, or Search Console results.
-

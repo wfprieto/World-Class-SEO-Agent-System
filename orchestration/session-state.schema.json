@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Session State",
+  "description": "Shared state object for multi-agent SEO workflows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "session_id",
+    "request",
+    "mode",
+    "business_context",
+    "evidence_inventory",
+    "agent_outputs",
+    "handoffs",
+    "decisions",
+    "open_risks"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Unique workflow/session identifier."
+    },
+    "request": {
+      "type": "string",
+      "description": "Original user or project request."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["Audit", "Implementation", "Strategy", "Monitoring", "Research", "Debate"],
+      "description": "Operating mode for the current run."
+    },
+    "business_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "business_type", "markets", "goals"],
+      "properties": {
+        "domain": { "type": "string" },
+        "business_type": { "type": "string" },
+        "markets": { "type": "array", "items": { "type": "string" } },
+        "goals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "evidence_inventory": {
+      "type": "array",
+      "description": "All evidence artifacts collected during the workflow.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "type", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "type": { "type": "string" },
+          "status": { "enum": ["available", "missing", "partial", "stale"] },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "agent_outputs": {
+      "type": "array",
+      "description": "Agent outputs conforming to agent-output.schema.json.",
+      "items": { "type": "object" }
+    },
+    "handoffs": {
+      "type": "array",
+      "description": "Agent handoffs conforming to handoff-payload.schema.json.",
+      "items": { "type": "object" }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Scrummaster or strategist decision records.",
+      "items": { "type": "object" }
+    },
+    "open_risks": {
+      "type": "array",
+      "description": "Open risks that must be resolved or accepted.",
+      "items": { "type": "string" }
+    }
+  }
+}

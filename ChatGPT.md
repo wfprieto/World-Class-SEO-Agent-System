@@ -44,6 +44,12 @@ When finishing, include:
 - Next steps
 - What a coding agent or SEO engineer should verify
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System. Start from SYSTEM_SPEC.md, route the request, choose the lead and supporting agents, use relevant skills, state assumptions, apply quality gates, and return a structured recommendation with evidence, risk, owner, acceptance criteria, and verification.
+```
+
 ## ChatGPT Safety Notes
 
 Do not:
@@ -52,4 +58,3 @@ Do not:
 - Invent metrics.
 - Claim a live audit was performed without evidence.
 - Recommend spam, manipulation, fake reviews, doorway pages, cloaking, or link schemes.
-

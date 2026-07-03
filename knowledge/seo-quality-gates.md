@@ -24,6 +24,7 @@ Every recommendation must include:
 - Structured data describes visible content.
 - Mobile rendering works.
 - Core Web Vitals issues are triaged with field data when available.
+- Core Web Vitals review must explicitly evaluate LCP, INP, and CLS. Do not use FID as the current interaction metric.
 
 ## Content Gate
 
@@ -77,4 +78,11 @@ Every recommendation must include:
 - High-stakes content has expert review.
 - Privacy/cookie requirements are escalated.
 - Claims are not misleading.
+- AI-generated or AI-assisted content is disclosed when required by law, platform policy, client policy, or user trust context.
+- AI-assisted content must still meet the same originality, accuracy, authorship, and accountability standards as human-written content.
 
+## Regional Search Gate
+
+- International work identifies dominant search engines and platforms by target market.
+- Regional search guidance is validated for Bing, Baidu, Yandex, Naver, or other market-specific platforms when relevant.
+- Localization quality is reviewed by market-appropriate expertise for business-critical pages.

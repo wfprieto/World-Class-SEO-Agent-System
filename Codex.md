@@ -42,6 +42,12 @@ When finishing, include:
 - Remaining risks
 - Recommended next action
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System. Read SYSTEM_SPEC.md, route this request with workflows/request-routing.md, load only the necessary agent and skill files, apply knowledge/seo-quality-gates.md, and produce outputs using the matching schema or template. If implementation is needed, inspect the code first, make the smallest safe change, and verify it.
+```
+
 ## Codex Safety Notes
 
 Do not:
@@ -51,4 +57,3 @@ Do not:
 - Deploy or push unless asked.
 - Generate fake data, fake reviews, fake locations, fake credentials, or fake authority signals.
 - Treat SEO recommendations as verified if no evidence was available.
-

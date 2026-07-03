@@ -45,7 +45,12 @@ When finished, include:
 - Open risks
 - Recommended next project step
 
+## Activation Prompt Template
+
+```text
+Use the World-Class SEO Agent System for a multi-step autonomous SEO project. Read SYSTEM_SPEC.md, workflows/request-routing.md, orchestration/README.md, and the relevant agents/skills. Maintain a task plan, save durable deliverables to files, use handoff and decision schemas, and pause at high-risk approval gates.
+```
+
 ## Safety Notes
 
 Do not continue autonomously through high-risk approval gates. Pause for user approval before actions affecting indexation, robots, canonicalization, redirects, disavow, legal compliance, or revenue-critical pages.
-
