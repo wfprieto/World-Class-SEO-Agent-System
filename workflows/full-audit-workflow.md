@@ -15,6 +15,7 @@
 13. SEO Full Audit/Analyst Agent normalizes scores and writes the audit.
 14. SEO Scrummaster Agent challenges high-impact findings.
 15. Senior SEO Strategist Agent converts accepted findings into a roadmap.
+16. SEO Output Report Agent creates a plain-language stakeholder report.
 
 ## Definition of Done
 
@@ -45,7 +46,8 @@ flowchart TD
   K -->|Yes| L["Create handoff to Senior SEO Engineer Agent"]
   K -->|No| M["Create roadmap"]
   L --> M
-  M --> N["Publish audit report"]
+  M --> N["SEO Output Report Agent creates plain-language report"]
+  N --> O["Publish audit report and stakeholder summary"]
 ```
 
 ## Failure Handling

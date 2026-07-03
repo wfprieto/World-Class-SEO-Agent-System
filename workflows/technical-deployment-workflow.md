@@ -8,6 +8,7 @@
 6. Senior SEO Engineer Agent implements patch.
 7. SEO Technical Agent validates output.
 8. SEO Full Audit/Analyst Agent monitors drift after release.
+9. SEO Output Report Agent summarizes completed technical changes in plain language when reporting is needed.
 
 ## Required Verification
 
@@ -36,6 +37,10 @@ flowchart TD
   J -->|Yes| K["Monitor drift"]
   J -->|No| L["Rollback or revise"]
   L --> I
+  K --> M{"Stakeholder summary needed?"}
+  M -->|Yes| N["SEO Output Report Agent"]
+  M -->|No| O["Close implementation loop"]
+  N --> O
 ```
 
 ## Failure Handling

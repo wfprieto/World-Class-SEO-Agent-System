@@ -12,6 +12,8 @@ This project follows semantic versioning where possible:
 
 ### Added
 
+- SEO Output Report Agent for plain-language stakeholder reporting.
+- Plain-language SEO report skill, template, and worked example.
 - Missing agent-referenced templates.
 - Complete definitions for additional referenced skills.
 - Skill definition standard and execution playbooks.

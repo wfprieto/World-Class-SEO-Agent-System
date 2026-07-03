@@ -39,6 +39,23 @@ Every agent output must include:
 - Verification method
 - Follow-up date or trigger
 
+## Plain-Language Reporting Standard
+
+Any completed audit, implementation, sprint, or multi-agent workflow should be eligible for translation by the SEO Output Report Agent into a non-technical stakeholder report.
+
+The plain-language report must clearly separate:
+
+- What was reviewed
+- What was fixed or changed
+- What was created or added
+- What was recommended but not yet done
+- Why each item matters
+- What benefit is expected
+- What still needs to be checked
+- What the next step is
+
+The report must avoid jargon, avoid guaranteed ranking claims, and explain missing evidence in simple language.
+
 ## Risk Classes
 
 Critical:

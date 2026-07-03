@@ -22,6 +22,11 @@ Strategy or roadmap:
 - Lead: Senior SEO Strategist Agent
 - Support: SEO Full Audit/Analyst Agent, Competitive Intelligence Agent, SEO Scrummaster Agent
 
+Plain-language SEO report:
+
+- Lead: SEO Output Report Agent
+- Support: SEO Full Audit/Analyst Agent, SEO Scrummaster Agent, Senior SEO Strategist Agent, and any specialist agents whose work is being summarized
+
 GEO/AIO optimization:
 
 - Lead: GEO / AIO Optimization Agent
@@ -73,6 +78,7 @@ If a request matches multiple agents:
 4. If the request involves risk, include SEO Scrummaster Agent.
 5. If the request involves claims, legal, privacy, regulated topics, or spam-policy risk, include SEO Compliance & Legal Agent.
 6. If the request involves AI search visibility, include GEO / AIO Optimization Agent.
+7. If the user asks for a client report, plain-language summary, non-technical explanation, or stakeholder update, include SEO Output Report Agent.
 
 ## Conditional Routing Decision Tree
 
@@ -91,6 +97,7 @@ flowchart TD
   F -->|GEO/AIO| L["GEO / AIO Optimization Agent"]
   F -->|Security| M["Negative SEO & Security Agent"]
   F -->|Strategy| N["Senior SEO Strategist Agent"]
+  F -->|Plain-language report| R["SEO Output Report Agent"]
   C --> O{"High or critical risk?"}
   E --> O
   G --> O
@@ -101,6 +108,7 @@ flowchart TD
   L --> O
   M --> O
   N --> O
+  R --> O
   O -->|Yes| P["SEO Scrummaster Agent challenge"]
   O -->|No| Q["Proceed with selected workflow"]
   P --> Q

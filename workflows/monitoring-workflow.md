@@ -27,6 +27,10 @@ flowchart TD
   N --> O["Verify and monitor"]
   J --> O
   K --> L
+  O --> P{"Plain-language update needed?"}
+  P -->|Yes| Q["SEO Output Report Agent"]
+  P -->|No| R["Close monitoring cycle"]
+  Q --> R
 ```
 
 ## Trigger Thresholds
@@ -50,4 +54,3 @@ Escalate to SEO Scrummaster Agent when:
 - Owner
 - Next action
 - Verification date
-

@@ -10,6 +10,7 @@
 8. SEO CRO Agent aligns CTA with intent.
 9. SEO Scrummaster Agent verifies quality gate.
 10. SEO Full Audit/Analyst Agent monitors post-publication performance.
+11. SEO Output Report Agent summarizes content, metadata, and next steps in plain language when stakeholder reporting is needed.
 
 ## Required Content Quality Gate
 
@@ -43,6 +44,10 @@ flowchart TD
   I -->|No| K["SEO CRO Agent checks CTA fit"]
   J --> K
   K --> L["SEO Scrummaster Agent publish gate"]
+  L --> M{"Stakeholder summary needed?"}
+  M -->|Yes| N["SEO Output Report Agent"]
+  M -->|No| O["Publish or hand off"]
+  N --> O
 ```
 
 ## Failure Handling

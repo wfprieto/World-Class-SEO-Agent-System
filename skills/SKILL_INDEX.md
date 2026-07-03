@@ -70,6 +70,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `trend-monitor`
 - `seo-roadmap`
 - `executive-summary`
+- `plain-language-seo-report`
 - `content-calendar`
 - `request-routing`
 - `prioritization-matrix`

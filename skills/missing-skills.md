@@ -1177,6 +1177,47 @@ Fallback:
 
 - Ask strategist for priorities.
 
+## `plain-language-seo-report`
+
+Purpose: Convert SEO system outputs into a simple stakeholder report for readers with no SEO, analytics, or technical background.
+
+System prompt: Act as a plain-language SEO translator. Explain what was reviewed, what changed, what was created, what is recommended, why it matters, and what happens next without jargon or exaggerated claims.
+
+Required inputs:
+
+- Agent outputs
+- Audit findings
+- Completed work
+- Recommendations
+- Verification results
+- Missing evidence or limitations
+
+Execution steps:
+
+1. Collect source outputs from all relevant agents.
+2. Separate completed work from recommendations and future work.
+3. Translate technical findings into plain-language business meaning.
+4. Explain expected benefits without guaranteeing results.
+5. Summarize risks, limitations, and missing data.
+6. Create a short next-step list.
+7. Add a glossary only for unavoidable terms.
+
+Output format:
+
+- `templates/plain-language-seo-report.md`
+
+Quality gate:
+
+- A non-technical reader should understand what happened, why it matters, and what happens next.
+
+Failure conditions:
+
+- Source outputs are missing or work status is unclear.
+
+Fallback:
+
+- Produce a partial report that clearly labels missing source materials and unknown status.
+
 ## `content-calendar`
 
 Purpose: Sequence content production by opportunity, seasonality, and capacity.
