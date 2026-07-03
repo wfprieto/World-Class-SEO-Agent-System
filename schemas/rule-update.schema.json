@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Knowledge Rule Update",
+  "type": "object",
+  "required": [
+    "rule_id",
+    "version",
+    "target_agent",
+    "rule_type",
+    "source_type",
+    "confidence",
+    "new_instruction",
+    "validation_check"
+  ],
+  "properties": {
+    "rule_id": { "type": "string" },
+    "version": { "type": "string" },
+    "target_agent": { "type": "string" },
+    "rule_type": {
+      "enum": [
+        "Enforce_New_Standard",
+        "Ban_Practice",
+        "New_Tactic_Alert",
+        "Measurement_Update",
+        "Deprecation"
+      ]
+    },
+    "source_type": {
+      "enum": [
+        "Official",
+        "First_Party_Data",
+        "Experiment",
+        "Industry_Hypothesis"
+      ]
+    },
+    "source_url": { "type": "string" },
+    "confidence": { "enum": ["High", "Medium", "Low"] },
+    "old_context": { "type": "string" },
+    "new_instruction": { "type": "string" },
+    "validation_check": { "type": "string" },
+    "review_date": { "type": "string" }
+  }
+}
+

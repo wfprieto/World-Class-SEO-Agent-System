@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Agent Output",
+  "type": "object",
+  "required": [
+    "agent",
+    "summary",
+    "evidence",
+    "confidence",
+    "findings",
+    "recommended_actions",
+    "risks",
+    "verification"
+  ],
+  "properties": {
+    "agent": { "type": "string" },
+    "summary": { "type": "string" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "type"],
+        "properties": {
+          "source": { "type": "string" },
+          "type": { "type": "string" },
+          "date_checked": { "type": "string" }
+        }
+      }
+    },
+    "confidence": { "enum": ["High", "Medium", "Low"] },
+    "findings": { "type": "array", "items": { "type": "string" } },
+    "recommended_actions": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "verification": { "type": "array", "items": { "type": "string" } }
+  }
+}
+

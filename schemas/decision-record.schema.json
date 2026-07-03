@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Decision Record",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "proposal",
+    "decision",
+    "evidence",
+    "risk",
+    "owner",
+    "verification"
+  ],
+  "properties": {
+    "decision_id": { "type": "string" },
+    "proposal": { "type": "string" },
+    "decision": { "enum": ["Approve", "Revise", "Reject", "Defer"] },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "counterarguments": { "type": "array", "items": { "type": "string" } },
+    "risk": { "enum": ["Critical", "High", "Medium", "Low"] },
+    "owner": { "type": "string" },
+    "verification": { "type": "string" },
+    "rollback": { "type": "string" }
+  }
+}
+

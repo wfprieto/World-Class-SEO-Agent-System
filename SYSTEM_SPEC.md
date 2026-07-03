@@ -1,0 +1,114 @@
+# System Specification
+
+## Mission
+
+Create the most effective model-agnostic SEO agent system for senior SEO engineering teams. The system must improve organic visibility, qualified traffic, conversion quality, brand/entity trust, AI search visibility, accessibility, compliance, and long-term site resilience.
+
+## Design Philosophy
+
+The system uses specialist agents because world-class SEO requires different forms of expertise. Technical SEO, content strategy, accessibility, CRO, local SEO, international SEO, digital PR, and SEO engineering are connected, but they are not the same job.
+
+The system uses shared skills because specialist agents should not duplicate work. A crawl, schema audit, content brief, hreflang validation, or backlink review should produce one reliable artifact that other agents can reuse.
+
+The system uses governance because SEO changes can break revenue, compliance, crawlability, and user trust if they are deployed casually.
+
+## Evidence Hierarchy
+
+1. First-party performance data: Google Search Console, Bing Webmaster Tools, analytics, server logs, CRM, conversion data, rank tracking, CMS exports.
+2. Direct technical evidence: raw HTML, rendered DOM, HTTP headers, robots.txt, XML sitemaps, structured data, screenshots, accessibility tree, codebase inspection.
+3. Search evidence: live SERPs, AI Overviews, AI citation snapshots, local packs, image/video SERPs, competitor SERP movements.
+4. Authority evidence: backlink data, citation data, brand mentions, digital PR coverage, entity databases, review platforms.
+5. Official standards: search engine documentation, structured data standards, accessibility standards, privacy/compliance requirements.
+6. Industry research and experiments: useful for hypotheses, not sufficient for final rules.
+
+## Standard Agent Output
+
+Every agent output must include:
+
+- Summary
+- Evidence used
+- Confidence level
+- Findings
+- Recommended actions
+- Impact
+- Effort
+- Risk
+- Owner
+- Dependencies
+- Acceptance criteria
+- Verification method
+- Follow-up date or trigger
+
+## Risk Classes
+
+Critical:
+
+- Sitewide indexation, crawling, canonical, redirect, security, legal, or revenue-impacting risks.
+
+High:
+
+- Important template-level SEO issues, major content quality issues, serious accessibility blockers, local visibility defects, international targeting conflicts.
+
+Medium:
+
+- Page group issues, content gaps, schema enhancements, metadata improvements, internal link improvements, performance refinements.
+
+Low:
+
+- Nice-to-have enhancements, formatting cleanup, supporting optimizations, monitoring improvements.
+
+## Approval Gates
+
+Human approval is required before:
+
+- Sitewide robots.txt changes
+- Mass noindex changes
+- Canonical rules affecting many URLs
+- Redirect migrations
+- Disavow submissions
+- Large programmatic page creation
+- Legal/compliance-sensitive publication
+- Medical, legal, financial, or regulated content publication
+- Changes to checkout, lead forms, pricing pages, or revenue-critical funnels
+
+## Operating Modes
+
+Audit Mode:
+
+- Diagnose, score, and prioritize.
+
+Implementation Mode:
+
+- Make safe, scoped code or content changes with validation.
+
+Strategy Mode:
+
+- Build roadmap, budgets, owners, and sequencing.
+
+Monitoring Mode:
+
+- Detect drift, ranking movement, indexation changes, security issues, content decay, and competitor movement.
+
+Research Mode:
+
+- Explore new algorithm changes, tactics, tests, and knowledge updates.
+
+Debate Mode:
+
+- Scrummaster forces agents to defend assumptions before important decisions.
+
+## System Success Metrics
+
+- Indexed valuable URLs
+- Reduced technical defects
+- Improved crawl efficiency
+- Improved Core Web Vitals where relevant
+- More qualified organic clicks
+- Higher conversion rate from organic traffic
+- Higher content quality and information gain
+- Better local pack visibility
+- Better international targeting accuracy
+- Improved AI citation and brand mention visibility
+- Reduced security, spam, and compliance risk
+- Faster SEO engineering throughput
+
