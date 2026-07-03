@@ -1,0 +1,19 @@
+{
+  "handoff_id": "handoff-content-to-compliance-001",
+  "from_agent": "SEO Copywriter/Content Agent",
+  "to_agent": "SEO Compliance & Legal Agent",
+  "reason": "Draft service page includes performance claims that need proof review.",
+  "context_summary": "The proposed copy says the service cuts onboarding time by 40 percent, but no approved proof source was attached.",
+  "evidence_refs": [
+    "content-brief-20260703",
+    "draft-service-page-v2"
+  ],
+  "requested_action": "Review the claim and approve, revise, or remove it before publication.",
+  "risk_level": "High",
+  "acceptance_criteria": [
+    "Every performance claim has an approved proof source.",
+    "Unsupported claims are removed or rewritten.",
+    "Final copy passes anti-ai-public-writing after compliance edits."
+  ],
+  "due_trigger": "Before the service page moves to publication review."
+}

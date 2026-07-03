@@ -1,0 +1,21 @@
+{
+  "decision_id": "decision-20260703-redirect-map-001",
+  "proposal": "Redirect legacy pricing URLs to the current pricing page.",
+  "decision": "Approve",
+  "evidence": [
+    "redirect-chain-export-20260703.csv",
+    "gsc-landing-page-export-20260703.csv"
+  ],
+  "counterarguments": [
+    "Some legacy URLs may have query-specific intent that the pricing page does not fully answer."
+  ],
+  "risk": "Medium",
+  "owner": "Senior SEO Engineer Agent",
+  "conditions": [
+    "Validate one-hop 301 behavior.",
+    "Confirm the target page is indexable and self-canonical.",
+    "Monitor GSC landing page errors after deployment."
+  ],
+  "verification": "Run redirect-chain adapter and crawl the final target URLs after deployment.",
+  "rollback": "Restore the previous redirect rules if high-value URLs return errors or irrelevant targets."
+}

@@ -1,0 +1,13 @@
+{
+  "rule_id": "seo-rule-20260703-public-copy",
+  "version": "1.0.0",
+  "target_agent": "SEO Copywriter/Content Agent",
+  "rule_type": "Enforce_New_Standard",
+  "source_type": "First_Party_Data",
+  "source_url": "skills/public-facing-writing-skills.md",
+  "confidence": "High",
+  "old_context": "Some public-facing copy could be generated from content briefs without a final human-sounding writing gate.",
+  "new_instruction": "Any visitor-visible text must pass anti-ai-public-writing before publication.",
+  "validation_check": "Content outputs that include public copy reference anti-ai-public-writing in acceptance criteria.",
+  "review_date": "2026-10-03"
+}

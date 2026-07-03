@@ -232,6 +232,8 @@ The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workfl
 
 The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, async execution, memory, tool dispatch and LLM clients. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
 
+Adapter implementation details live in [`adapters/README.md`](adapters/README.md). Recommended tools to connect are listed in [`adapters/TOOLS.md`](adapters/TOOLS.md). A safe OAuth2 Google Search Console pattern is provided in [`adapters/gsc_live_example.py`](adapters/gsc_live_example.py).
+
 Dry-run routing:
 
 ```powershell

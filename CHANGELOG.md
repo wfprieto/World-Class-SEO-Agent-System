@@ -8,6 +8,23 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.4.0] - 2026-07-03
+
+### Added
+
+- Adapter implementation guide in `adapters/README.md`.
+- Categorized SEO tool connection catalog in `adapters/TOOLS.md`.
+- Google Search Console live OAuth2 adapter example.
+- Adapter stubs for CrUX, hreflang validation, sitemap validation, accessibility checks, GBP/local data, redirect chains, AI citation monitoring, knowledge graph checks and robots.txt validation.
+- Schema validation examples for handoff payloads, decision records and rule updates.
+- Anonymized/sanitized real-site GSC export pattern.
+- Expanded adapter tests covering existing parsers, new stubs, registry coverage and missing-secret behavior for live GSC.
+
+### Changed
+
+- Schema example validation now checks agent outputs plus handoff, decision and rule-update examples.
+- Runtime adapter registry now exposes the expanded adapter set.
+
 ## [1.3.0] - 2026-07-03
 
 ### Added

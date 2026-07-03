@@ -42,3 +42,23 @@ def test_session_state_schema_example_conforms():
     errors = list(Draft202012Validator(schema).iter_errors(example))
     assert errors == []
 
+
+def test_handoff_payload_example_conforms():
+    schema = load_json("schemas/handoff-payload.schema.json")
+    payload = load_json("examples/schema-validation-examples/handoff-payload.json")
+    errors = list(Draft202012Validator(schema).iter_errors(payload))
+    assert errors == []
+
+
+def test_decision_record_example_conforms():
+    schema = load_json("schemas/decision-record.schema.json")
+    payload = load_json("examples/schema-validation-examples/decision-record.json")
+    errors = list(Draft202012Validator(schema).iter_errors(payload))
+    assert errors == []
+
+
+def test_rule_update_example_conforms():
+    schema = load_json("schemas/rule-update.schema.json")
+    payload = load_json("examples/schema-validation-examples/rule-update.json")
+    errors = list(Draft202012Validator(schema).iter_errors(payload))
+    assert errors == []

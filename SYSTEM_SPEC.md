@@ -101,6 +101,8 @@ The adapter layer must:
 
 Required adapter categories include GSC, GA4, crawler exports, server logs, Lighthouse/PageSpeed payloads, schema validation, rank tracking, and backlink data.
 
+Extended adapter categories include CrUX, hreflang validation, sitemap validation, accessibility checks, GBP/local exports, redirect chains, AI citation monitoring, knowledge graph/entity checks and robots.txt validation.
+
 ## Risk Classes
 
 Critical:

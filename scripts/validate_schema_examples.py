@@ -27,6 +27,13 @@ def main() -> int:
         (ROOT / "schemas/agent-output.schema.json", payload)
         for payload in sorted((ROOT / "examples").glob("*/agent-output.json"))
     ]
+    pairs.extend(
+        [
+            (ROOT / "schemas/handoff-payload.schema.json", ROOT / "examples/schema-validation-examples/handoff-payload.json"),
+            (ROOT / "schemas/decision-record.schema.json", ROOT / "examples/schema-validation-examples/decision-record.json"),
+            (ROOT / "schemas/rule-update.schema.json", ROOT / "examples/schema-validation-examples/rule-update.json"),
+        ]
+    )
     failures: list[str] = []
     for schema_path, payload_path in pairs:
         errors = validate(schema_path, payload_path)
