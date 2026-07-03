@@ -1,48 +1,40 @@
 # World-Class SEO Agent System
 
-A model-agnostic, repository-ready operating system for senior SEO engineering, SEO strategy, technical SEO, content operations, GEO/AIO optimization, local SEO, accessibility, CRO, security, compliance, digital PR, competitive intelligence, and continuous SEO research.
+A model-agnostic operating system for senior SEO engineering, technical SEO, content strategy, GEO/AIO optimization, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
 
-This repository is designed as a single source of truth for coding professionals who want SEO agents and SEO skills that work together with clear routing, evidence standards, handoffs, quality gates, and verification rules.
+This repository is designed as a single source of truth for coding professionals who want SEO agents and SEO skills that work together with clear routing, evidence standards, handoffs, quality gates, implementation templates, and verification rules.
 
-## What This System Is
+## What This Is
 
-This is not a prompt dump. It is an SEO operating system made of:
+This is not a prompt dump. It is a structured SEO operating system made of:
 
-- Named specialist agents
+- 22 specialist SEO agents
 - Reusable SEO skills
 - Shared evidence standards
-- Knowledge-source rules
 - Cross-agent workflows
-- Output schemas
-- Implementation templates
-- LLM-specific operating files for Codex and ChatGPT
+- Knowledge-source rules
+- Quality gates and anti-patterns
+- JSON output schemas
+- Practical report and implementation templates
+- LLM-specific operating guides for Codex and ChatGPT
 
-The agents are intentionally LLM agnostic. Any capable coding or reasoning model can use the files. `Codex.md` and `ChatGPT.md` provide model-specific operating guidance without changing the core system.
+The core system is LLM agnostic. Any capable coding or reasoning model can use the files. `Codex.md` and `ChatGPT.md` provide model-specific operating guidance without changing the system itself.
 
-## Agent Roster
+## Who It Is For
 
-1. SEO Technical Agent
-2. SEO Copywriter/Content Agent
-3. SEO Information Architecture Agent
-4. SEO Accessibility Agent
-5. SEO CRO Agent
-6. Local SEO Agent
-7. Senior SEO Strategist Agent
-8. Senior SEO Engineer Agent
-9. SEO Scrummaster Agent
-10. SEO Full Audit/Analyst Agent
-11. GEO / AIO Optimization Agent
-12. Visual & Video Search Agent
-13. Voice Search & Conversational Agent
-14. SEO Compliance & Legal Agent
-15. Negative SEO & Security Agent
-16. International & Multilingual SEO Agent
-17. Digital PR & Programmatic Link Outreach Agent
-18. Predictive SEO Trend Agent
-19. Competitive Intelligence Agent
-20. SEO Research and Development Agent
-21. SEO Knowledge Graph Sync Agent
-22. AI Principal SEO Scientist
+- SEO engineers
+- Technical SEO specialists
+- SEO strategists
+- Content SEO teams
+- Agency operators
+- Growth engineers
+- Product teams responsible for organic acquisition
+- Developers building SEO-aware sites and applications
+- AI/coding-agent users who want repeatable SEO workflows
+
+## Core Operating Rule
+
+Every SEO recommendation must be evidence-backed, user-first, policy-safe, technically verifiable, and mapped to an owner, risk level, acceptance criteria, and measurement plan.
 
 ## Repository Structure
 
@@ -60,18 +52,41 @@ World-Class-SEO-Agent-System/
 `-- templates/
 ```
 
-## Core Operating Rule
+## Start Here
 
-Every SEO recommendation must be evidence-backed, user-first, policy-safe, technically verifiable, and mapped to an owner, risk level, acceptance criteria, and measurement plan.
+1. Read [`SYSTEM_SPEC.md`](SYSTEM_SPEC.md) for the system mission, evidence hierarchy, operating modes, and approval gates.
+2. Use [`workflows/request-routing.md`](workflows/request-routing.md) to choose the right agent or workflow.
+3. Open [`agents/AGENT_INDEX.md`](agents/AGENT_INDEX.md) to find the specialist agents.
+4. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
+5. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
+6. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
 
-## Fast Start
+## Agent Roster
 
-1. Read `SYSTEM_SPEC.md`.
-2. Select the user request type from `workflows/request-routing.md`.
-3. Load only the required agent files from `agents/`.
-4. Load the needed skill files from `skills/`.
-5. Apply the quality gates in `knowledge/seo-quality-gates.md`.
-6. Return outputs using `schemas/agent-output.schema.json` or the closest template in `templates/`.
+| Agent | Primary Role |
+| --- | --- |
+| SEO Technical Agent | Crawlability, indexation, rendering, schema, canonicals, robots, sitemaps, Core Web Vitals |
+| SEO Copywriter/Content Agent | Content briefs, metadata, E-E-A-T, information gain, refreshes, intent matching |
+| SEO Information Architecture Agent | Taxonomy, URL structures, internal links, topic clusters, crawl depth |
+| SEO Accessibility Agent | WCAG-oriented checks, headings, alt text, labels, keyboard access, screen reader usability |
+| SEO CRO Agent | Organic landing page conversion, CTA-intent fit, funnel friction, testing ideas |
+| Local SEO Agent | GBP, NAP, citations, reviews, local landing pages, local pack visibility |
+| Senior SEO Strategist Agent | Roadmaps, prioritization, business alignment, KPI planning |
+| Senior SEO Engineer Agent | Code-level SEO implementation, tests, templates, deployment readiness |
+| SEO Scrummaster Agent | Agent coordination, challenge loops, sprint planning, risk gates |
+| SEO Full Audit/Analyst Agent | Full audits, health scoring, analytics synthesis, reporting |
+| GEO / AIO Optimization Agent | AI Overviews, generative search visibility, entity clarity, passage citability |
+| Visual & Video Search Agent | Image SEO, video SEO, transcripts, media schema, visual search readiness |
+| Voice Search & Conversational Agent | Spoken queries, Q&A structures, conversational answer formats |
+| SEO Compliance & Legal Agent | Spam policies, disclosures, privacy, claims, regulated content escalation |
+| Negative SEO & Security Agent | Toxic links, hacked pages, malware, scraping, spam attacks |
+| International & Multilingual SEO Agent | Hreflang, localization, regional targeting, multilingual site architecture |
+| Digital PR & Programmatic Link Outreach Agent | Linkable assets, unlinked mentions, backlink gaps, outreach strategy |
+| Predictive SEO Trend Agent | Trend forecasting, seasonality, emerging search demand |
+| Competitive Intelligence Agent | Competitor gaps, new pages, SERP movement, backlink patterns, AI citations |
+| SEO Research and Development Agent | Controlled SEO experiments, hypotheses, test design, results interpretation |
+| SEO Knowledge Graph Sync Agent | Entities, sameAs, schema consistency, brand SERP, knowledge graph readiness |
+| AI Principal SEO Scientist | Search change monitoring, rule updates, knowledge sync, system learning |
 
 ## Best Use Cases
 
@@ -86,6 +101,87 @@ Every SEO recommendation must be evidence-backed, user-first, policy-safe, techn
 - Competitive intelligence
 - SEO experiment design
 - SEO sprint planning and issue prioritization
+- Digital PR and authority-building workflows
+- SEO knowledge-base maintenance
+
+## How To Use It With Codex
+
+Use [`Codex.md`](Codex.md) when working inside a coding-agent environment.
+
+Codex is best for:
+
+- Inspecting codebases
+- Implementing metadata, schema, sitemaps, robots, redirects, and internal-link logic
+- Creating SEO regression checks
+- Fixing accessibility and performance issues
+- Running validation and tests
+
+Recommended flow:
+
+1. Read `Codex.md`.
+2. Route the task.
+3. Load the relevant agent and skill files.
+4. Make the smallest safe code change.
+5. Verify the rendered result, tests, schema, crawl signals, or performance signal as appropriate.
+
+## How To Use It With ChatGPT
+
+Use [`ChatGPT.md`](ChatGPT.md) for conversation-first analysis, planning, drafting, and review.
+
+ChatGPT is best for:
+
+- SEO strategy synthesis
+- Content briefs
+- Agent debate simulation
+- Competitive analysis summaries
+- Local and international SEO planning
+- Compliance review checklists
+- Experiment design
+- Executive reporting
+
+Recommended flow:
+
+1. Read `ChatGPT.md`.
+2. Route the request.
+3. Ask for missing first-party evidence when needed.
+4. Produce a structured recommendation with assumptions and risks clearly labeled.
+
+## Workflows
+
+- [`request-routing.md`](workflows/request-routing.md): choose the right lead and support agents.
+- [`full-audit-workflow.md`](workflows/full-audit-workflow.md): run a complete SEO audit.
+- [`content-production-workflow.md`](workflows/content-production-workflow.md): produce search-ready, user-first content.
+- [`technical-deployment-workflow.md`](workflows/technical-deployment-workflow.md): safely ship SEO code changes.
+- [`continuous-learning-workflow.md`](workflows/continuous-learning-workflow.md): keep the system current.
+- [`system-improvement-loop.md`](workflows/system-improvement-loop.md): improve the agent system itself.
+
+## Knowledge and Governance
+
+- [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md): required acceptance gates.
+- [`knowledge/knowledge-sources.md`](knowledge/knowledge-sources.md): source hierarchy and trusted references.
+- [`knowledge/anti-patterns.md`](knowledge/anti-patterns.md): tactics the system must reject.
+- [`knowledge/scoring-model.md`](knowledge/scoring-model.md): default scoring model for audits.
+
+## Output Schemas
+
+- [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json): standard agent response.
+- [`schemas/decision-record.schema.json`](schemas/decision-record.schema.json): Scrummaster decision record.
+- [`schemas/rule-update.schema.json`](schemas/rule-update.schema.json): knowledge-base rule update.
+
+## Templates
+
+The [`templates/`](templates/) folder includes practical starting points for:
+
+- SEO audits
+- Content briefs
+- Technical SEO tickets
+- SEO roadmaps
+- Decision records
+- GEO/AIO reports
+- SEO experiments
+- Knowledge updates
+- Outreach campaigns
+- Engineering change plans
 
 ## Non-Negotiables
 
@@ -94,3 +190,12 @@ Every SEO recommendation must be evidence-backed, user-first, policy-safe, techn
 - Do not hide text or create content that differs materially for bots and users.
 - Do not auto-apply indexation, canonical, redirect, robots, disavow, or legal/compliance changes without explicit approval.
 - Do not claim certainty when evidence is incomplete.
+- Do not treat industry speculation as official search guidance.
+
+## Contribution Standard
+
+Every contribution must improve SEO capability, operating clarity, evidence quality, safety, or implementation usefulness. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
