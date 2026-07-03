@@ -67,14 +67,15 @@ World-Class-SEO-Agent-System/
 
 ## Start Here
 
-1. Read [`SYSTEM_SPEC.md`](SYSTEM_SPEC.md) for the system mission, evidence hierarchy, operating modes, and approval gates.
-2. Use [`workflows/request-routing.md`](workflows/request-routing.md) to choose the right agent or workflow.
-3. Open [`agents/AGENT_INDEX.md`](agents/AGENT_INDEX.md) to find the specialist agents.
-4. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
-5. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
-6. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
-7. For multi-agent work, use [`orchestration/README.md`](orchestration/README.md) and [`orchestration/session-state.schema.json`](orchestration/session-state.schema.json).
-8. For executable routing or integration work, use [`main.py`](main.py), [`runtime/`](runtime/), and [`adapters/`](adapters/).
+1. Read [`SYSTEM_MAP.md`](SYSTEM_MAP.md) for the fastest navigation path through the repository.
+2. Read [`SYSTEM_SPEC.md`](SYSTEM_SPEC.md) for the system mission, evidence hierarchy, operating modes, and approval gates.
+3. Use [`workflows/request-routing.md`](workflows/request-routing.md) to choose the right agent or workflow.
+4. Open [`agents/AGENT_INDEX.md`](agents/AGENT_INDEX.md) to find the specialist agents.
+5. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
+6. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
+7. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
+8. For multi-agent work, use [`orchestration/README.md`](orchestration/README.md) and [`orchestration/session-state.schema.json`](orchestration/session-state.schema.json).
+9. For executable routing or integration work, use [`main.py`](main.py), [`runtime/`](runtime/), and [`adapters/`](adapters/).
 
 ## Agent Roster
 

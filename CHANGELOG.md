@@ -8,6 +8,19 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.4.1] - 2026-07-03
+
+### Added
+
+- `SYSTEM_MAP.md` as a fast navigation map for humans and LLMs.
+- Semantic tests that verify system map presence, executor coverage, router workflow paths and router agent file coverage.
+
+### Changed
+
+- Expanded runtime routing to cover specialist agents beyond the common audit/content/technical paths.
+- Added `.pytest_cache/` to `.gitignore`.
+- Updated README start path to point first to the system map.
+
 ## [1.4.0] - 2026-07-03
 
 ### Added

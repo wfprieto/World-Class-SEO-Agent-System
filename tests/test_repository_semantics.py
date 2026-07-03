@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from runtime.executor import AGENT_FILE_NAMES
+from runtime.routing import RequestRouter
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,3 +42,36 @@ def test_every_indexed_skill_has_deep_procedure():
     indexed_skills = set(re.findall(r"`([a-z0-9-]+)`", index))
     procedure_skills = set(re.findall(r"^## ([a-z0-9-]+)$", procedures, re.MULTILINE))
     assert not indexed_skills - procedure_skills
+
+
+def test_system_map_points_to_core_repository_sections():
+    content = (ROOT / "SYSTEM_MAP.md").read_text(encoding="utf-8")
+    required_paths = [
+        "SYSTEM_SPEC.md",
+        "agents/AGENT_INDEX.md",
+        "skills/SKILL_INDEX.md",
+        "skills/deep-skill-procedures.md",
+        "workflows/request-routing.md",
+        "knowledge/seo-quality-gates.md",
+        "schemas/agent-output.schema.json",
+        "adapters/README.md",
+        "runtime/orchestrator.py",
+        "examples/README.md",
+    ]
+    for path in required_paths:
+        assert path in content
+        assert (ROOT / path).exists(), path
+
+
+def test_executor_agent_map_covers_all_agent_files():
+    agent_files = {path.name for path in (ROOT / "agents").glob("*.md") if path.name != "AGENT_INDEX.md"}
+    mapped_files = set(AGENT_FILE_NAMES.values())
+    assert agent_files == mapped_files
+
+
+def test_router_routes_to_existing_agent_files_and_workflows():
+    router = RequestRouter()
+    mapped_agents = set(AGENT_FILE_NAMES)
+    for _keywords, lead_agent, workflow in router.ROUTES:
+        assert lead_agent in mapped_agents
+        assert (ROOT / workflow).exists(), workflow
