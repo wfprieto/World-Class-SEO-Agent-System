@@ -5,16 +5,33 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from runtime.executor import AgentExecutor
+from runtime.llm import LLMClient, build_llm_client
+from runtime.memory import MemoryStore
 from runtime.routing import RequestRouter, RouteResult
 from runtime.state import EvidenceItem, SessionState
+from runtime.tools import ToolDispatcher, ToolRequest
 
 
 class SEOOrchestrator:
     """Runtime facade for routing, state creation, and artifact loading."""
 
-    def __init__(self, repo_root: Path) -> None:
+    def __init__(
+        self,
+        repo_root: Path,
+        llm_client: LLMClient | None = None,
+        tool_dispatcher: ToolDispatcher | None = None,
+        memory: MemoryStore | None = None,
+    ) -> None:
         self.repo_root = repo_root
         self.router = RequestRouter()
+        self.llm_client = llm_client or build_llm_client("echo")
+        self.executor = AgentExecutor(
+            repo_root=repo_root,
+            llm_client=self.llm_client,
+            tool_dispatcher=tool_dispatcher,
+            memory=memory,
+        )
 
     def start_session(
         self,
@@ -64,3 +81,20 @@ class SEOOrchestrator:
     def session_snapshot(self, session: SessionState) -> dict[str, Any]:
         return session.to_dict()
 
+    async def execute_async(
+        self,
+        session: SessionState,
+        route: RouteResult | None = None,
+        tool_requests: list[ToolRequest] | None = None,
+    ) -> dict[str, Any]:
+        active_route = route or self.route(session)
+        return await self.executor.execute(session, active_route, tool_requests)
+
+    def execute(
+        self,
+        session: SessionState,
+        route: RouteResult | None = None,
+        tool_requests: list[ToolRequest] | None = None,
+    ) -> dict[str, Any]:
+        active_route = route or self.route(session)
+        return self.executor.execute_sync(session, active_route, tool_requests)

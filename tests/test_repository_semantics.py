@@ -32,3 +32,10 @@ def test_core_workflows_have_mermaid_diagrams():
         content = path.read_text(encoding="utf-8")
         assert "```mermaid" in content, path
 
+
+def test_every_indexed_skill_has_deep_procedure():
+    index = (ROOT / "skills" / "SKILL_INDEX.md").read_text(encoding="utf-8")
+    procedures = (ROOT / "skills" / "deep-skill-procedures.md").read_text(encoding="utf-8")
+    indexed_skills = set(re.findall(r"`([a-z0-9-]+)`", index))
+    procedure_skills = set(re.findall(r"^## ([a-z0-9-]+)$", procedures, re.MULTILINE))
+    assert not indexed_skills - procedure_skills

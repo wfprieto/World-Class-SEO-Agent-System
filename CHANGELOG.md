@@ -8,6 +8,21 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.3.0] - 2026-07-03
+
+### Added
+
+- Model-agnostic runtime execution with async LLM clients, streaming hooks, memory and tool dispatch.
+- Offline echo LLM client for deterministic tests and dry runs.
+- Optional OpenAI-compatible and Anthropic-compatible clients configured through environment variables.
+- Runtime tests for LLM execution and adapter dispatch.
+- Repository semantic test requiring every indexed skill to have a deep procedure.
+
+### Changed
+
+- CLI can now route only or execute routed workflows with `--execute`.
+- Runtime documentation now includes dry-run, live LLM and tool-dispatch examples.
+
 ## [1.2.1] - 2026-07-03
 
 ### Added

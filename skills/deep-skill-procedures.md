@@ -381,3 +381,452 @@ Time estimate: 1-4 hours.
 Decision points: compliance risk overrides ranking opportunity.
 
 Failure handling: if legal context is unknown, mark recommendations as requiring counsel review before publication.
+
+## seo-diagnostic-stack-design
+
+Time estimate: 1-4 hours.
+
+1. Ask for monthly tool budget, site type, CMS/framework, code access, analytics access, GSC/Bing access, reporting audience and monitoring needs.
+2. Define the free baseline first: GSC, Bing Webmaster Tools, GA4, PageSpeed Insights, Rich Results Test, Looker Studio and crawl exports where possible.
+3. Map paid tools only to clear jobs: crawler, rank tracking, backlink data, local listings, AI search visibility, reporting or enterprise monitoring.
+4. Document setup owner, credentials owner, data refresh cadence, alert thresholds and report recipients.
+5. Create the diagnostic scorecard and mark any unavailable data as missing rather than clean.
+
+Decision points: recommend paid tools only when site size, reporting burden, revenue value or technical risk justifies them.
+
+Failure handling: if budget is unknown, provide free, low-budget and growth-budget options.
+
+## sitemap-audit
+
+Time estimate: 30 minutes to 3 hours.
+
+1. Collect XML sitemap index, child sitemaps, CMS sitemap settings and submitted sitemap data from GSC/Bing when available.
+2. Validate status codes, canonical targets, indexability, robots access, lastmod accuracy and URL count.
+3. Compare sitemap URLs against crawl-discovered URLs, priority landing pages and excluded URLs.
+4. Remove redirected, blocked, noindexed, duplicate, parameter and non-canonical URLs.
+5. Confirm the sitemap only lists URLs the site wants indexed.
+
+Decision points: route sitemap generation defects to Senior SEO Engineer Agent when they come from code or CMS templates.
+
+Failure handling: if GSC access is missing, validate sitemap eligibility through crawl and live HTTP checks.
+
+## score-normalization
+
+Time estimate: 30-90 minutes.
+
+1. Collect raw scores from audits, tools and agent outputs.
+2. Normalize each score to the repository scoring model so severity is comparable across technical, content, local, authority and risk categories.
+3. Weight issues by business impact, affected URL count, confidence, risk and reversibility.
+4. Separate health scores from opportunity scores.
+5. Explain scoring limits in plain language.
+
+Decision points: do not average critical risks into a harmless-looking overall score.
+
+Failure handling: if a tool score lacks methodology, use it as supporting context only.
+
+## technical-implementation
+
+Time estimate: 1-8 hours depending on codebase complexity.
+
+1. Identify the template, route, component, CMS setting or build process causing the SEO issue.
+2. Make the smallest code or configuration change that fixes the behavior.
+3. Add or update tests for metadata, schema, sitemaps, redirects, robots, canonicals, image handling or rendered output.
+4. Validate locally through rendered HTML, HTTP response, build output and crawler-like checks.
+5. Document rollback path and post-deploy verification.
+
+Decision points: require approval for sitewide robots, noindex, canonical, redirect or revenue-template changes.
+
+Failure handling: if the code owner cannot be identified, create an implementation ticket with exact files, expected output and acceptance criteria.
+
+## redirect-validation
+
+Time estimate: 30 minutes to 4 hours.
+
+1. Collect redirect map, legacy URLs, target URLs, status codes, canonicals and traffic/backlink importance.
+2. Test one-hop behavior, chains, loops, 404s, soft 404s, protocol/host consistency and query handling.
+3. Compare target relevance to old page intent.
+4. Validate that internal links and sitemaps point to final canonical URLs.
+5. Prioritize fixes for high-traffic, linked or revenue-sensitive URLs.
+
+Decision points: reject redirects that send users to irrelevant pages just to preserve link equity.
+
+Failure handling: if legacy inventory is incomplete, combine crawl, analytics landing pages, backlinks and server logs.
+
+## seo-ci-checks
+
+Time estimate: 1-6 hours.
+
+1. Identify SEO behaviors that can be tested before deployment.
+2. Add checks for titles, canonicals, robots directives, schema syntax, sitemap generation, redirects, heading structure and critical rendered links.
+3. Use fixture pages that represent important templates.
+4. Fail builds only on clear regressions, and warn on advisory improvements.
+5. Document how engineers update fixtures when templates change intentionally.
+
+Decision points: CI should catch breakage, not become a noisy audit report.
+
+Failure handling: if rendering is hard in CI, start with static output and add browser checks later.
+
+## content-inventory
+
+Time estimate: 1-6 hours.
+
+1. Export all indexable and important non-indexable URLs with type, owner, publish date, update date, traffic, conversions, links and status.
+2. Classify pages by intent, funnel stage, topic, template and target market.
+3. Flag missing owners, stale pages, duplicates, thin pages and cannibalization candidates.
+4. Join crawl, GSC, analytics and CMS data where possible.
+5. Produce a maintainable inventory with update cadence.
+
+Decision points: inventory must support action, not just count URLs.
+
+Failure handling: if CMS export is missing, build the first inventory from crawl and analytics.
+
+## metadata-generation
+
+Time estimate: 30 minutes to 4 hours.
+
+1. Confirm page purpose, query intent, audience, offer and differentiator.
+2. Review current title, meta description, H1 and SERP competitors.
+3. Write titles that are specific, accurate and naturally include the core query when appropriate.
+4. Write descriptions that explain the page value without ranking promises or fake urgency.
+5. Pass all visible and SERP-facing copy through `anti-ai-public-writing`.
+
+Decision points: do not mass-generate metadata for pages with unclear intent or duplicate content.
+
+Failure handling: if page content is weak, recommend page improvement before metadata polish.
+
+## citation-audit
+
+Time estimate: 1-5 hours.
+
+1. Collect major local directories, industry directories, map listings, data aggregators and niche citation sources.
+2. Compare name, address, phone, URL, hours, categories and service areas.
+3. Flag duplicates, stale locations, tracking-number conflicts and inconsistent categories.
+4. Prioritize citation fixes by authority, local relevance and visibility.
+5. Document owner access and correction status.
+
+Decision points: avoid creating citations on low-quality directories that add spam risk.
+
+Failure handling: if login access is unavailable, prepare public correction requests and owner tasks.
+
+## review-strategy
+
+Time estimate: 1-3 hours.
+
+1. Audit review platforms, ratings, volume, velocity, sentiment, response quality and competitor benchmarks.
+2. Identify service lines, locations or staff patterns behind review themes.
+3. Build compliant review request timing and messaging.
+4. Draft response rules for positive, negative and sensitive reviews.
+5. Define monitoring cadence and escalation path.
+
+Decision points: never incentivize, gate or fake reviews.
+
+Failure handling: route legal, medical, employment or harassment issues to human review.
+
+## international-url-architecture
+
+Time estimate: 2-8 hours.
+
+1. Confirm markets, languages, currencies, legal requirements, inventory differences and search engines.
+2. Choose subdirectory, subdomain or ccTLD approach based on operations and risk.
+3. Map locale URL rules, canonicals, hreflang, x-default, redirects and language selectors.
+4. Define localized content requirements and duplicate-control rules.
+5. Create migration and validation plan.
+
+Decision points: do not launch locale pages that are translated but not localized for users.
+
+Failure handling: if markets are uncertain, start with a limited locale pilot.
+
+## localized-content-review
+
+Time estimate: 1-6 hours per market group.
+
+1. Compare localized page copy against source page, local SERP intent, terminology, currency, units, laws and cultural context.
+2. Check translator notes, reviewer ownership and local proof points.
+3. Validate metadata, headings, internal links, schema and CTAs for the market.
+4. Flag literal translations that miss local search behavior.
+5. Recommend local examples, FAQs, entities and trust signals.
+
+Decision points: localized content must satisfy the market, not just mirror the source language.
+
+Failure handling: if no native reviewer is available, mark confidence medium or low.
+
+## brand-serp-audit
+
+Time estimate: 1-3 hours.
+
+1. Capture branded search results across priority markets and devices.
+2. Review site links, knowledge panel, social profiles, review sites, news, images, videos and AI answers.
+3. Identify inaccurate entity facts, weak owned-asset coverage, reputation risks and missing proof sources.
+4. Align schema, About page, sameAs links and third-party profiles.
+5. Create fixes by owned, editable and third-party sources.
+
+Decision points: reputation-sensitive issues need stakeholder review before response.
+
+Failure handling: SERPs vary, so record date, location and query variants.
+
+## conversational-query-map
+
+Time estimate: 1-4 hours.
+
+1. Gather questions from GSC, support tickets, sales calls, forums, People Also Ask and internal search.
+2. Group questions by intent, funnel stage and answer type.
+3. Map each group to existing pages, FAQs, support content or new content needs.
+4. Write concise answer patterns that sound natural when spoken.
+5. Add schema only when it matches visible content and policy.
+
+Decision points: avoid creating thin FAQ blocks just to target voice search.
+
+Failure handling: if question data is sparse, use sales/support input and mark as qualitative.
+
+## official-source-monitor
+
+Time estimate: 30-90 minutes per cycle.
+
+1. Track official search engine docs, status dashboards, structured data docs, browser performance guidance and AI search platform guidance.
+2. Record source, date, change type and affected agents.
+3. Separate confirmed documentation from industry commentary.
+4. Convert changes into rule updates or watch items.
+5. Schedule follow-up validation when guidance is unclear.
+
+Decision points: official guidance does not automatically mean immediate site changes; assess impact first.
+
+Failure handling: if a source changes without detail, create a monitoring note rather than a new rule.
+
+## digital-pr-asset-brief
+
+Time estimate: 1-4 hours.
+
+1. Identify audience, journalist angle, data source, expert voice and linkable page.
+2. Validate that the asset has a real reason to earn coverage.
+3. Define headline angles, proof, visuals, methodology and outreach targets.
+4. Check legal, claims and data rights before publication.
+5. Plan internal links from the asset to relevant commercial or educational pages.
+
+Decision points: reject assets that exist only to ask for links without news value.
+
+Failure handling: if proprietary data is unavailable, use expert analysis or original research.
+
+## outreach-prospecting
+
+Time estimate: 1-6 hours.
+
+1. Define prospect type: journalist, editor, resource page owner, partner, association or unlinked mention owner.
+2. Find relevant prospects and verify topical fit, authority, editorial standards and contact path.
+3. Remove spam sites, link sellers, unrelated blogs and private networks.
+4. Personalize pitch angle to the prospect's audience.
+5. Track outreach status, response, link outcome and relationship notes.
+
+Decision points: quality and relevance beat volume.
+
+Failure handling: if contact data is uncertain, verify manually before sending.
+
+## negative-seo-threat-review
+
+Time estimate: 1-4 hours.
+
+1. Monitor backlink spikes, anchor anomalies, hacked pages, scrape patterns, indexation spam and suspicious redirects.
+2. Compare new risks against historical baseline.
+3. Separate annoying low-quality noise from material threats.
+4. Preserve evidence before requesting removal, security cleanup or disavow review.
+5. Escalate malware, hacked content and injected pages immediately.
+
+Decision points: disavow only after strong evidence and human approval.
+
+Failure handling: if data is incomplete, monitor trend and expand evidence sources.
+
+## security-indexation-check
+
+Time estimate: 30 minutes to 3 hours.
+
+1. Search indexed pages for unexpected paths, spam titles, injected languages, casino/pharma terms and rogue subdomains.
+2. Compare crawl, sitemap, server logs and GSC security/manual action data.
+3. Inspect suspicious URLs for status, canonical, templates and source.
+4. Coordinate cleanup with engineering/security.
+5. Request recrawl or removals only after root cause is fixed.
+
+Decision points: treat indexed malware or hacked content as critical.
+
+Failure handling: if access is limited, document public evidence and escalation owner.
+
+## spam-policy-check
+
+Time estimate: 1-3 hours.
+
+1. Review content, links, redirects, programmatic pages, affiliate sections, reviews and third-party hosted content.
+2. Compare tactics against current search spam policies and site reputation abuse guidance.
+3. Flag scaled low-value content, cloaking, doorway pages, manipulative links and misleading structured data.
+4. Recommend removal, noindex, rewrite, disclosure or governance changes.
+5. Record policy source and confidence.
+
+Decision points: policy risk overrides short-term traffic.
+
+Failure handling: if policy fit is uncertain, route to AI Principal SEO Scientist and Compliance Agent.
+
+## claims-risk-review
+
+Time estimate: 30 minutes to 3 hours.
+
+1. Extract claims about results, rankings, price, performance, credentials, health, money, legality and comparisons.
+2. Match each claim to proof or approved source material.
+3. Flag unsupported superlatives, guarantees, testimonials and regulated statements.
+4. Rewrite risky claims into safer, accurate language.
+5. Route sensitive claims to legal/compliance owner.
+
+Decision points: never invent proof to preserve stronger copy.
+
+Failure handling: if proof is missing, remove the claim or label it for approval.
+
+## competitive-gap
+
+Time estimate: 2-8 hours.
+
+1. Identify true search competitors by SERP overlap, not only business category.
+2. Compare ranking pages, content depth, templates, internal links, schema, backlinks and SERP features.
+3. Find gaps where competitors satisfy intent better or own stronger authority signals.
+4. Separate useful opportunities from copycat distractions.
+5. Prioritize gaps by business value and realistic ability to win.
+
+Decision points: do not chase competitor pages that do not match the business model.
+
+Failure handling: if rank data is limited, sample priority SERPs manually.
+
+## competitor-change-monitor
+
+Time estimate: 1-3 hours to configure, then recurring.
+
+1. Track competitor new pages, removed pages, title changes, schema changes, internal links, rankings, links and AI citations.
+2. Set thresholds for material changes.
+3. Classify changes as content, technical, authority, SERP or product positioning.
+4. Trigger a response only when the change affects priority topics or markets.
+5. Archive snapshots for comparison.
+
+Decision points: monitoring should inform strategy, not create reactive busywork.
+
+Failure handling: if crawl access is blocked, rely on SERP/rank/backlink signals.
+
+## forecasting
+
+Time estimate: 1-6 hours.
+
+1. Gather historical clicks, impressions, rankings, seasonality, conversions and planned changes.
+2. Segment by page group, topic, market and funnel stage.
+3. Build conservative, expected and upside scenarios.
+4. State assumptions, confidence and external risks.
+5. Tie forecast to measurement windows and leading indicators.
+
+Decision points: avoid precise forecasts when data is volatile or sparse.
+
+Failure handling: if history is weak, use directional forecast with wider ranges.
+
+## trend-monitor
+
+Time estimate: 30-90 minutes per cycle.
+
+1. Monitor query growth, social/search demand, news, forums, customer questions and competitor publishing.
+2. Separate durable demand from short-lived noise.
+3. Map trends to existing pages, new content, PR angles or no action.
+4. Alert content and strategy agents before the peak when possible.
+5. Track outcomes from acted-on trends.
+
+Decision points: trend relevance must beat raw volume.
+
+Failure handling: if data source reliability is unknown, require confirmation from a second source.
+
+## executive-summary
+
+Time estimate: 30-90 minutes.
+
+1. Read the source findings, decisions and verification results.
+2. Lead with what changed, what matters and what should happen next.
+3. Translate technical details into business language.
+4. Separate confirmed facts from expected benefits.
+5. Keep the summary short enough for a busy stakeholder.
+
+Decision points: include risk and missing evidence even when the report is positive.
+
+Failure handling: if findings conflict, ask Scrummaster Agent for a decision record.
+
+## plain-language-seo-report
+
+Time estimate: 1-3 hours.
+
+1. Gather audit results, completed work, copy changes, metadata changes, technical fixes, recommendations and verification status.
+2. Translate each item into what was checked, what was changed, why it matters and what happens next.
+3. Remove jargon or define unavoidable terms in one sentence.
+4. Avoid ranking guarantees and unsupported benefit claims.
+5. End with clear next steps, owners and follow-up timing.
+
+Decision points: do not hide missing access, unverified changes or risks.
+
+Failure handling: if source outputs are incomplete, list what is missing and produce a partial report.
+
+## content-calendar
+
+Time estimate: 1-4 hours.
+
+1. Convert prioritized clusters, briefs, seasonality and business events into a publish/update schedule.
+2. Balance new content, refreshes, technical dependencies and promotional timing.
+3. Assign owner, draft date, review date, publish date and measurement date.
+4. Add proof/source requirements and compliance checkpoints.
+5. Keep capacity realistic.
+
+Decision points: do not schedule more content than the team can make useful.
+
+Failure handling: if resources are unknown, create a minimum viable calendar.
+
+## request-routing
+
+Time estimate: 5-20 minutes.
+
+1. Read the request for primary intent, risk, evidence needs and likely output.
+2. Choose one lead agent and only necessary support agents.
+3. Identify required evidence and missing access.
+4. Select workflow and approval gates.
+5. Record routing confidence and escalation trigger.
+
+Decision points: high-risk or unclear requests should route through SEO Scrummaster Agent.
+
+Failure handling: if the request is vague, start with the least risky discovery workflow.
+
+## decision-record
+
+Time estimate: 15-45 minutes.
+
+1. State the decision, date, owner, context and options considered.
+2. Record evidence, assumptions, dissent and risk.
+3. Explain why the chosen path beat alternatives.
+4. Define acceptance criteria, rollback and follow-up.
+5. Link related agent outputs and tickets.
+
+Decision points: create records for sitewide, high-risk, expensive or contested decisions.
+
+Failure handling: if no decision was made, record open questions instead.
+
+## definition-of-done
+
+Time estimate: 15-45 minutes.
+
+1. Define what must be true in code, content, analytics, crawl data and stakeholder approval.
+2. Include acceptance criteria, verification method, owner and timing.
+3. Add rollback or monitoring requirements for risky changes.
+4. Distinguish launch done from SEO validated.
+5. Confirm evidence source for each criterion.
+
+Decision points: a task is not done just because it was published.
+
+Failure handling: if verification access is missing, mark the item blocked or conditionally done.
+
+## anti-ai-public-writing
+
+Time estimate: 10-90 minutes depending on copy volume.
+
+1. Identify the visitor-facing placement, audience, page intent and action the text should support.
+2. Check every claim against supplied proof.
+3. Remove obvious AI phrasing, hype, generic SEO filler, stiff openers, em dashes and mechanical rhythm.
+4. Rewrite for plain speech, specificity and natural flow.
+5. Preserve useful brand personality without making the copy sound like a press release.
+6. Recheck SEO terms so they fit naturally.
+
+Decision points: if proof is missing, weaken or remove the claim rather than dressing it up.
+
+Failure handling: route regulated, legal, medical, financial, pricing or guarantee claims to compliance review.

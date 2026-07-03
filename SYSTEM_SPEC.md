@@ -86,6 +86,8 @@ The runtime layer must:
 
 - Route requests to the correct lead and support agents.
 - Create session state with business context, evidence inventory, decisions, risks, and outputs.
+- Execute routed workflows through a pluggable LLM client when requested.
+- Support async execution, streaming output, memory and adapter/tool dispatch.
 - Keep orchestration model-agnostic so Codex, ChatGPT, Claude, Replit, Manus, or another runtime can use the same contracts.
 - Preserve human approval gates for high-risk SEO actions.
 

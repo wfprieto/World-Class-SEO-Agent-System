@@ -230,7 +230,34 @@ The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workfl
 
 ## Runtime and Adapters
 
-The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, and an orchestrator facade. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
+The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, async execution, memory, tool dispatch and LLM clients. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
+
+Dry-run routing:
+
+```powershell
+python main.py "Run a full SEO audit" --domain https://example.com
+```
+
+Dry-run execution with the built-in echo client:
+
+```powershell
+python main.py "Run a full SEO audit" --domain https://example.com --execute
+```
+
+Optional live execution:
+
+```powershell
+$env:OPENAI_API_KEY="..."
+python main.py "Run a full SEO audit" --domain https://example.com --execute --llm-provider openai
+```
+
+See [`.env.example`](.env.example) for optional provider settings. Do not commit real API keys.
+
+Tool dispatch before execution:
+
+```powershell
+python main.py "Run a technical crawl audit" --execute --tool crawler_csv=examples/anonymized-production-style-example/inputs/crawl.csv
+```
 
 ## Templates
 
