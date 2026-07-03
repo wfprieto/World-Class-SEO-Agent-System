@@ -9,6 +9,8 @@ Lead agent: SEO Diagnostic Infrastructure Agent
 | Monthly SEO tool budget | {budget_tier} |
 | Website size | {website_size} |
 | Business type | {business_type} |
+| Website or app platform | {platform} |
+| Code and deployment access | {code_access} |
 | Technical ability | {technical_ability} |
 | Reporting need | {reporting_need} |
 | Existing tools | {existing_tools} |
@@ -68,4 +70,3 @@ Lead agent: SEO Diagnostic Infrastructure Agent
 1. {next_step}
 2. {next_step}
 3. {next_step}
-

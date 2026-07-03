@@ -9,6 +9,8 @@ Lead agent: SEO Diagnostic Infrastructure Agent
 | Monthly SEO tool budget | $0 |
 | Website size | 1-20 pages |
 | Business type | Local business |
+| Website or app platform | WordPress |
+| Code and deployment access | CMS/admin access only |
 | Technical ability | Comfortable with CMS/plugins |
 | Reporting need | Monthly owner summary |
 | Existing tools | None confirmed |
@@ -76,4 +78,3 @@ Do not buy enterprise crawlers, expensive backlink tools, or advanced content op
 1. Set up GSC and Bing Webmaster Tools.
 2. Install GA4 conversion tracking.
 3. Build the first monthly Looker Studio dashboard.
-

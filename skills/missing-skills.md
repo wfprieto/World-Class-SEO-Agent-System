@@ -91,17 +91,20 @@ Required inputs:
 - Monthly SEO tool budget
 - Website size
 - Business type
+- Website or app platform
+- Code and deployment access
 - Technical ability
 - Reporting need
 - Existing tools
 - CMS/framework
+- Platform and code access
 - Market scope
 
 Execution steps:
 
-1. Run the budget and context intake.
+1. Run the budget, platform, access, and context intake.
 2. Identify required native diagnostics, including search console and analytics needs.
-3. Select crawl, performance, structured data, rank, backlink, content, GEO/AIO, and reporting tools only where justified.
+3. Select crawl, performance, structured data, CMS/plugin, rank, backlink, content, GEO/AIO, and reporting tools only where justified.
 4. Separate required tools from optional upgrades and future upgrades.
 5. Define ownership, setup effort, recurring cost, and reporting cadence.
 6. Define the SEO grading model and data quality checks.
@@ -117,13 +120,13 @@ Quality gate:
 
 Failure conditions:
 
-- Budget or context unknown.
+- Budget, platform, access, or context unknown.
 - Tool access constraints unknown.
 - Client ownership or privacy constraints unclear.
 
 Fallback:
 
-- Recommend a free-first provisional stack and ask for the missing budget/context inputs before paid recommendations.
+- Recommend a free-first provisional stack and ask for the missing budget, platform, access, or context inputs before paid recommendations.
 
 ## `analytics-synthesis`
 

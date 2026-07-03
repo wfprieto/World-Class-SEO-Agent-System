@@ -63,6 +63,7 @@ SEO audits and monitoring are only as reliable as the diagnostic setup behind th
 The diagnostic setup must:
 
 - Ask budget and context questions before recommending paid tools.
+- Ask what type of website or app is being built or audited, including CMS/framework and code/deployment access.
 - Include a free baseline wherever possible.
 - Recommend paid tools only when justified by site size, business needs, reporting needs, or operational complexity.
 - Identify who owns each tool or data source.

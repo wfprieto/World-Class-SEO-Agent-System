@@ -30,19 +30,36 @@ Before recommending tools, dashboards, reporting systems, or paid platforms, ask
    - Marketplace
    - Agency/client portfolio
    - Enterprise/multi-site
-4. Technical ability:
+4. Website or app platform:
+   - WordPress
+   - Shopify
+   - Webflow, Wix, Squarespace, or similar website builder
+   - Custom static site
+   - Custom app using React, Next.js, Vue, Nuxt, SvelteKit, Angular, or similar
+   - Ecommerce platform
+   - Headless CMS
+   - Multi-site or enterprise CMS
+   - Unsure
+5. Code and deployment access:
+   - No code access
+   - CMS/admin access only
+   - Theme/plugin access
+   - Repository access
+   - Developer or engineering team available
+   - Hosting/server access
+6. Technical ability:
    - Non-technical
    - Comfortable with CMS/plugins
    - Comfortable with spreadsheets
    - Developer available
    - Engineering team available
-5. Reporting need:
+7. Reporting need:
    - Personal diagnostics
    - Monthly client report
    - Executive dashboard
    - Ongoing monitoring and alerts
-6. Existing tools already available.
-7. Required data ownership, privacy, and client-access constraints.
+8. Existing tools already available.
+9. Required data ownership, privacy, and client-access constraints.
 
 If this information is missing, ask for it before making paid-tool recommendations. If the user cannot answer, produce a conservative free-first starter stack and mark confidence as provisional.
 
@@ -75,6 +92,8 @@ If this information is missing, ask for it before making paid-tool recommendatio
 - Reporting needs
 - Existing tools and accounts
 - CMS/framework
+- Website/app platform
+- Code and deployment access
 - Market/local/international scope
 - Compliance/privacy constraints
 - Stakeholder audience
@@ -189,6 +208,7 @@ Prioritize:
 - Do not imply paid tools are required for every site.
 - Do not recommend tools that duplicate existing capabilities without a reason.
 - Do not ignore privacy, access, or client ownership constraints.
+- Do not recommend code-level diagnostics or implementation paths that do not fit the user's platform or access level.
 - Do not build dashboards from unverified or inconsistent data.
 - Do not present tool metrics as absolute truth without noting limitations.
 
@@ -200,4 +220,3 @@ Prioritize:
 - Senior SEO Strategist Agent for roadmap and investment prioritization
 - SEO Scrummaster Agent for tool selection decisions and budget tradeoffs
 - AI Principal SEO Scientist for diagnostic-stack rule updates
-

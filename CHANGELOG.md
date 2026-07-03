@@ -16,6 +16,7 @@ This project follows semantic versioning where possible:
 - Plain-language SEO report skill, template, and worked example.
 - SEO Diagnostic Infrastructure Agent for budget-aware SEO tool stack, audit reporting, grading, dashboard, and monitoring setup.
 - Diagnostic stack design skill, template, and worked example.
+- Website/app platform and code-access intake for diagnostic stack recommendations.
 - Missing agent-referenced templates.
 - Complete definitions for additional referenced skills.
 - Skill definition standard and execution playbooks.
