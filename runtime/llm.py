@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import urllib.request
 from dataclasses import dataclass, asdict
 from typing import AsyncIterator, Protocol
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+
+logger = logging.getLogger(__name__)
 
 class LLMConfigurationError(RuntimeError):
     """Raised when a configured LLM provider is missing required settings."""
@@ -98,6 +103,11 @@ class OpenAICompatibleClient:
         yield response.content
 
     def _post_json(self, url: str, payload: dict) -> dict:
+        logger.info("Calling OpenAI-compatible chat completion endpoint for model %s", self.model)
+        return self._post_json_with_retry(url, payload)
+
+    @retry(wait=wait_exponential(multiplier=1, min=1, max=10), stop=stop_after_attempt(3), reraise=True)
+    def _post_json_with_retry(self, url: str, payload: dict) -> dict:
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
@@ -142,6 +152,11 @@ class AnthropicClient:
         yield response.content
 
     def _post_json(self, url: str, payload: dict) -> dict:
+        logger.info("Calling Anthropic messages endpoint for model %s", self.model)
+        return self._post_json_with_retry(url, payload)
+
+    @retry(wait=wait_exponential(multiplier=1, min=1, max=10), stop=stop_after_attempt(3), reraise=True)
+    def _post_json_with_retry(self, url: str, payload: dict) -> dict:
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),

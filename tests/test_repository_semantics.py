@@ -75,3 +75,8 @@ def test_router_routes_to_existing_agent_files_and_workflows():
     for _keywords, lead_agent, workflow in router.ROUTES:
         assert lead_agent in mapped_agents
         assert (ROOT / workflow).exists(), workflow
+
+
+def test_ai_scientist_references_continuous_learning_workflow():
+    content = (ROOT / "agents" / "ai-principal-seo-scientist.md").read_text(encoding="utf-8")
+    assert "workflows/continuous-learning-workflow.md" in content

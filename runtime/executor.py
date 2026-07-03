@@ -9,7 +9,7 @@ from typing import Any, AsyncIterator
 from runtime.llm import LLMClient, LLMMessage
 from runtime.memory import InMemoryStore, MemoryStore
 from runtime.routing import RouteResult
-from runtime.state import SessionState
+from runtime.state import Handoff, SessionState
 from runtime.tools import ToolDispatcher, ToolRequest
 
 
@@ -64,21 +64,18 @@ class AgentExecutor:
         messages = self._messages(session, route, [tool.to_dict() for tool in tools])
         self.memory.append(session.session_id, {"type": "prompt", "messages": [message.__dict__ for message in messages]})
         response = await self.llm_client.complete(messages)
+        agent_output = self._agent_output(session, route, [tool.to_dict() for tool in tools], response.content)
+        handoffs = self._handoffs(session, route, response.content, agent_output)
         payload = {
             "route": route.to_dict(),
             "tool_results": [tool.to_dict() for tool in tools],
+            "agent_output": agent_output,
+            "handoffs": [handoff.__dict__ for handoff in handoffs],
             "llm": response.to_dict(),
         }
         self.memory.append(session.session_id, {"type": "llm_response", "payload": payload})
-        session.agent_outputs.append(
-            {
-                "agent": route.lead_agent,
-                "summary": "Runtime execution completed.",
-                "provider": response.provider,
-                "model": response.model,
-                "content": response.content,
-            }
-        )
+        session.agent_outputs.append(agent_output)
+        session.handoffs.extend(handoffs)
         return payload
 
     async def stream(
@@ -133,3 +130,93 @@ class AgentExecutor:
         if not path.exists():
             return ""
         return path.read_text(encoding="utf-8")
+
+    def _agent_output(
+        self,
+        session: SessionState,
+        route: RouteResult,
+        tool_results: list[dict[str, Any]],
+        content: str,
+    ) -> dict[str, Any]:
+        evidence = [
+            {
+                "source": result.get("tool", "runtime"),
+                "type": "adapter_result",
+                "date_checked": session.created_at[:10],
+                "notes": f"Adapter status: {result.get('status', 'unknown')}.",
+            }
+            for result in tool_results
+        ] or [
+            {
+                "source": "runtime_request",
+                "type": "business_context",
+                "date_checked": session.created_at[:10],
+                "notes": "No adapter evidence supplied; output is based on request context and loaded system files.",
+            }
+        ]
+        finding_severity = "Medium" if session.open_risks else "Low"
+        return {
+            "agent": route.lead_agent,
+            "summary": "Runtime execution completed with routed workflow context.",
+            "evidence": evidence,
+            "confidence": route.confidence if route.confidence in {"High", "Medium", "Low"} else "Medium",
+            "findings": [
+                {
+                    "id": f"{session.session_id}-runtime-001",
+                    "severity": finding_severity,
+                    "finding": content[:500] if content else "Runtime produced no narrative content.",
+                    "affected_scope": session.business_context.domain or "Unspecified domain/property",
+                    "evidence_refs": [item["source"] for item in evidence],
+                }
+            ],
+            "recommended_actions": [
+                {
+                    "action": "Review the routed output, resolve missing evidence, and run the relevant specialist workflow.",
+                    "priority": "P1" if session.open_risks else "P2",
+                    "owner": route.lead_agent,
+                    "success_metric": "Output has verified evidence, owner, acceptance criteria and follow-up trigger.",
+                }
+            ],
+            "impact": "Improves routing clarity and keeps runtime output aligned to the standard SEO agent contract.",
+            "effort": "Low",
+            "risks": session.open_risks or ["No material runtime risks were detected."],
+            "owner": route.lead_agent,
+            "dependencies": route.required_evidence,
+            "acceptance_criteria": [
+                "Agent output conforms to schemas/agent-output.schema.json.",
+                "Missing evidence is either supplied or explicitly documented.",
+            ],
+            "verification": [
+                "Validate payload against agent-output schema.",
+                "Run repository validation and semantic tests.",
+            ],
+            "follow_up": "Recheck after missing evidence is supplied or before implementation begins.",
+        }
+
+    def _handoffs(
+        self,
+        session: SessionState,
+        route: RouteResult,
+        content: str,
+        agent_output: dict[str, Any],
+    ) -> list[Handoff]:
+        should_escalate = bool(session.open_risks) or "escalate" in content.lower() or "handoff" in content.lower()
+        if not should_escalate or route.lead_agent == "SEO Scrummaster Agent":
+            return []
+        return [
+            Handoff(
+                handoff_id=f"{session.session_id}-handoff-001",
+                from_agent=route.lead_agent,
+                to_agent="SEO Scrummaster Agent",
+                reason=route.escalation,
+                context_summary=agent_output["summary"],
+                evidence_refs=[finding["id"] for finding in agent_output["findings"]],
+                requested_action="Review escalation trigger, confirm owner, and decide whether the workflow can proceed.",
+                risk_level="Medium" if session.open_risks else "Low",
+                acceptance_criteria=[
+                    "Escalation decision is recorded.",
+                    "Missing evidence or risk owner is assigned.",
+                ],
+                due_trigger="Before implementation or publication.",
+            )
+        ]

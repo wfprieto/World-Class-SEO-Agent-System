@@ -7,6 +7,8 @@ from runtime.memory import InMemoryStore
 from runtime.orchestrator import SEOOrchestrator
 from runtime.routing import RequestRouter
 from runtime.tools import ToolRequest
+from tests.test_schema_validation import load_json
+from jsonschema import Draft202012Validator
 
 
 def test_routes_diagnostic_setup_to_infrastructure_agent():
@@ -47,7 +49,26 @@ def test_orchestrator_executes_with_echo_llm():
     payload = orchestrator.execute(session, route)
     assert payload["llm"]["provider"] == "echo"
     assert payload["route"]["lead_agent"] == "SEO Full Audit/Analyst Agent"
+    errors = list(Draft202012Validator(load_json("schemas/agent-output.schema.json")).iter_errors(payload["agent_output"]))
+    assert errors == []
     assert memory.load(session.session_id)
+
+
+def test_orchestrator_emits_handoff_when_escalation_is_needed():
+    orchestrator = SEOOrchestrator(Path(__file__).resolve().parents[1])
+    session = orchestrator.start_session(
+        request="Run a full SEO audit",
+        mode="Audit",
+        domain="",
+        business_type="SaaS",
+    )
+    route = orchestrator.route(session)
+    payload = orchestrator.execute(session, route)
+    assert payload["handoffs"]
+    assert payload["handoffs"][0]["to_agent"] == "SEO Scrummaster Agent"
+    errors = list(Draft202012Validator(load_json("schemas/handoff-payload.schema.json")).iter_errors(payload["handoffs"][0]))
+    assert errors == []
+    assert session.handoffs
 
 
 def test_orchestrator_dispatches_tool_before_llm(tmp_path):

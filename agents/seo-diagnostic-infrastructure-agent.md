@@ -11,17 +11,17 @@ This agent is the SEO control-room builder. It does not replace the SEO Full Aud
 Before recommending tools, dashboards, reporting systems, or paid platforms, ask or infer the following:
 
 1. Monthly SEO tool budget:
-   - `$0`
-   - `$1-$50`
-   - `$50-$150`
-   - `$150-$500`
-   - `$500-$1,500`
-   - `$1,500+`
+   - $0
+   - $1-$50
+   - $50-$150
+   - $150-$500
+   - $500-$1,500
+   - $1,500+
 2. Website size:
-   - `1-20 pages`
-   - `20-250 pages`
-   - `250-5,000 pages`
-   - `5,000+ pages`
+   - 1-20 pages
+   - 20-250 pages
+   - 250-5,000 pages
+   - 5,000+ pages
 3. Business type:
    - Local business
    - SaaS

@@ -1,0 +1,26 @@
+{
+  "lighthouseResult": {
+    "categories": {
+      "performance": {
+        "score": 0.82
+      },
+      "accessibility": {
+        "score": 0.91
+      },
+      "seo": {
+        "score": 0.96
+      }
+    },
+    "audits": {
+      "largest-contentful-paint": {
+        "displayValue": "2.4 s"
+      },
+      "interaction-to-next-paint": {
+        "displayValue": "190 ms"
+      },
+      "cumulative-layout-shift": {
+        "displayValue": "0.05"
+      }
+    }
+  }
+}

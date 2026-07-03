@@ -8,6 +8,22 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.4.2] - 2026-07-03
+
+### Added
+
+- Registry aliases for backlink, CrUX, GA4, GSC, PageSpeed and rank tracking adapters.
+- Runtime handoff emission when escalation is triggered.
+- Schema-aligned runtime `agent_output` payloads.
+- Deep procedures for accessibility audit, analytics synthesis, conversion intent, landing page CRO, local landing page briefs and regional keyword maps.
+- Additional anonymized GSC and Core Web Vitals export examples.
+- Tenacity retry/backoff and logging for live LLM clients.
+
+### Changed
+
+- Removed backticks from diagnostic budget/page-size values to prevent false skill-reference positives.
+- AI Principal SEO Scientist now explicitly references `workflows/continuous-learning-workflow.md`.
+
 ## [1.4.1] - 2026-07-03
 
 ### Added

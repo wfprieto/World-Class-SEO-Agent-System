@@ -7,6 +7,10 @@ The included CSV is anonymized and safe for public repository use. It preserves 
 ## File
 
 - `gsc-search-performance-anonymized.csv`: page/query export with clicks, impressions, CTR and average position.
+- `gsc-local-pages-anonymized.csv`: local landing page query sample.
+- `gsc-commercial-pages-anonymized.csv`: commercial service page query sample.
+- `crux-origin-cwv-anonymized.json`: origin-level Core Web Vitals sample.
+- `pagespeed-cwv-anonymized.json`: PageSpeed/Lighthouse Core Web Vitals-style sample.
 
 ## Required Privacy Steps Before Adding Real Client Data
 

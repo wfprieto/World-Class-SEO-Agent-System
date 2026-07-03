@@ -830,3 +830,87 @@ Time estimate: 10-90 minutes depending on copy volume.
 Decision points: if proof is missing, weaken or remove the claim rather than dressing it up.
 
 Failure handling: route regulated, legal, medical, financial, pricing or guarantee claims to compliance review.
+
+## analytics-synthesis
+
+Time estimate: 1-4 hours.
+
+1. Pull GSC, GA4, rank, crawl and conversion data into one page/topic view.
+2. Separate traffic, visibility, engagement and conversion signals.
+3. Identify where data agrees, where it conflicts and where tracking is missing.
+4. Translate metrics into findings with evidence references and confidence.
+5. Route technical drops, content decay, CRO issues or measurement gaps to the right agent.
+
+Decision points: do not treat traffic loss as an SEO cause until tracking, seasonality and technical changes are checked.
+
+Failure handling: if analytics access is missing, use available exports and mark confidence lower.
+
+## accessibility-audit
+
+Time estimate: 1-6 hours.
+
+1. Review headings, labels, alt text, keyboard access, focus order, forms and screen reader cues.
+2. Run Lighthouse, axe/WAVE-style checks or supplied accessibility exports.
+3. Compare accessibility defects against SEO impact, user impact and implementation effort.
+4. Flag missing alt text, broken heading order, unlabeled controls and inaccessible content that searchers need.
+5. Produce fixes with acceptance criteria and verification method.
+
+Decision points: prioritize blockers that prevent users or crawlers from understanding primary content.
+
+Failure handling: if automated tooling is unavailable, inspect templates manually and mark coverage limits.
+
+## conversion-intent-map
+
+Time estimate: 1-3 hours.
+
+1. Map organic queries to funnel stage, user intent and expected next action.
+2. Compare current CTA, offer and page format against that intent.
+3. Identify mismatch between informational, commercial, local and transactional visitors.
+4. Recommend CTA, trust proof, internal link and content changes.
+5. Define measurement plan for conversion movement.
+
+Decision points: do not push aggressive CTAs on pages where users still need education or proof.
+
+Failure handling: if conversion data is missing, use intent analysis and flag need for analytics setup.
+
+## landing-page-cro-audit
+
+Time estimate: 1-5 hours.
+
+1. Review organic landing pages by traffic, query intent, engagement, conversions and business value.
+2. Inspect above-the-fold message, CTA clarity, proof, speed, accessibility and friction.
+3. Compare page promise against SERP intent and metadata.
+4. Identify testable changes and guardrail metrics.
+5. Recommend changes with risk level and stop conditions.
+
+Decision points: require approval before changing revenue-critical pages or lead forms.
+
+Failure handling: if heatmap/session data is absent, use heuristic audit and analytics exports.
+
+## local-landing-page-brief
+
+Time estimate: 1-3 hours per page type.
+
+1. Confirm location, service area, services, proof points, reviews, staff, photos and local regulations.
+2. Research local query intent and competing local landing pages.
+3. Define unique local value, NAP, map embed, driving/service details, FAQs and internal links.
+4. Add GBP, citation and schema requirements.
+5. Pass public-facing copy through `anti-ai-public-writing`.
+
+Decision points: do not create fake or doorway location pages.
+
+Failure handling: if local proof is missing, produce a content brief that asks for real evidence before drafting.
+
+## regional-keyword-map
+
+Time estimate: 1-4 hours per market group.
+
+1. Gather regional query data, language variants, local terminology and search engine differences.
+2. Group queries by market, language, intent and page eligibility.
+3. Map clusters to existing pages, localized pages or no-build decisions.
+4. Identify hreflang, currency, units, spelling and compliance needs.
+5. Prioritize by business value, search demand and localization readiness.
+
+Decision points: region-specific pages need distinct user value, not only swapped city or country names.
+
+Failure handling: if market data is sparse, use GSC country filters, sales input and regional SERP samples.

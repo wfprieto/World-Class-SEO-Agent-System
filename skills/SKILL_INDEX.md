@@ -12,6 +12,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `crawl-map`
 - `indexation-reality-check`
 - `sitemap-audit`
+- `analytics-synthesis`
 - `seo-drift-monitor`
 - `score-normalization`
 
@@ -34,17 +35,22 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `content-inventory`
 - `sxo-page-fit`
 - `metadata-generation`
+- `conversion-intent-map`
+- `landing-page-cro-audit`
 
 ## Local, International, and Media Skills
 
 - `local-seo-audit`
 - `citation-audit`
 - `review-strategy`
+- `local-landing-page-brief`
+- `regional-keyword-map`
 - `hreflang-audit`
 - `international-url-architecture`
 - `localized-content-review`
 - `image-seo-audit`
 - `video-seo-audit`
+- `accessibility-audit`
 
 ## GEO, Entity, and Conversational Skills
 

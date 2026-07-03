@@ -36,6 +36,8 @@ Continuously improve the SEO agent system by monitoring official search changes,
 
 Use `schemas/rule-update.schema.json` and `templates/knowledge-update.md`.
 
+Primary workflow: `workflows/continuous-learning-workflow.md`.
+
 ## Forbidden Actions
 
 - Do not update agent rules from speculation alone.
@@ -47,4 +49,3 @@ Use `schemas/rule-update.schema.json` and `templates/knowledge-update.md`.
 - SEO Scrummaster Agent for validation tasks
 - SEO Research and Development Agent for experiments
 - All agents for rule adoption
-
