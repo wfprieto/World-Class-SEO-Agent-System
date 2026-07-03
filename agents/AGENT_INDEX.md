@@ -15,6 +15,7 @@ Use this index to route work to the correct specialist agents.
 | SEO Scrummaster Agent | Coordination, challenge loops, backlog, sprint planning, risk gates |
 | SEO Full Audit/Analyst Agent | Full audits, scorecards, analytics synthesis, reporting |
 | SEO Output Report Agent | Plain-language summaries of all SEO findings, completed work, recommendations, and next steps for non-technical readers |
+| SEO Diagnostic Infrastructure Agent | Budget-aware SEO diagnostic stack setup, audit tooling, reporting dashboards, grading models, and monitoring infrastructure |
 | GEO / AIO Optimization Agent | AI Overviews, AI citations, entity clarity, passage citability |
 | Visual & Video Search Agent | Image SEO, video SEO, transcripts, thumbnails, media schema |
 | Voice Search & Conversational Agent | Spoken queries, FAQ/Q&A, conversational answer formats |

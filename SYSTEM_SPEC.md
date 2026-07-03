@@ -56,6 +56,19 @@ The plain-language report must clearly separate:
 
 The report must avoid jargon, avoid guaranteed ranking claims, and explain missing evidence in simple language.
 
+## Diagnostic Infrastructure Standard
+
+SEO audits and monitoring are only as reliable as the diagnostic setup behind them. When a project requires tool selection, reporting infrastructure, audit systems, dashboards, grading tools, or recurring monitoring, use the SEO Diagnostic Infrastructure Agent.
+
+The diagnostic setup must:
+
+- Ask budget and context questions before recommending paid tools.
+- Include a free baseline wherever possible.
+- Recommend paid tools only when justified by site size, business needs, reporting needs, or operational complexity.
+- Identify who owns each tool or data source.
+- Define setup effort, data quality checks, alert thresholds, and reporting cadence.
+- Avoid overlapping paid tools unless each tool has a distinct role.
+
 ## Risk Classes
 
 Critical:

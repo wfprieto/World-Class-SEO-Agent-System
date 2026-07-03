@@ -8,7 +8,7 @@ This repository is designed as a single source of truth for coding professionals
 
 This is not a prompt dump. It is a structured SEO operating system made of:
 
-- 23 specialist SEO agents
+- 24 specialist SEO agents
 - Reusable SEO skills
 - Shared evidence standards
 - Cross-agent workflows
@@ -84,6 +84,7 @@ World-Class-SEO-Agent-System/
 | SEO Scrummaster Agent | Agent coordination, challenge loops, sprint planning, risk gates |
 | SEO Full Audit/Analyst Agent | Full audits, health scoring, analytics synthesis, reporting |
 | SEO Output Report Agent | Plain-language reports of findings, completed work, recommendations, and next steps for non-technical stakeholders |
+| SEO Diagnostic Infrastructure Agent | Budget-aware diagnostic stack setup, audit tooling, dashboards, grading models, and monitoring infrastructure |
 | GEO / AIO Optimization Agent | AI Overviews, generative search visibility, entity clarity, passage citability |
 | Visual & Video Search Agent | Image SEO, video SEO, transcripts, media schema, visual search readiness |
 | Voice Search & Conversational Agent | Spoken queries, Q&A structures, conversational answer formats |
@@ -194,6 +195,7 @@ See [`examples/`](examples/) for worked sample outputs:
 - Content brief example
 - Technical deployment example
 - Plain-language SEO report example
+- Diagnostic infrastructure example
 
 ## Validation
 

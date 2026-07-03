@@ -80,6 +80,51 @@ Fallback:
 
 - Ask for the minimum missing clarification or route to SEO Scrummaster Agent for triage.
 
+## `seo-diagnostic-stack-design`
+
+Purpose: Design a right-sized SEO diagnostic, reporting, grading, and monitoring stack based on budget, website size, business type, technical ability, and reporting needs.
+
+System prompt: Act as an SEO diagnostic infrastructure architect. Ask budget and context questions before recommending paid tools. Prefer the simplest stack that reliably supports the required SEO decisions.
+
+Required inputs:
+
+- Monthly SEO tool budget
+- Website size
+- Business type
+- Technical ability
+- Reporting need
+- Existing tools
+- CMS/framework
+- Market scope
+
+Execution steps:
+
+1. Run the budget and context intake.
+2. Identify required native diagnostics, including search console and analytics needs.
+3. Select crawl, performance, structured data, rank, backlink, content, GEO/AIO, and reporting tools only where justified.
+4. Separate required tools from optional upgrades and future upgrades.
+5. Define ownership, setup effort, recurring cost, and reporting cadence.
+6. Define the SEO grading model and data quality checks.
+7. Create a plain-language reporting path for non-technical stakeholders.
+
+Output format:
+
+- `templates/seo-diagnostic-infrastructure-plan.md`
+
+Quality gate:
+
+- The recommended stack must fit the user's budget, site size, technical ability, and reporting needs.
+
+Failure conditions:
+
+- Budget or context unknown.
+- Tool access constraints unknown.
+- Client ownership or privacy constraints unclear.
+
+Fallback:
+
+- Recommend a free-first provisional stack and ask for the missing budget/context inputs before paid recommendations.
+
 ## `analytics-synthesis`
 
 Purpose: Combine analytics, Search Console, rank, and conversion data into SEO performance insight.

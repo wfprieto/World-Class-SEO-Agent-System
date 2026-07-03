@@ -13,12 +13,14 @@ flowchart TD
   B -->|Security/manual action| F["Negative SEO & Security Agent"]
   B -->|Competitor movement| G["Competitive Intelligence Agent"]
   B -->|Search policy/update| H["AI Principal SEO Scientist"]
+  B -->|Tooling or data quality issue| S["SEO Diagnostic Infrastructure Agent"]
   C --> I{"Critical impact?"}
   D --> I
   E --> I
   F --> I
   G --> J["Create monitoring report"]
   H --> K["Draft knowledge update"]
+  S --> J
   I -->|Yes| L["SEO Scrummaster Agent escalation"]
   I -->|No| J
   L --> M{"Implementation needed?"}

@@ -7,6 +7,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 ## Core Audit Skills
 
 - `full-site-audit`
+- `seo-diagnostic-stack-design`
 - `technical-audit`
 - `crawl-map`
 - `indexation-reality-check`

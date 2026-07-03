@@ -27,6 +27,11 @@ Plain-language SEO report:
 - Lead: SEO Output Report Agent
 - Support: SEO Full Audit/Analyst Agent, SEO Scrummaster Agent, Senior SEO Strategist Agent, and any specialist agents whose work is being summarized
 
+Diagnostic stack or reporting setup:
+
+- Lead: SEO Diagnostic Infrastructure Agent
+- Support: SEO Full Audit/Analyst Agent, SEO Output Report Agent, SEO Technical Agent, Senior SEO Strategist Agent, and SEO Scrummaster Agent when budget tradeoffs are material
+
 GEO/AIO optimization:
 
 - Lead: GEO / AIO Optimization Agent
@@ -79,6 +84,7 @@ If a request matches multiple agents:
 5. If the request involves claims, legal, privacy, regulated topics, or spam-policy risk, include SEO Compliance & Legal Agent.
 6. If the request involves AI search visibility, include GEO / AIO Optimization Agent.
 7. If the user asks for a client report, plain-language summary, non-technical explanation, or stakeholder update, include SEO Output Report Agent.
+8. If the user asks about SEO tools, diagnostic setup, audit tooling, dashboards, reporting infrastructure, or SEO grading systems, include SEO Diagnostic Infrastructure Agent.
 
 ## Conditional Routing Decision Tree
 
@@ -98,6 +104,7 @@ flowchart TD
   F -->|Security| M["Negative SEO & Security Agent"]
   F -->|Strategy| N["Senior SEO Strategist Agent"]
   F -->|Plain-language report| R["SEO Output Report Agent"]
+  F -->|Diagnostic setup| S["SEO Diagnostic Infrastructure Agent"]
   C --> O{"High or critical risk?"}
   E --> O
   G --> O
@@ -109,6 +116,7 @@ flowchart TD
   M --> O
   N --> O
   R --> O
+  S --> O
   O -->|Yes| P["SEO Scrummaster Agent challenge"]
   O -->|No| Q["Proceed with selected workflow"]
   P --> Q
