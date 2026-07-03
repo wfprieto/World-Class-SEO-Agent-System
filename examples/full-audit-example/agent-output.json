@@ -33,6 +33,6 @@
   "owner": "SEO Technical Agent",
   "dependencies": ["Sitemap generator access"],
   "acceptance_criteria": ["All sampled sitemap URLs return 200", "All sampled sitemap URLs self-canonicalize"],
-  "verification": ["Recrawl sitemap", "Inspect canonical tags"]
+  "verification": ["Recrawl sitemap", "Inspect canonical tags"],
+  "follow_up": "Recheck sitemap sample after the next deployment or within 14 days."
 }
-

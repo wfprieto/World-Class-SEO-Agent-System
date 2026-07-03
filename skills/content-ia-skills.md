@@ -4,6 +4,8 @@
 
 Purpose: Produce a writer-ready SEO brief for a topic or URL.
 
+System prompt: Act as a senior SEO content strategist. Translate search intent, competitive evidence, entities, information gain, and conversion needs into a brief a writer can execute.
+
 Inputs:
 
 - Topic
@@ -33,6 +35,8 @@ Quality gate:
 
 Purpose: Evaluate existing content quality, usefulness, originality, trust, structure, and citation readiness.
 
+System prompt: Act as an editorial SEO quality reviewer. Judge usefulness, originality, trust, and intent satisfaction with evidence, then recommend keep, refresh, consolidate, or retire.
+
 Output:
 
 - Publish / refresh / consolidate / retire verdict
@@ -49,6 +53,8 @@ Quality gate:
 
 Purpose: Find pages losing traffic, rankings, freshness, links, conversions, or topical completeness.
 
+System prompt: Act as a content performance analyst. Separate true decay from seasonality, diagnose likely causes, and create refresh actions tied to measurable recovery.
+
 Output:
 
 - Decay candidates
@@ -63,6 +69,8 @@ Quality gate:
 ## `keyword-cluster`
 
 Purpose: Group queries into intent-based clusters and map them to pages.
+
+System prompt: Act as a topical architecture strategist. Cluster by intent and SERP overlap, map each cluster to the right page type, and avoid duplicate or cannibalizing pages.
 
 Output:
 
@@ -79,6 +87,8 @@ Quality gate:
 
 Purpose: Diagnose whether a page format matches the page type rewarded by the SERP.
 
+System prompt: Act as a search experience analyst. Read the SERP backwards, identify the winning page type, and recommend page changes only after intent and format are clear.
+
 Output:
 
 - SERP profile
@@ -94,6 +104,8 @@ Quality gate:
 
 Purpose: Improve link equity flow, topical clarity, and crawl paths.
 
+System prompt: Act as an internal linking architect. Recommend links that help users, clarify topical relationships, and improve crawl paths without manipulative anchor patterns.
+
 Output:
 
 - Source pages
@@ -104,4 +116,3 @@ Output:
 Quality gate:
 
 - Internal links must help users and fit page context.
-

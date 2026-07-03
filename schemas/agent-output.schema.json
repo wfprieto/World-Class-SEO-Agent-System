@@ -17,7 +17,8 @@
     "owner",
     "dependencies",
     "acceptance_criteria",
-    "verification"
+    "verification",
+    "follow_up"
   ],
   "properties": {
     "agent": {
@@ -153,6 +154,10 @@
       "type": "array",
       "description": "Checks that prove the recommendation was correctly implemented or validated.",
       "items": { "type": "string" }
+    },
+    "follow_up": {
+      "type": "string",
+      "description": "Follow-up date, monitoring trigger, or condition for revisiting this output."
     }
   },
   "examples": [
@@ -191,7 +196,8 @@
       "owner": "Senior SEO Engineer Agent",
       "dependencies": ["International & Multilingual SEO Agent validation", "Template access"],
       "acceptance_criteria": ["Self-canonical is present on sampled localized URLs", "Return hreflang tags validate", "No unexpected noindex or robots blocks"],
-      "verification": ["Run hreflang audit on sample URLs", "Inspect rendered HTML", "Submit sample URLs for indexation validation when available"]
+      "verification": ["Run hreflang audit on sample URLs", "Inspect rendered HTML", "Submit sample URLs for indexation validation when available"],
+      "follow_up": "Recheck sampled localized URLs 14 days after deployment or after next sitemap submission."
     }
   ]
 }

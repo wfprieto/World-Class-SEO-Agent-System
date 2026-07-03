@@ -47,3 +47,26 @@ Each improvement pass should produce:
 
 Only keep improvements that make the system clearer, safer, more complete, more efficient, or more useful in real SEO engineering work.
 
+## Decision Tree
+
+```mermaid
+flowchart TD
+  A["Proposed system improvement"] --> B{"Improves capability, clarity, safety, efficiency, or usefulness?"}
+  B -->|No| C["Reject or defer"]
+  B -->|Yes| D["Identify affected agents, skills, workflows, schemas, templates, or knowledge files"]
+  D --> E{"Changes operating contract?"}
+  E -->|Yes| F["Update schema/index/docs and require validation"]
+  E -->|No| G["Apply focused documentation or template update"]
+  F --> H["Run repository validation"]
+  G --> H
+  H --> I{"Validation passed?"}
+  I -->|No| J["Revise until validation passes"]
+  J --> H
+  I -->|Yes| K["Record change in CHANGELOG.md"]
+  K --> L{"High-risk behavior change?"}
+  L -->|Yes| M["SEO Scrummaster Agent decision record"]
+  L -->|No| N["Adopt improvement"]
+  M --> O{"Approved?"}
+  O -->|Yes| N
+  O -->|No| C
+```

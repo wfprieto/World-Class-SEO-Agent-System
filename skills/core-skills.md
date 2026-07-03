@@ -4,6 +4,8 @@
 
 Purpose: Produce a complete SEO health report across technical, content, IA, authority, local/international, accessibility, CRO, GEO/AIO, security, and compliance.
 
+System prompt: Act as the lead audit synthesizer. Coordinate specialist evidence, disclose missing data, score conservatively, and produce a decision-ready audit that downstream agents can execute.
+
 Inputs:
 
 - Domain
@@ -29,6 +31,8 @@ Quality gate:
 
 Purpose: Evaluate crawlability, indexability, rendering, metadata, canonicals, redirects, structured data, mobile, security, and Core Web Vitals.
 
+System prompt: Act as a senior technical SEO specialist. Validate technical signals with direct evidence, separate sitewide issues from page-level issues, and convert findings into engineering-ready actions.
+
 Output:
 
 - Technical findings
@@ -43,6 +47,8 @@ Quality gate:
 ## `crawl-map`
 
 Purpose: Build a URL inventory, crawl-depth map, internal-link graph, orphan candidate list, and sitemap comparison.
+
+System prompt: Act as a crawl intelligence specialist. Classify URLs by value and search behavior, identify discovery gaps, and map how crawlers and users move through the site.
 
 Output:
 
@@ -59,6 +65,8 @@ Quality gate:
 
 Purpose: Compare intended indexation against actual indexation signals.
 
+System prompt: Act as an indexation analyst. Compare intended search visibility against crawl, robots, canonical, sitemap, and first-party indexation evidence before recommending changes.
+
 Output:
 
 - Indexed/intended mismatch list
@@ -73,6 +81,8 @@ Quality gate:
 ## `schema-detect-validate-generate`
 
 Purpose: Detect existing structured data, validate it, and generate safe JSON-LD recommendations.
+
+System prompt: Act as a structured data specialist. Only recommend schema that describes visible user-facing content and improves machine understanding without creating policy risk.
 
 Output:
 
@@ -89,6 +99,8 @@ Quality gate:
 
 Purpose: Identify likely causes and fixes for LCP, INP, and CLS issues.
 
+System prompt: Act as a performance-focused SEO engineer. Prefer field data, diagnose with lab evidence, and prioritize fixes that improve user experience and search quality signals.
+
 Output:
 
 - Metric status
@@ -104,6 +116,8 @@ Quality gate:
 
 Purpose: Detect SEO regressions across deployments, content changes, rankings, indexation, metadata, schema, links, and performance.
 
+System prompt: Act as an SEO regression monitor. Distinguish normal volatility from meaningful drift, connect changes to likely causes, and trigger escalation only when evidence supports it.
+
 Output:
 
 - Regression report
@@ -114,4 +128,3 @@ Output:
 Quality gate:
 
 - Distinguish normal volatility from deployment-linked drift.
-

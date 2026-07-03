@@ -31,13 +31,28 @@
     },
     "business_context": {
       "type": "object",
+      "description": "Business and market context required to interpret SEO evidence and prioritize work.",
       "additionalProperties": false,
       "required": ["domain", "business_type", "markets", "goals"],
       "properties": {
-        "domain": { "type": "string" },
-        "business_type": { "type": "string" },
-        "markets": { "type": "array", "items": { "type": "string" } },
-        "goals": { "type": "array", "items": { "type": "string" } }
+        "domain": {
+          "type": "string",
+          "description": "Primary site or property under review."
+        },
+        "business_type": {
+          "type": "string",
+          "description": "Business model or site type, such as SaaS, local service, ecommerce, publisher, marketplace, or enterprise."
+        },
+        "markets": {
+          "type": "array",
+          "description": "Target countries, regions, languages, or market segments.",
+          "items": { "type": "string" }
+        },
+        "goals": {
+          "type": "array",
+          "description": "Business and SEO outcomes the workflow should optimize for.",
+          "items": { "type": "string" }
+        }
       }
     },
     "evidence_inventory": {
@@ -76,5 +91,38 @@
       "description": "Open risks that must be resolved or accepted.",
       "items": { "type": "string" }
     }
-  }
+  },
+  "examples": [
+    {
+      "session_id": "seo-session-20260703-001",
+      "request": "Run a technical SEO and GEO readiness audit for example.com.",
+      "mode": "Audit",
+      "business_context": {
+        "domain": "https://www.example.com",
+        "business_type": "SaaS",
+        "markets": ["United States", "Canada"],
+        "goals": ["Increase qualified organic demos", "Improve AI citation readiness"]
+      },
+      "evidence_inventory": [
+        {
+          "id": "evidence-crawl-001",
+          "source": "crawl-export-2026-07-03.csv",
+          "type": "crawl_export",
+          "status": "available",
+          "notes": "Sample crawl of priority templates."
+        },
+        {
+          "id": "evidence-gsc-001",
+          "source": "Google Search Console",
+          "type": "first_party_data",
+          "status": "missing",
+          "notes": "Access not available for this run."
+        }
+      ],
+      "agent_outputs": [],
+      "handoffs": [],
+      "decisions": [],
+      "open_risks": ["GSC unavailable; performance findings will be lower confidence."]
+    }
+  ]
 }

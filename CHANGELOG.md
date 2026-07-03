@@ -22,6 +22,8 @@ This project follows semantic versioning where possible:
 - Regional search engine knowledge source.
 - Repository validation script and GitHub Actions workflow.
 - Security policy and code of conduct.
+- System prompts for original grouped skill definitions.
+- Mermaid decision trees for continuous learning and system improvement workflows.
 
 ### Changed
 
@@ -29,6 +31,8 @@ This project follows semantic versioning where possible:
 - Added stricter schema descriptions, examples, and `additionalProperties: false`.
 - Expanded workflow decision trees and failure handling.
 - Added AI content disclosure and INP-specific quality gates.
+- Added `follow_up` to the standard agent output schema.
+- Added descriptions and examples to the session state schema.
 
 ## [1.0.0] - 2026-07-03
 
@@ -39,4 +43,3 @@ This project follows semantic versioning where possible:
 - Model-specific control files.
 - Core skill catalogue.
 - Workflows, quality gates, anti-patterns, schemas, and templates.
-
