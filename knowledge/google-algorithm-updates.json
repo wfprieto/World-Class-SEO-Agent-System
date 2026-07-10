@@ -9,6 +9,7 @@
   ],
   "last_reconciled": "2026-07-10",
   "next_review": "2026-08-10 or immediately after an official Google ranking or policy update",
+  "reverification_note": "2026 policy/update entries independently re-verified against Google-owned sources on 2026-07-10; current through the June 24-26 2026 spam update. The unconfirmed June 19 2026 volatility is intentionally excluded.",
   "source_precedence": [
     "incident-specific Google Search Status page",
     "Google Search Status ranking history",
@@ -392,13 +393,13 @@
       "notes": "Google stated the FAQ rich result is no longer shown in Search."
     },
     {
-      "id": "2026-06-llms-clarification",
-      "date": "2026-06-15",
-      "name": "Google clarified llms.txt has no Search visibility or ranking effect",
+      "id": "2026-05-llms-clarification",
+      "date": "2026-05-15",
+      "name": "Google clarified llms.txt is neither required nor a ranking lever",
       "kind": "documentation",
       "source": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
       "evidence": "VERIFIED_CURRENT",
-      "notes": "Maintaining llms.txt for another service is optional; it is not a Google Search requirement or lever."
+      "notes": "Part of the May 15 2026 generative-AI optimization guide. Google states machine-readable/AI text files including llms.txt are not used by Google Search and will not harm or help visibility. Independently re-verified 2026-07-10."
     }
   ],
   "quarantined_claims": [
