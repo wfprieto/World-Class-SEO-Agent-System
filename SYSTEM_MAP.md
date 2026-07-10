@@ -57,6 +57,7 @@ This is the fast navigation file for humans and LLMs. Start here when you need t
 | SEO experiments and research design | SEO Research and Development Agent | `agents/seo-research-and-development-agent.md` |
 | Entities, sameAs, brand SERP, knowledge graph consistency | SEO Knowledge Graph Sync Agent | `agents/seo-knowledge-graph-sync-agent.md` |
 | Search changes, knowledge sync, rule updates | AI Principal SEO Scientist | `agents/ai-principal-seo-scientist.md` |
+| E-commerce, product schema, marketplace, faceted nav | SEO E-commerce Agent | `agents/seo-ecommerce-agent.md` |
 
 ## Skill Lookup
 
@@ -68,6 +69,11 @@ Use `skills/SKILL_INDEX.md` to find the skill name, then use `skills/deep-skill-
 - `skills/strategy-governance-skills.md`
 - `skills/missing-skills.md`
 - `skills/public-facing-writing-skills.md`
+- `skills/ecommerce-seo-skills.md`
+- `skills/programmatic-seo-governance.md`
+- `skills/geo-grid-local-rank-skills.md`
+- `skills/competitor-comparison-pages.md`
+- `skills/rendered-visual-audit-and-page-entry.md`
 
 Every indexed skill must have a matching deep procedure. This is enforced by tests.
 

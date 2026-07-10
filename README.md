@@ -8,7 +8,7 @@ This repository is designed as a single source of truth for coding professionals
 
 This is not a prompt dump. It is a structured SEO operating system made of:
 
-- 24 specialist SEO agents
+- 25 specialist SEO agents
 - Reusable SEO skills
 - Shared evidence standards
 - Cross-agent workflows
@@ -105,6 +105,7 @@ World-Class-SEO-Agent-System/
 | SEO Research and Development Agent | Controlled SEO experiments, hypotheses, test design, results interpretation |
 | SEO Knowledge Graph Sync Agent | Entities, sameAs, schema consistency, brand SERP, knowledge graph readiness |
 | AI Principal SEO Scientist | Search change monitoring, rule updates, knowledge sync, system learning |
+| SEO E-commerce Agent | Product/category SEO, Product/Offer/ProductGroup schema, faceted navigation, Google Shopping/Merchant eligibility, marketplace intelligence |
 
 ## Best Use Cases
 
@@ -116,6 +117,7 @@ World-Class-SEO-Agent-System/
 - International and hreflang audits
 - SEO security and negative SEO monitoring
 - Programmatic SEO governance
+- E-commerce, product schema, and marketplace SEO
 - Competitive intelligence
 - SEO experiment design
 - SEO sprint planning and issue prioritization
@@ -233,7 +235,7 @@ The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workfl
 
 The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, async execution, memory, tool dispatch and LLM clients. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
 
-Adapter implementation details live in [`adapters/README.md`](adapters/README.md). Recommended tools to connect are listed in [`adapters/TOOLS.md`](adapters/TOOLS.md). A safe OAuth2 Google Search Console pattern is provided in [`adapters/gsc_live_example.py`](adapters/gsc_live_example.py).
+Adapter implementation details live in [`adapters/README.md`](adapters/README.md). Recommended tools to connect are listed in [`adapters/TOOLS.md`](adapters/TOOLS.md). A safe OAuth2 Google Search Console pattern is provided in [`adapters/gsc_live_example.py`](adapters/gsc_live_example.py). A live key-only PageSpeed Insights and CrUX adapter with SSRF-safe URL validation is provided in [`adapters/google_pagespeed_live.py`](adapters/google_pagespeed_live.py), and a persistent cross-session drift store in [`adapters/evidence_store.py`](adapters/evidence_store.py).
 
 Dry-run routing:
 

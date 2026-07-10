@@ -35,6 +35,7 @@ class RequestRouter:
         (("cro", "conversion", "cta", "landing page", "a/b test"), "SEO CRO Agent", "workflows/request-routing.md"),
         (("content", "brief", "copy", "metadata", "refresh", "article"), "SEO Copywriter/Content Agent", "workflows/content-production-workflow.md"),
         (("local", "gbp", "nap", "citation", "reviews"), "Local SEO Agent", "workflows/request-routing.md"),
+        (("ecommerce", "e-commerce", "product page", "product schema", "shopping", "merchant", "marketplace", "faceted navigation"), "SEO E-commerce Agent", "workflows/request-routing.md"),
         (("international", "hreflang", "multilingual", "locale"), "International & Multilingual SEO Agent", "workflows/request-routing.md"),
         (("image", "video", "youtube", "transcript", "visual search"), "Visual & Video Search Agent", "workflows/request-routing.md"),
         (("voice", "spoken", "conversational", "faq", "q&a"), "Voice Search & Conversational Agent", "workflows/request-routing.md"),
@@ -49,6 +50,7 @@ class RequestRouter:
         (("algorithm", "knowledge sync", "rule update", "official source"), "AI Principal SEO Scientist", "workflows/continuous-learning-workflow.md"),
         (("strategy", "roadmap", "plan", "prioritize"), "Senior SEO Strategist Agent", "workflows/request-routing.md"),
         (("scrum", "sprint", "debate", "decision"), "SEO Scrummaster Agent", "workflows/request-routing.md"),
+        (("single page audit", "single-page audit", "audit this page", "page audit", "single url audit"), "SEO Full Audit/Analyst Agent", "workflows/single-page-audit-workflow.md"),
         (("audit", "analyze", "health", "score"), "SEO Full Audit/Analyst Agent", "workflows/full-audit-workflow.md"),
     ]
 
@@ -71,6 +73,7 @@ class RequestRouter:
             "SEO Accessibility Agent": ["Senior SEO Engineer Agent", "SEO CRO Agent"],
             "SEO CRO Agent": ["SEO Copywriter/Content Agent", "Senior SEO Strategist Agent"],
             "Local SEO Agent": ["SEO Copywriter/Content Agent", "SEO Knowledge Graph Sync Agent"],
+            "SEO E-commerce Agent": ["SEO Technical Agent", "SEO Copywriter/Content Agent", "SEO Compliance & Legal Agent"],
             "International & Multilingual SEO Agent": ["SEO Technical Agent", "SEO Copywriter/Content Agent"],
             "Visual & Video Search Agent": ["SEO Technical Agent", "SEO Copywriter/Content Agent"],
             "Voice Search & Conversational Agent": ["SEO Copywriter/Content Agent", "GEO / AIO Optimization Agent"],

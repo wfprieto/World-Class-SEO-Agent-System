@@ -17,6 +17,7 @@ from adapters.pagespeed import PageSpeedPayloadAdapter
 from adapters.rank_tracking import RankTrackingCSVAdapter
 from adapters.redirect_chain import RedirectChainAdapter
 from adapters.robots_txt import RobotsTxtAdapter
+from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
 from adapters.schema_validation import SchemaValidationAdapter
 from adapters.sitemap_validator import SitemapValidatorAdapter
 
@@ -46,4 +47,6 @@ def default_adapters() -> dict[str, object]:
         "robots_txt": RobotsTxtAdapter(),
         "schema_validation": SchemaValidationAdapter(),
         "sitemap_validator": SitemapValidatorAdapter(),
+        "google_pagespeed_live": GooglePageSpeedLiveAdapter(),
+        "pagespeed_live": GooglePageSpeedLiveAdapter(),
     }

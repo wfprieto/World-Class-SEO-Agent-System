@@ -62,6 +62,16 @@ Research or new SEO tactic:
 - Lead: SEO Research and Development Agent
 - Support: AI Principal SEO Scientist, SEO Scrummaster Agent
 
+E-commerce SEO:
+
+- Lead: SEO E-commerce Agent
+- Support: SEO Technical Agent, SEO Copywriter/Content Agent, SEO Compliance & Legal Agent
+
+Single-page audit:
+
+- Lead: SEO Full Audit/Analyst Agent using the single-page-audit skill and workflows/single-page-audit-workflow.md
+- Support: SEO Technical Agent, GEO / AIO Optimization Agent
+
 ## Escalation Rules
 
 Escalate to SEO Scrummaster Agent when:

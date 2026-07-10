@@ -914,3 +914,164 @@ Time estimate: 1-4 hours per market group.
 Decision points: region-specific pages need distinct user value, not only swapped city or country names.
 
 Failure handling: if market data is sparse, use GSC country filters, sales input and regional SERP samples.
+
+## product-page-seo-audit
+
+Time estimate: 1-3 hours per template.
+
+1. Confirm page type; redirect non-product URLs. Prefer rendered HTML (see rendered-visual-audit) because many stores hydrate client-side.
+2. Score title, metadata, headings, product content uniqueness (not manufacturer copy-paste), specs table, and on-page reviews.
+3. Score images: descriptive alt/filenames, modern format, hero >= 800px for Shopping, AI-image labeling (knowledge/ai-image-labeling.md).
+4. Delegate schema to product-schema-validate-generate and hero-image LCP to core-web-vitals-triage.
+5. Weighted score /100: schema 25, title/meta 15, images 20, content 20, internal links 10, technical 10.
+
+Decision points: escalate pricing/claims to SEO Compliance & Legal Agent; escalate faceted crawl to SEO Technical Agent. Failure handling: if only source HTML is available, flag rendered/visual checks as skipped.
+
+## product-schema-validate-generate
+
+Time estimate: 30-90 minutes.
+
+1. Load knowledge/schema-deprecation-registry.md and reject deprecated types before generating.
+2. Validate required Product/Offer fields (price numeric no symbol, ISO 4217 currency, full availability enum, brand, seller).
+3. Recommend ProductGroup with hasVariant/variesBy for variant families instead of duplicate Product blocks.
+4. Add aggregateRating/review only when genuine and visible. No self-serving review markup.
+5. Output corrected JSON-LD and a completeness score.
+
+Decision points: block generation when markup would describe hidden or fabricated content. Failure handling: return the registry replacement when a requested type is dead.
+
+## marketplace-intelligence
+
+Time estimate: 1-2 hours (requires a connected metered source).
+
+1. Detect a live marketplace source; if none, report unavailable and stop. Never fabricate prices, sellers, or share.
+2. Show a cost estimate and get approval before every metered call.
+3. Pull pricing distribution, seller landscape, and listing-quality benchmarks; compare Google Shopping vs Amazon where available.
+4. Log actual cost consumed.
+
+Decision points: fall back to on-page and schema analysis when no source is connected. Failure handling: on rate limit or budget stop, report and halt.
+
+## marketplace-keyword-gap
+
+Time estimate: 1-2 hours (requires connected sources).
+
+1. Pull organic ranked keywords for the domain.
+2. Pull Shopping presence for the top organic keywords.
+3. Classify each keyword: Organic Only, Shopping Only, Both, Neither, with a recommended action.
+
+Decision points: run whichever channel is connected and mark the other unavailable. Failure handling: no fabricated volumes or CPCs.
+
+## faceted-navigation-governance
+
+Time estimate: 2-4 hours.
+
+1. Classify each filter/sort/variant parameter: indexable-valuable, canonical-to-base, or block-from-crawl.
+2. Recommend self-referencing canonicals on primary categories; canonicalize sorted/filtered views to base.
+3. Recommend robots disallow or noindex for combinatorial facets; keep high-demand facet pages indexable with unique content.
+4. Hand crawl-budget monitoring to SEO Technical Agent.
+
+Decision points: never block valuable demand pages. Failure handling: request live faceted URLs or a crawl export when patterns are JS-only.
+
+## merchant-data-consistency-audit
+
+Time estimate: 1-2 hours (requires page and feed/account evidence).
+
+1. Match the exact product and variant across page, structured data, feed, checkout-accessible state, and any approved marketplace source.
+2. Reconcile price, availability, title, GTIN/MPN/SKU, image, and shipping/return fields; preserve every conflict rather than choosing the convenient value.
+3. Report a consistency matrix and flag Merchant Center disapproval risks. Mandatory when both page and merchant/feed evidence exist.
+
+Decision points: hand feed-pipeline fixes to the data/engineering owner. Failure handling: run with partial evidence only to establish missing reconciliation fields, and label coverage.
+
+## agentic-commerce-readiness-check
+
+Time estimate: 30-60 minutes.
+
+1. Confirm foundational readiness: clean Product/Offer schema, valid Merchant feed, accurate business profile.
+2. Note whether an agent-commerce capability profile exists; report presence as opportunity, absence as neutral.
+3. Verify the current standard and its canonical URL against a Google primary source before recommending implementation.
+
+Decision points: separate confirmed foundations (FACT) from speculative readiness (HYPOTHESIS). Failure handling: recommend only the foundational work that pays off regardless.
+
+## programmatic-seo-governance
+
+Time estimate: 4-12 hours depending on page count.
+
+1. Define the page-set thesis and audit the data foundation (provenance, freshness, null/duplicate rates).
+2. Build the intent/entity map; flag doorway-like or duplicate-intent clusters as hard stops.
+3. Test a stratified sample per template family (at least 30 rendered pages when the population permits).
+4. Measure similarity with multiple diagnostics; apply gates: warn at 30 near-duplicate pages, hard stop at 50; warn below 60% unique, hard stop below 40%.
+5. Govern URLs, canonicals, robots, sitemaps; issue a launch decision (APPROVED_CANARY, APPROVED_STAGED, HOLD_FOR_REWORK, BLOCKED) with progressive rollout.
+
+Decision points: no agent overrides a hard stop; escalate exceptions per the skill. Failure handling: on missing data or rendered samples, return PARTIAL/BLOCKED, never inferred approval.
+
+## geo-grid-rank-scan
+
+Time estimate: 30-90 minutes (requires a connected metered maps-SERP source).
+
+1. Confirm a Tier 1 source is connected; if not, report unavailable and stop.
+2. Geocode the business center; generate grid points with the Haversine offset (default 7x7, 5 km).
+3. Show a cost estimate and get approval before firing one query per grid point.
+4. Compute Share of Local Voice, average rank, and weakest quadrant; render an ASCII heatmap.
+
+Decision points: never estimate ranks without a source. Failure handling: offer competitor-radius-map at the free tier when rank data is unavailable.
+
+## gbp-profile-audit
+
+Time estimate: 45-90 minutes.
+
+1. Prefer live profile data (Tier 1); score the ~25 ranking-relevant fields (present-and-optimized 2, present 1, missing 0), apply industry weights, normalize to 100.
+2. At the free tier, score detectable on-site signals and mark the rest unknown.
+3. Never recommend keyword-stuffing the business name or fake categories.
+
+Decision points: label all unknowns. Failure handling: provide the static 25-field checklist for manual completion.
+
+## competitor-radius-map
+
+Time estimate: 30-60 minutes.
+
+1. Geocode the center. At the free tier, query an open POI source for same-category businesses in radius.
+2. At Tier 1, use the maps-SERP source for keyword+location and extract competitors with rating, reviews, categories, density.
+3. Present a competitor landscape table; distinguish presence (free) from rank (metered).
+
+Decision points: no invented ratings. Failure handling: widen radius or broaden category and say what changed.
+
+## cross-platform-nap-verify
+
+Time estimate: 30-60 minutes.
+
+1. Retrieve NAP from each available platform (Google, Bing, Apple, OSM).
+2. Compare each field: exact, partial, missing, or conflicting.
+3. Severity: name mismatch Critical, address High, phone Medium; recommend claiming unclaimed profiles.
+
+Decision points: report conflicts, do not silently pick one. Failure handling: hand platforms without a public API to manual verification.
+
+## competitor-comparison-page-build
+
+Time estimate: 3-6 hours.
+
+1. Choose page type (vs, alternatives, roundup, comparison table) matched to query intent.
+2. Build a verifiable feature matrix and dated pricing with sources; use "Not publicly available" rather than guessing.
+3. Write balanced body copy (min ~1,500 words) with an honest verdict and disclosed own-product affiliation.
+4. Generate Product/SoftwareApplication/ItemList schema; check the deprecation registry; add aggregateRating only when genuine ratings are visible.
+
+Decision points: route legal-sensitive comparative claims to SEO Compliance & Legal Agent. Failure handling: if data is unverifiable, narrow to substantiated claims; set a quarterly review cadence.
+
+## rendered-visual-audit
+
+Time estimate: 30-90 minutes.
+
+1. Detect a render capability (browser MCP, hosted screenshot MCP, or local Playwright). If none, degrade to raw-HTML and flag rendered checks skipped.
+2. Render desktop and mobile viewports; capture full-page and above-the-fold screenshots.
+3. Check above-the-fold value proposition and CTA visibility, mobile rendering, visual CLS risk, and rendered-vs-source delta (SPA risk).
+4. Attach screenshots as evidence.
+
+Decision points: no "visible above the fold" claim without a screenshot. Failure handling: raw-HTML analysis with an explicit skipped-checks banner.
+
+## single-page-audit
+
+Time estimate: 1-2 hours.
+
+1. Fetch and classify the page; select the relevant skills by type.
+2. Run baseline skills (technical, schema, content, CWV, rendered-visual, geo) plus type-specific skills, respecting cost gates.
+3. Synthesize one consolidated page report with a single prioritized action list and no duplicate findings.
+
+Decision points: recommend a full audit when the page implicates site-wide issues. Failure handling: run the subset that can execute and list skipped checks. See workflows/single-page-audit-workflow.md.

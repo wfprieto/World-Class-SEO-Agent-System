@@ -24,6 +24,10 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `internal-link-map`
 - `seo-ci-checks`
 - `technical-implementation`
+- `programmatic-seo-governance`
+- `rendered-visual-audit`
+- `single-page-audit`
+- `faceted-navigation-governance`
 
 ## Content and IA Skills
 
@@ -37,6 +41,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `metadata-generation`
 - `conversion-intent-map`
 - `landing-page-cro-audit`
+- `competitor-comparison-page-build`
 
 ## Local, International, and Media Skills
 
@@ -51,6 +56,19 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `image-seo-audit`
 - `video-seo-audit`
 - `accessibility-audit`
+- `geo-grid-rank-scan`
+- `gbp-profile-audit`
+- `competitor-radius-map`
+- `cross-platform-nap-verify`
+
+## E-commerce Skills
+
+- `product-page-seo-audit`
+- `product-schema-validate-generate`
+- `marketplace-intelligence`
+- `marketplace-keyword-gap`
+- `merchant-data-consistency-audit`
+- `agentic-commerce-readiness-check`
 
 ## GEO, Entity, and Conversational Skills
 
@@ -98,3 +116,8 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `public-facing-writing-skills.md`: required writing quality gate for anything a website or app visitor can read.
 - `skill-execution-playbooks.md`: procedural playbooks that add step-by-step execution depth to grouped skills.
 - `deep-skill-procedures.md`: tool-aware procedures, decision points, failure handling, and time estimates for the original grouped skills.
+- `ecommerce-seo-skills.md`: e-commerce, product schema, marketplace, and faceted-navigation skills.
+- `programmatic-seo-governance.md`: scaled-page governance skill.
+- `geo-grid-local-rank-skills.md`: geo-grid rank, GBP audit, competitor radius, NAP verification.
+- `competitor-comparison-pages.md`: comparison and alternatives page build skill.
+- `rendered-visual-audit-and-page-entry.md`: rendered visual audit and single-page audit entry.

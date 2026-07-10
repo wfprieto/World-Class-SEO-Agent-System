@@ -28,3 +28,4 @@ Use this index to route work to the correct specialist agents.
 | SEO Research and Development Agent | Experiments, hypotheses, test design, learning agenda |
 | SEO Knowledge Graph Sync Agent | Entities, schema consistency, sameAs, brand SERP, knowledge graph readiness |
 | AI Principal SEO Scientist | External updates, knowledge sync, agent rule updates, system learning |
+| SEO E-commerce Agent | E-commerce and product/category SEO, Product/Offer/ProductGroup schema, faceted navigation governance, Google Shopping/Merchant eligibility, marketplace intelligence |

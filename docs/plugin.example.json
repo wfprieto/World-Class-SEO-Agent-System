@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "world-class-seo-agent-system",
+  "displayName": "World-Class SEO Agent System",
+  "version": "1.0.0",
+  "description": "Governance-first SEO auditing and strategy workflows with specialist agents, evidence controls, and optional live-data integrations.",
+  "keywords": [
+    "seo",
+    "technical-seo",
+    "local-seo",
+    "ecommerce-seo",
+    "generative-search",
+    "auditing"
+  ],
+  "defaultEnabled": false
+}

@@ -38,6 +38,7 @@ AGENT_FILE_NAMES = {
     "SEO Research and Development Agent": "seo-research-and-development-agent.md",
     "SEO Knowledge Graph Sync Agent": "seo-knowledge-graph-sync-agent.md",
     "AI Principal SEO Scientist": "ai-principal-seo-scientist.md",
+    "SEO E-commerce Agent": "seo-ecommerce-agent.md",
 }
 
 

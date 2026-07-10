@@ -1,0 +1,439 @@
+{
+  "schema_version": "2.1.0",
+  "purpose": "Machine-readable Google ranking-update and policy/search-feature timeline for drift analysis. It supports temporal correlation only and must not be used to claim causation.",
+  "canonical_path": "knowledge/google-algorithm-updates.json",
+  "primary_consumers": [
+    "seo-drift-monitor",
+    "analytics workflows",
+    "Senior SEO Strategist Agent"
+  ],
+  "last_reconciled": "2026-07-10",
+  "next_review": "2026-08-10 or immediately after an official Google ranking or policy update",
+  "source_precedence": [
+    "incident-specific Google Search Status page",
+    "Google Search Status ranking history",
+    "current Google Search Central policy/documentation",
+    "Google Search Central blog announcement",
+    "third-party source only as quarantined context"
+  ],
+  "usage_rules": [
+    "Use rollout windows, not announcement headlines alone, when aligning traffic changes.",
+    "A temporal overlap is correlation, not proof that an update caused a change.",
+    "Separate ranking updates, service incidents, manual actions, documentation changes, and policy enforcement.",
+    "Do not encode third-party volatility labels, traffic-loss percentages, or unnamed studies as verified events.",
+    "Reconcile against the official status JSON/history before every client-facing update analysis.",
+    "If the official ranking history or incident record changes, reconcile the canonical file immediately rather than waiting for the routine review date.",
+    "Treat each event ID as unique. Do not duplicate the same rollout across ranking_updates, policy_and_feature_changes, or service_incidents.",
+    "Store no client URLs, traffic data, credentials, personal data, or confidential incident analysis in this public reference file.",
+    "Validate unique IDs, ISO dates, start/end ordering, approved source domains, and chronological ordering before release.",
+    "Consumers must preserve the event source and evidence state and must not silently promote quarantined claims."
+  ],
+  "ranking_updates": [
+    {
+      "id": "2023-08-core",
+      "start_date": "2023-08-22",
+      "end_date": "2023-09-07",
+      "name": "August 2023 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2023-09-helpful-content",
+      "start_date": "2023-09-14",
+      "end_date": "2023-09-28",
+      "name": "September 2023 helpful content update",
+      "kind": "helpful_content",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official helpful content update before the system was incorporated into broader core systems in 2024."
+    },
+    {
+      "id": "2023-10-spam",
+      "start_date": "2023-10-04",
+      "end_date": "2023-10-20",
+      "name": "October 2023 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2023-10-core",
+      "start_date": "2023-10-05",
+      "end_date": "2023-10-19",
+      "name": "October 2023 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2023-11-core",
+      "start_date": "2023-11-02",
+      "end_date": "2023-11-28",
+      "name": "November 2023 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2023-11-reviews",
+      "start_date": "2023-11-08",
+      "end_date": "2023-12-07",
+      "name": "November 2023 reviews update",
+      "kind": "reviews",
+      "scope": "Review content ranking system",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official reviews update."
+    },
+    {
+      "id": "2024-03-core",
+      "start_date": "2024-03-05",
+      "end_date": "2024-04-19",
+      "name": "March 2024 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Complex broad core update; Google also announced new spam policies on the start date."
+    },
+    {
+      "id": "2024-03-spam",
+      "start_date": "2024-03-05",
+      "end_date": "2024-03-20",
+      "name": "March 2024 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2024-06-spam",
+      "start_date": "2024-06-20",
+      "end_date": "2024-06-27",
+      "name": "June 2024 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2024-08-core",
+      "start_date": "2024-08-15",
+      "end_date": "2024-09-03",
+      "name": "August 2024 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update. A separate ranking incident also began on 2024-08-15; do not merge the incident with the update when analyzing traffic."
+    },
+    {
+      "id": "2024-11-core",
+      "start_date": "2024-11-11",
+      "end_date": "2024-12-05",
+      "name": "November 2024 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2024-12-core",
+      "start_date": "2024-12-12",
+      "end_date": "2024-12-18",
+      "name": "December 2024 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2024-12-spam",
+      "start_date": "2024-12-19",
+      "end_date": "2024-12-26",
+      "name": "December 2024 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2025-03-core",
+      "start_date": "2025-03-13",
+      "end_date": "2025-03-27",
+      "name": "March 2025 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/incidents/zpmwuSwifjDjfrVdaZUx",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2025-06-core",
+      "start_date": "2025-06-30",
+      "end_date": "2025-07-17",
+      "name": "June 2025 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/incidents/riq1AuqETW46NfBCe5NT",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2025-08-spam",
+      "start_date": "2025-08-26",
+      "end_date": "2025-09-22",
+      "name": "August 2025 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/incidents/a7Aainy6E9rZsmfq82xt",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2025-12-core",
+      "start_date": "2025-12-11",
+      "end_date": "2025-12-29",
+      "name": "December 2025 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/incidents/DsirqJ1gpPRgVQeccPRv",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update. Do not attach third-party traffic-loss percentages or E-E-A-T claims without separate evidence."
+    },
+    {
+      "id": "2026-02-discover",
+      "start_date": "2026-02-05",
+      "end_date": "2026-02-27",
+      "name": "February 2026 Discover update",
+      "kind": "discover",
+      "scope": "Google Discover",
+      "source": "https://status.search.google.com/incidents/mYbNTqV1ytDc2fA8hUz4",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official Discover update; do not treat it as a general web-search core update."
+    },
+    {
+      "id": "2026-03-spam",
+      "start_date": "2026-03-24",
+      "end_date": "2026-03-25",
+      "name": "March 2026 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/incidents/VbnSXAH4SmEcxPtx4YSD",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    },
+    {
+      "id": "2026-03-core",
+      "start_date": "2026-03-27",
+      "end_date": "2026-04-08",
+      "name": "March 2026 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/incidents/7eTbAa2jWdToLkraZj5y",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2026-05-core",
+      "start_date": "2026-05-21",
+      "end_date": "2026-06-02",
+      "name": "May 2026 core update",
+      "kind": "core",
+      "scope": "Google Search ranking",
+      "source": "https://status.search.google.com/incidents/wdAXJk6LRRihEjpzEeWE",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official broad core update."
+    },
+    {
+      "id": "2026-06-spam",
+      "start_date": "2026-06-24",
+      "end_date": "2026-06-26",
+      "name": "June 2026 spam update",
+      "kind": "spam",
+      "scope": "Google Search spam systems",
+      "source": "https://status.search.google.com/incidents/YUX1peHev5a4fkxLDiUQ",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Official spam update."
+    }
+  ],
+  "policy_and_feature_changes": [
+    {
+      "id": "2023-08-faq-restriction",
+      "date": "2023-08-08",
+      "name": "FAQ rich results restricted",
+      "kind": "search_feature",
+      "source": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "FAQ rich results were restricted primarily to well-known authoritative government and health sites."
+    },
+    {
+      "id": "2023-09-howto-retired",
+      "date": "2023-09-14",
+      "name": "HowTo rich result removed",
+      "kind": "search_feature",
+      "source": "https://developers.google.com/search/blog/2023/09/structured-data-changes",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "HowTo rich results were removed on desktop and mobile."
+    },
+    {
+      "id": "2024-03-spam-policies",
+      "date": "2024-03-05",
+      "name": "Expired domain, scaled content, and site reputation abuse policies announced",
+      "kind": "policy",
+      "source": "https://developers.google.com/search/blog/2024/03/core-update-spam-policies",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Policy event, not a standalone ranking-update window. Correlate enforcement and manual actions separately."
+    },
+    {
+      "id": "2024-03-inp",
+      "date": "2024-03-12",
+      "name": "INP became a Core Web Vital",
+      "kind": "cwv",
+      "source": "https://web.dev/articles/inp",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "INP replaced FID as the stable responsiveness Core Web Vital."
+    },
+    {
+      "id": "2024-07-mobile-first-complete",
+      "date": "2024-07-05",
+      "name": "Mobile-first indexing migration completed",
+      "kind": "indexing_policy",
+      "source": "https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-sites-mobile-first-indexing",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google completed the migration to mobile-first indexing."
+    },
+    {
+      "id": "2024-11-site-reputation-clarification",
+      "date": "2024-11-19",
+      "name": "Site reputation abuse policy clarified",
+      "kind": "policy",
+      "source": "https://developers.google.com/search/blog/2024/11/site-reputation-abuse",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google clarified that first-party involvement or oversight does not change the third-party nature of content used to exploit host ranking signals; editorial wording was further clarified in January 2025."
+    },
+    {
+      "id": "2025-06-search-feature-phaseout",
+      "date": "2025-06-12",
+      "name": "Lesser-used structured-data displays phased out",
+      "kind": "search_feature",
+      "source": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Course Info, ClaimReview, Estimated Salary, Learning Video, Special Announcement, and Vehicle Listing displays were phased out; Book Actions later required context-specific handling."
+    },
+    {
+      "id": "2025-09-structured-reporting-removal",
+      "date": "2025-09-09",
+      "name": "Reporting and test support removed for phased-out structured-data displays",
+      "kind": "tooling",
+      "source": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Search Console rich-result reporting and Rich Results Test support were removed for the named phased-out types."
+    },
+    {
+      "id": "2025-09-qrg",
+      "date": "2025-09-11",
+      "name": "Search Quality Rater Guidelines edition",
+      "kind": "qrg",
+      "source": "https://guidelines.raterhub.com/searchqualityevaluatorguidelines.pdf",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Guideline edition date. Rater scores do not directly determine an individual page ranking."
+    },
+    {
+      "id": "2026-01-practice-problem",
+      "date": "2026-01-06",
+      "name": "Practice Problem structured-data documentation removed",
+      "kind": "search_feature",
+      "source": "https://developers.google.com/search/updates",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google stated that the Practice Problem feature is no longer shown in Search."
+    },
+    {
+      "id": "2026-04-back-hijacking",
+      "date": "2026-04-13",
+      "name": "Back button hijacking added to spam policies",
+      "kind": "policy",
+      "source": "https://developers.google.com/search/blog/2026/04/back-button-hijacking",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google announced the explicit policy on 2026-04-13 with enforcement beginning 2026-06-15; pages may face manual actions or automated demotions.",
+      "enforcement_date": "2026-06-15"
+    },
+    {
+      "id": "2026-05-ai-optimization-guide",
+      "date": "2026-05-15",
+      "name": "Google generative-AI optimization guide published",
+      "kind": "documentation",
+      "source": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google states that generative Search remains SEO; no special AI markup, ideal length, or content chunking is required."
+    },
+    {
+      "id": "2026-06-faq-docs-removed",
+      "date": "2026-06-15",
+      "name": "FAQ rich-result documentation removed",
+      "kind": "search_feature",
+      "source": "https://developers.google.com/search/updates",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Google stated the FAQ rich result is no longer shown in Search."
+    },
+    {
+      "id": "2026-06-llms-clarification",
+      "date": "2026-06-15",
+      "name": "Google clarified llms.txt has no Search visibility or ranking effect",
+      "kind": "documentation",
+      "source": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Maintaining llms.txt for another service is optional; it is not a Google Search requirement or lever."
+    }
+  ],
+  "quarantined_claims": [
+    {
+      "claim": "A named update gave E-E-A-T a new numeric weight or targeted a specific business model without a Google statement.",
+      "status": "UNVERIFIED",
+      "action": "Do not encode or use in causal reporting."
+    },
+    {
+      "claim": "A fixed percentage traffic loss is typical for a core or spam update.",
+      "status": "UNVERIFIED",
+      "action": "Use the client data and documented rollout window; do not generalize a third-party sample."
+    },
+    {
+      "claim": "A third-party SERP volatility spike is itself an official Google update.",
+      "status": "UNVERIFIED",
+      "action": "Keep as analyst context outside the canonical event list unless Google confirms it."
+    }
+  ],
+  "service_incidents": [
+    {
+      "id": "2024-08-ranking-incident",
+      "start_date": "2024-08-15",
+      "end_date": "2024-08-20",
+      "name": "Ranking issue concurrent with August 2024 core update",
+      "scope": "Google Search ranking service incident",
+      "source": "https://status.search.google.com/products/rGHU1u87FJnkP6W2GwMi/history",
+      "evidence": "VERIFIED_CURRENT",
+      "notes": "Analyze separately from the August 2024 core update; overlapping dates do not make them the same event."
+    }
+  ],
+  "failure_policy": {
+    "official_history_unavailable": "Return the last verified snapshot as stale context only; do not claim current completeness.",
+    "invalid_or_partial_date": "Quarantine the entry; do not use it for rollout overlap calculations.",
+    "third_party_only_event": "Keep outside ranking_updates and policy_and_feature_changes until a primary source confirms it.",
+    "conflicting_google_sources": "Preserve both sources, mark the event blocked for causal reporting, and escalate for reconciliation."
+  }
+}

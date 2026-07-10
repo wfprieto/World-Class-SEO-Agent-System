@@ -68,3 +68,8 @@ python main.py "Validate robots rules" --execute --tool robots_txt="{\"path\":\"
 4. Add the adapter to `adapters/registry.py`.
 5. Add at least one test in `tests/test_adapters.py`.
 6. Document the tool in `TOOLS.md` when it is a recommended connection.
+
+## Live and persistence adapters
+
+- `google_pagespeed_live.py`: live key-only adapter for PageSpeed Insights plus CrUX field data. It returns the same normalized `AdapterResult` contract as the payload adapters and validates every target URL with an SSRF-safe public-address check before fetching. Set `GOOGLE_PAGESPEED_API_KEY`. Registered as `google_pagespeed_live` and `pagespeed_live`.
+- `evidence_store.py`: a persistent SQLite store for cross-session baselines and drift comparison. It is not a fetch-adapter and is intentionally kept out of `default_adapters()`; the `seo-drift-monitor` skill and adapters write normalized snapshots to it. See `docs/evidence-cache-contract.md`.

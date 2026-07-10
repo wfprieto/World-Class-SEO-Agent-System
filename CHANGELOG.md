@@ -8,6 +8,24 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.5.0] - 2026-07-10
+
+### Added
+
+- SEO E-commerce Agent plus e-commerce skills (product-page audit, Product/Offer/ProductGroup schema validation, marketplace intelligence, marketplace keyword gap, faceted-navigation governance, agent-commerce readiness).
+- Programmatic SEO governance skill with doorway and index-bloat gates.
+- Geo-grid local rank, GBP profile audit, competitor radius map, and cross-platform NAP verification skills.
+- Competitor comparison and alternatives page build skill.
+- Rendered visual audit skill and single-page audit entry point with `workflows/single-page-audit-workflow.md`.
+- Knowledge registry: schema-deprecation registry, machine-readable Google algorithm-update history, GEO readiness rubric, E-E-A-T rubric, Core Web Vitals gates, free backlink sources, AI-image labeling, and parasite/expired-domain checks.
+- Live key-only PageSpeed/CrUX adapter with SSRF-safe validation and a persistent SQLite evidence/drift store.
+- Deep procedures for every new skill, `templates/ecommerce-seo-report.md`, and `docs/` architecture references (MCP mapping, evidence-cache contract, plugin packaging).
+
+### Changed
+
+- Registered the SEO E-commerce Agent in the executor and router, and the PageSpeed live adapter in the registry.
+- Updated AGENT_INDEX, SKILL_INDEX, README, SYSTEM_MAP, and request routing to reference the new capabilities.
+
 ## [1.4.2] - 2026-07-03
 
 ### Added
