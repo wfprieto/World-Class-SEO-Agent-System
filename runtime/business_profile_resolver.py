@@ -90,15 +90,31 @@ def _explicit_profiles(value: str) -> tuple[str, ...]:
     normalized = value.strip().lower()
     if normalized in {"", "unknown", "unconfirmed", "auto"}:
         return ()
+    direct = _normalize_profile(normalized)
+    if direct in PROFILES:
+        return (direct,)
+
     for separator in ("+", ",", "/", " and "):
         normalized = normalized.replace(separator, "|")
-    profiles = []
-    for item in normalized.split("|"):
+    profiles: list[str] = []
+    if "|" in normalized:
+        parts = normalized.split("|")
+    else:
+        # Accept human-declared hybrids such as "ecommerce local-service" without
+        # interpreting arbitrary business prose. Only canonical labels are scanned.
+        canonical_labels = (
+            "ecommerce", "e-commerce", "local-service", "saas", "publisher",
+            "agency-b2b", "agency",
+        )
+        parts = [label for label in canonical_labels if label in normalized]
+    for item in parts:
         profile = _normalize_profile(item)
         if profile not in PROFILES:
             raise ValueError(f"unsupported explicit business profile: {item.strip()}")
         if profile not in profiles:
             profiles.append(profile)
+    if not profiles:
+        raise ValueError(f"unsupported explicit business profile: {value.strip()}")
     return tuple(profiles)
 
 
@@ -109,7 +125,9 @@ def resolve_business_profile(
 ) -> BusinessProfileResolution:
     """Resolve workflow profiles with explicit override, evidence, score, and confidence."""
     explicit = _explicit_profiles(explicit_business_type)
-    observed = tuple(sorted({str(item).strip().lower() for item in signals if str(item).strip()}))
+    observed = tuple(
+        sorted({str(item).strip().lower() for item in signals if str(item).strip()})
+    )
     if explicit:
         return BusinessProfileResolution(
             profiles=explicit,
