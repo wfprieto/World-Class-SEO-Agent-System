@@ -27,6 +27,7 @@ ALIASES = {
     "retail": "ecommerce",
     "local": "local-service",
     "local_service": "local-service",
+    "local-business": "local-service",
     "agency": "agency-b2b",
     "b2b": "agency-b2b",
 }
