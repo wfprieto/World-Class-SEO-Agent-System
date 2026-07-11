@@ -159,7 +159,7 @@ class StructuredOutputService:
         instruction = LLMMessage(
             role="system",
             content=(
-                f"You are {agent_name}. Return only one JSON object whose agent field is exactly "
+                f"You are {agent_name!r}. Return only one JSON object whose agent field is exactly "
                 f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
                 "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
                 "provider results. Every factual numeric or URL claim must also appear in "
