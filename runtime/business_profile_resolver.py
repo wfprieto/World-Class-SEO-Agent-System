@@ -8,6 +8,7 @@ requirement rather than silently selecting a specialist profile.
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from typing import Iterable
 
@@ -63,6 +64,16 @@ CONTRADICTORY_SIGNALS: dict[str, set[str]] = {
     "publisher": {"no_editorial_output"},
     "agency-b2b": {"no_service_offering"},
 }
+_EXPLICIT_LABELS = (
+    "local-service",
+    "agency-b2b",
+    "e-commerce",
+    "ecommerce",
+    "publisher",
+    "agency",
+    "saas",
+    "generic",
+)
 
 
 @dataclass(frozen=True)
@@ -82,32 +93,36 @@ class BusinessProfileResolution:
 
 
 def _normalize_profile(value: str) -> str:
-    normalized = value.strip().lower().replace(" ", "-")
+    normalized = value.strip().lower().replace("_", "-").replace(" ", "-")
     return ALIASES.get(normalized, normalized)
 
 
 def _explicit_profiles(value: str) -> tuple[str, ...]:
-    normalized = value.strip().lower()
+    normalized = " ".join(value.strip().lower().split())
     if normalized in {"", "unknown", "unconfirmed", "auto"}:
         return ()
     direct = _normalize_profile(normalized)
     if direct in PROFILES:
         return (direct,)
 
-    for separator in ("+", ",", "/", " and "):
-        normalized = normalized.replace(separator, "|")
-    profiles: list[str] = []
-    if "|" in normalized:
-        parts = normalized.split("|")
-    else:
-        # Accept human-declared hybrids such as "ecommerce local-service" without
-        # interpreting arbitrary business prose. Only canonical labels are scanned.
-        canonical_labels = (
-            "ecommerce", "e-commerce", "local-service", "saas", "publisher",
-            "agency-b2b", "agency",
-        )
-        parts = [label for label in canonical_labels if label in normalized]
+    found: list[tuple[int, str]] = []
+    for label in _EXPLICIT_LABELS:
+        pattern = rf"(?<![a-z0-9_-]){re.escape(label)}(?![a-z0-9_-])"
+        match = re.search(pattern, normalized)
+        if match:
+            found.append((match.start(), _normalize_profile(label)))
+    if found:
+        profiles: list[str] = []
+        for _, profile in sorted(found):
+            if profile not in profiles:
+                profiles.append(profile)
+        return tuple(profiles)
+
+    parts = re.split(r"\s*(?:\+|,|/|\band\b)\s*", normalized)
+    profiles = []
     for item in parts:
+        if not item:
+            continue
         profile = _normalize_profile(item)
         if profile not in PROFILES:
             raise ValueError(f"unsupported explicit business profile: {item.strip()}")
