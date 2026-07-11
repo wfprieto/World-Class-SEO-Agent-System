@@ -61,6 +61,8 @@ class SEOOrchestrator:
             signals=profile_signals or [],
         )
         session.business_profile_resolution = profile.to_dict()
+        if business_type.strip().lower() in {"", "unknown", "unconfirmed", "auto"} and profile.profiles != ("generic",):
+            session.business_context.business_type = " ".join(profile.profiles)
         if profile_signals and profile.route == "UNCONFIRMED":
             session.evidence_inventory.append(
                 EvidenceItem(
