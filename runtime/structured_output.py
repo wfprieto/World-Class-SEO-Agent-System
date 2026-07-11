@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from runtime.evidence_binding import validate_evidence_binding
 from runtime.llm import LLMClient, LLMMessage, LLMResponse
 from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.schema_registry import SchemaRegistry
@@ -41,6 +42,10 @@ def _extract_json(content: str) -> dict[str, Any]:
     return parsed
 
 
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
 def _echo_output(
     agent_name: str,
     request: str,
@@ -57,8 +62,9 @@ def _echo_output(
         if isinstance(item, dict) and item.get("source")
     ]
     evidence_source = evidence_refs[0] if evidence_refs else "runtime_request"
+    slug = _slug(agent_name)
     return {
-        "output_id": f"synthetic-{re.sub(r'[^a-z0-9]+', '-', agent_name.lower()).strip('-')}",
+        "output_id": f"synthetic-{slug}",
         "agent": agent_name,
         "summary": (
             "Synthetic offline execution completed for workflow verification. "
@@ -75,11 +81,9 @@ def _echo_output(
         "confidence": "Low",
         "findings": [
             {
-                "id": f"synthetic-{re.sub(r'[^a-z0-9]+', '-', agent_name.lower()).strip('-')}-001",
+                "id": f"synthetic-{slug}-001",
                 "severity": "Low",
-                "finding": (
-                    f"{agent_name} executed in synthetic offline mode for request: {request[:160]}"
-                ),
+                "finding": f"{agent_name} executed in synthetic offline mode for request: {request[:160]}",
                 "affected_scope": domain or "Unspecified property",
                 "evidence_refs": [evidence_source],
             }
@@ -112,6 +116,20 @@ class StructuredOutputService:
         self.repo_root = repo_root
         self.schemas = SchemaRegistry(repo_root)
 
+    def _errors(
+        self,
+        output: dict[str, Any],
+        *,
+        expected_agent: str,
+    ) -> list[str]:
+        errors = self.schemas.errors("agent-output", output)
+        if output.get("agent") != expected_agent:
+            errors.append(
+                f"agent identity mismatch: expected {expected_agent!r}, got {output.get('agent')!r}"
+            )
+        errors.extend(validate_evidence_binding(output))
+        return errors
+
     async def complete_agent_output(
         self,
         client: LLMClient,
@@ -126,10 +144,8 @@ class StructuredOutputService:
         budget: RunBudget,
     ) -> StructuredOutputResult:
         if getattr(client, "provider", "") == "echo":
-            output = _echo_output(
-                agent_name, request, domain, skills, knowledge, prior_outputs
-            )
-            errors = self.schemas.errors("agent-output", output)
+            output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)
+            errors = self._errors(output, expected_agent=agent_name)
             return StructuredOutputResult(
                 status="ok" if not errors else "failed",
                 output=output if not errors else None,
@@ -143,10 +159,11 @@ class StructuredOutputService:
         instruction = LLMMessage(
             role="system",
             content=(
-                "Return only one JSON object that validates against this JSON Schema. "
-                "Do not wrap prose in a fake schema shell. Do not invent evidence, URLs, metrics, "
-                "completion claims, or provider results. Every factual numeric or URL claim must "
-                "also appear in material_claims with valid evidence_refs.\n\n"
+                f"You are {agent_name}. Return only one JSON object whose agent field is exactly "
+                f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
+                "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
+                "provider results. Every factual numeric or URL claim must also appear in "
+                "material_claims with valid evidence_refs.\n\n"
                 + json.dumps(schema, separators=(",", ":"))
             ),
         )
@@ -174,11 +191,12 @@ class StructuredOutputService:
                 errors = [str(exc)]
                 output = None
             else:
+                output.setdefault("output_id", f"{_slug(agent_name)}-output")
                 output.setdefault("material_claims", [])
                 output.setdefault("skills_used", skills)
                 output.setdefault("knowledge_used", knowledge)
                 output.setdefault("execution_state", "COMPLETE")
-                errors = self.schemas.errors("agent-output", output)
+                errors = self._errors(output, expected_agent=agent_name)
                 if not errors:
                     return StructuredOutputResult(
                         status="ok",
