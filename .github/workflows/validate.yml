@@ -6,9 +6,17 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   validate:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,17 +24,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install validation dependencies
         run: python -m pip install -r requirements-dev.txt
 
-      - name: Validate repository contracts
+      - name: Compile Python sources
+        run: python -m compileall -q .
+
+      - name: Validate repository, canonical skills, versions, and tracer
         shell: pwsh
         run: ./scripts/validate-repository.ps1
 
       - name: Validate example outputs against schemas
         run: python scripts/validate_schema_examples.py
 
-      - name: Run semantic test suite
+      - name: Run semantic and runtime test suite
         run: pytest -q
