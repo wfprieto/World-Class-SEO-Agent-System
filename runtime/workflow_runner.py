@@ -53,6 +53,30 @@ class WorkflowRunner:
                 f"Required tool {tool.tool} did not produce usable evidence: {tool.status}."
             )
 
+        # Open risks are routed to the Scrummaster as a real handoff before specialist work.
+        # It remains CREATED until a Scrummaster node actually consumes it.
+        if session.open_risks and route.lead_agent != "SEO Scrummaster Agent":
+            session.handoffs.append(
+                Handoff(
+                    handoff_id=f"{session.session_id}-risk-escalation-001",
+                    from_agent=route.lead_agent,
+                    to_agent="SEO Scrummaster Agent",
+                    reason=route.escalation,
+                    context_summary="; ".join(session.open_risks)[:1000],
+                    evidence_refs=[item.id for item in session.evidence_inventory],
+                    requested_action=(
+                        "Review the open risks, determine whether the workflow may proceed, "
+                        "and record a decision before implementation or publication."
+                    ),
+                    risk_level="High",
+                    acceptance_criteria=[
+                        "A schema-valid decision record addresses each open risk.",
+                        "No gated implementation proceeds on unresolved evidence.",
+                    ],
+                    due_trigger="Before implementation or publication.",
+                )
+            )
+
         outputs_by_node: dict[str, dict[str, Any]] = {}
         states: dict[str, str] = {}
         errors: dict[str, list[str]] = {}
@@ -100,8 +124,11 @@ class WorkflowRunner:
                 )
 
             output_id = str(output.get("output_id") or output.get("agent") or node.id)
-            for handoff in handoffs:
-                handoff.consume(output_id)
+            # Consume every pending handoff addressed to this agent, including the initial
+            # risk escalation and direct dependency handoffs.
+            for pending in session.handoffs:
+                if pending.status == "CREATED" and pending.to_agent == node.agent:
+                    pending.consume(output_id)
             outputs_by_node[node.id] = output
             session.agent_outputs.append(output)
             if result.status == "ok":
@@ -182,9 +209,12 @@ class WorkflowRunner:
             if not node.required and states.get(node.id) not in {"COMPLETE", "SYNTHETIC"}
         ]
         has_synthetic = any(state == "SYNTHETIC" for state in states.values())
+        unresolved_handoffs = [
+            handoff for handoff in session.handoffs if handoff.status != "CONSUMED"
+        ]
         if required_failures:
             workflow_status = "FAILED"
-        elif optional_failures or required_tool_failures or conflicts or has_synthetic:
+        elif optional_failures or required_tool_failures or conflicts or has_synthetic or unresolved_handoffs:
             workflow_status = "PARTIAL"
         else:
             workflow_status = "COMPLETE"
@@ -205,6 +235,13 @@ class WorkflowRunner:
 
         session_payload = session.to_dict()
         self.schemas.validate("session-state", session_payload)
+        llm_summary = {
+            "provider": getattr(self.executor.llm_client, "provider", "unknown"),
+            "model": getattr(self.executor.llm_client, "model", "unknown"),
+            "calls": budget.usage.llm_calls,
+            "correction_calls": budget.usage.correction_calls,
+            "synthetic": has_synthetic,
+        }
 
         return {
             "execution_mode": "multi-agent",
@@ -223,6 +260,7 @@ class WorkflowRunner:
             "handoffs_consumed": consumed,
             "decisions": decisions,
             "budget": budget.snapshot(),
+            "llm": llm_summary,
             "session": session_payload,
         }
 
