@@ -1,8 +1,8 @@
-"""Branded A4 report from the canonical agent-output shape.
+"""Render canonical SEO agent output as a branded PDF or truthful HTML fallback.
 
-The renderer preserves canonical finding, evidence, action, owner, acceptance, verification,
-and follow-up fields. Legacy title/detail fixtures remain readable for backward compatibility,
-but they do not define a second report contract.
+The renderer preserves finding text, scope, evidence references, actions, owners,
+acceptance criteria, verification, risks, impact, and follow-up. Legacy title/detail
+fixtures remain readable without becoming a second report contract.
 """
 
 from __future__ import annotations
@@ -26,15 +26,12 @@ _REQUIRED = ("agent", "summary", "findings")
 _MAX_HEADING = 600
 _MAX_BODY = 4000
 DEFAULT_OUT = "outputs/seo-report.pdf"
-
 DEPENDENCY_MISSING = "dependency_missing"
 RENDER_FAILED = "render_failed"
 
 
 @dataclass
 class ReportResult:
-    """Truthful record of what was actually produced."""
-
     format: str
     path: Path
     message: str
@@ -52,9 +49,9 @@ def load_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
-def _clamp(text: Any, maximum: int = _MAX_HEADING) -> str:
-    value = str(text)
-    return value if len(value) <= maximum else value[: maximum - 1] + "…"
+def _clamp(value: Any, maximum: int = _MAX_HEADING) -> str:
+    text = str(value)
+    return text if len(text) <= maximum else text[: maximum - 1] + "…"
 
 
 def _score_chart(scores: dict[str, float], brand: str) -> str:
@@ -81,8 +78,7 @@ def _score_chart(scores: dict[str, float], brand: str) -> str:
     buffer = io.BytesIO()
     figure.savefig(buffer, format="png", dpi=140, bbox_inches="tight", transparent=True)
     plt.close(figure)
-    buffer.seek(0)
-    return "data:image/png;base64," + base64.b64encode(buffer.read()).decode()
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 
 def _listing(title: str, items: list[Any]) -> str:
@@ -92,7 +88,7 @@ def _listing(title: str, items: list[Any]) -> str:
     return f"<h2>{html.escape(title)}</h2><ul>{rows}</ul>"
 
 
-def _verification_items(value: Any) -> list[str]:
+def _as_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value]
     if value in (None, ""):
@@ -101,7 +97,7 @@ def _verification_items(value: Any) -> list[str]:
 
 
 def _evidence_block(items: list[Any]) -> str:
-    rows = []
+    rows: list[str] = []
     for item in items:
         if not isinstance(item, dict):
             rows.append(f"<li>{html.escape(_clamp(item, _MAX_BODY))}</li>")
@@ -116,16 +112,19 @@ def _evidence_block(items: list[Any]) -> str:
             )
             if part
         )
-        rows.append(
-            f"<li><strong>{html.escape(_clamp(label))}</strong>"
-            f"{': ' + html.escape(_clamp(details, _MAX_BODY)) if details else ''}</li>"
-        )
+        suffix = f": {html.escape(_clamp(details, _MAX_BODY))}" if details else ""
+        rows.append(f"<li><strong>{html.escape(_clamp(label))}</strong>{suffix}</li>")
     return "<h2>Evidence</h2><ul>" + "".join(rows) + "</ul>" if rows else ""
 
 
 def _finding_block(finding: Any) -> str:
     if not isinstance(finding, dict):
-        severity, title, detail, scope, references, finding_id = "Medium", str(finding), "", "", [], ""
+        severity = "Medium"
+        title = str(finding)
+        detail = ""
+        scope = ""
+        references: list[Any] = []
+        finding_id = ""
     else:
         severity = str(finding.get("severity", "Medium"))
         title = str(finding.get("finding", finding.get("title", "Finding")))
@@ -134,36 +133,44 @@ def _finding_block(finding: Any) -> str:
         references = finding.get("evidence_refs", []) or []
         finding_id = str(finding.get("id", ""))
     metadata = " · ".join(
-        part for part in (
+        part
+        for part in (
             f"ID: {finding_id}" if finding_id else "",
             f"Scope: {scope}" if scope else "",
             f"Evidence: {', '.join(str(item) for item in references)}" if references else "",
-        ) if part
+        )
+        if part
+    )
+    detail_html = f"<p>{html.escape(_clamp(detail, _MAX_BODY))}</p>" if detail else ""
+    metadata_html = (
+        f'<div class="small">{html.escape(_clamp(metadata, _MAX_BODY))}</div>'
+        if metadata
+        else ""
     )
     return (
         '<div class="finding">'
         f'<span class="sev" style="background:{SEVERITY_COLOR.get(severity, "#5a6b7b")}">'
         f"{html.escape(_clamp(severity))}</span>"
         f"<h3>{html.escape(_clamp(title, _MAX_BODY))}</h3>"
-        f"{'<p>' + html.escape(_clamp(detail, _MAX_BODY)) + '</p>' if detail else ''}"
-        f"{'<div class=\"small\">' + html.escape(_clamp(metadata, _MAX_BODY)) + '</div>' if metadata else ''}"
-        "</div>"
+        f"{detail_html}{metadata_html}</div>"
     )
 
 
 def _action_items(actions: list[Any]) -> list[str]:
-    result = []
+    result: list[str] = []
     for action in actions:
         if not isinstance(action, dict):
             result.append(str(action))
             continue
         text = str(action.get("action", ""))
         qualifiers = " · ".join(
-            part for part in (
+            part
+            for part in (
                 str(action.get("priority", "")),
                 f"Owner: {action.get('owner')}" if action.get("owner") else "",
                 f"Success: {action.get('success_metric')}" if action.get("success_metric") else "",
-            ) if part
+            )
+            if part
         )
         result.append(text + (f" ({qualifiers})" if qualifiers else ""))
     return result
@@ -180,16 +187,20 @@ def build_html(data: dict, brand: str = "#0b5fff") -> str:
         raise ValueError("findings must be a list")
 
     chart = _score_chart(data.get("scores") or {}, brand)
-    body = "".join(_finding_block(item) for item in findings or []) or "<p>No findings recorded.</p>"
-    actions = _action_items(data.get("recommended_actions") or [])
+    finding_html = "".join(_finding_block(item) for item in findings or []) or "<p>No findings recorded.</p>"
+    action_html = _listing("Recommended actions", _action_items(data.get("recommended_actions") or []))
     meta = " · ".join(
-        filter(None, [
-            html.escape(_clamp(data.get("agent", ""))),
-            "Confidence: " + html.escape(_clamp(data.get("confidence", "Unknown"))),
-            "Owner: " + html.escape(_clamp(data.get("owner", "—"))),
-            "State: " + html.escape(_clamp(data.get("execution_state", "Not recorded"))),
-        ])
+        filter(
+            None,
+            [
+                html.escape(_clamp(data.get("agent", ""))),
+                "Confidence: " + html.escape(_clamp(data.get("confidence", "Unknown"))),
+                "Owner: " + html.escape(_clamp(data.get("owner", "—"))),
+                "State: " + html.escape(_clamp(data.get("execution_state", "Not recorded"))),
+            ],
+        )
     )
+    chart_html = f'<h2>Scores</h2><img src="{chart}"/>' if chart else ""
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>
 @page {{ size: A4; margin: 18mm 16mm; @bottom-center {{ content: "Confidential · " counter(page); font-size:8pt; color:#889; }} }}
 body {{ font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#1b2733; font-size:10.5pt; }}
@@ -203,12 +214,12 @@ h3 {{ font-size:11pt; margin:4px 0; word-break:break-word; }} img {{ max-width:1
 <div class="band"><h1>SEO Report</h1><div class="meta">{meta}</div></div>
 <h2>Summary</h2><p>{html.escape(_clamp(data.get('summary', ''), _MAX_BODY))}</p>
 {_evidence_block(data.get('evidence') or [])}
-{'<h2>Scores</h2><img src="' + chart + '"/>' if chart else ''}
-<h2>Findings</h2>{body}
-{_listing('Recommended actions', actions)}
+{chart_html}
+<h2>Findings</h2>{finding_html}
+{action_html}
 {_listing('Dependencies', data.get('dependencies') or [])}
 {_listing('Acceptance criteria', data.get('acceptance_criteria') or [])}
-{_listing('Verification', _verification_items(data.get('verification')))}
+{_listing('Verification', _as_list(data.get('verification')))}
 {_listing('Risks', data.get('risks') or [])}
 <h2>Impact and follow-up</h2><p>{html.escape(_clamp(data.get('impact', 'Not recorded'), _MAX_BODY))}</p>
 <p><strong>Follow-up:</strong> {html.escape(_clamp(data.get('follow_up', 'Not recorded'), _MAX_BODY))}</p>
@@ -221,7 +232,7 @@ def _weasyprint_renderer(markup: str, out: Path) -> None:
 
 
 def dependency_status() -> dict[str, str]:
-    status = {}
+    status: dict[str, str] = {}
     for module in ("weasyprint", "matplotlib"):
         try:
             __import__(module)
@@ -254,7 +265,6 @@ def write_report(
             renderer = _weasyprint_renderer
         except Exception:  # noqa: BLE001
             reason = DEPENDENCY_MISSING
-
     if renderer is not None:
         try:
             renderer(markup, out)
@@ -285,5 +295,5 @@ if __name__ == "__main__":
     parser.add_argument("agent_output")
     parser.add_argument("--out", default=DEFAULT_OUT)
     parser.add_argument("--brand", default="#0b5fff")
-    args = parser.parse_args()
-    print(write_report(load_json(args.agent_output), args.out, args.brand))
+    arguments = parser.parse_args()
+    print(write_report(load_json(arguments.agent_output), arguments.out, arguments.brand))
