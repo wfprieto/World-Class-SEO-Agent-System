@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, RefResolver
 
 
 class SchemaValidationError(ValueError):
@@ -23,21 +23,32 @@ class SchemaRegistry:
         self.repo_root = repo_root
         self.schema_root = repo_root / "schemas"
         self._schemas: dict[str, dict[str, Any]] = {}
+        self._paths: dict[str, Path] = {}
+
+    def _path(self, schema_name: str) -> Path:
+        normalized = schema_name.removesuffix(".schema.json").removesuffix(".json")
+        if normalized == "session-state":
+            return self.repo_root / "orchestration" / "session-state.schema.json"
+        return self.schema_root / f"{normalized}.schema.json"
 
     def load(self, schema_name: str) -> dict[str, Any]:
-        key = schema_name if schema_name.endswith(".json") else f"{schema_name}.schema.json"
+        key = schema_name.removesuffix(".schema.json").removesuffix(".json")
         if key not in self._schemas:
-            path = self.schema_root / key
+            path = self._path(key)
             if not path.exists():
                 raise FileNotFoundError(f"schema not found: {path}")
             schema = json.loads(path.read_text(encoding="utf-8"))
             Draft202012Validator.check_schema(schema)
             self._schemas[key] = schema
+            self._paths[key] = path
         return self._schemas[key]
 
     def errors(self, schema_name: str, payload: Any) -> list[str]:
-        schema = self.load(schema_name)
-        validator = Draft202012Validator(schema)
+        key = schema_name.removesuffix(".schema.json").removesuffix(".json")
+        schema = self.load(key)
+        path = self._paths[key]
+        resolver = RefResolver(base_uri=path.resolve().as_uri(), referrer=schema)
+        validator = Draft202012Validator(schema, resolver=resolver)
         return [
             f"{'.'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
             for error in sorted(validator.iter_errors(payload), key=lambda item: list(item.absolute_path))
