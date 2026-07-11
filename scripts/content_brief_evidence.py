@@ -1,24 +1,15 @@
-"""Evidence layer for the canonical `content-brief` skill.
+"""Evidence layer for the canonical ``content-brief`` skill.
 
-Two capabilities, both evidence-first and both deliberately conservative:
-
-1. Website-relevance gate - decide whether the site should publish the page at all,
-   before any keyword or SERP work. Search volume never green-lights an unrelated
-   topic. Verdicts: RELEVANT, CONDITIONALLY_RELEVANT, NOT_RELEVANT, INSUFFICIENT_EVIDENCE.
-
-2. SERP competitor assessment - assess the *observed* competing page set for a query.
-   It uses only supplied search results. It never fabricates traffic, backlinks,
-   authority, volume, CPC, or performance data, and it never reports a Google score.
-
-The comparison score is an explicitly configurable kit heuristic. It is not a Google
-metric, not a ranking factor, and not a probability of ranking.
+The website-relevance and observed-SERP gates are conservative kit governance
+heuristics. They are not Google metrics, ranking factors, or ranking probabilities.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Iterable
+from urllib.parse import urlsplit
 
-# Configurable kit heuristic weights. Not Google weights. Override per project.
 DEFAULT_WEIGHTS: dict[str, float] = {
     "intent_fit": 0.25,
     "first_hand_evidence": 0.20,
@@ -27,15 +18,47 @@ DEFAULT_WEIGHTS: dict[str, float] = {
     "entity_coverage": 0.15,
     "conversion_fit": 0.10,
 }
-
 _REQUIRED_CAPTURE = ("query", "locale", "device", "date", "source")
-# A SERP capture ages quickly. Beyond this, treat conclusions as stale, not current.
 STALE_AFTER_DAYS = 30
 _SITE_FIELDS = ("purpose", "audience", "offerings", "markets", "expertise")
 
 
 def _tokens(text: str) -> set[str]:
-    return {t for t in "".join(c.lower() if c.isalnum() else " " for c in str(text)).split() if len(t) > 2}
+    return {
+        token
+        for token in "".join(
+            character.lower() if character.isalnum() else " " for character in str(text)
+        ).split()
+        if len(token) > 2
+    }
+
+
+def _host(value: str) -> str:
+    raw = str(value).strip()
+    parsed = urlsplit(raw if "://" in raw else f"https://{raw}")
+    host = (parsed.hostname or "").lower().rstrip(".")
+    return host[4:] if host.startswith("www.") else host
+
+
+def _domain_matches(host: str, domain: str) -> bool:
+    candidate = _host(domain)
+    return bool(candidate) and (host == candidate or host.endswith("." + candidate))
+
+
+def _weights(value: dict[str, float] | None) -> dict[str, float]:
+    supplied = dict(DEFAULT_WEIGHTS if value is None else value)
+    unknown = set(supplied) - set(DEFAULT_WEIGHTS)
+    if unknown:
+        raise ValueError(f"unknown SERP heuristic weights: {sorted(unknown)}")
+    if set(supplied) != set(DEFAULT_WEIGHTS):
+        missing = set(DEFAULT_WEIGHTS) - set(supplied)
+        raise ValueError(f"SERP heuristic weights missing: {sorted(missing)}")
+    if any(not isinstance(item, (int, float)) or item < 0 for item in supplied.values()):
+        raise ValueError("SERP heuristic weights must be non-negative numbers")
+    total = float(sum(supplied.values()))
+    if total <= 0:
+        raise ValueError("SERP heuristic weights must sum to more than zero")
+    return {key: float(item) / total for key, item in supplied.items()}
 
 
 def assess_relevance(
@@ -44,13 +67,13 @@ def assess_relevance(
     market: str | None = None,
     search_volume: int | None = None,
 ) -> dict[str, Any]:
-    """Decide whether this site should publish this page. Volume is never a reason to."""
-    known = [f for f in _SITE_FIELDS if site.get(f)]
+    known = [field for field in _SITE_FIELDS if site.get(field)]
     if len(known) < 3:
         return {
             "verdict": "INSUFFICIENT_EVIDENCE",
             "reasons": ["Site purpose, audience, offerings, markets, or expertise not supplied."],
             "evidence": {"site_fields_supplied": known},
+            "conditions": [],
             "note": "Relevance is a kit governance gate, not a Google ranking factor.",
         }
 
@@ -58,59 +81,80 @@ def assess_relevance(
     corpus = _tokens(
         " ".join(
             [str(site.get("purpose", "")), str(site.get("audience", ""))]
-            + [str(o) for o in site.get("offerings", [])]
-            + [str(e) for e in site.get("expertise", [])]
-            + [str(t) for t in site.get("existing_topics", [])]
+            + [str(item) for item in site.get("offerings", [])]
+            + [str(item) for item in site.get("expertise", [])]
+            + [str(item) for item in site.get("existing_topics", [])]
         )
     )
     overlap = topic_tokens & corpus
-    reasons: list[str] = []
     evidence = {
         "topic_tokens": sorted(topic_tokens),
         "matched_site_tokens": sorted(overlap),
         "site_fields_supplied": known,
     }
-
     if not overlap:
-        reasons.append(
-            "Topic does not intersect the site's stated purpose, offerings, audience or expertise."
-        )
+        reasons = ["Topic does not intersect the site's stated purpose, offerings, audience or expertise."]
         if search_volume:
-            reasons.append(
-                "Search volume was supplied but is not a reason to publish an unrelated page."
-            )
-        return {"verdict": "NOT_RELEVANT", "reasons": reasons, "evidence": evidence,
-                "note": "Relevance is a kit governance gate, not a Google ranking factor."}
+            reasons.append("Search volume was supplied but is not a reason to publish an unrelated page.")
+        return {
+            "verdict": "NOT_RELEVANT",
+            "reasons": reasons,
+            "evidence": evidence,
+            "conditions": [],
+            "note": "Relevance is a kit governance gate, not a Google ranking factor.",
+        }
 
-    markets = [str(m).upper() for m in site.get("markets", [])]
-    market_ok = (not market) or (not markets) or any(
-        str(market).upper() == m or str(market).upper().startswith(m.split("-")[0]) for m in markets
+    markets = [str(item).upper() for item in site.get("markets", [])]
+    market_value = str(market or "").upper()
+    market_ok = not market_value or not markets or any(
+        market_value == item
+        or market_value.startswith(item + "-")
+        or item.startswith(market_value + "-")
+        for item in markets
     )
+    conditions: list[str] = []
     if not market_ok:
-        reasons.append(
-            f"Topic market {market} is outside the site's stated market scope {markets}."
-        )
-        return {"verdict": "CONDITIONALLY_RELEVANT", "reasons": reasons, "evidence": evidence,
-                "note": "Relevance is a kit governance gate, not a Google ranking factor."}
-
+        conditions.append(f"Resolve market mismatch: requested {market}; site scope {markets}.")
     if not site.get("expertise"):
-        reasons.append("No first-hand expertise recorded; page needs a credible author or proof.")
-        return {"verdict": "CONDITIONALLY_RELEVANT", "reasons": reasons, "evidence": evidence,
-                "note": "Relevance is a kit governance gate, not a Google ranking factor."}
+        conditions.append("Assign a credible first-hand expert or obtain substantiated proof.")
+    if conditions:
+        return {
+            "verdict": "CONDITIONALLY_RELEVANT",
+            "reasons": conditions,
+            "conditions": conditions,
+            "evidence": evidence,
+            "note": "Relevance is a kit governance gate, not a Google ranking factor.",
+        }
+    return {
+        "verdict": "RELEVANT",
+        "reasons": ["Topic intersects the site's purpose, offerings and expertise, in-market."],
+        "conditions": [],
+        "evidence": evidence,
+        "note": "Relevance is a kit governance gate, not a Google ranking factor.",
+    }
 
-    reasons.append("Topic intersects the site's purpose, offerings and expertise, in-market.")
-    return {"verdict": "RELEVANT", "reasons": reasons, "evidence": evidence,
-            "note": "Relevance is a kit governance gate, not a Google ranking factor."}
 
-
-def _freshness(last_updated: str | None) -> float:
+def _freshness(last_updated: str | None, as_of: str | None = None) -> float:
     if not last_updated:
         return 0.0
-    year = str(last_updated)[:4]
-    if not year.isdigit():
+    try:
+        updated = date.fromisoformat(str(last_updated)[:10])
+        current = date.fromisoformat(str(as_of)[:10]) if as_of else date.today()
+    except (TypeError, ValueError):
         return 0.0
-    age = 2026 - int(year)
-    return 1.0 if age <= 1 else 0.5 if age <= 3 else 0.0
+    age_days = (current - updated).days
+    return 1.0 if age_days <= 365 else 0.5 if age_days <= 1095 else 0.0
+
+
+def _is_stale(captured: str | None, as_of: str | None = None) -> bool:
+    if not captured:
+        return True
+    try:
+        captured_date = date.fromisoformat(str(captured)[:10])
+        current = date.fromisoformat(str(as_of)[:10]) if as_of else date.today()
+    except (TypeError, ValueError):
+        return True
+    return (current - captured_date).days > STALE_AFTER_DAYS
 
 
 def assess_serp(
@@ -120,36 +164,38 @@ def assess_serp(
     known_domain_competitors: list[str] | None = None,
     weights: dict[str, float] | None = None,
     as_of: str | None = None,
+    target_intent: str | None = None,
 ) -> dict[str, Any]:
-    """Assess the observed competing page set. Uses only supplied results."""
-    missing = [k for k in _REQUIRED_CAPTURE if not capture.get(k)]
+    missing = [key for key in _REQUIRED_CAPTURE if not capture.get(key)]
     if missing:
         raise ValueError(
             "SERP capture must record query, locale, device, date and source; missing: "
             + ", ".join(missing)
         )
-
-    weights = weights or dict(DEFAULT_WEIGHTS)
-    domain_competitors = {d.lower() for d in (known_domain_competitors or [])}
-
+    active_weights = _weights(weights)
+    domain_competitors = {_host(item) for item in (known_domain_competitors or []) if _host(item)}
+    own_host = _host(own_domain)
     stale = _is_stale(capture.get("date"), as_of)
     intents: set[str] = set()
     inaccessible: list[dict[str, Any]] = []
-
     seen: set[str] = set()
     competitors: list[dict[str, Any]] = []
     duplicates = 0
+    own_results_excluded = 0
+
     for row in results or []:
         url = str(row.get("url", "")).strip()
         if not url:
             continue
-        if url in seen:
+        normalized_url = url.rstrip("/")
+        if normalized_url in seen:
             duplicates += 1
             continue
-        seen.add(url)
-
-        # An unreachable or blocked result is disclosed, never silently dropped and never
-        # scored as if it had been read.
+        seen.add(normalized_url)
+        host = _host(url)
+        if own_host and _domain_matches(host, own_host):
+            own_results_excluded += 1
+            continue
         if row.get("inaccessible") or row.get("fetch_error"):
             inaccessible.append({
                 "url": url,
@@ -157,22 +203,35 @@ def assess_serp(
                 "evidence_state": "Not Run",
             })
             continue
-        if row.get("intent"):
-            intents.add(str(row["intent"]))
-        host = url.split("//")[-1].split("/")[0].lower()
-        kind = "domain_and_serp" if any(host.endswith(d) for d in domain_competitors) else "serp_only"
-
+        row_intent = str(row.get("intent", "")).strip().lower()
+        if row_intent:
+            intents.add(row_intent)
+        kind = (
+            "domain_and_serp"
+            if any(_domain_matches(host, domain) for domain in domain_competitors)
+            else "serp_only"
+        )
         signals = {
-            "intent_fit": 1.0 if row.get("intent") else 0.0,
+            "intent_fit": (
+                1.0
+                if row_intent and (not target_intent or row_intent == target_intent.lower())
+                else 0.0
+            ),
             "first_hand_evidence": 1.0 if row.get("first_hand_evidence") else 0.0,
             "source_quality": 1.0 if row.get("sources_cited") else 0.0,
-            "freshness": _freshness(row.get("last_updated")),
+            "freshness": _freshness(row.get("last_updated"), as_of),
             "entity_coverage": min(len(row.get("entities") or []) / 3.0, 1.0),
             "conversion_fit": 1.0 if row.get("conversion_path") else 0.0,
         }
-        observed = {k: v for k, v in row.items() if k in
-                    ("url", "position", "page_type", "intent", "last_updated", "entities")}
-        heuristic = round(sum(signals[k] * weights.get(k, 0.0) for k in signals) * 100, 1)
+        observed = {
+            key: value
+            for key, value in row.items()
+            if key in ("url", "position", "page_type", "intent", "last_updated", "entities")
+        }
+        heuristic = round(
+            sum(signals[key] * active_weights[key] for key in signals) * 100,
+            1,
+        )
         competitors.append({
             "url": url,
             "competitor_kind": kind,
@@ -183,92 +242,96 @@ def assess_serp(
         })
 
     if not competitors:
+        reason = (
+            "Search results were supplied but none were readable competitor pages."
+            if inaccessible or own_results_excluded
+            else "No search results were supplied for this query, locale and device."
+        )
         return {
             "status": "INSUFFICIENT_EVIDENCE",
             "capture": capture,
             "competitors": [],
             "result_count": 0,
             "duplicates_removed": duplicates,
+            "own_results_excluded": own_results_excluded,
             "inaccessible": inaccessible,
             "stale": stale,
             "mixed_intent": False,
             "score_basis": "kit_heuristic",
             "weights_configurable": True,
-            "weights": weights,
+            "weights": active_weights,
             "disclaimer": "Heuristic only. This is not a Google score and not a ranking probability.",
-            "missing_evidence": ["No search results were supplied for this query, locale and device."],
+            "missing_evidence": [reason],
         }
 
-    bar = max(c["heuristic_score"] for c in competitors)
     mixed_intent = len(intents) > 1
     return {
         "status": "STALE_EVIDENCE" if stale else "OK",
         "stale": stale,
         "mixed_intent": mixed_intent,
         "intent_note": (
-            "The observed results serve more than one intent. Do not average them into a single "
-            "target; choose the intent this page will serve and say so."
-            if mixed_intent else "Observed results share one dominant intent."
+            "The observed results serve more than one intent. Select and state one target intent before briefing."
+            if mixed_intent
+            else "Observed results share one dominant intent."
         ),
         "inaccessible": inaccessible,
         "capture": capture,
         "own_domain": own_domain,
+        "own_results_excluded": own_results_excluded,
+        "target_intent": target_intent,
         "result_count": len(competitors),
         "duplicates_removed": duplicates,
         "competitors": competitors,
-        "bar_to_beat": bar,
+        "bar_to_beat": max(item["heuristic_score"] for item in competitors),
         "score_basis": "kit_heuristic",
         "weights_configurable": True,
-        "weights": weights,
+        "weights": active_weights,
         "disclaimer": (
-            "Heuristic only. This is not a Google score, not a ranking factor, and not a "
-            "probability of ranking. Direct observation is separated from inference."
+            "Heuristic only. This is not a Google score, ranking factor, or probability of ranking. "
+            "Direct observation is separated from inference."
         ),
         "missing_evidence": [],
     }
-
-
-def _is_stale(captured: str | None, as_of: str | None = None) -> bool:
-    """True when the SERP capture is older than STALE_AFTER_DAYS."""
-    from datetime import date
-
-    if not captured:
-        return True
-    try:
-        y, m, d = (int(x) for x in str(captured)[:10].split("-"))
-        cap = date(y, m, d)
-        if as_of:
-            ay, am, ad = (int(x) for x in str(as_of)[:10].split("-"))
-            today = date(ay, am, ad)
-        else:
-            today = date.today()
-    except (TypeError, ValueError):
-        return True
-    return (today - cap).days > STALE_AFTER_DAYS
 
 
 def brief_decision(
     relevance: dict[str, Any],
     serp: dict[str, Any],
     information_gain: list[str],
+    *,
+    conditions_resolved: bool = False,
+    selected_intent: str | None = None,
 ) -> dict[str, Any]:
-    """A brief only proceeds with relevance AND a distinct, stated information gain."""
     verdict = relevance.get("verdict")
     if verdict == "NOT_RELEVANT":
         return {"publish": False, "reason": "Website-relevance gate returned NOT_RELEVANT."}
     if verdict == "INSUFFICIENT_EVIDENCE":
         return {"publish": False, "reason": "Insufficient site evidence to judge relevance."}
+    if verdict == "CONDITIONALLY_RELEVANT" and not conditions_resolved:
+        return {
+            "publish": False,
+            "reason": "Website relevance is conditional and the stated conditions are unresolved.",
+            "conditions": relevance.get("conditions", []),
+        }
+    if serp.get("status") in {"INSUFFICIENT_EVIDENCE", "STALE_EVIDENCE"}:
+        return {
+            "publish": False,
+            "reason": f"SERP evidence status is {serp.get('status')}; refresh or supply evidence.",
+        }
+    if serp.get("mixed_intent") and not selected_intent:
+        return {
+            "publish": False,
+            "reason": "Mixed-intent SERP requires one explicitly selected target intent.",
+        }
     if not information_gain:
         return {
             "publish": False,
-            "reason": (
-                "No distinct information gain stated. A brief must say what this page adds "
-                "beyond the observed results."
-            ),
+            "reason": "No distinct information gain stated. A brief must add value beyond observed results.",
         }
     return {
         "publish": True,
-        "reason": "Relevant, with stated information gain.",
+        "reason": "Relevance and current SERP evidence pass, with stated information gain.",
         "must_beat": serp.get("bar_to_beat"),
+        "selected_intent": selected_intent or serp.get("target_intent"),
         "information_gain": information_gain,
     }
