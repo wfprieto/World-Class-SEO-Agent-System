@@ -44,6 +44,8 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `competitor-comparison-page-build`
 - `flow-prompt-run`
 - `serp-overlap-cluster`
+- `desktop-commander-execution`
+- `consent-mode-diagnostic`
 
 ## Local, International, and Media Skills
 
@@ -125,3 +127,4 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `rendered-visual-audit-and-page-entry.md`: rendered visual audit and single-page audit entry.
 - `seo-flow-skill.md`: FLOW stage prompt library; stage files in `flow-prompts/` are references, not separate skills.
 - `seo-cluster-skill.md`: SERP-overlap topic clustering.
+- `local-execution-skills.md`: bounded local execution layer for approved local operations.

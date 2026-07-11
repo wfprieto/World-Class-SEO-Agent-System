@@ -8,6 +8,22 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.7.0] - 2026-07-11
+
+### Added
+
+- `skills/local-execution-skills.md`: one governed Desktop Commander execution skill (`desktop-commander-execution`) with allowed / approval-gated / prohibited permission tiers, evidence recording, and tool-overlap resolution. Individual tool functions are not registered as skills.
+- `knowledge/seo-vertical-profiles.md` and `scripts/vertical_profiles.py`: the six vertical architecture profiles (generic, ecommerce, local-service, saas, publisher, agency). Low-confidence detection never silently routes; two or more strongly evidenced models produce a declared HYBRID route. The detection authority remains `docs/plugin-packaging.md` section 9 and `runtime/routing.py` remains the only router.
+- `knowledge/agent-friendly-pages.md`: evidence-labeled page-construction reference. Records that llms.txt is not required for Google Search, that crawler access does not guarantee citation, and that Google-Extended is a robots.txt token only rather than a log user-agent. Cross-references `knowledge/geo-readiness-rubric.md` and the rendered-visual-audit skill instead of duplicating them.
+- `knowledge/dma-consent-mode-v2.md`, `scripts/consent_mode_diagnostic.py`, and the `consent-mode-diagnostic` skill: Consent Mode v2 signals, command ordering, region precedence, Basic versus Advanced behavior, and unknown/stale handling. It never grants consent, never bypasses a CMP, never exposes consent strings or identifiers, and never claims legal compliance.
+- `scripts/content_brief_evidence.py`: website-relevance gate and evidence-based SERP competitor assessment.
+- `tests/test_batch3_tactical.py`.
+
+### Changed
+
+- `skills/content-ia-skills.md`: the canonical `content-brief` skill now requires a website-relevance verdict (RELEVANT, CONDITIONALLY_RELEVANT, NOT_RELEVANT, INSUFFICIENT_EVIDENCE) and an evidence-based SERP competitor assessment before any outline work. Search volume never green-lights an unrelated topic, and a brief requires a stated information gain. Comparison weights are labeled configurable kit heuristics, not Google scores or ranking factors. No competing content-brief-v2 skill was created.
+- `docs/INTEGRATION-MANIFEST.md`: corrected source-of-truth drift. It described Batch 2 as "staged, not released" and carried version 1.5.0 after Batch 2 had already been merged (squash commit 0612201). Reconciled to the real repository state.
+
 ## [1.6.0] - 2026-07-10
 
 ### Added
