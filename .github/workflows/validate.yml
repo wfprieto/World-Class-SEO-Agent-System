@@ -49,4 +49,18 @@ jobs:
         run: python scripts/validate_schema_examples.py
 
       - name: Run semantic and runtime test suite
-        run: pytest -q
+        id: pytest
+        continue-on-error: true
+        run: pytest -q --junitxml=pytest-results.xml
+
+      - name: Upload pytest result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
+          path: pytest-results.xml
+          if-no-files-found: error
+
+      - name: Enforce pytest result
+        if: steps.pytest.outcome == 'failure'
+        run: python -c "import sys; sys.exit(1)"
