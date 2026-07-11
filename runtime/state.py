@@ -8,6 +8,21 @@ from typing import Any
 from uuid import uuid4
 
 
+def _default_business_profile_resolution() -> dict[str, Any]:
+    """A schema-valid unresolved profile for direct SessionState construction paths."""
+    return {
+        "profiles": ["generic"],
+        "route": "UNCONFIRMED",
+        "confidence": "Low",
+        "scores": {},
+        "observed_signals": [],
+        "user_override": [],
+        "missing_evidence": ["Business profile has not been resolved."],
+        "action": "ask_or_stop_when_profile_changes_execution",
+        "authority": "docs/plugin-packaging.md section 9",
+    }
+
+
 @dataclass
 class BusinessContext:
     domain: str
@@ -66,7 +81,9 @@ class SessionState:
     request: str
     mode: str
     business_context: BusinessContext
-    business_profile_resolution: dict[str, Any] = field(default_factory=dict)
+    business_profile_resolution: dict[str, Any] = field(
+        default_factory=_default_business_profile_resolution
+    )
     evidence_inventory: list[EvidenceItem] = field(default_factory=list)
     agent_outputs: list[dict[str, Any]] = field(default_factory=list)
     handoffs: list[Handoff] = field(default_factory=list)
