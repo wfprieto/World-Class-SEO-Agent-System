@@ -6,6 +6,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+from runtime.business_profile_resolver import resolve_business_profile
 from runtime.execution_limits import ExecutionLimits
 from runtime.executor import AgentExecutor
 from runtime.llm import LLMClient, build_llm_client
@@ -45,6 +46,7 @@ class SEOOrchestrator:
         business_type: str = "unknown",
         markets: list[str] | None = None,
         goals: list[str] | None = None,
+        profile_signals: list[str] | None = None,
     ) -> SessionState:
         session = SessionState.create(
             request=request,
@@ -54,6 +56,24 @@ class SEOOrchestrator:
             markets=markets,
             goals=goals,
         )
+        profile = resolve_business_profile(
+            explicit_business_type=business_type,
+            signals=profile_signals or [],
+        )
+        session.business_profile_resolution = profile.to_dict()
+        if profile_signals and profile.route == "UNCONFIRMED":
+            session.evidence_inventory.append(
+                EvidenceItem(
+                    id="business-profile-unconfirmed",
+                    source="business_profile_resolver",
+                    type="business_context",
+                    status="partial",
+                    notes="; ".join(profile.missing_evidence),
+                )
+            )
+            session.open_risks.append(
+                "Business profile evidence is low confidence; use the generic graph or obtain one material clarification."
+            )
         if not domain:
             session.evidence_inventory.append(
                 EvidenceItem(
@@ -69,11 +89,15 @@ class SEOOrchestrator:
 
     def route(self, session: SessionState) -> RouteResult:
         result = self.router.route(session.request)
+        profile = session.business_profile_resolution
         session.add_event(
             node_id="routing",
             agent="SEO Scrummaster Agent",
             state="COMPLETE",
-            detail=f"Routed request to {result.lead_agent} with {len(result.supporting_agents)} support agents.",
+            detail=(
+                f"Routed request to {result.lead_agent} with {len(result.supporting_agents)} "
+                f"support agents and business profiles {profile.get('profiles', ['generic'])}."
+            ),
         )
         session.agent_outputs.append(
             {
@@ -90,7 +114,9 @@ class SEOOrchestrator:
                         "type": "routing_decision",
                         "date_checked": session.created_at[:10],
                         "notes": (
-                            f"Workflow: {result.workflow}; routing confidence: {result.confidence}."
+                            f"Workflow: {result.workflow}; routing confidence: {result.confidence}; "
+                            f"business profiles: {profile.get('profiles', ['generic'])}; "
+                            f"profile confidence: {profile.get('confidence', 'Low')}."
                         ),
                     }
                 ],
@@ -120,6 +146,7 @@ class SEOOrchestrator:
                 "acceptance_criteria": [
                     "Lead and support agents exist in the capability registry.",
                     "The selected workflow exists and can build a valid graph.",
+                    "Business-profile routing is explicit or truthfully unconfirmed.",
                 ],
                 "verification": [
                     "Validate the routing output against the canonical agent-output schema.",
@@ -128,7 +155,7 @@ class SEOOrchestrator:
                 "follow_up": "At workflow completion or when routing evidence changes.",
                 "material_claims": [],
                 "skills_used": ["request-routing"],
-                "knowledge_used": [],
+                "knowledge_used": ["docs/plugin-packaging.md section 9"],
                 "execution_state": "SYNTHETIC",
             }
         )
