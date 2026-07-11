@@ -32,7 +32,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the SEO agent system orchestrator.")
     parser.add_argument("request", help="SEO request to route and prepare.")
     parser.add_argument("--domain", default="", help="Target domain or property.")
-    parser.add_argument("--business-type", default="unknown", help="Business type.")
+    parser.add_argument("--business-type", default="unknown", help="Explicit business profile or declared hybrid.")
+    parser.add_argument("--profile-signal", action="append", default=[], help="Observed business-profile signal. Repeat for multiple signals.")
     parser.add_argument("--market", action="append", default=[], help="Target market. Repeat for multiple.")
     parser.add_argument("--goal", action="append", default=[], help="SEO/business goal. Repeat for multiple.")
     parser.add_argument("--mode", default="Audit", choices=["Audit", "Implementation", "Strategy", "Monitoring", "Research", "Debate"])
@@ -63,6 +64,7 @@ def main() -> int:
         business_type=args.business_type,
         markets=args.market,
         goals=args.goal,
+        profile_signals=args.profile_signal,
     )
     result = orchestrator.route(session)
     if args.execute and args.stream:
