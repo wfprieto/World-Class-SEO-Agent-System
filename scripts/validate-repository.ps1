@@ -76,9 +76,35 @@ function Test-AgentReferences {
   }
 }
 
+function Test-PythonValidator {
+  param(
+    [string]$Script,
+    [string[]]$Arguments = @()
+  )
+  $scriptPath = Join-Path $Root $Script
+  if (-not (Test-Path -LiteralPath $scriptPath)) {
+    Add-Failure "Missing validator: $Script"
+    return
+  }
+  Push-Location $Root
+  try {
+    & python $scriptPath @Arguments
+    if ($LASTEXITCODE -ne 0) {
+      Add-Failure "Validator failed: $Script"
+    }
+  } catch {
+    Add-Failure "Validator error: $Script - $($_.Exception.Message)"
+  } finally {
+    Pop-Location
+  }
+}
+
 Test-JsonFiles
 Test-MarkdownLinks
 Test-AgentReferences
+Test-PythonValidator "scripts/validate_canonical_skill_consistency.py"
+Test-PythonValidator "scripts/validate_release_version.py"
+Test-PythonValidator "evaluation/tracer/run_tracer.py"
 
 if ($failures.Count -gt 0) {
   Write-Host "Repository validation failed:" -ForegroundColor Red
@@ -87,4 +113,3 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host "Repository validation passed." -ForegroundColor Green
-
