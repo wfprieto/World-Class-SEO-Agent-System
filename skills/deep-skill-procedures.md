@@ -1099,3 +1099,30 @@ Time estimate: 2-4 hours (needs supplied SERP results).
 5. Deliver the cluster map and page plan. State that SERP overlap groups intent and does not prove ranking success.
 
 Decision points: do not merge distinct-intent clusters on a few incidental shared URLs. Failure handling: with no SERP data, produce an intent-grouped draft labeled ANALYSIS and mark SERP validation pending.
+
+## desktop-commander-execution
+
+Time estimate: minutes per operation.
+
+1. Resolve and record the approved workspace root. Refuse any path outside it.
+2. Classify the operation: allowed, approval-gated, or prohibited (see `skills/local-execution-skills.md`).
+3. For an approval-gated operation (commit, push, PR, merge, deploy, publish, remote write, system-wide install, production credentials, paid API, destructive action, branch deletion), stop and obtain explicit human approval.
+4. Run the smallest sufficient command.
+5. Record command, target, exit status, and evidence state (`Verified`, `Not Run`, `Blocked`).
+6. State what the result proves and what it does not. A zero exit code proves the command ran, not that an SEO or business outcome improved.
+
+Decision points: when two tools can do the job, prefer a dedicated API/MCP, then Desktop Commander, then a browser tool; never run the same operation twice through different tools. Failure handling: on a path escape, missing approval, or unclear tool ownership, stop and report `BLOCKED`.
+
+## consent-mode-diagnostic
+
+Time estimate: 2-4 hours for a real property.
+
+1. Collect the supplied configuration: region, CMP, mode, defaults for all four signals, command ordering, `wait_for_update`, region overrides, duplicates, SPA behaviour, environment.
+2. Verify ordering (default before tags, update after default) and the presence of `ad_storage`, `analytics_storage`, `ad_user_data`, `ad_personalization`.
+3. Verify consent-required regions default to denied, and resolve region/subregion precedence (more specific wins).
+4. Treat missing, unknown, or stale states as denied.
+5. Flag duplicate initialisation, SPA route changes, and Preview-versus-Production drift.
+6. Distinguish Basic from Advanced behaviour and record the modelled-measurement limitation.
+7. Emit the consent-state matrix, severity-rated findings with corrections and validation methods, the privacy impact, the owner, acceptance criteria, and the legal-review flag.
+
+Decision points: never grant consent, never bypass the CMP, never change live tags without explicit authorisation. Failure handling: no CMP or no configuration means `BLOCKED`, never `PASS`. Legal interpretation is always referred to qualified counsel; technical configuration is not legal compliance.

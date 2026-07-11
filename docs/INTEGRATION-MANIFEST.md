@@ -1,7 +1,7 @@
 # Integration Record
 
-**Status:** Integrated into `main`  
-**Version:** 1.5.0  
+**Status:** Merged into `main` (Batch 2 released; squash commit 0612201)  
+**Version:** 1.6.0  
 **Last reviewed:** 2026-07-10
 
 This records the capabilities added in v1.5.0 and how they are wired into the system. These files are part of the repository, not a separate drop-in kit. For the running history, see `CHANGELOG.md`.
@@ -33,7 +33,7 @@ This records the capabilities added in v1.5.0 and how they are wired into the sy
 
 Green locally and in CI (`.github/workflows/validate.yml`): repository validator, schema-example validation, and the full pytest suite. Run locally with `scripts/validate-repository.ps1`, `python scripts/validate_schema_examples.py`, and `pytest -q`.
 
-## Batch 2 (v1.6.0) — staged, not released
+## Batch 2 (v1.6.0) - merged into `main`
 
 | Capability | Disposition | Where it lives |
 |---|---|---|

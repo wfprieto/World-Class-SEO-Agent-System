@@ -50,3 +50,6 @@ Reconciled, evidence-labeled knowledge files maintained inside this repository. 
 - free-backlink-sources.md: free-first backlink data sources with confidence weighting.
 - ai-image-labeling.md: IPTC and C2PA provenance labeling for AI-generated images and Merchant Center.
 - parasite-seo-expired-domain-checks.md: site-reputation and expired-domain abuse detection.
+- agent-friendly-pages.md: page construction for users, search engines, and permitted AI agents.
+- seo-vertical-profiles.md: the six vertical architecture profiles (detection authority remains docs/plugin-packaging.md section 9).
+- dma-consent-mode-v2.md: Consent Mode v2 signals, ordering, and region behaviour (technical, not legal advice).

@@ -2,6 +2,39 @@
 
 ## `content-brief`
 
+Before any keyword or outline work, `content-brief` must pass two evidence gates. Both are kit governance heuristics. Neither is a Google ranking factor and neither is a Google score.
+
+### Gate 1: website relevance
+
+Decide whether this site should publish this page at all. Assess the topic against the site's real business or editorial purpose, intended audience, products/services/expertise or publishing remit, existing topical architecture, conversion or user-value path, geographic and market scope, brand/entity relevance, and the ability to produce genuine first-hand or expert content.
+
+Return exactly one verdict: `RELEVANT`, `CONDITIONALLY_RELEVANT`, `NOT_RELEVANT`, or `INSUFFICIENT_EVIDENCE`.
+
+Search volume is never a reason to publish. A high-volume topic the site cannot credibly cover returns `NOT_RELEVANT`. This gate is not a Google ranking factor; it is a kit governance gate that protects topical credibility and user trust.
+
+### Gate 2: SERP competitor evidence
+
+Assess the *observed* competing page set for the query and market, using only supplied search results.
+
+- Identify the actual competing pages; distinguish domain competitors from SERP-only competitors.
+- Record query, locale, device, date, source, and result position for every capture.
+- Compare page type, intent fit, topical focus, demonstrated experience, source quality, freshness, entity coverage, information gain, UX, and conversion fit.
+- Disclose missing or inaccessible evidence rather than filling the gap.
+- Never fabricate traffic, backlinks, authority, volume, CPC, or performance data.
+- Separate direct observation from inference.
+- Comparison weights are configurable kit heuristics, clearly labelled. The resulting score is not a Google score and not a probability of ranking.
+
+If no results are supplied, return `INSUFFICIENT_EVIDENCE`. Do not invent a competitor set.
+
+### Brief decision
+
+A brief proceeds only when relevance passes **and** a distinct information gain is stated. No information gain means no brief. The finished brief must contain:
+
+- **Why this site should publish this page** - the relevance evidence.
+- **What must be materially better than the observed results** - the specific bar drawn from the observed competitor set.
+
+Executable support: `scripts/content_brief_evidence.py` (`assess_relevance`, `assess_serp`, `brief_decision`).
+
 Purpose: Produce a writer-ready SEO brief for a topic or URL.
 
 System prompt: Act as a senior SEO content strategist. Translate search intent, competitive evidence, entities, information gain, and conversion needs into a brief a writer can execute.
