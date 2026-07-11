@@ -75,6 +75,63 @@ class SEOOrchestrator:
             state="COMPLETE",
             detail=f"Routed request to {result.lead_agent} with {len(result.supporting_agents)} support agents.",
         )
+        session.agent_outputs.append(
+            {
+                "output_id": f"{session.session_id}-routing-output",
+                "agent": "SEO Scrummaster Agent",
+                "summary": (
+                    f"Routed the request to {result.lead_agent} with "
+                    f"{len(result.supporting_agents)} supporting agents."
+                ),
+                "evidence": [
+                    {
+                        "id": "runtime-route",
+                        "source": "runtime_route",
+                        "type": "routing_decision",
+                        "date_checked": session.created_at[:10],
+                        "notes": (
+                            f"Workflow: {result.workflow}; routing confidence: {result.confidence}."
+                        ),
+                    }
+                ],
+                "confidence": result.confidence if result.confidence in {"High", "Medium", "Low"} else "Low",
+                "findings": [
+                    {
+                        "id": f"{session.session_id}-route-001",
+                        "severity": "Low",
+                        "finding": f"The request is routed to {result.lead_agent} as deliverable owner.",
+                        "affected_scope": result.workflow,
+                        "evidence_refs": ["runtime-route"],
+                    }
+                ],
+                "recommended_actions": [
+                    {
+                        "action": "Execute the routed workflow and record every required specialist output.",
+                        "priority": "P2",
+                        "owner": result.lead_agent,
+                        "success_metric": "Required workflow nodes complete or report a truthful blocked state.",
+                    }
+                ],
+                "impact": "Creates an explicit, reviewable routing decision before specialist execution.",
+                "effort": "Low",
+                "risks": [result.escalation],
+                "owner": "SEO Scrummaster Agent",
+                "dependencies": result.required_evidence,
+                "acceptance_criteria": [
+                    "Lead and support agents exist in the capability registry.",
+                    "The selected workflow exists and can build a valid graph.",
+                ],
+                "verification": [
+                    "Validate the routing output against the canonical agent-output schema.",
+                    "Confirm the workflow executes the listed specialists rather than retaining metadata only.",
+                ],
+                "follow_up": "At workflow completion or when routing evidence changes.",
+                "material_claims": [],
+                "skills_used": ["request-routing"],
+                "knowledge_used": [],
+                "execution_state": "SYNTHETIC",
+            }
+        )
         return result
 
     def load_artifact(self, relative_path: str) -> str:
