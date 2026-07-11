@@ -2,7 +2,8 @@
 
 **Status:** Operator and implementation reference
 **Last provider verification:** 2026-07-10  
-**Canonical source path:** `docs/mcp-server-mapping.md`
+**Canonical source path:** `docs/mcp-server-mapping.md`  
+**Machine-readable registry:** `adapters/mcp_extensions.py` is the single declarative source for capability, cost tier, allowed and forbidden operations, credential requirements, and the kit skills each provider unlocks. This document explains that registry for operators. If the two disagree, the registry is authoritative and this file must be updated. Capability detection performs no provider call, reads no secret value, and every metered call requires a cost estimate plus explicit approval.
 
 ## 1. Purpose
 

@@ -281,14 +281,32 @@ class EvidenceStore:
                       FROM snapshots
                     """
                 ).fetchall()
+                # Backfill digests ONLY for rows that genuinely lack them (pre-digest legacy
+                # rows). A row that already carries both digests is never rewritten here:
+                # recomputing it would silently re-bless external tampering and destroy
+                # tamper-evidence. Verification of hashed rows happens on read
+                # (`_decode_row`) and in `integrity_check()`. Deliberate rewriting is only
+                # available through the explicit `repair_digests(confirm=True)` method.
                 for row in legacy_rows:
+                    payload_hash = row["payload_sha256"] or ""
+                    record_hash = row["record_sha256"] or ""
+                    if payload_hash and record_hash:
+                        continue  # fully hashed: leave untouched, verify on read
+
+                    payload_digest = _sha256(row["payload_json"])
+                    if payload_hash and not hmac.compare_digest(payload_hash, payload_digest):
+                        raise EvidenceIntegrityError(
+                            f"snapshot {row['id']} failed payload hash verification during "
+                            "migration; refusing to repair it silently"
+                        )
+
                     try:
                         canonical_url = canonicalize_url(row["url"])
                     except ValueError as exc:
                         raise EvidenceIntegrityError(
                             f"legacy snapshot {row['id']} has an invalid URL"
                         ) from exc
-                    payload_digest = _sha256(row["payload_json"])
+
                     record_digest = _record_digest(
                         url=canonical_url,
                         metric_group=row["metric_group"],
@@ -300,19 +318,20 @@ class EvidenceStore:
                         run_id=row["run_id"],
                         scope_json=row["scope_json"],
                     )
-                    if (
-                        row["url"] != canonical_url
-                        or row["payload_sha256"] != payload_digest
-                        or row["record_sha256"] != record_digest
-                    ):
-                        self._conn.execute(
-                            """
-                            UPDATE snapshots
-                               SET url=?, payload_sha256=?, record_sha256=?
-                             WHERE id=?
-                            """,
-                            (canonical_url, payload_digest, record_digest, row["id"]),
+                    if record_hash and not hmac.compare_digest(record_hash, record_digest):
+                        raise EvidenceIntegrityError(
+                            f"snapshot {row['id']} failed record hash verification during "
+                            "migration; refusing to repair it silently"
                         )
+
+                    self._conn.execute(
+                        """
+                        UPDATE snapshots
+                           SET url=?, payload_sha256=?, record_sha256=?
+                         WHERE id=?
+                        """,
+                        (canonical_url, payload_digest, record_digest, row["id"]),
+                    )
 
                 self._conn.execute("DROP INDEX IF EXISTS idx_url_group")
                 self._conn.execute(
@@ -651,6 +670,63 @@ class EvidenceStore:
                 "payloads_checked": checked,
                 "errors": errors,
             }
+
+    def repair_digests(self, *, confirm: bool = False) -> dict[str, Any]:
+        """Recompute and overwrite integrity digests for every row.
+
+        This is the only path that rewrites existing digests. It is deliberately NOT part
+        of initialization, because rewriting a digest over tampered content destroys the
+        tamper-evidence that `integrity_check()` and `_decode_row()` rely on.
+
+        Use it only when you have established that a mismatch is caused by a legitimate
+        migration and not by tampering. It requires `confirm=True`.
+        """
+        if not confirm:
+            raise ValueError(
+                "repair_digests() rewrites integrity digests and destroys tamper-evidence; "
+                "call it with confirm=True only after establishing the cause of the mismatch"
+            )
+        with self._lock:
+            self._ensure_open()
+            rows = self._conn.execute(
+                """
+                SELECT id, url, metric_group, captured_at, payload_json,
+                       schema_version, source, status, run_id, scope_json,
+                       payload_sha256, record_sha256
+                  FROM snapshots
+                """
+            ).fetchall()
+            repaired = 0
+            for row in rows:
+                canonical_url = canonicalize_url(row["url"])
+                payload_digest = _sha256(row["payload_json"])
+                record_digest = _record_digest(
+                    url=canonical_url,
+                    metric_group=row["metric_group"],
+                    captured_at=row["captured_at"],
+                    payload_json=row["payload_json"],
+                    schema_version=row["schema_version"],
+                    source=row["source"],
+                    status=row["status"],
+                    run_id=row["run_id"],
+                    scope_json=row["scope_json"],
+                )
+                if (
+                    row["url"] != canonical_url
+                    or (row["payload_sha256"] or "") != payload_digest
+                    or (row["record_sha256"] or "") != record_digest
+                ):
+                    self._conn.execute(
+                        """
+                        UPDATE snapshots
+                           SET url=?, payload_sha256=?, record_sha256=?
+                         WHERE id=?
+                        """,
+                        (canonical_url, payload_digest, record_digest, row["id"]),
+                    )
+                    repaired += 1
+            self._conn.commit()
+        return {"status": "repaired", "repaired": repaired, "checked": len(rows)}
 
     def close(self) -> None:
         with self._lock:

@@ -29,6 +29,7 @@ from email.utils import parsedate_to_datetime
 from collections.abc import Callable
 from typing import Any
 
+from adapters.url_safety import validate_public_url
 from adapters.base import AdapterNotConfigured, AdapterResult
 
 
@@ -375,58 +376,6 @@ class GooglePageSpeedLiveAdapter:
 
     @staticmethod
     def _validate_public_url(url: str) -> str:
-        """Canonicalize a public target and reject common SSRF/privacy hazards."""
-        if not isinstance(url, str) or not url.strip():
-            raise ValueError("URL must be a non-empty string")
-        try:
-            parsed = urllib.parse.urlsplit(url.strip())
-            scheme = parsed.scheme.lower()
-            host = (parsed.hostname or "").rstrip(".").encode("idna").decode("ascii").lower()
-            port = parsed.port
-        except (UnicodeError, ValueError) as exc:
-            raise ValueError("URL contains an invalid host or port") from exc
+        """Delegate to the kit's single canonical URL-safety policy."""
+        return validate_public_url(url)
 
-        if scheme not in _ALLOWED_SCHEMES or not host:
-            raise ValueError("URL must use http or https and include a host")
-        if parsed.username or parsed.password:
-            raise ValueError("URLs containing credentials are not allowed")
-        if port is not None and port not in _ALLOWED_TARGET_PORTS:
-            raise ValueError("Only standard HTTP and HTTPS ports are allowed")
-
-        query_keys = {
-            key.lower()
-            for key, _ in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-        }
-        sensitive = sorted(query_keys & _SENSITIVE_QUERY_KEYS)
-        if sensitive:
-            raise ValueError(
-                "URL query contains credential-like fields and cannot be sent to Google"
-            )
-
-        lookup_port = port or (443 if scheme == "https" else 80)
-        try:
-            infos = socket.getaddrinfo(
-                host, lookup_port, type=socket.SOCK_STREAM
-            )
-        except socket.gaierror as exc:
-            raise ValueError(f"URL host cannot be resolved: {host}") from exc
-        addresses = {info[4][0] for info in infos}
-        if not addresses:
-            raise ValueError("URL host resolved to no addresses")
-        for address in addresses:
-            try:
-                ip = ipaddress.ip_address(address)
-            except ValueError as exc:
-                raise ValueError("URL host returned an invalid address") from exc
-            if not ip.is_global:
-                raise ValueError(
-                    f"URL host resolves to a non-public address: {ip.compressed}"
-                )
-
-        if port == (443 if scheme == "https" else 80):
-            port = None
-        display_host = f"[{host}]" if ":" in host else host
-        netloc = display_host if port is None else f"{display_host}:{port}"
-        return urllib.parse.urlunsplit(
-            (scheme, netloc, parsed.path or "/", parsed.query, "")
-        )

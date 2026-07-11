@@ -1075,3 +1075,27 @@ Time estimate: 1-2 hours.
 3. Synthesize one consolidated page report with a single prioritized action list and no duplicate findings.
 
 Decision points: recommend a full audit when the page implicates site-wide issues. Failure handling: run the subset that can execute and list skipped checks. See workflows/single-page-audit-workflow.md.
+
+## flow-prompt-run
+
+Time estimate: 1-3 hours.
+
+1. Name the search surface and the business outcome before writing anything.
+2. Decide the blocking stage: unclear demand language to Find; weak off-site corroboration to Leverage; hard-to-extract or low-trust asset to Optimize; traffic without business impact to Win; local visibility to Local.
+3. Load only the matching file in `skills/flow-prompts/` and apply the relevant prompts. The stage files are references, not separate skills.
+4. Separate observed evidence from assumption. Drop any statistic that has no supplied source.
+5. Return the asset plus an evidence register (claim to source) and the measurement event that will judge it.
+
+Decision points: route pricing, guarantee, and regulated claims to the SEO Compliance & Legal Agent. Failure handling: if the business outcome or evidence is missing, request it or write the safer version and mark the gaps; if the stage is unclear, run Find first.
+
+## serp-overlap-cluster
+
+Time estimate: 2-4 hours (needs supplied SERP results).
+
+1. Expand the seed into 30-50 deduplicated variants.
+2. Capture the top-10 organic URLs per keyword from a connected source or a supplied export. If none exists, stop and request it; never fabricate rankings, volumes, or intent.
+3. Run `scripts/serp_cluster.py`: >= 4 shared top-10 URLs (or exactly 3) merges keywords; <= 2 keeps them separate. Output is deterministic for identical input.
+4. Assign the hub (highest supplied volume, then connectivity) and spokes; build the internal-link matrix.
+5. Deliver the cluster map and page plan. State that SERP overlap groups intent and does not prove ranking success.
+
+Decision points: do not merge distinct-intent clusters on a few incidental shared URLs. Failure handling: with no SERP data, produce an intent-grouped draft labeled ANALYSIS and mark SERP validation pending.

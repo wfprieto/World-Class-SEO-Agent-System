@@ -28,3 +28,7 @@ coverage/
 outputs/
 reports/generated/
 tmp/
+
+# Local SEO evidence cache and drift database (may contain client data)
+.seo-cache/
+*.db

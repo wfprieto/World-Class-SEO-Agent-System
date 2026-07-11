@@ -42,6 +42,8 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `conversion-intent-map`
 - `landing-page-cro-audit`
 - `competitor-comparison-page-build`
+- `flow-prompt-run`
+- `serp-overlap-cluster`
 
 ## Local, International, and Media Skills
 
@@ -121,3 +123,5 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `geo-grid-local-rank-skills.md`: geo-grid rank, GBP audit, competitor radius, NAP verification.
 - `competitor-comparison-pages.md`: comparison and alternatives page build skill.
 - `rendered-visual-audit-and-page-entry.md`: rendered visual audit and single-page audit entry.
+- `seo-flow-skill.md`: FLOW stage prompt library; stage files in `flow-prompts/` are references, not separate skills.
+- `seo-cluster-skill.md`: SERP-overlap topic clustering.

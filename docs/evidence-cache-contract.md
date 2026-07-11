@@ -269,3 +269,13 @@ Unit tests must use fixtures or mocked transport. Live API testing is separate, 
 - File-permission behavior varies by operating system.
 - Threaded independent-connection concurrency was tested; sustained multi-process contention was not load-tested.
 - Hashes provide corruption detection, not encryption or writer-proof authenticity.
+
+## Page-state drift is a metric group, not a second database
+
+Page drift uses this same store. `adapters/page_drift.py` records a hashed page-state
+fingerprint (title, canonical, robots, h1, status code, SHA-256 of the HTML and of the
+structured data) under `metric_group = "page_state"`, then classifies this store's drift
+output into critical, warning, and info. There is no separate drift database: one persistent
+evidence store (`.seo-cache/evidence.db`) remains the single source of truth for dated
+snapshots and comparison. Missing history is reported as `insufficient_history` and must
+never be read as "no drift".
