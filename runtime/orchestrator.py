@@ -1,20 +1,23 @@
-"""Minimal executable orchestrator for SEO agent sessions."""
+"""Executable orchestrator for coordinated SEO agent sessions."""
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
+from runtime.execution_limits import ExecutionLimits
 from runtime.executor import AgentExecutor
 from runtime.llm import LLMClient, build_llm_client
 from runtime.memory import MemoryStore
 from runtime.routing import RequestRouter, RouteResult
 from runtime.state import EvidenceItem, SessionState
 from runtime.tools import ToolDispatcher, ToolRequest
+from runtime.workflow_runner import WorkflowRunner
 
 
 class SEOOrchestrator:
-    """Runtime facade for routing, state creation, and artifact loading."""
+    """Runtime facade for routing, state, tools, and multi-agent workflow execution."""
 
     def __init__(
         self,
@@ -32,6 +35,7 @@ class SEOOrchestrator:
             tool_dispatcher=tool_dispatcher,
             memory=memory,
         )
+        self.workflow_runner = WorkflowRunner(repo_root, self.executor)
 
     def start_session(
         self,
@@ -65,12 +69,11 @@ class SEOOrchestrator:
 
     def route(self, session: SessionState) -> RouteResult:
         result = self.router.route(session.request)
-        session.agent_outputs.append(
-            {
-                "agent": "SEO Scrummaster Agent",
-                "summary": f"Routed request to {result.lead_agent}.",
-                "route": result.to_dict(),
-            }
+        session.add_event(
+            node_id="routing",
+            agent="SEO Scrummaster Agent",
+            state="COMPLETE",
+            detail=f"Routed request to {result.lead_agent} with {len(result.supporting_agents)} support agents.",
         )
         return result
 
@@ -86,15 +89,37 @@ class SEOOrchestrator:
         session: SessionState,
         route: RouteResult | None = None,
         tool_requests: list[ToolRequest] | None = None,
+        *,
+        execution_mode: str = "multi-agent",
+        limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
         active_route = route or self.route(session)
-        return await self.executor.execute(session, active_route, tool_requests)
+        if execution_mode == "single-agent":
+            return await self.executor.execute(session, active_route, tool_requests)
+        if execution_mode != "multi-agent":
+            raise ValueError("execution_mode must be 'multi-agent' or 'single-agent'")
+        return await self.workflow_runner.run(
+            session,
+            active_route,
+            tool_requests,
+            limits=limits,
+        )
 
     def execute(
         self,
         session: SessionState,
         route: RouteResult | None = None,
         tool_requests: list[ToolRequest] | None = None,
+        *,
+        execution_mode: str = "multi-agent",
+        limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
-        active_route = route or self.route(session)
-        return self.executor.execute_sync(session, active_route, tool_requests)
+        return asyncio.run(
+            self.execute_async(
+                session,
+                route,
+                tool_requests,
+                execution_mode=execution_mode,
+                limits=limits,
+            )
+        )
