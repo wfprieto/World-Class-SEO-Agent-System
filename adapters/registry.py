@@ -16,6 +16,7 @@ from adapters.log_parser import LogParserAdapter
 from adapters.pagespeed import PageSpeedPayloadAdapter
 from adapters.rank_tracking import RankTrackingCSVAdapter
 from adapters.redirect_chain import RedirectChainAdapter
+from adapters.rendered_page import RenderedPageAdapter
 from adapters.robots_txt import RobotsTxtAdapter
 from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
 from adapters.schema_validation import SchemaValidationAdapter
@@ -44,6 +45,7 @@ def default_adapters() -> dict[str, object]:
         "rank_tracking": RankTrackingCSVAdapter(),
         "rank_tracking_csv": RankTrackingCSVAdapter(),
         "redirect_chain": RedirectChainAdapter(),
+        "rendered_page": RenderedPageAdapter(),
         "robots_txt": RobotsTxtAdapter(),
         "schema_validation": SchemaValidationAdapter(),
         "sitemap_validator": SitemapValidatorAdapter(),

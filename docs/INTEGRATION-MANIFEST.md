@@ -33,6 +33,38 @@ This records the capabilities added in v1.5.0 and how they are wired into the sy
 
 Green locally and in CI (`.github/workflows/validate.yml`): repository validator, schema-example validation, and the full pytest suite. Run locally with `scripts/validate-repository.ps1`, `python scripts/validate_schema_examples.py`, and `pytest -q`.
 
+## Batch 2 (v1.6.0) — staged, not released
+
+| Capability | Disposition | Where it lives |
+|---|---|---|
+| FLOW prompt library | Integrated as written | `skills/seo-flow-skill.md` (skill `flow-prompt-run`); stage files in `skills/flow-prompts/` are references, not separate skills |
+| Rendered-page adapter | Integrated with narrow changes | `adapters/rendered_page.py`, registered as `rendered_page`; returns `AdapterResult`; Playwright optional |
+| SERP-overlap clustering | Integrated as written | `scripts/serp_cluster.py` + `skills/seo-cluster-skill.md` (skill `serp-overlap-cluster`) |
+| Report generator | Integrated with narrow changes | `scripts/seo_pdf_report.py`, consumes the canonical agent-output shape; HTML fallback when WeasyPrint is absent |
+| MCP extension registry | Integrated with narrow changes | `adapters/mcp_extensions.py` is the machine-readable source; `docs/mcp-server-mapping.md` defers to it |
+| Drift monitoring | **Rejected as a separate system; merged** | `adapters/page_drift.py` layers page-state drift on the existing evidence store (`metric_group = "page_state"`). The proposed standalone `drift_store.py` SQLite database was not added, because a second database would create a competing source of truth |
+
+One SSRF policy: `adapters/url_safety.py` is the single canonical outbound URL validator.
+`adapters/google_pagespeed_live.py` delegates to it, so the kit no longer carries two
+implementations. `.seo-cache/` and `*.db` are git-ignored; the evidence database is never committed.
+
+Optional dependencies (none required): `playwright` for live rendering, `weasyprint` and
+`matplotlib` for PDF output. Absent any of them, the kit still runs credential-free and the
+adapters report the missing evidence honestly rather than claiming it. Both optional paths are
+dependency-injected (`render_fn`, `pdf_renderer`), so the success branches are tested without a live
+browser or a native PDF runtime; `ReportResult.pdf_verified` is true only when a real PDF file exists.
+
+Evidence integrity: the canonical store is tamper-evident. `EvidenceStore._migrate_schema()` backfills
+digests only for legacy rows that lack them and never rewrites a row that already carries both digests, so
+tampered payloads and altered protected metadata are detected on read and by `integrity_check()`. Deliberate
+digest rewriting lives in the separate `EvidenceStore.repair_digests(confirm=True)`, which is never invoked
+during initialization. `adapters/page_drift.verify_untampered()` is retained as defence in depth: it checks
+stored digests on a raw connection before the store opens, so a drift verdict is never produced from evidence
+that cannot be trusted.
+
+Generated artifacts (reports, cluster maps) default to `outputs/`, which is git-ignored, so they cannot
+enter source control.
+
 ## Accuracy note
 
 The knowledge files keep the system's evidence hierarchy: facts are labeled and time-sensitive claims are marked for re-verification. `knowledge/google-algorithm-updates.json` was independently re-verified against Google-owned sources on 2026-07-10 and is current through the June 24-26 2026 spam update.

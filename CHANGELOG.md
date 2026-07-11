@@ -8,6 +8,51 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [1.6.0] - 2026-07-10
+
+### Added
+
+- `adapters/url_safety.py`: single canonical outbound URL-safety policy (SSRF, credentials, ports, non-global addresses).
+- `adapters/rendered_page.py`: optional Playwright render adapter returning `AdapterResult`, with SPA detection, subresource guarding, accessibility-tree capture, and truthful raw-fetch fallback.
+- `adapters/page_drift.py`: page-state drift over the existing evidence store (`metric_group = "page_state"`), with SHA-256 fingerprints and severity classification.
+- `adapters/mcp_extensions.py`: declarative MCP extension registry with cost tier, allowed and forbidden operations, credential presence detection, and no provider calls.
+- `scripts/serp_cluster.py` and `skills/seo-cluster-skill.md`: deterministic SERP-overlap topic clustering (`serp-overlap-cluster`).
+- `scripts/seo_pdf_report.py`: branded A4 report from the canonical agent-output shape, with a styled HTML fallback.
+- `skills/seo-flow-skill.md` and `skills/flow-prompts/`: clean-room FLOW stage prompt library (`flow-prompt-run`).
+- `tests/test_batch2_integration.py` and `tests/test_batch2_hardening.py`: SSRF, optional-dependency
+  success paths via injection, SPA, BOM, deterministic clustering, concurrent and tampered evidence,
+  adversarial MCP governance, reporting-contract resilience, index integrity, and the rollback boundary.
+- `adapters/mcp_extensions.validate_registry()`: fails closed on tool-name shadowing, silent capability
+  expansion, destructive operations, missing cost gates, malformed credentials, description poisoning,
+  and unguarded SSRF-capable providers.
+- `adapters/page_drift.verify_untampered()`: verifies stored payload digests on a raw connection before
+  the evidence store opens, so a drift verdict is never produced from tampered evidence.
+- `scripts/seo_pdf_report.ReportResult`: states truthfully whether a PDF or the HTML fallback was produced.
+
+### Changed
+
+- `adapters/google_pagespeed_live.py` now delegates URL validation to `adapters/url_safety.py`, so the kit has one SSRF implementation instead of two. Behavior is unchanged.
+- `adapters/registry.py` registers `rendered_page`.
+- `docs/mcp-server-mapping.md` now defers to `adapters/mcp_extensions.py` as the machine-readable source.
+- `docs/evidence-cache-contract.md` records that page drift is a metric group in the one evidence store, not a second database.
+- `.gitignore` excludes `.seo-cache/` and `*.db` so the evidence database is never committed.
+
+### Fixed
+
+- **Evidence tamper-evidence restored.** `EvidenceStore._migrate_schema()` previously recomputed and
+  overwrote `payload_sha256` and `record_sha256` for every row on each open, so an externally tampered
+  payload or altered protected metadata was silently re-blessed and `integrity_check()` could never detect
+  it. Migration now backfills digests only for legacy rows that genuinely lack them, never rewrites a row
+  that already carries both digests, and raises `EvidenceIntegrityError` on a partial-digest mismatch
+  instead of repairing it. Reopening an untampered database preserves its hashes and is idempotent.
+- Deliberate digest rewriting moved to a separate, explicitly invoked `EvidenceStore.repair_digests(confirm=True)`.
+  It is never called during initialization and refuses to run without explicit confirmation, because rewriting a
+  digest over tampered content destroys tamper-evidence.
+
+### Rejected
+
+- The proposed standalone `drift_store.py` SQLite database. The canonical evidence store already provides SHA-256 digests and drift comparison; a second database would create a competing source of truth.
+
 ## [1.5.0] - 2026-07-10
 
 ### Added
