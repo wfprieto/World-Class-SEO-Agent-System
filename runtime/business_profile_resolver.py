@@ -9,7 +9,7 @@ requirement rather than silently selecting a specialist profile.
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Iterable
 
 
@@ -89,7 +89,18 @@ class BusinessProfileResolution:
     authority: str = "docs/plugin-packaging.md section 9"
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        """Return a JSON-schema-compatible mapping; tuples are emitted as arrays."""
+        return {
+            "profiles": list(self.profiles),
+            "route": self.route,
+            "confidence": self.confidence,
+            "scores": dict(self.scores),
+            "observed_signals": list(self.observed_signals),
+            "user_override": list(self.user_override),
+            "missing_evidence": list(self.missing_evidence),
+            "action": self.action,
+            "authority": self.authority,
+        }
 
 
 def _normalize_profile(value: str) -> str:
