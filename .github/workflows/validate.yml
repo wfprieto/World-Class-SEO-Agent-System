@@ -32,7 +32,16 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q .
 
-      - name: Validate repository, canonical skills, versions, and tracer
+      - name: Validate canonical skill convergence
+        run: python scripts/validate_canonical_skill_consistency.py
+
+      - name: Validate release-version consistency
+        run: python scripts/validate_release_version.py
+
+      - name: Run multi-agent tracer gate
+        run: python evaluation/tracer/run_tracer.py
+
+      - name: Validate legacy repository contracts
         shell: pwsh
         run: ./scripts/validate-repository.ps1
 
