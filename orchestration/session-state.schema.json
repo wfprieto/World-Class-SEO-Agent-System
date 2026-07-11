@@ -9,6 +9,7 @@
     "request",
     "mode",
     "business_context",
+    "business_profile_resolution",
     "evidence_inventory",
     "agent_outputs",
     "handoffs",
@@ -31,6 +32,41 @@
         "business_type": {"type": "string"},
         "markets": {"type": "array", "items": {"type": "string"}},
         "goals": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "business_profile_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiles",
+        "route",
+        "confidence",
+        "scores",
+        "observed_signals",
+        "user_override",
+        "missing_evidence",
+        "action",
+        "authority"
+      ],
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": {
+            "enum": ["generic", "ecommerce", "local-service", "saas", "publisher", "agency-b2b"]
+          },
+          "minItems": 1
+        },
+        "route": {"enum": ["SINGLE", "HYBRID", "UNCONFIRMED"]},
+        "confidence": {"enum": ["High", "Medium", "Low"]},
+        "scores": {
+          "type": "object",
+          "additionalProperties": {"type": "integer"}
+        },
+        "observed_signals": {"type": "array", "items": {"type": "string"}},
+        "user_override": {"type": "array", "items": {"type": "string"}},
+        "missing_evidence": {"type": "array", "items": {"type": "string"}},
+        "action": {"type": "string"},
+        "authority": {"type": "string"}
       }
     },
     "evidence_inventory": {
@@ -97,6 +133,17 @@
         "business_type": "SaaS",
         "markets": ["United States", "Canada"],
         "goals": ["Increase qualified organic demos", "Improve AI citation readiness"]
+      },
+      "business_profile_resolution": {
+        "profiles": ["saas"],
+        "route": "SINGLE",
+        "confidence": "High",
+        "scores": {"saas": 0},
+        "observed_signals": [],
+        "user_override": ["saas"],
+        "missing_evidence": [],
+        "action": "run_declared_profile",
+        "authority": "docs/plugin-packaging.md section 9"
       },
       "evidence_inventory": [
         {
