@@ -15,7 +15,7 @@ from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.schema_registry import SchemaRegistry
 from runtime.state import Handoff, SessionState
 from runtime.tools import ToolRequest
-from runtime.workflow_graph import WorkflowGraph, WorkflowNode, build_workflow_graph
+from runtime.workflow_graph import WorkflowNode, build_workflow_graph
 
 
 class WorkflowRunner:
@@ -44,7 +44,8 @@ class WorkflowRunner:
         tools = await self.executor.tool_dispatcher.dispatch_many(tool_requests or [])
         tool_results = [tool.to_dict() for tool in tools]
         required_tool_failures = [
-            tool for tool in tools
+            tool
+            for tool in tools
             if tool.required and tool.evidence_state in {"BLOCKED", "INVALID", "MISSING"}
         ]
         for tool in required_tool_failures:
@@ -57,7 +58,10 @@ class WorkflowRunner:
         errors: dict[str, list[str]] = {}
         semaphore = asyncio.Semaphore(active_limits.max_parallel_agents)
 
-        async def run_node(node: WorkflowNode) -> None:
+        async def run_node(
+            node: WorkflowNode,
+            shared_outputs: list[dict[str, Any]],
+        ) -> None:
             blocked_dependencies = [
                 dependency
                 for dependency in node.depends_on
@@ -68,12 +72,7 @@ class WorkflowRunner:
                 errors[node.id] = [
                     "Blocked by incomplete dependencies: " + ", ".join(blocked_dependencies)
                 ]
-                session.add_event(
-                    node.id,
-                    node.agent,
-                    "BLOCKED",
-                    errors[node.id][0],
-                )
+                session.add_event(node.id, node.agent, "BLOCKED", errors[node.id][0])
                 return
 
             try:
@@ -95,7 +94,7 @@ class WorkflowRunner:
                     agent_name=node.agent,
                     workflow_path=route.workflow,
                     tool_results=tool_results,
-                    prior_outputs=dependency_outputs,
+                    prior_outputs=shared_outputs,
                     budget=budget,
                     role=node.role,
                 )
@@ -116,7 +115,11 @@ class WorkflowRunner:
             session.add_event(node.id, node.agent, state, "; ".join(result.errors[:3]))
 
         for level in graph.levels():
-            await asyncio.gather(*(run_node(node) for node in level))
+            # Every node in a level sees the same completed-state snapshot. This avoids
+            # nondeterministic same-level leakage while giving downstream agents all prior
+            # validated specialist work, not only the immediately preceding handoff.
+            shared_snapshot = list(outputs_by_node.values())
+            await asyncio.gather(*(run_node(node, shared_snapshot) for node in level))
 
         registry = FindingRegistry()
         completed_outputs = [
@@ -130,6 +133,40 @@ class WorkflowRunner:
         registry.accept_all_without_conflict(conflicts)
         normalized_findings = registry.records()
         decisions = build_decisions(conflicts, normalized_findings)
+
+        scrum_completed = any(
+            output.get("agent") == "SEO Scrummaster Agent"
+            for output in completed_outputs
+        )
+        if scrum_completed and not decisions:
+            decisions.append(
+                {
+                    "decision_id": f"{session.session_id}-decision-governance-001",
+                    "proposal": "Advance the validated findings to strategy and reporting.",
+                    "decision": "Defer" if any(state == "SYNTHETIC" for state in states.values()) else "Approve",
+                    "evidence": [
+                        str(item.get("id"))
+                        for item in normalized_findings
+                        if item.get("id")
+                    ],
+                    "counterarguments": [
+                        "Synthetic or incomplete evidence cannot authorize implementation."
+                        if any(state == "SYNTHETIC" for state in states.values())
+                        else "No unresolved material conflict was detected."
+                    ],
+                    "risk": "Medium",
+                    "owner": "SEO Scrummaster Agent",
+                    "conditions": [
+                        "Human approval remains required for every gated implementation.",
+                        "Replace synthetic evidence before client-facing conclusions."
+                        if any(state == "SYNTHETIC" for state in states.values())
+                        else "Preserve evidence, owner, acceptance criteria, and rollback controls.",
+                    ],
+                    "verification": "Validate the complete session state and re-run affected specialists when evidence changes.",
+                    "rollback": "Do not implement recommendations that lack verified evidence or approval.",
+                }
+            )
+
         for decision in decisions:
             self.schemas.validate("decision-record", decision)
         session.decisions.extend(decisions)
@@ -144,9 +181,10 @@ class WorkflowRunner:
             for node in graph.nodes
             if not node.required and states.get(node.id) not in {"COMPLETE", "SYNTHETIC"}
         ]
+        has_synthetic = any(state == "SYNTHETIC" for state in states.values())
         if required_failures:
             workflow_status = "FAILED"
-        elif optional_failures or required_tool_failures or conflicts:
+        elif optional_failures or required_tool_failures or conflicts or has_synthetic:
             workflow_status = "PARTIAL"
         else:
             workflow_status = "COMPLETE"
@@ -165,6 +203,9 @@ class WorkflowRunner:
         final_output = outputs_by_node.get(final_node) if final_node else None
         consumed = sum(1 for handoff in session.handoffs if handoff.status == "CONSUMED")
 
+        session_payload = session.to_dict()
+        self.schemas.validate("session-state", session_payload)
+
         return {
             "execution_mode": "multi-agent",
             "route": route.to_dict(),
@@ -182,7 +223,7 @@ class WorkflowRunner:
             "handoffs_consumed": consumed,
             "decisions": decisions,
             "budget": budget.snapshot(),
-            "session": session.to_dict(),
+            "session": session_payload,
         }
 
     @staticmethod
@@ -200,9 +241,7 @@ class WorkflowRunner:
             ]
             handoffs.append(
                 Handoff(
-                    handoff_id=(
-                        f"{session.session_id}-{node.id}-handoff-{index:02d}"
-                    ),
+                    handoff_id=f"{session.session_id}-{node.id}-handoff-{index:02d}",
                     from_agent=str(output.get("agent", "Unknown Agent")),
                     to_agent=node.agent,
                     reason=f"Dependency output required by workflow node {node.id}.",
