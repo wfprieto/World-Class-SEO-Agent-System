@@ -77,7 +77,7 @@
         }
       ],
       "expected_conflicts": 1,
-      "expected_unique_findings": 2
+      "expected_unique_findings": 1
     },
     {
       "id": "duplicate-canonical-root-cause",
