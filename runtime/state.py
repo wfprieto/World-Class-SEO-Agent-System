@@ -1,8 +1,8 @@
-"""Shared state models for SEO agent workflows."""
+"""Shared state models for coordinated SEO agent workflows."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -37,6 +37,27 @@ class Handoff:
     risk_level: str
     acceptance_criteria: list[str]
     due_trigger: str
+    status: str = "CREATED"
+    receiving_output_id: str = ""
+    consumed_at: str = ""
+
+    def consume(self, output_id: str) -> None:
+        self.status = "CONSUMED"
+        self.receiving_output_id = output_id
+        self.consumed_at = datetime.now(timezone.utc).isoformat()
+
+    def block(self) -> None:
+        self.status = "BLOCKED"
+
+
+@dataclass
+class WorkflowEvent:
+    event_id: str
+    node_id: str
+    agent: str
+    state: str
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    detail: str = ""
 
 
 @dataclass
@@ -50,6 +71,10 @@ class SessionState:
     handoffs: list[Handoff] = field(default_factory=list)
     decisions: list[dict[str, Any]] = field(default_factory=list)
     open_risks: list[str] = field(default_factory=list)
+    workflow_status: str = "PLANNED"
+    workflow_events: list[WorkflowEvent] = field(default_factory=list)
+    execution_limits: dict[str, Any] = field(default_factory=dict)
+    budget_usage: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @classmethod
@@ -74,8 +99,18 @@ class SessionState:
             ),
         )
 
+    def add_event(self, node_id: str, agent: str, state: str, detail: str = "") -> None:
+        self.workflow_events.append(
+            WorkflowEvent(
+                event_id=f"{self.session_id}-event-{len(self.workflow_events) + 1:04d}",
+                node_id=node_id,
+                agent=agent,
+                state=state,
+                detail=detail,
+            )
+        )
+
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data.pop("created_at", None)
         return data
-
