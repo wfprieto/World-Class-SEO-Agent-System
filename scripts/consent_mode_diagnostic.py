@@ -1,26 +1,7 @@
-"""DMA / Consent Mode v2 diagnostic (configuration analysis only).
+"""Consent Mode v2 configuration diagnostic (supplied evidence only).
 
-Analyses a SUPPLIED tag/consent configuration description. It performs no network call,
-loads no tag, reads no live CMP, and never emits or modifies a consent command. It cannot
-grant, deny, bypass, or manipulate consent, and it never claims legal compliance.
-
-Primary sources (checked 2026-07-11):
-- Consent mode setup: https://developers.google.com/tag-platform/security/guides/consent
-- Consent mode debugging (Tag Assistant): https://developers.google.com/tag-platform/security/guides/consent-debugging
-- Google Ads consent mode reference: https://support.google.com/google-ads/answer/13802165
-
-Established behaviour used by this diagnostic:
-- Four signals: ad_storage, analytics_storage, ad_user_data, ad_personalization.
-- `default` must be set before any Google tag / GTM container loads and reads consent.
-- `update` reflects the user's choice and may fire multiple times; it must follow `default`.
-- `wait_for_update` is a one-time per-page window, not a rolling timer.
-- Region and subregion defaults: the more specific region wins (for example US-CA over US).
-- Advanced mode loads tags before the banner and sends cookieless pings; Basic mode blocks
-  tags until consent and relies on modelled measurement.
-
-Legal note: technical configuration is not legal compliance. Any DMA, GDPR, ePrivacy or
-consent-validity question requires qualified counsel. This tool separates observed
-configuration, provider documentation, technical analysis, and legal uncertainty.
+This module performs no network call, emits no consent command, changes no tag, and makes
+no legal-compliance determination. Live testing remains separately authorized and scoped.
 """
 
 from __future__ import annotations
@@ -28,233 +9,272 @@ from __future__ import annotations
 from typing import Any
 
 SIGNALS = ("ad_storage", "analytics_storage", "ad_user_data", "ad_personalization")
-CONSENT_REQUIRED_REGIONS = {"EEA", "EU", "UK", "CH"}
 _VALID_STATES = {"granted", "denied"}
-_REDACT = ("tc_string", "user_id", "client_id", "gclid", "email", "consent_string")
+_VALID_MODES = {"basic", "advanced"}
+_REDACT_KEYS = {
+    "tc_string", "user_id", "client_id", "gclid", "email", "consent_string",
+    "access_token", "refresh_token", "api_key", "authorization", "cookie",
+}
+# ISO country codes plus compatibility aliases used by supplied audit fixtures.
+_CONSENT_REQUIRED = {
+    "AT", "BE", "BG", "HR", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR",
+    "GR", "HU", "IE", "IS", "IT", "LI", "LT", "LU", "LV", "MT", "NL", "NO",
+    "PL", "PT", "RO", "SE", "SI", "SK", "GB", "UK", "CH", "EEA", "EU",
+}
 
 LEGAL_NOTE = (
-    "Technical configuration is not legal compliance. Consent validity, DMA and GDPR "
-    "obligations require qualified counsel."
+    "Technical configuration is not legal compliance. Consent validity, DMA, GDPR, "
+    "ePrivacy, and regional obligations require qualified counsel."
 )
 
 
-def _finding(sev: str, area: str, finding: str, correction: str, validation: str,
-             privacy: str = "none") -> dict[str, str]:
+def _finding(
+    severity: str,
+    area: str,
+    finding: str,
+    correction: str,
+    validation: str,
+    *,
+    privacy: str = "none",
+    classification: str = "observed_defect",
+) -> dict[str, str]:
     return {
-        "severity": sev,
+        "severity": severity,
         "area": area,
         "finding": finding,
         "technical_correction": correction,
         "validation_method": validation,
         "privacy_impact": privacy,
         "evidence": "observed configuration (supplied)",
+        "classification": classification,
     }
 
 
-def _redact(config: dict[str, Any]) -> dict[str, Any]:
-    """Never echo consent strings, identifiers, or user data back into the report."""
-    return {k: v for k, v in config.items() if k not in _REDACT}
+def _redact(value: Any, *, key: str = "") -> Any:
+    normalized = key.lower().replace("-", "_")
+    if normalized in _REDACT_KEYS or any(marker in normalized for marker in ("password", "secret", "private_key")):
+        return "[REDACTED]"
+    if isinstance(value, dict):
+        return {str(item_key): _redact(item_value, key=str(item_key)) for item_key, item_value in value.items()}
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    if isinstance(value, tuple):
+        return [_redact(item) for item in value]
+    return value
+
+
+def _region_parts(region: str) -> tuple[str, str | None]:
+    normalized = region.upper().strip()
+    if "-" in normalized:
+        country, subdivision = normalized.split("-", 1)
+        return country, subdivision
+    return normalized, None
+
+
+def _requires_consent(region: str) -> bool:
+    country, _ = _region_parts(region)
+    return country in _CONSENT_REQUIRED
+
+
+def _resolve_region_defaults(
+    region: str,
+    defaults: dict[str, str],
+    overrides: dict[str, Any],
+) -> dict[str, Any]:
+    normalized = region.upper().strip()
+    country, _ = _region_parts(normalized)
+    resolved = dict(defaults)
+    applied: list[str] = []
+    for candidate in (country, normalized):
+        row = overrides.get(candidate)
+        if isinstance(row, dict):
+            resolved.update({str(key): str(value) for key, value in row.items()})
+            applied.append(candidate)
+    return {
+        "requested_region": normalized or "unknown",
+        "applied_overrides": applied,
+        "resolved_defaults": resolved,
+        "note": "Country defaults apply before more-specific subdivision defaults; the most specific match wins.",
+        **{str(key): value for key, value in overrides.items()},
+    }
 
 
 def diagnose(config: dict[str, Any]) -> dict[str, Any]:
-    """Diagnose a supplied consent configuration. Never grants or bypasses consent."""
     if not isinstance(config, dict):
         raise TypeError("config must be a dict describing the observed configuration")
 
-    # Live testing against a real CMP, tag, or ad account is a separate authorisation.
     if config.get("live_test_requested") and not config.get("live_test_authorized"):
         return {
             "status": "BLOCKED",
             "reason": (
-                "Live consent testing was requested without explicit written authorisation. "
-                "Live tests can create advertising or analytics writes and touch production "
-                "tags. Supply an authorisation and scope, or run against fixtures."
+                "Live consent testing was requested without explicit written authorization. "
+                "Use fixtures or supply the approved environment, operations, and write boundaries."
             ),
             "findings": [],
             "legal_review_required": True,
-            "legal_note": LEGAL_NOTE + " Consult qualified counsel.",
-            "evidence_inventory": {"live_verification": "Blocked (unauthorised)"},
+            "legal_note": LEGAL_NOTE,
+            "evidence_inventory": {"live_verification": "Blocked (unauthorized)"},
         }
 
-    region = str(config.get("region", "")).upper()
-    consent_region = any(region.startswith(r) for r in CONSENT_REQUIRED_REGIONS)
-    mode = str(config.get("mode", "advanced")).lower()
-    defaults: dict[str, str] = dict(config.get("defaults") or {})
+    region = str(config.get("region", "")).upper().strip()
+    consent_region = _requires_consent(region)
+    mode = str(config.get("mode", "advanced")).lower().strip()
+    defaults = {str(key): str(value) for key, value in dict(config.get("defaults") or {}).items()}
+    overrides = config.get("region_overrides") or {}
+    if not isinstance(overrides, dict):
+        overrides = {}
+    region_resolution = _resolve_region_defaults(region, defaults, overrides)
+    effective_defaults = dict(region_resolution["resolved_defaults"])
     findings: list[dict[str, str]] = []
 
-    # --- CMP presence -------------------------------------------------------
+    if mode not in _VALID_MODES:
+        findings.append(_finding(
+            "high", "mode", f"Unknown Consent Mode implementation mode: {mode or 'missing'}.",
+            "Declare either basic or advanced mode and verify the actual tag-loading behavior.",
+            "Tag Assistant and network evidence confirm whether tags are blocked or send cookieless pings.",
+        ))
+        mode = "unknown"
+
     if not config.get("cmp"):
         findings.append(_finding(
-            "critical", "cmp",
-            "No CMP is recorded. Consent state cannot be collected or proven.",
-            "Install a CMP that sets the consent default before tags load. Do not grant consent "
-            "on the user's behalf.",
-            "Tag Assistant: confirm a default command precedes tag initialisation.",
+            "critical", "cmp", "No CMP is recorded; consent collection and proof are unavailable.",
+            "Use an approved CMP or document the authorized consent collection mechanism. Never grant consent on the user's behalf.",
+            "Tag Assistant confirms a default before tag initialization and an update after user choice.",
             privacy="high",
         ))
 
-    # --- Default present and ordered before tags ---------------------------
     if not config.get("default_set"):
         findings.append(_finding(
-            "critical", "ordering",
-            "No consent default command is set. Tags may read consent before a default exists.",
-            "Set a consent default for all four signals before any Google tag or GTM container loads.",
-            "Tag Assistant: check the default command appears before the first tag read.",
+            "critical", "ordering", "No consent default command is recorded.",
+            "Set all four consent signals before any Google tag or GTM container reads consent.",
+            "Tag Assistant shows the default before the first consent read.",
         ))
     elif not config.get("default_before_tags"):
         findings.append(_finding(
-            "critical", "ordering",
-            "A tag reads consent before the default is set (default is not before tags).",
-            "Move the consent default above the Google tag / GTM snippet so it runs first.",
-            "Tag Assistant: 'a tag read consent state before a default was set' must not appear.",
+            "critical", "ordering", "A tag reads consent before the default is set.",
+            "Move the default before the Google tag or GTM snippet.",
+            "The Tag Assistant ordering warning no longer appears.",
         ))
 
-    # --- Update present and ordered after default --------------------------
-    if not config.get("update_present"):
+    choice_observed = bool(config.get("user_choice_observed", config.get("update_present")))
+    if choice_observed and not config.get("update_present"):
         findings.append(_finding(
-            "high", "ordering",
-            "No consent update command is recorded; the user's choice is never propagated.",
-            "Call the consent update command when the user makes or changes a choice.",
-            "Tag Assistant: observe an update after interacting with the banner.",
+            "high", "ordering", "A user choice was observed but no consent update was recorded.",
+            "Send the consent update when the user makes or changes a choice.",
+            "Tag Assistant observes the update on the page where the choice occurs.",
         ))
-    elif not config.get("update_after_default"):
+    elif config.get("update_present") and not config.get("update_after_default"):
         findings.append(_finding(
-            "critical", "ordering",
-            "Consent update fires before the default command. Command order is invalid.",
-            "Emit the default first, then the update on user choice. Update may fire repeatedly.",
-            "Tag Assistant: confirm default precedes update within the same page load.",
+            "critical", "ordering", "Consent update fires before the default command.",
+            "Emit the default first and update only from the user's choice.",
+            "Tag Assistant confirms default precedes every update.",
         ))
 
-    # --- Four signals present ----------------------------------------------
     for signal in SIGNALS:
-        if signal not in defaults:
-            sev = "critical" if signal in ("ad_user_data", "ad_personalization") else "high"
+        if signal not in effective_defaults:
+            severity = "critical" if signal in {"ad_user_data", "ad_personalization"} else "high"
             findings.append(_finding(
-                sev, "signals",
-                f"{signal} is not set in the consent default.",
-                f"Set {signal} explicitly in the default command. Consent Mode v2 requires all four "
-                "signals: ad_storage, analytics_storage, ad_user_data, ad_personalization.",
-                "Tag Assistant: all four signals appear in the default command.",
+                severity, "signals", f"{signal} is not set in the resolved consent default.",
+                f"Set {signal} explicitly; all four Consent Mode v2 signals are required.",
+                "Tag Assistant shows all four signals in the resolved default.",
             ))
 
-    # --- Region-appropriate defaults ---------------------------------------
-    for signal, state in defaults.items():
-        state_l = str(state).lower()
-        if state_l not in _VALID_STATES:
-            findings.append(_finding(
-                "high", "state",
-                f"{signal} default is '{state}', which is not a valid consent state; treated as denied.",
-                "Use only 'granted' or 'denied' in the default. An unknown or stale value must never "
-                "be treated as granted.",
-                "Tag Assistant: inspect the resolved consent state.",
-            ))
-        elif consent_region and state_l == "granted":
-            findings.append(_finding(
-                "critical", "state",
-                f"{signal} defaults to granted in a consent-required region ({region}).",
-                "Default all four signals to denied in consent-required regions and only change state "
-                "from the user's own choice via the update command.",
-                "Tag Assistant: default shows denied before interaction.",
-                privacy="high",
-            ))
-
-    # --- Consent state matrix ----------------------------------------------
     matrix: dict[str, dict[str, str]] = {}
     for signal in SIGNALS:
-        raw = str(defaults.get(signal, "missing")).lower()
+        raw = str(effective_defaults.get(signal, "missing")).lower()
         treated = raw if raw in _VALID_STATES else "denied"
         matrix[signal] = {
             "declared_default": raw,
             "treated_as": treated,
-            "note": "Missing, unknown or stale states are treated as denied, never as granted.",
+            "note": "Missing, unknown, or stale values are treated as denied, never granted.",
         }
+        if raw not in _VALID_STATES:
+            findings.append(_finding(
+                "high", "state", f"{signal} has invalid default state {raw!r}; it is treated as denied.",
+                "Use only granted or denied and derive changes from the user's choice.",
+                "Tag Assistant shows a valid resolved state.",
+            ))
+        elif consent_region and raw == "granted":
+            findings.append(_finding(
+                "critical", "state", f"{signal} defaults to granted for consent-required region {region}.",
+                "Default to denied and change state only from the user's choice.",
+                "Before interaction, Tag Assistant shows denied.",
+                privacy="high",
+            ))
 
-    # --- wait_for_update ----------------------------------------------------
     wait = config.get("wait_for_update_ms")
-    if wait is None:
+    if config.get("async_cmp") and wait is None:
         findings.append(_finding(
-            "medium", "timing",
-            "wait_for_update is not set; tags may send data before the user's choice arrives.",
-            "Set wait_for_update in the default command. It is a one-time window per page load, "
-            "not a rolling timer.",
-            "Tag Assistant: confirm tags hold until update or the window elapses.",
+            "medium", "timing", "The asynchronous CMP has no wait_for_update window.",
+            "Set a bounded one-time wait window only when needed for asynchronous CMP loading.",
+            "Tag Assistant confirms the update arrives before the window expires.",
+        ))
+    elif wait is not None and (not isinstance(wait, int) or wait < 0):
+        findings.append(_finding(
+            "medium", "timing", "wait_for_update is not a non-negative integer.",
+            "Use a bounded millisecond integer and verify its effect on the page load.",
+            "Tag Assistant confirms the intended one-time wait behavior.",
         ))
 
-    # --- Duplicates, SPA, environments -------------------------------------
     if config.get("duplicate_tags"):
         findings.append(_finding(
-            "high", "initialisation",
-            "Duplicate tag initialisation detected; consent state may race between containers.",
-            "Remove the duplicate Google tag / GTM container. One initialisation per page.",
-            "Tag Assistant: only one container initialises.",
+            "high", "initialisation", "Duplicate tag initialization is observed and may race consent state.",
+            "Remove the duplicate initialization and preserve one controlled container path.",
+            "Tag Assistant shows one initialization path.",
         ))
     if config.get("spa"):
+        defect = config.get("spa_state_lost") is True
         findings.append(_finding(
-            "medium", "spa",
-            "SPA detected: consent state must persist and update on client-side route changes.",
-            "Re-assert consent state on route change and ensure the update is captured on the page "
-            "where the choice occurs, before any transition.",
-            "Tag Assistant: navigate a client-side route and confirm consent persists.",
+            "high" if defect else "medium",
+            "spa",
+            "SPA navigation loses or misapplies consent state." if defect else "SPA consent persistence has not been verified across route changes.",
+            "Persist and re-apply the resolved state without granting consent or replaying stale choices.",
+            "Navigate client-side routes and confirm the resolved state remains correct.",
+            classification="observed_defect" if defect else "verification_required",
         ))
     if config.get("server_side_tagging"):
+        defect = config.get("server_consent_not_enforced") is True
         findings.append(_finding(
-            "high", "server-side",
-            "Server-side tagging is present: consent state must be forwarded to the server "
-            "container, or the server may send data the user never consented to.",
-            "Propagate the consent state to the server container and enforce it there. A denied "
-            "client-side state must not become a granted server-side send.",
-            "Inspect the server container: confirm consent is read and enforced per request.",
+            "critical" if defect else "high",
+            "server-side",
+            "Server-side tagging sends data without enforcing the client consent state." if defect else "Server-side consent forwarding and enforcement require verification.",
+            "Forward and enforce consent per request; denied client state must not become a granted server send.",
+            "Inspect the server container and request evidence for each consent state.",
             privacy="high",
+            classification="observed_defect" if defect else "verification_required",
         ))
     if config.get("cross_domain"):
+        defect = config.get("cross_domain_state_lost") is True
         findings.append(_finding(
-            "high", "cross-domain",
-            "Cross-domain journey detected: consent state does not automatically carry across "
-            "domains and may silently reset.",
-            "Propagate consent across the linked domains, or re-collect it on the second domain. "
-            "Never assume consent granted on domain A applies to domain B.",
-            "Traverse the cross-domain path and confirm the resolved consent state on arrival.",
+            "high",
+            "cross-domain",
+            "Consent state resets incorrectly across domains." if defect else "Cross-domain consent behavior requires scoped verification.",
+            "Use an approved propagation or re-collection design; never assume domain A consent applies to domain B.",
+            "Traverse the approved cross-domain path and inspect the resolved state on arrival.",
             privacy="high",
+            classification="observed_defect" if defect else "verification_required",
         ))
     if config.get("production_config_differs"):
         findings.append(_finding(
-            "high", "environment",
-            "Preview and Production consent configuration differ; Preview evidence is not proof of "
-            "Production behaviour.",
-            "Reconcile the Preview and Production containers and re-verify in Production.",
-            "Compare published container versions across environments.",
+            "high", "environment", "Preview and Production consent configurations differ.",
+            "Reconcile the published container and verify the production version.",
+            "Compare published container versions and production Tag Assistant evidence.",
         ))
 
-    # --- Region resolution --------------------------------------------------
-    overrides = config.get("region_overrides") or {}
-    region_resolution: dict[str, Any] = dict(overrides)
-    region_resolution["note"] = (
-        "Where a region and a subregion both set a default, the more specific region wins "
-        "(for example US-CA overrides US)."
-    )
+    mode_behavior = {
+        "basic": "Basic: tags are blocked until consent; non-consented measurement is modeled rather than directly observed.",
+        "advanced": "Advanced: tags may load before interaction and send cookieless pings until consent is granted.",
+        "unknown": "Unknown mode: no behavior claim is made until observed.",
+    }[mode]
 
-    # --- Mode behaviour -----------------------------------------------------
-    if mode == "basic":
-        mode_behavior = (
-            "Basic: tags are blocked until the user consents. No pings are sent before consent, "
-            "so non-consented behaviour relies on modeled measurement."
-        )
-    else:
-        mode_behavior = (
-            "Advanced: tags load before the banner and send cookieless pings without identifiers "
-            "until consent is granted."
-        )
-
-    severities = [f["severity"] for f in findings]
-    if not config.get("cmp") and "critical" in severities:
+    severities = [item["severity"] for item in findings if item["classification"] == "observed_defect"]
+    if not config.get("cmp"):
         status = "BLOCKED"
     elif "critical" in severities:
         status = "FAIL"
     elif findings:
         status = "PARTIAL"
     else:
-        status = "PASS"
-    if not consent_region and not findings:
         status = "PASS"
 
     return {
@@ -278,26 +298,19 @@ def diagnose(config: dict[str, Any]) -> dict[str, Any]:
         "findings": findings,
         "owner": "Analytics/Tagging owner with Privacy owner",
         "acceptance_criteria": [
-            "All four signals set in the default command.",
-            "Default precedes any tag read; update follows default and reflects the user's choice.",
-            "Consent-required regions default to denied.",
-            "No duplicate initialisation; SPA route changes preserve consent state.",
+            "All four signals are set in the resolved default.",
+            "Default precedes any tag read and updates reflect only the user's choice.",
+            "Consent-required regions resolve to denied before interaction.",
+            "SPA, server-side, cross-domain, and environment behavior is verified where applicable.",
         ],
-        "modeled_measurement_note": (
-            "Modelled conversions and behavioural modelling are estimates produced by Google, not "
-            "observed user data. Do not report modelled figures as measured."
-        ),
-        "rollback": (
-            "Revert to the previously published container version and re-verify with Tag Assistant. "
-            "Do not change live tags or consent settings without explicit authorisation."
-        ),
+        "modeled_measurement_note": "Modeled conversions and behavioral modeling are estimates, not observed user data.",
+        "rollback": "Revert to the previously published container version and re-verify. Do not change live tags without authorization.",
         "legal_review_required": True,
-        "legal_note": LEGAL_NOTE + " This diagnostic does not constitute legal advice and does not "
-                                   "assert compliance with the DMA or any other law; consult qualified counsel.",
+        "legal_note": LEGAL_NOTE,
         "guardrails": [
             "Consent is never granted automatically by this tool.",
             "The CMP is never bypassed or manipulated.",
-            "No consent strings, identifiers, or user data are recorded in this report.",
+            "No consent strings, identifiers, or user data are retained in this report.",
             "No live tag or production change is made.",
         ],
     }
