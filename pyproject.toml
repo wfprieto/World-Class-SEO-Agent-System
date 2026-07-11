@@ -1,6 +1,6 @@
 [project]
 name = "world-class-seo-agent-system"
-version = "1.4.2"
+version = "1.7.0"
 description = "Model-agnostic SEO agent operating system with runtime contracts, adapters, schemas, workflows, and validation tests."
 requires-python = ">=3.10"
 dependencies = [
@@ -11,6 +11,7 @@ dependencies = [
 dev = [
   "jsonschema>=4.22.0",
   "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
   "PyYAML>=6.0.0",
   "tenacity>=8.2.0"
 ]
@@ -18,3 +19,4 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+asyncio_mode = "auto"

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SEO Session State",
-  "description": "Shared state object for multi-agent SEO workflows.",
+  "description": "Shared state object for coordinated multi-agent SEO workflows.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,6 +9,7 @@
     "request",
     "mode",
     "business_context",
+    "business_profile_resolution",
     "evidence_inventory",
     "agent_outputs",
     "handoffs",
@@ -16,81 +17,111 @@
     "open_risks"
   ],
   "properties": {
-    "session_id": {
-      "type": "string",
-      "description": "Unique workflow/session identifier."
-    },
-    "request": {
-      "type": "string",
-      "description": "Original user or project request."
-    },
+    "session_id": {"type": "string"},
+    "request": {"type": "string"},
     "mode": {
       "type": "string",
-      "enum": ["Audit", "Implementation", "Strategy", "Monitoring", "Research", "Debate"],
-      "description": "Operating mode for the current run."
+      "enum": ["Audit", "Implementation", "Strategy", "Monitoring", "Research", "Debate"]
     },
     "business_context": {
       "type": "object",
-      "description": "Business and market context required to interpret SEO evidence and prioritize work.",
       "additionalProperties": false,
       "required": ["domain", "business_type", "markets", "goals"],
       "properties": {
-        "domain": {
-          "type": "string",
-          "description": "Primary site or property under review."
-        },
-        "business_type": {
-          "type": "string",
-          "description": "Business model or site type, such as SaaS, local service, ecommerce, publisher, marketplace, or enterprise."
-        },
-        "markets": {
+        "domain": {"type": "string"},
+        "business_type": {"type": "string"},
+        "markets": {"type": "array", "items": {"type": "string"}},
+        "goals": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "business_profile_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiles",
+        "route",
+        "confidence",
+        "scores",
+        "observed_signals",
+        "user_override",
+        "missing_evidence",
+        "action",
+        "authority"
+      ],
+      "properties": {
+        "profiles": {
           "type": "array",
-          "description": "Target countries, regions, languages, or market segments.",
-          "items": { "type": "string" }
+          "items": {
+            "enum": ["generic", "ecommerce", "local-service", "saas", "publisher", "agency-b2b"]
+          },
+          "minItems": 1
         },
-        "goals": {
-          "type": "array",
-          "description": "Business and SEO outcomes the workflow should optimize for.",
-          "items": { "type": "string" }
-        }
+        "route": {"enum": ["SINGLE", "HYBRID", "UNCONFIRMED"]},
+        "confidence": {"enum": ["High", "Medium", "Low"]},
+        "scores": {
+          "type": "object",
+          "additionalProperties": {"type": "integer"}
+        },
+        "observed_signals": {"type": "array", "items": {"type": "string"}},
+        "user_override": {"type": "array", "items": {"type": "string"}},
+        "missing_evidence": {"type": "array", "items": {"type": "string"}},
+        "action": {"type": "string"},
+        "authority": {"type": "string"}
       }
     },
     "evidence_inventory": {
       "type": "array",
-      "description": "All evidence artifacts collected during the workflow.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "source", "type", "status"],
         "properties": {
-          "id": { "type": "string" },
-          "source": { "type": "string" },
-          "type": { "type": "string" },
-          "status": { "enum": ["available", "missing", "partial", "stale"] },
-          "notes": { "type": "string" }
+          "id": {"type": "string"},
+          "source": {"type": "string"},
+          "type": {"type": "string"},
+          "status": {"enum": ["available", "missing", "partial", "stale", "invalid", "blocked"]},
+          "notes": {"type": "string"}
         }
       }
     },
     "agent_outputs": {
       "type": "array",
-      "description": "Agent outputs conforming to agent-output.schema.json.",
-      "items": { "type": "object" }
+      "description": "Every item must satisfy the canonical agent-output contract.",
+      "items": {"$ref": "../schemas/agent-output.schema.json"}
     },
     "handoffs": {
       "type": "array",
-      "description": "Agent handoffs conforming to handoff-payload.schema.json.",
-      "items": { "type": "object" }
+      "description": "Every handoff records creation and consumption state.",
+      "items": {"$ref": "../schemas/handoff-payload.schema.json"}
     },
     "decisions": {
       "type": "array",
       "description": "Scrummaster or strategist decision records.",
-      "items": { "type": "object" }
+      "items": {"$ref": "../schemas/decision-record.schema.json"}
     },
-    "open_risks": {
+    "open_risks": {"type": "array", "items": {"type": "string"}},
+    "workflow_status": {
+      "type": "string",
+      "enum": ["PLANNED", "RUNNING", "PARTIAL", "BLOCKED", "FAILED", "COMPLETE"]
+    },
+    "workflow_events": {
       "type": "array",
-      "description": "Open risks that must be resolved or accepted.",
-      "items": { "type": "string" }
-    }
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "node_id", "agent", "state", "timestamp", "detail"],
+        "properties": {
+          "event_id": {"type": "string"},
+          "node_id": {"type": "string"},
+          "agent": {"type": "string"},
+          "state": {"type": "string"},
+          "timestamp": {"type": "string"},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "execution_limits": {"type": "object"},
+    "budget_usage": {"type": "object"}
   },
   "examples": [
     {
@@ -103,6 +134,17 @@
         "markets": ["United States", "Canada"],
         "goals": ["Increase qualified organic demos", "Improve AI citation readiness"]
       },
+      "business_profile_resolution": {
+        "profiles": ["saas"],
+        "route": "SINGLE",
+        "confidence": "High",
+        "scores": {"saas": 0},
+        "observed_signals": [],
+        "user_override": ["saas"],
+        "missing_evidence": [],
+        "action": "run_declared_profile",
+        "authority": "docs/plugin-packaging.md section 9"
+      },
       "evidence_inventory": [
         {
           "id": "evidence-crawl-001",
@@ -110,19 +152,16 @@
           "type": "crawl_export",
           "status": "available",
           "notes": "Sample crawl of priority templates."
-        },
-        {
-          "id": "evidence-gsc-001",
-          "source": "Google Search Console",
-          "type": "first_party_data",
-          "status": "missing",
-          "notes": "Access not available for this run."
         }
       ],
       "agent_outputs": [],
       "handoffs": [],
       "decisions": [],
-      "open_risks": ["GSC unavailable; performance findings will be lower confidence."]
+      "open_risks": [],
+      "workflow_status": "PLANNED",
+      "workflow_events": [],
+      "execution_limits": {},
+      "budget_usage": {}
     }
   ]
 }

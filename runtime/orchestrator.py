@@ -1,20 +1,24 @@
-"""Minimal executable orchestrator for SEO agent sessions."""
+"""Executable orchestrator for coordinated SEO agent sessions."""
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
+from runtime.business_profile_resolver import resolve_business_profile
+from runtime.execution_limits import ExecutionLimits
 from runtime.executor import AgentExecutor
 from runtime.llm import LLMClient, build_llm_client
 from runtime.memory import MemoryStore
 from runtime.routing import RequestRouter, RouteResult
 from runtime.state import EvidenceItem, SessionState
 from runtime.tools import ToolDispatcher, ToolRequest
+from runtime.workflow_runner import WorkflowRunner
 
 
 class SEOOrchestrator:
-    """Runtime facade for routing, state creation, and artifact loading."""
+    """Runtime facade for routing, state, tools, and multi-agent workflow execution."""
 
     def __init__(
         self,
@@ -32,6 +36,7 @@ class SEOOrchestrator:
             tool_dispatcher=tool_dispatcher,
             memory=memory,
         )
+        self.workflow_runner = WorkflowRunner(repo_root, self.executor)
 
     def start_session(
         self,
@@ -41,6 +46,7 @@ class SEOOrchestrator:
         business_type: str = "unknown",
         markets: list[str] | None = None,
         goals: list[str] | None = None,
+        profile_signals: list[str] | None = None,
     ) -> SessionState:
         session = SessionState.create(
             request=request,
@@ -50,6 +56,26 @@ class SEOOrchestrator:
             markets=markets,
             goals=goals,
         )
+        profile = resolve_business_profile(
+            explicit_business_type=business_type,
+            signals=profile_signals or [],
+        )
+        session.business_profile_resolution = profile.to_dict()
+        if business_type.strip().lower() in {"", "unknown", "unconfirmed", "auto"} and profile.profiles != ("generic",):
+            session.business_context.business_type = " ".join(profile.profiles)
+        if profile_signals and profile.route == "UNCONFIRMED":
+            session.evidence_inventory.append(
+                EvidenceItem(
+                    id="business-profile-unconfirmed",
+                    source="business_profile_resolver",
+                    type="business_context",
+                    status="partial",
+                    notes="; ".join(profile.missing_evidence),
+                )
+            )
+            session.open_risks.append(
+                "Business profile evidence is low confidence; use the generic graph or obtain one material clarification."
+            )
         if not domain:
             session.evidence_inventory.append(
                 EvidenceItem(
@@ -65,11 +91,74 @@ class SEOOrchestrator:
 
     def route(self, session: SessionState) -> RouteResult:
         result = self.router.route(session.request)
+        profile = session.business_profile_resolution
+        session.add_event(
+            node_id="routing",
+            agent="SEO Scrummaster Agent",
+            state="COMPLETE",
+            detail=(
+                f"Routed request to {result.lead_agent} with {len(result.supporting_agents)} "
+                f"support agents and business profiles {profile.get('profiles', ['generic'])}."
+            ),
+        )
         session.agent_outputs.append(
             {
+                "output_id": f"{session.session_id}-routing-output",
                 "agent": "SEO Scrummaster Agent",
-                "summary": f"Routed request to {result.lead_agent}.",
-                "route": result.to_dict(),
+                "summary": (
+                    f"Routed the request to {result.lead_agent} with "
+                    f"{len(result.supporting_agents)} supporting agents."
+                ),
+                "evidence": [
+                    {
+                        "id": "runtime-route",
+                        "source": "runtime_route",
+                        "type": "routing_decision",
+                        "date_checked": session.created_at[:10],
+                        "notes": (
+                            f"Workflow: {result.workflow}; routing confidence: {result.confidence}; "
+                            f"business profiles: {profile.get('profiles', ['generic'])}; "
+                            f"profile confidence: {profile.get('confidence', 'Low')}."
+                        ),
+                    }
+                ],
+                "confidence": result.confidence if result.confidence in {"High", "Medium", "Low"} else "Low",
+                "findings": [
+                    {
+                        "id": f"{session.session_id}-route-001",
+                        "severity": "Low",
+                        "finding": f"The request is routed to {result.lead_agent} as deliverable owner.",
+                        "affected_scope": result.workflow,
+                        "evidence_refs": ["runtime-route"],
+                    }
+                ],
+                "recommended_actions": [
+                    {
+                        "action": "Execute the routed workflow and record every required specialist output.",
+                        "priority": "P2",
+                        "owner": result.lead_agent,
+                        "success_metric": "Required workflow nodes complete or report a truthful blocked state.",
+                    }
+                ],
+                "impact": "Creates an explicit, reviewable routing decision before specialist execution.",
+                "effort": "Low",
+                "risks": [result.escalation],
+                "owner": "SEO Scrummaster Agent",
+                "dependencies": result.required_evidence,
+                "acceptance_criteria": [
+                    "Lead and support agents exist in the capability registry.",
+                    "The selected workflow exists and can build a valid graph.",
+                    "Business-profile routing is explicit or truthfully unconfirmed.",
+                ],
+                "verification": [
+                    "Validate the routing output against the canonical agent-output schema.",
+                    "Confirm the workflow executes the listed specialists rather than retaining metadata only.",
+                ],
+                "follow_up": "At workflow completion or when routing evidence changes.",
+                "material_claims": [],
+                "skills_used": ["request-routing"],
+                "knowledge_used": ["docs/plugin-packaging.md section 9"],
+                "execution_state": "SYNTHETIC",
             }
         )
         return result
@@ -86,15 +175,37 @@ class SEOOrchestrator:
         session: SessionState,
         route: RouteResult | None = None,
         tool_requests: list[ToolRequest] | None = None,
+        *,
+        execution_mode: str = "multi-agent",
+        limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
         active_route = route or self.route(session)
-        return await self.executor.execute(session, active_route, tool_requests)
+        if execution_mode == "single-agent":
+            return await self.executor.execute(session, active_route, tool_requests)
+        if execution_mode != "multi-agent":
+            raise ValueError("execution_mode must be 'multi-agent' or 'single-agent'")
+        return await self.workflow_runner.run(
+            session,
+            active_route,
+            tool_requests,
+            limits=limits,
+        )
 
     def execute(
         self,
         session: SessionState,
         route: RouteResult | None = None,
         tool_requests: list[ToolRequest] | None = None,
+        *,
+        execution_mode: str = "multi-agent",
+        limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
-        active_route = route or self.route(session)
-        return self.executor.execute_sync(session, active_route, tool_requests)
+        return asyncio.run(
+            self.execute_async(
+                session,
+                route,
+                tool_requests,
+                execution_mode=execution_mode,
+                limits=limits,
+            )
+        )

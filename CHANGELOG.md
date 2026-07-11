@@ -8,6 +8,39 @@ This project follows semantic versioning where possible:
 - MINOR: new agents, skills, workflows, templates, or knowledge sources.
 - PATCH: clarifications, documentation fixes, and non-breaking improvements.
 
+## [Unreleased]
+
+### Added
+
+- A bounded multi-agent workflow graph that executes specialist agents, lead synthesis, Scrummaster governance, strategy, and stakeholder reporting as real dependency-ordered nodes.
+- `orchestration/capability-registry.json`, the machine-readable mapping from all 25 agents to canonical skills, knowledge, templates, and evidence requirements.
+- Strict structured-agent output, material-claim evidence binding, cross-agent finding normalization, conflict detection, consumed handoffs, decision records, workflow events, and complete session validation.
+- Per-run limits for workflow nodes, LLM calls, concurrency, correction attempts, depth, runtime, and optional estimated cost.
+- Evidence-scored business-profile resolution implementing the documented strong, supporting, contradictory, margin, hybrid, and explicit-override rules.
+- Deterministic multi-agent GO/NO_GO tracer fixtures and the sanitized pre-remediation single-agent baseline.
+- Canonical skill-consistency, release-version, evidence-binding, provider-security, memory-security, profile-routing, report-fidelity, release-cleanup, and coordinated-runtime tests.
+- Windows and Ubuntu CI across Python 3.11 and 3.13 with JUnit artifacts.
+- Post-implementation 20 Pass Protocol review at `docs/20-PASS-WORLD-CLASS-RUNTIME-REVIEW.md`.
+
+### Changed
+
+- Multi-agent execution is now the runtime default; the single-agent path remains only as a schema-valid debug/comparison mode.
+- Every executable agent loads its canonical capability bundle and returns a schema-valid output or a truthful failed/blocked result.
+- Tool dispatch preserves successful independent evidence when another adapter is unavailable or fails.
+- Runtime event memory now recursively redacts secrets, locks writes, fails on malformed records, and supports session deletion without replacing the canonical SEO EvidenceStore.
+- Custom OpenAI-compatible endpoints require HTTPS, explicit approval, no embedded credentials, and a separately scoped credential.
+- The deep-skill procedure file is now a one-heading-per-skill canonical reference catalog instead of a second rulebook.
+- Content-brief relevance and SERP evidence logic now validates weights, excludes own-domain results, uses current dates, separates intent correctly, and blocks stale, mixed, conditional, or insufficient evidence.
+- Consent Mode diagnostics now use region/subregion resolution, recursive redaction, and separate observed defects from topology that still requires verification.
+- The report renderer now preserves canonical finding text, affected scope, evidence references, actions, owners, success metrics, dependencies, acceptance criteria, verification, risks, impact, and follow-up.
+- `docs/INTEGRATION-MANIFEST.md` and `pyproject.toml` are reconciled to version 1.7.0; version drift is now a CI failure.
+
+### Security
+
+- Untrusted tool and retrieved content cannot override system rules, approvals, scope, tool selection, or cost boundaries.
+- Arbitrary model prose is not converted into a successful-looking schema wrapper.
+- Required risk handoffs remain unresolved until the addressed Scrummaster node consumes them.
+
 ## [1.7.0] - 2026-07-11
 
 ### Added
@@ -35,14 +68,9 @@ This project follows semantic versioning where possible:
 - `scripts/serp_cluster.py` and `skills/seo-cluster-skill.md`: deterministic SERP-overlap topic clustering (`serp-overlap-cluster`).
 - `scripts/seo_pdf_report.py`: branded A4 report from the canonical agent-output shape, with a styled HTML fallback.
 - `skills/seo-flow-skill.md` and `skills/flow-prompts/`: clean-room FLOW stage prompt library (`flow-prompt-run`).
-- `tests/test_batch2_integration.py` and `tests/test_batch2_hardening.py`: SSRF, optional-dependency
-  success paths via injection, SPA, BOM, deterministic clustering, concurrent and tampered evidence,
-  adversarial MCP governance, reporting-contract resilience, index integrity, and the rollback boundary.
-- `adapters/mcp_extensions.validate_registry()`: fails closed on tool-name shadowing, silent capability
-  expansion, destructive operations, missing cost gates, malformed credentials, description poisoning,
-  and unguarded SSRF-capable providers.
-- `adapters/page_drift.verify_untampered()`: verifies stored payload digests on a raw connection before
-  the evidence store opens, so a drift verdict is never produced from tampered evidence.
+- `tests/test_batch2_integration.py` and `tests/test_batch2_hardening.py`: SSRF, optional-dependency success paths via injection, SPA, BOM, deterministic clustering, concurrent and tampered evidence, adversarial MCP governance, reporting-contract resilience, index integrity, and the rollback boundary.
+- `adapters/mcp_extensions.validate_registry()`: fails closed on tool-name shadowing, silent capability expansion, destructive operations, missing cost gates, malformed credentials, description poisoning, and unguarded SSRF-capable providers.
+- `adapters/page_drift.verify_untampered()`: verifies stored payload digests on a raw connection before the evidence store opens, so a drift verdict is never produced from tampered evidence.
 - `scripts/seo_pdf_report.ReportResult`: states truthfully whether a PDF or the HTML fallback was produced.
 
 ### Changed
@@ -55,15 +83,8 @@ This project follows semantic versioning where possible:
 
 ### Fixed
 
-- **Evidence tamper-evidence restored.** `EvidenceStore._migrate_schema()` previously recomputed and
-  overwrote `payload_sha256` and `record_sha256` for every row on each open, so an externally tampered
-  payload or altered protected metadata was silently re-blessed and `integrity_check()` could never detect
-  it. Migration now backfills digests only for legacy rows that genuinely lack them, never rewrites a row
-  that already carries both digests, and raises `EvidenceIntegrityError` on a partial-digest mismatch
-  instead of repairing it. Reopening an untampered database preserves its hashes and is idempotent.
-- Deliberate digest rewriting moved to a separate, explicitly invoked `EvidenceStore.repair_digests(confirm=True)`.
-  It is never called during initialization and refuses to run without explicit confirmation, because rewriting a
-  digest over tampered content destroys tamper-evidence.
+- **Evidence tamper-evidence restored.** `EvidenceStore._migrate_schema()` previously recomputed and overwrote `payload_sha256` and `record_sha256` for every row on each open, so an externally tampered payload or altered protected metadata was silently re-blessed and `integrity_check()` could never detect it. Migration now backfills digests only for legacy rows that genuinely lack them, never rewrites a row that already carries both digests, and raises `EvidenceIntegrityError` on a partial-digest mismatch instead of repairing it. Reopening an untampered database preserves its hashes and is idempotent.
+- Deliberate digest rewriting moved to a separate, explicitly invoked `EvidenceStore.repair_digests(confirm=True)`. It is never called during initialization and refuses to run without explicit confirmation, because rewriting a digest over tampered content destroys tamper-evidence.
 
 ### Rejected
 
@@ -179,39 +200,5 @@ This project follows semantic versioning where possible:
 
 ### Added
 
-- SEO Output Report Agent for plain-language stakeholder reporting.
-- Plain-language SEO report skill, template, and worked example.
-- SEO Diagnostic Infrastructure Agent for budget-aware SEO tool stack, audit reporting, grading, dashboard, and monitoring setup.
-- Diagnostic stack design skill, template, and worked example.
-- Website/app platform and code-access intake for diagnostic stack recommendations.
-- Missing agent-referenced templates.
-- Complete definitions for additional referenced skills.
-- Skill definition standard and execution playbooks.
-- Handoff payload schema.
-- Session state schema.
-- Monitoring workflow.
-- Orchestration guide.
-- Regional search engine knowledge source.
-- Repository validation script and GitHub Actions workflow.
-- Security policy and code of conduct.
-- System prompts for original grouped skill definitions.
-- Mermaid decision trees for continuous learning and system improvement workflows.
-
-### Changed
-
-- Strengthened `agent-output.schema.json` to match the system output contract.
-- Added stricter schema descriptions, examples, and `additionalProperties: false`.
-- Expanded workflow decision trees and failure handling.
-- Added AI content disclosure and INP-specific quality gates.
-- Added `follow_up` to the standard agent output schema.
-- Added descriptions and examples to the session state schema.
-
-## [1.0.0] - 2026-07-03
-
-### Added
-
-- Initial World-Class SEO Agent System.
-- 22 specialist SEO agents.
-- Model-specific control files.
-- Core skill catalogue.
-- Workflows, quality gates, anti-patterns, schemas, and templates.
+- Initial 24-agent roster, skill library, workflows, schemas, templates, knowledge governance, and model-specific control files.
+- Standard output contract, risk classes, approval gates, scoring model, anti-patterns, and quality gates.

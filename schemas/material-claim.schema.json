@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEO Material Claim",
+  "description": "A material factual, numeric, URL, policy, comparative, or completion claim bound to evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "claim_type",
+    "statement",
+    "evidence_refs",
+    "evidence_state",
+    "inference"
+  ],
+  "properties": {
+    "claim_id": {"type": "string"},
+    "claim_type": {
+      "type": "string",
+      "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
+    },
+    "statement": {"type": "string"},
+    "normalized_value": {},
+    "unit": {"type": "string"},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "evidence_state": {
+      "type": "string",
+      "enum": ["AVAILABLE", "PARTIAL", "MISSING", "STALE", "INVALID", "BLOCKED"]
+    },
+    "inference": {"type": "boolean"}
+  }
+}

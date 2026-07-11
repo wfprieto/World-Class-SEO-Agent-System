@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "shared": {
+    "system_spec": "SYSTEM_SPEC.md",
+    "quality_gates": "knowledge/seo-quality-gates.md",
+    "evidence_rules": "knowledge/knowledge-sources.md",
+    "anti_patterns": "knowledge/anti-patterns.md",
+    "output_schema": "schemas/agent-output.schema.json"
+  },
+  "agents": {
+    "SEO Technical Agent": {
+      "agent_file": "agents/seo-technical-agent.md",
+      "skills": ["technical-audit", "crawl-map", "indexation-reality-check", "schema-detect-validate-generate", "core-web-vitals-triage"],
+      "skill_files": ["skills/core-skills.md", "skills/rendered-visual-audit-and-page-entry.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/core-web-vitals-gates.md", "knowledge/schema-deprecation-registry.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["domain_or_urls", "crawl_or_page_evidence", "rendered_or_http_evidence"]
+    },
+    "SEO Copywriter/Content Agent": {
+      "agent_file": "agents/seo-copywriter-content-agent.md",
+      "skills": ["content-brief", "content-audit", "content-decay", "metadata-generation", "anti-ai-public-writing"],
+      "skill_files": ["skills/content-ia-skills.md", "skills/public-facing-writing-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/eeat-quality-rubric.md", "knowledge/agent-friendly-pages.md"],
+      "templates": ["templates/content-brief.md"],
+      "required_evidence": ["audience", "business_goal", "observed_serp_or_first_party_queries"]
+    },
+    "SEO Information Architecture Agent": {
+      "agent_file": "agents/seo-information-architecture-agent.md",
+      "skills": ["crawl-map", "keyword-cluster", "internal-link-map", "content-inventory"],
+      "skill_files": ["skills/content-ia-skills.md", "skills/core-skills.md", "skills/seo-cluster-skill.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["url_inventory", "navigation", "internal_link_data"]
+    },
+    "SEO Accessibility Agent": {
+      "agent_file": "agents/seo-accessibility-agent.md",
+      "skills": ["accessibility-audit", "rendered-visual-audit"],
+      "skill_files": ["skills/specialist-skills.md", "skills/rendered-visual-audit-and-page-entry.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["rendered_page", "accessibility_tree_or_manual_checks"]
+    },
+    "SEO CRO Agent": {
+      "agent_file": "agents/seo-cro-agent.md",
+      "skills": ["sxo-page-fit", "conversion-intent-map", "landing-page-cro-audit"],
+      "skill_files": ["skills/content-ia-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["conversion_goal", "organic_intent", "page_or_funnel_evidence"]
+    },
+    "Local SEO Agent": {
+      "agent_file": "agents/local-seo-agent.md",
+      "skills": ["local-seo-audit", "citation-audit", "gbp-profile-audit", "geo-grid-rank-scan", "cross-platform-nap-verify"],
+      "skill_files": ["skills/specialist-skills.md", "skills/geo-grid-local-rank-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/seo-vertical-profiles.md"],
+      "templates": ["templates/local-seo-report.md"],
+      "required_evidence": ["resolved_business_identity", "location_or_service_area", "local_source_tier"]
+    },
+    "Senior SEO Strategist Agent": {
+      "agent_file": "agents/senior-seo-strategist-agent.md",
+      "skills": ["seo-roadmap", "prioritization-matrix", "forecasting", "executive-summary"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/scoring-model.md", "knowledge/seo-quality-gates.md"],
+      "templates": ["templates/seo-roadmap.md"],
+      "required_evidence": ["accepted_findings", "business_goals", "capacity_and_constraints"]
+    },
+    "Senior SEO Engineer Agent": {
+      "agent_file": "agents/senior-seo-engineer-agent.md",
+      "skills": ["technical-implementation", "seo-ci-checks", "redirect-validation", "desktop-commander-execution"],
+      "skill_files": ["skills/core-skills.md", "skills/local-execution-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/engineering-change-plan.md"],
+      "required_evidence": ["codebase", "acceptance_criteria", "rollback_plan"]
+    },
+    "SEO Scrummaster Agent": {
+      "agent_file": "agents/seo-scrummaster-agent.md",
+      "skills": ["request-routing", "scrummaster-debate", "decision-record", "definition-of-done", "prioritization-matrix"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/anti-patterns.md"],
+      "templates": ["templates/decision-record.md", "templates/seo-sprint-plan.md"],
+      "required_evidence": ["agent_outputs", "conflicts", "risks", "business_priorities"]
+    },
+    "SEO Full Audit/Analyst Agent": {
+      "agent_file": "agents/seo-full-audit-analyst-agent.md",
+      "skills": ["full-site-audit", "analytics-synthesis", "score-normalization", "seo-drift-monitor"],
+      "skill_files": ["skills/core-skills.md"],
+      "knowledge_files": ["knowledge/scoring-model.md", "knowledge/seo-quality-gates.md", "knowledge/knowledge-sources.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["specialist_outputs", "evidence_inventory", "business_context"]
+    },
+    "SEO Output Report Agent": {
+      "agent_file": "agents/seo-output-report-agent.md",
+      "skills": ["plain-language-seo-report", "executive-summary"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["accepted_findings", "decisions", "roadmap", "verification_status"]
+    },
+    "SEO Diagnostic Infrastructure Agent": {
+      "agent_file": "agents/seo-diagnostic-infrastructure-agent.md",
+      "skills": ["seo-diagnostic-stack-design"],
+      "skill_files": ["skills/missing-skills.md"],
+      "knowledge_files": ["knowledge/knowledge-sources.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["budget", "site_type", "available_access", "reporting_needs"]
+    },
+    "GEO / AIO Optimization Agent": {
+      "agent_file": "agents/geo-aio-optimization-agent.md",
+      "skills": ["geo-aio-citation-audit", "brand-serp-audit", "knowledge-graph-sync"],
+      "skill_files": ["skills/specialist-skills.md"],
+      "knowledge_files": ["knowledge/geo-readiness-rubric.md", "knowledge/agent-friendly-pages.md", "knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["priority_questions", "entity_evidence", "dated_ai_or_serp_observations"]
+    },
+    "Visual & Video Search Agent": {
+      "agent_file": "agents/visual-video-search-agent.md",
+      "skills": ["image-seo-audit", "video-seo-audit", "rendered-visual-audit"],
+      "skill_files": ["skills/specialist-skills.md", "skills/rendered-visual-audit-and-page-entry.md"],
+      "knowledge_files": ["knowledge/ai-image-labeling.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["media_inventory", "rendered_page", "asset_metadata"]
+    },
+    "Voice Search & Conversational Agent": {
+      "agent_file": "agents/voice-search-conversational-agent.md",
+      "skills": ["conversational-query-map", "content-brief"],
+      "skill_files": ["skills/specialist-skills.md", "skills/content-ia-skills.md"],
+      "knowledge_files": ["knowledge/agent-friendly-pages.md"],
+      "templates": ["templates/content-brief.md"],
+      "required_evidence": ["question_data", "audience", "page_map"]
+    },
+    "SEO Compliance & Legal Agent": {
+      "agent_file": "agents/seo-compliance-legal-agent.md",
+      "skills": ["compliance-review", "spam-policy-check", "claims-risk-review", "consent-mode-diagnostic"],
+      "skill_files": ["skills/strategy-governance-skills.md", "skills/local-execution-skills.md"],
+      "knowledge_files": ["knowledge/anti-patterns.md", "knowledge/dma-consent-mode-v2.md"],
+      "templates": ["templates/compliance-review.md"],
+      "required_evidence": ["claims_and_sources", "jurisdiction", "commercial_relationships"]
+    },
+    "Negative SEO & Security Agent": {
+      "agent_file": "agents/negative-seo-security-agent.md",
+      "skills": ["negative-seo-threat-review", "security-indexation-check", "spam-policy-check"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/parasite-seo-expired-domain-checks.md", "knowledge/anti-patterns.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["security_or_indexation_signals", "historical_baseline"]
+    },
+    "International & Multilingual SEO Agent": {
+      "agent_file": "agents/international-multilingual-seo-agent.md",
+      "skills": ["hreflang-audit", "international-url-architecture", "localized-content-review", "regional-keyword-map"],
+      "skill_files": ["skills/specialist-skills.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["market_and_locale_inventory", "hreflang_or_url_evidence"]
+    },
+    "Digital PR & Programmatic Link Outreach Agent": {
+      "agent_file": "agents/digital-pr-programmatic-link-outreach-agent.md",
+      "skills": ["backlink-profile", "backlink-gap", "digital-pr-asset-brief", "outreach-prospecting"],
+      "skill_files": ["skills/specialist-skills.md"],
+      "knowledge_files": ["knowledge/free-backlink-sources.md", "knowledge/anti-patterns.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["backlink_or_mention_data", "brand_safety_requirements"]
+    },
+    "Predictive SEO Trend Agent": {
+      "agent_file": "agents/predictive-seo-trend-agent.md",
+      "skills": ["trend-monitor", "forecasting", "content-calendar"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/google-algorithm-updates.json"],
+      "templates": ["templates/seo-roadmap.md"],
+      "required_evidence": ["historical_demand", "seasonality", "business_timing"]
+    },
+    "Competitive Intelligence Agent": {
+      "agent_file": "agents/competitive-intelligence-agent.md",
+      "skills": ["competitive-gap", "competitor-change-monitor", "competitor-comparison-page-build"],
+      "skill_files": ["skills/strategy-governance-skills.md", "skills/competitor-comparison-pages.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["observed_competitors", "dated_serp_or_provider_data"]
+    },
+    "SEO Research and Development Agent": {
+      "agent_file": "agents/seo-research-and-development-agent.md",
+      "skills": ["experiment-design", "official-source-monitor"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/knowledge-sources.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["hypothesis", "measurement_plan", "guardrails"]
+    },
+    "SEO Knowledge Graph Sync Agent": {
+      "agent_file": "agents/seo-knowledge-graph-sync-agent.md",
+      "skills": ["knowledge-graph-sync", "brand-serp-audit", "schema-detect-validate-generate"],
+      "skill_files": ["skills/specialist-skills.md", "skills/core-skills.md"],
+      "knowledge_files": ["knowledge/schema-deprecation-registry.md"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["entity_inventory", "canonical_identity_sources"]
+    },
+    "AI Principal SEO Scientist": {
+      "agent_file": "agents/ai-principal-seo-scientist.md",
+      "skills": ["official-source-monitor", "knowledge-sync", "experiment-design"],
+      "skill_files": ["skills/strategy-governance-skills.md"],
+      "knowledge_files": ["knowledge/knowledge-sources.md", "knowledge/google-algorithm-updates.json"],
+      "templates": ["templates/audit-report.md"],
+      "required_evidence": ["primary_source", "affected_agents", "validation_check"]
+    },
+    "SEO E-commerce Agent": {
+      "agent_file": "agents/seo-ecommerce-agent.md",
+      "skills": ["product-page-seo-audit", "product-schema-validate-generate", "merchant-data-consistency-audit", "faceted-navigation-governance", "marketplace-intelligence"],
+      "skill_files": ["skills/ecommerce-seo-skills.md"],
+      "knowledge_files": ["knowledge/schema-deprecation-registry.md", "knowledge/ai-image-labeling.md", "knowledge/seo-quality-gates.md"],
+      "templates": ["templates/ecommerce-seo-report.md"],
+      "required_evidence": ["product_or_category_evidence", "page_schema_feed_identity", "target_market"]
+    }
+  }
+}

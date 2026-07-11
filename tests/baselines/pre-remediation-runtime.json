@@ -1,0 +1,23 @@
+{
+  "baseline_sha": "cf782d9881258366aae7f9b94c1267be6717e94a",
+  "captured_at": "2026-07-11",
+  "sanitized": true,
+  "contains_secrets": false,
+  "requests": [
+    {"request": "Run a complete SEO audit.", "lead": "SEO Full Audit/Analyst Agent", "support_listed": 4, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0},
+    {"request": "Build an SEO content brief.", "lead": "SEO Copywriter/Content Agent", "support_listed": 3, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0},
+    {"request": "Audit an e-commerce product page.", "lead": "SEO E-commerce Agent", "support_listed": 3, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0},
+    {"request": "Run a local SEO audit.", "lead": "Local SEO Agent", "support_listed": 2, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0},
+    {"request": "Implement a technical canonical fix.", "lead": "SEO Technical Agent", "support_listed": 2, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0},
+    {"request": "Create a 90-day SEO strategy.", "lead": "Senior SEO Strategist Agent", "support_listed": 2, "support_executed": 0, "llm_calls": 1, "handoffs_emitted": 1, "handoffs_consumed": 0, "decisions": 0}
+  ],
+  "totals": {
+    "requests": 6,
+    "support_agents_listed": 16,
+    "support_agents_executed": 0,
+    "llm_calls": 6,
+    "handoffs_emitted": 6,
+    "handoffs_consumed": 0,
+    "decisions": 0
+  }
+}

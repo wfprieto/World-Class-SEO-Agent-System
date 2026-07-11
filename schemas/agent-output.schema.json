@@ -21,6 +21,10 @@
     "follow_up"
   ],
   "properties": {
+    "output_id": {
+      "type": "string",
+      "description": "Stable runtime output identifier used by handoffs and workflow events."
+    },
     "agent": {
       "type": "string",
       "description": "Exact agent name responsible for this output."
@@ -37,6 +41,10 @@
         "additionalProperties": false,
         "required": ["source", "type", "date_checked", "notes"],
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Optional stable evidence identifier."
+          },
           "source": {
             "type": "string",
             "description": "URL, file, export, report, crawl, API, or user-provided source."
@@ -88,8 +96,8 @@
           },
           "evidence_refs": {
             "type": "array",
-            "description": "References to evidence items by source or short label.",
-            "items": { "type": "string" }
+            "description": "References to evidence items by stable id or source label.",
+            "items": {"type": "string"}
           }
         }
       }
@@ -134,7 +142,7 @@
     "risks": {
       "type": "array",
       "description": "Known risks, tradeoffs, or failure modes.",
-      "items": { "type": "string" }
+      "items": {"type": "string"}
     },
     "owner": {
       "type": "string",
@@ -143,21 +151,61 @@
     "dependencies": {
       "type": "array",
       "description": "Data, approvals, agents, teams, or systems required before completion.",
-      "items": { "type": "string" }
+      "items": {"type": "string"}
     },
     "acceptance_criteria": {
       "type": "array",
       "description": "Conditions that must be true for this work to be accepted.",
-      "items": { "type": "string" }
+      "items": {"type": "string"}
     },
     "verification": {
       "type": "array",
       "description": "Checks that prove the recommendation was correctly implemented or validated.",
-      "items": { "type": "string" }
+      "items": {"type": "string"}
     },
     "follow_up": {
       "type": "string",
       "description": "Follow-up date, monitoring trigger, or condition for revisiting this output."
+    },
+    "material_claims": {
+      "type": "array",
+      "description": "Material numeric, URL, policy, comparative, or completion claims bound to evidence.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_id", "claim_type", "statement", "evidence_refs", "evidence_state", "inference"],
+        "properties": {
+          "claim_id": {"type": "string"},
+          "claim_type": {
+            "type": "string",
+            "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
+          },
+          "statement": {"type": "string"},
+          "normalized_value": {},
+          "unit": {"type": "string"},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "evidence_state": {
+            "type": "string",
+            "enum": ["AVAILABLE", "PARTIAL", "MISSING", "STALE", "INVALID", "BLOCKED"]
+          },
+          "inference": {"type": "boolean"}
+        }
+      }
+    },
+    "skills_used": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Canonical skills loaded for this execution node."
+    },
+    "knowledge_used": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Canonical knowledge files loaded for this execution node."
+    },
+    "execution_state": {
+      "type": "string",
+      "enum": ["COMPLETE", "PARTIAL", "BLOCKED", "FAILED", "SYNTHETIC"],
+      "description": "Truthful execution state of the agent node."
     }
   },
   "examples": [
@@ -190,7 +238,7 @@
           "success_metric": "Sampled localized URLs return self-canonical plus reciprocal hreflang."
         }
       ],
-      "impact": "Improves international targeting and reduces duplicate/incorrect canonical consolidation risk.",
+      "impact": "Improves international targeting and reduces duplicate or incorrect canonical consolidation risk.",
       "effort": "Medium",
       "risks": ["Incorrect rollout could affect indexation across all localized product pages."],
       "owner": "Senior SEO Engineer Agent",

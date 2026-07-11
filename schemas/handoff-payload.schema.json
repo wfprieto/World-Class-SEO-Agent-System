@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SEO Agent Handoff Payload",
-  "description": "Minimum contract for passing work from one SEO agent to another.",
+  "description": "Minimum contract for passing work from one SEO agent to another and recording consumption.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,49 +17,25 @@
     "due_trigger"
   ],
   "properties": {
-    "handoff_id": {
-      "type": "string",
-      "description": "Stable handoff identifier."
-    },
-    "from_agent": {
-      "type": "string",
-      "description": "Agent initiating the handoff."
-    },
-    "to_agent": {
-      "type": "string",
-      "description": "Agent receiving the handoff."
-    },
-    "reason": {
-      "type": "string",
-      "description": "Why this handoff is required."
-    },
-    "context_summary": {
-      "type": "string",
-      "description": "Compressed context the receiving agent needs."
-    },
-    "evidence_refs": {
-      "type": "array",
-      "description": "Evidence artifacts or labels that support the handoff.",
-      "items": { "type": "string" }
-    },
-    "requested_action": {
-      "type": "string",
-      "description": "Specific action requested from the receiving agent."
-    },
+    "handoff_id": {"type": "string"},
+    "from_agent": {"type": "string"},
+    "to_agent": {"type": "string"},
+    "reason": {"type": "string"},
+    "context_summary": {"type": "string"},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "requested_action": {"type": "string"},
     "risk_level": {
       "type": "string",
-      "enum": ["Critical", "High", "Medium", "Low"],
-      "description": "Risk level of the requested action."
+      "enum": ["Critical", "High", "Medium", "Low"]
     },
-    "acceptance_criteria": {
-      "type": "array",
-      "description": "Conditions the receiving agent must satisfy.",
-      "items": { "type": "string" }
-    },
-    "due_trigger": {
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+    "due_trigger": {"type": "string"},
+    "status": {
       "type": "string",
-      "description": "Time, workflow step, or condition that determines when this handoff is due."
-    }
+      "enum": ["CREATED", "CONSUMED", "BLOCKED"]
+    },
+    "receiving_output_id": {"type": "string"},
+    "consumed_at": {"type": "string"}
   },
   "examples": [
     {
@@ -72,7 +48,10 @@
       "requested_action": "Patch product template canonical generation and add regression test.",
       "risk_level": "High",
       "acceptance_criteria": ["Localized sample URLs self-canonicalize", "Existing US product URLs unchanged"],
-      "due_trigger": "Before international sitemap resubmission"
+      "due_trigger": "Before international sitemap resubmission",
+      "status": "CREATED",
+      "receiving_output_id": "",
+      "consumed_at": ""
     }
   ]
 }

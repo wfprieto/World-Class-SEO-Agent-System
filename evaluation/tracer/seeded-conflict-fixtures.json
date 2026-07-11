@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "fixtures": [
+    {
+      "id": "technical-content-noindex",
+      "single_agent": {
+        "conflicts_caught": 0,
+        "unsupported_claims": 0,
+        "evidence_coverage": 0.5,
+        "duplicate_findings": 0,
+        "action_completeness": 0.5,
+        "handoffs_completed": 0
+      },
+      "outputs": [
+        {
+          "agent": "SEO Copywriter/Content Agent",
+          "findings": [
+            {
+              "id": "content-publish",
+              "severity": "Medium",
+              "finding": "Publish and index the refreshed category content.",
+              "affected_scope": "category template",
+              "evidence_refs": ["serp-1"]
+            }
+          ]
+        },
+        {
+          "agent": "SEO Technical Agent",
+          "findings": [
+            {
+              "id": "technical-noindex",
+              "severity": "High",
+              "finding": "Block publication because the category template is accidentally noindex.",
+              "affected_scope": "category template",
+              "evidence_refs": ["render-1", "crawl-1"]
+            }
+          ]
+        }
+      ],
+      "expected_conflicts": 1,
+      "expected_unique_findings": 2
+    },
+    {
+      "id": "growth-compliance-claim",
+      "single_agent": {
+        "conflicts_caught": 0,
+        "unsupported_claims": 1,
+        "evidence_coverage": 0.5,
+        "duplicate_findings": 0,
+        "action_completeness": 0.5,
+        "handoffs_completed": 0
+      },
+      "outputs": [
+        {
+          "agent": "SEO CRO Agent",
+          "findings": [
+            {
+              "id": "cro-claim",
+              "severity": "Medium",
+              "finding": "Implement the fastest and cheapest claim on the landing page.",
+              "affected_scope": "pricing landing page",
+              "evidence_refs": ["copy-1"]
+            }
+          ]
+        },
+        {
+          "agent": "SEO Compliance & Legal Agent",
+          "findings": [
+            {
+              "id": "legal-block",
+              "severity": "High",
+              "finding": "Block the unsupported fastest and cheapest comparative claim.",
+              "affected_scope": "pricing landing page",
+              "evidence_refs": ["claims-ledger-1"]
+            }
+          ]
+        }
+      ],
+      "expected_conflicts": 1,
+      "expected_unique_findings": 1
+    },
+    {
+      "id": "duplicate-canonical-root-cause",
+      "single_agent": {
+        "conflicts_caught": 0,
+        "unsupported_claims": 0,
+        "evidence_coverage": 0.5,
+        "duplicate_findings": 1,
+        "action_completeness": 0.5,
+        "handoffs_completed": 0
+      },
+      "outputs": [
+        {
+          "agent": "SEO Technical Agent",
+          "findings": [
+            {
+              "id": "tech-canonical",
+              "severity": "High",
+              "finding": "Product pages emit an incorrect canonical.",
+              "affected_scope": "product template",
+              "evidence_refs": ["crawl-1"]
+            }
+          ]
+        },
+        {
+          "agent": "SEO E-commerce Agent",
+          "findings": [
+            {
+              "id": "commerce-canonical",
+              "severity": "Medium",
+              "finding": "The product template has a canonical mismatch.",
+              "affected_scope": "product template",
+              "evidence_refs": ["schema-1"]
+            }
+          ]
+        }
+      ],
+      "expected_conflicts": 0,
+      "expected_unique_findings": 1
+    }
+  ]
+}
