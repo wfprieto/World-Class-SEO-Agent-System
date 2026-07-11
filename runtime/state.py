@@ -66,6 +66,7 @@ class SessionState:
     request: str
     mode: str
     business_context: BusinessContext
+    business_profile_resolution: dict[str, Any] = field(default_factory=dict)
     evidence_inventory: list[EvidenceItem] = field(default_factory=list)
     agent_outputs: list[dict[str, Any]] = field(default_factory=list)
     handoffs: list[Handoff] = field(default_factory=list)
