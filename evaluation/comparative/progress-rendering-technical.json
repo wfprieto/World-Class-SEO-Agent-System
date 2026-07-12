@@ -4,8 +4,8 @@
   "branch": "improvement/pr4-rendering-technical-pack",
   "baseline_commit": "aa3574bfce0a58134541b9e9a9f3c7148cd96097",
   "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
-  "builder_rating": "GOOD",
-  "overall_state": "CODE_CONTRACT_IN_REVIEW",
+  "builder_rating": "GREAT",
+  "overall_state": "PRODUCTION_CAPABLE_BROWSER_LIVE_BLOCKED",
   "capabilities": [
     {
       "id": "render-health",
@@ -15,10 +15,11 @@
         "Optional dependency remains outside core",
         "Missing package and browser return NOT_CONFIGURED",
         "Install and uninstall commands are exposed",
-        "Clean-install ModuleNotFoundError is sanitized"
+        "Clean-install ModuleNotFoundError is sanitized",
+        "Cross-platform package and command tests"
       ],
       "not_verified": [
-        "Chromium launch in every supported operator environment"
+        "Chromium launch in the current execution environment"
       ],
       "parity_status": "GAP_OPEN"
     },
@@ -30,10 +31,11 @@
         "Canonical public URL safety",
         "Subresource public-host guard",
         "Bounded timeout, viewport, console and request failures",
-        "Injected-browser rendered HTML contract"
+        "Injected-browser rendered HTML contract",
+        "ToolDispatcher runtime wiring"
       ],
       "not_verified": [
-        "Authorized live browser-network smoke test"
+        "Authorized live Chromium network smoke test"
       ],
       "parity_status": "GAP_OPEN"
     },
@@ -49,7 +51,7 @@
         "Injected-browser screenshot contract"
       ],
       "not_verified": [
-        "Authorized live screenshot smoke test"
+        "Authorized live Chromium screenshot smoke test"
       ],
       "parity_status": "GAP_OPEN"
     },
@@ -69,12 +71,13 @@
         "Every hop uses canonical public URL safety",
         "Bounded timeout, response size, and redirect count",
         "No cookies, credentials, POST requests, or writes",
-        "Loop and blocked-target evidence"
+        "Loop and blocked-target evidence",
+        "Windows and Ubuntu tests on Python 3.11 and 3.13"
       ],
       "not_verified": [
         "Production-network behavior across proxies and enterprise egress controls"
       ],
-      "parity_status": "GAP_OPEN"
+      "parity_status": "CODE_CONTRACT_READY"
     },
     {
       "id": "technical-inspections",
@@ -126,7 +129,7 @@
       "not_verified": [
         "Google feature-specific eligibility for generated markup"
       ],
-      "parity_status": "GAP_OPEN"
+      "parity_status": "CODE_CONTRACT_READY"
     },
     {
       "id": "runtime-and-agent-wiring",
@@ -136,17 +139,21 @@
         "ToolDispatcher-compatible adapters",
         "Normalized AdapterResult evidence",
         "Generated command documentation",
-        "Existing fixture adapters retained for compatibility"
+        "Existing fixture adapters retained for compatibility",
+        "All four CI cells green in GitHub Actions run 29177133095"
       ],
       "not_verified": [],
       "parity_status": "CODE_CONTRACT_READY"
     }
   ],
   "release_gate": {
-    "code_contract_state": "CI_IN_PROGRESS",
-    "browser_live_state": "BLOCKED",
+    "code_contract_state": "APPROVED_GREAT",
+    "browser_live_state": "BLOCKED_BY_NETWORK",
+    "browser_live_error": "Chromium download failed with DNS EAI_AGAIN for cdn.playwright.dev and playwright.download.prss.microsoft.com",
     "public_web_live_state": "NOT_RUN",
-    "required_for_live_closure": "Optional Playwright installation and authorized controlled-site smoke evidence",
+    "ci_run": 29177133095,
+    "evidence_package_hash": "2ac555bed1e9fcb08718248bfaa5e220a755d268d618292e2a890049040a5e55",
+    "required_for_live_closure": "Optional Playwright installation and authorized controlled-site smoke evidence in an environment with CDN access",
     "must_not_do": [
       "Do not install Playwright or browser binaries as core dependencies",
       "Do not follow redirects without validating each target",
