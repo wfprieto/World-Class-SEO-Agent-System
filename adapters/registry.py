@@ -21,6 +21,7 @@ from adapters.rendered_page import RenderedPageAdapter
 from adapters.robots_txt import RobotsTxtAdapter
 from adapters.schema_validation import SchemaValidationAdapter
 from adapters.sitemap_validator import SitemapValidatorAdapter
+from integrations.content_intelligence.adapters import ContentIntelligenceAdapter
 from integrations.google.crux import CrUXCurrentAdapter, CrUXHistoryAdapter
 from integrations.google.ga4 import GoogleAnalyticsDataAdapter
 from integrations.google.gsc import GoogleSearchConsoleAdapter
@@ -37,6 +38,7 @@ def default_adapters() -> dict[str, object]:
         "ai_citation_monitor": AICitationMonitorAdapter(),
         "backlinks": BacklinkCSVAdapter(),
         "backlink_csv": BacklinkCSVAdapter(),
+        "content_intelligence": ContentIntelligenceAdapter(),
         "crux": CrUXPayloadAdapter(),
         "crux_payload": CrUXPayloadAdapter(),
         "crawler_csv": CrawlerCSVAdapter(),
