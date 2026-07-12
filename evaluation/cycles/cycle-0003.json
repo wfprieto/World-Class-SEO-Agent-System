@@ -55,6 +55,7 @@
       "official-primary-contract-verification-2026-07-11",
       "browser-install-smoke-dns-eai-again"
     ],
+    "live_state": "BLOCKED",
     "browser_live_state": "BLOCKED_BY_NETWORK",
     "public_web_live_state": "NOT_RUN",
     "security_passed": true,
