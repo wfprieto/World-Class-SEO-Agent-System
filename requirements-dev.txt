@@ -1,10 +1,15 @@
 jsonschema>=4.22.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+pytest-cov>=6.0,<8
 PyYAML>=6.0.0
 tenacity>=8.2.0
+ruff>=0.9,<1
+mypy>=1.15,<3
+pip-audit>=2.7,<3
+build>=1.2,<2
 
-# Optional Batch 2 extras. Not required: the kit runs credential-free without them.
-# playwright   # rendered_page.py live rendering (then: playwright install chromium)
-# weasyprint   # seo_pdf_report.py PDF output (HTML fallback is used when absent)
-# matplotlib   # seo_pdf_report.py score chart (omitted when absent)
+# Optional rendering/reporting extras remain independently removable.
+# playwright
+# weasyprint
+# matplotlib
