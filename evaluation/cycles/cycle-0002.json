@@ -1,0 +1,80 @@
+{
+  "cycle_id": "cycle-0002",
+  "gap_id": "google-first-party-integrations",
+  "iteration": 1,
+  "state": "REWORK_REQUIRED",
+  "builder_context_id": "builder-google-context-0002",
+  "baseline": {
+    "target_commit": "56337cdd1843855ef07842255da27a5f17cdbb23",
+    "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+    "target_metrics": {
+      "production_connectors": 0,
+      "google_commands": 0,
+      "live_smoke_tests": 0
+    },
+    "claude_metrics": {
+      "google_api_commands": "multiple",
+      "live_capable": true
+    }
+  },
+  "hypothesis": "Shared bounded Google transports and first-party connectors can exceed the comparator's security and evidence controls, but live parity cannot be earned until authorized read-only provider smoke tests succeed.",
+  "files_changed": [
+    ".env.example",
+    "adapters/google_pagespeed_live.py",
+    "adapters/registry.py",
+    "docs/COMMANDS.md",
+    "docs/GOOGLE-INTEGRATIONS.md",
+    "evaluation/comparative/progress-google-first-party.json",
+    "integrations/__init__.py",
+    "integrations/google/__init__.py",
+    "integrations/google/client.py",
+    "integrations/google/gsc.py",
+    "integrations/google/ga4.py",
+    "integrations/google/crux.py",
+    "pyproject.toml",
+    "seoctl/__main__.py",
+    "seoctl/command-registry.json",
+    "seoctl/entrypoint.py",
+    "seoctl/google_cli.py",
+    "tests/test_google_cli.py",
+    "tests/test_google_first_party.py",
+    "tests/test_seoctl.py",
+    "tests/test_seoctl_docs.py"
+  ],
+  "tests_added": [
+    "tests/test_google_first_party.py",
+    "tests/test_google_cli.py"
+  ],
+  "verification": {
+    "tests_passed": true,
+    "regressions": [],
+    "evidence_refs": [
+      "pull-request-8-fixture-contract-suite",
+      "docs/GOOGLE-INTEGRATIONS.md",
+      "evaluation/comparative/progress-google-first-party.json"
+    ],
+    "live_state": "FIXTURE_ONLY",
+    "security_passed": true,
+    "documentation_executed": true
+  },
+  "claude_comparison": {
+    "functional": 8.0,
+    "accuracy": 9.5,
+    "security": 10.0,
+    "cost_control": 10.0,
+    "documentation": 8.5,
+    "verdict": "INFERIOR"
+  },
+  "builder_rating": "GOOD",
+  "reviewer_verdicts": [],
+  "lessons": [
+    "Search Console property totals must use a separate dimensionless query because dimension rows may be anonymized or incomplete.",
+    "Google API keys belong in X-Goog-Api-Key headers rather than request URLs.",
+    "Provider aggregate totals must be preserved rather than recomputed from paginated rows.",
+    "Fixture and transport-contract evidence cannot be promoted to live maturity."
+  ],
+  "next_action": "Run authorized read-only smoke tests for GSC, URL Inspection, GA4, PageSpeed, CrUX History, and LCP subparts, then repeat the independent comparison and review cycle.",
+  "direct_merge_permitted": false,
+  "created_at": "2026-07-12T02:00:00Z",
+  "updated_at": "2026-07-12T02:00:00Z"
+}
