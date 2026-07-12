@@ -14,12 +14,12 @@ The current evidence-based weighted score is:
 
 | System | Weighted score |
 |---|---:|
-| World-Class SEO Agent System | 70.0 / 100 |
+| World-Class SEO Agent System | 69.9 / 100 |
 | Claude SEO | 80.0 / 100 |
-| Current gap | 10.0 points |
+| Current gap | 10.1 points |
 | Required target | 92.0 / 100 |
 
-This score is lower than the supplied 73/100 assessment because the supplied category values and weights did not mathematically reproduce its final total. The rebaseline uses one explicit formula and enforces it in tests.
+This score is lower than the supplied 73/100 assessment because the supplied category values and weights did not mathematically reproduce its final total. The rebaseline uses one explicit formula and enforces it in tests. Agent depth is capped at 8.9 because its evidence maturity is `LIVE_CAPABLE`, not yet `PRODUCTION_READY` under the immutable scoring rules.
 
 ## What changed after the supplied assessment
 
