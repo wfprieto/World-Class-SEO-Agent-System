@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it."
+title: "World-Class SEO Agent System"
+type: software
+authors:
+  - family-names: Prieto
+    given-names: Bill
+repository-code: "https://github.com/wfprieto/World-Class-SEO-Agent-System"
+license: MIT
+version: 1.7.0
+date-released: 2026-07-11

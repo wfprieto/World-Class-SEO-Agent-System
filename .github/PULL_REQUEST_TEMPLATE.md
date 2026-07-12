@@ -1,33 +1,17 @@
-# Pull Request
+## Objective
 
-## Summary
+## Canonical authority changed
 
-What changed?
+## Evidence and tests
 
-## Type of Change
+## Security, privacy, and cost
 
-- [ ] Agent
-- [ ] Skill
-- [ ] Workflow
-- [ ] Template
-- [ ] Schema
-- [ ] Knowledge source
-- [ ] Documentation
+## Migration and rollback
 
-## Quality Checklist
+## Comparative effect
 
-- [ ] Follows `CONTRIBUTING.md`
-- [ ] Updates indexes when needed
-- [ ] Adds or updates templates/schemas when needed
-- [ ] Avoids manipulative SEO tactics
-- [ ] Keeps the system model-agnostic
-- [ ] Passes `./scripts/validate-repository.ps1`
-
-## Risk
-
-Low / Medium / High / Critical
-
-## Verification
-
-Describe how this was checked.
-
+- [ ] No duplicate source of truth
+- [ ] Generated artifacts refreshed
+- [ ] Tests and documented commands pass
+- [ ] No credentials or client data included
+- [ ] Live claims have authorized smoke evidence

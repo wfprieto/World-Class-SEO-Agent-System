@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "archetypes": ["saas", "ecommerce", "local-service", "publisher", "agency-b2b", "multilingual", "javascript-heavy"],
+  "tasks": ["full-audit", "single-page-audit", "content-brief", "technical-diagnosis", "schema-audit", "cwv", "local-audit", "ecommerce-audit", "hreflang", "content-decay", "backlinks", "geo-aio", "drift", "roadmap", "executive-report"],
+  "gates": {"critical_recall_min": 0.95, "precision_min": 0.90, "unsupported_claims_max": 0, "schema_valid_rate": 1.0, "handoff_consumption_rate": 1.0, "secret_exposure_max": 0, "unbounded_paid_calls_max": 0},
+  "execution_state": "NOT_RUN",
+  "reason": "Controlled benchmark sites and blinded comparative outputs are not present in the repository evidence package."
+}

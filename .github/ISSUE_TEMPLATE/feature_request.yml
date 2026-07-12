@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose an evidence-backed capability
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Measurable outcome
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Canonical authority and duplication risk
+    validations:
+      required: true

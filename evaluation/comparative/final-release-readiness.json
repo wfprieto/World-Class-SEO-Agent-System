@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-12",
+  "target_commit": "0dbbda9d3f7587fddba39322b07392bd06091259",
+  "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+  "release_candidate": "v2.0.0",
+  "gates": {
+    "phase4_deterministic": "PASS",
+    "phase5_deterministic": "PASS",
+    "final_push_ci": "NOT_OBSERVABLE",
+    "dependency_audit": "BLOCKED_BY_NETWORK",
+    "live_authorized_smokes": "INCOMPLETE",
+    "seven_archetype_benchmark": "NOT_RUN",
+    "scrummaster3_verdict": "REWORK_GOOD",
+    "vp_engineering_verdict": "REWORK_GOOD",
+    "external_reproduction": "NOT_RUN"
+  },
+  "release_decision": "BLOCKED",
+  "public_description_allowed": "A governed, evidence-first SEO agent operating system under active release validation.",
+  "public_claim_prohibited": "Best in the world or proven superior to Claude SEO."
+}
