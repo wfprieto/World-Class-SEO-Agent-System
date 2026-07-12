@@ -1,0 +1,151 @@
+{
+  "cycle_id": "cycle-0003",
+  "gap_id": "rendering-technical-execution-code-contract",
+  "iteration": 2,
+  "state": "APPROVED_GREAT",
+  "builder_context_id": "builder-technical-context-0003",
+  "baseline": {
+    "target_commit": "aa3574bfce0a58134541b9e9a9f3c7148cd96097",
+    "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+    "target_metrics": {
+      "canonical_commands": 20,
+      "technical_execution_commands": 0,
+      "playwright_optional_pack": false,
+      "runtime_technical_adapters": 0
+    },
+    "claude_metrics": {
+      "rendering_and_technical_scripts": "multiple",
+      "browser_capable": true
+    }
+  },
+  "hypothesis": "A cohesive optional rendering and technical execution package can provide operator-grade browser, robots, sitemap, hreflang, redirect, indexability, Core Web Vitals, preload, and structured-data evidence without duplicating URL safety, PageSpeed, evidence, or command authorities.",
+  "files_changed": [
+    "adapters/registry.py",
+    "docs/COMMANDS.md",
+    "docs/TECHNICAL-EXECUTION.md",
+    "evaluation/comparative/progress-rendering-technical.json",
+    "evaluation/cycles/cycle-0003.json",
+    "integrations/technical/__init__.py",
+    "integrations/technical/adapters.py",
+    "integrations/technical/browser.py",
+    "integrations/technical/http.py",
+    "integrations/technical/inspection.py",
+    "pyproject.toml",
+    "seoctl/command-registry.json",
+    "seoctl/entrypoint.py",
+    "seoctl/technical_cli.py",
+    "tests/test_rendering_technical.py",
+    "tests/test_technical_cli.py",
+    "tests/test_technical_runtime.py",
+    "tests/test_seoctl.py"
+  ],
+  "tests_added": [
+    "tests/test_rendering_technical.py",
+    "tests/test_technical_cli.py",
+    "tests/test_technical_runtime.py"
+  ],
+  "verification": {
+    "tests_passed": true,
+    "regressions": [],
+    "evidence_refs": [
+      "pull-request-9",
+      "github-actions-run-29177133095",
+      "docs/TECHNICAL-EXECUTION.md",
+      "evaluation/comparative/progress-rendering-technical.json",
+      "official-primary-contract-verification-2026-07-11",
+      "browser-install-smoke-dns-eai-again"
+    ],
+    "browser_live_state": "BLOCKED_BY_NETWORK",
+    "public_web_live_state": "NOT_RUN",
+    "security_passed": true,
+    "documentation_executed": true
+  },
+  "claude_comparison": {
+    "functional": 9.1,
+    "accuracy": 9.4,
+    "security": 9.8,
+    "cost_control": 10.0,
+    "documentation": 9.2,
+    "verdict": "PARITY"
+  },
+  "builder_rating": "GREAT",
+  "reviewer_verdicts": [
+    {
+      "review_id": "review-cycle-0003-sm3",
+      "reviewer_id": "senior-scrummaster-3",
+      "role": "SENIOR_SCRUMMASTER_3",
+      "context_id": "review-sm3-20260711-pr9",
+      "provider": "OpenAI",
+      "model": "GPT-5.6 Thinking",
+      "evidence_package_hash": "2ac555bed1e9fcb08718248bfaa5e220a755d268d618292e2a890049040a5e55",
+      "verdict": "APPROVE_GREAT",
+      "strongest_objections": [
+        "The browser dependency must remain optional; forcing browser binaries into core would worsen installation and maintenance burden.",
+        "Fixture rendering and injected browser responses do not prove a live Chromium network run, so browser live parity must remain GAP_OPEN.",
+        "Technical indexability must not be presented as proof that Google indexed, will index, or selected the page's declared canonical.",
+        "Hreflang inspection on one page cannot prove reciprocal return links or inspect header and XML implementations.",
+        "Schema syntax and baseline checks cannot be represented as Google rich-result eligibility."
+      ],
+      "evidence_refs": [
+        "pull-request-9",
+        "github-actions-run-29177133095",
+        "tests/test_rendering_technical.py",
+        "tests/test_technical_cli.py",
+        "tests/test_technical_runtime.py",
+        "evaluation/comparative/progress-rendering-technical.json"
+      ],
+      "residual_risks": [
+        "A real Chromium download and controlled-site smoke test remain blocked by DNS resolution in the execution environment.",
+        "Live public-web behavior can differ behind enterprise proxies, WAFs, consent layers, and bot controls."
+      ],
+      "required_changes": [],
+      "submitted_at": "2026-07-12T02:47:00Z",
+      "saw_other_reviewer_verdict": false,
+      "is_builder": false
+    },
+    {
+      "review_id": "review-cycle-0003-vpe",
+      "reviewer_id": "vp-engineering",
+      "role": "VP_ENGINEERING",
+      "context_id": "review-vpe-20260711-pr9",
+      "provider": "OpenAI",
+      "model": "GPT-5.6 Thinking",
+      "evidence_package_hash": "2ac555bed1e9fcb08718248bfaa5e220a755d268d618292e2a890049040a5e55",
+      "verdict": "APPROVE_GREAT",
+      "strongest_objections": [
+        "Every navigation and redirect target, including browser subresources, must use the canonical public-host policy to prevent private-network access.",
+        "The implementation must reuse the existing PageSpeed adapter, command registry, ToolDispatcher, and AdapterResult rather than create parallel authorities.",
+        "Browser and HTTP work must have hard timeout, response, redirect, screenshot, and collection ceilings.",
+        "Playwright must be independently installable and removable, with missing binaries returning NOT_CONFIGURED rather than a stack trace.",
+        "Structured-data generation must remain allowlisted and operator-fact-only to avoid fabricated business, offer, review, or medical claims."
+      ],
+      "evidence_refs": [
+        "pull-request-9",
+        "github-actions-run-29177133095",
+        "integrations/technical/browser.py",
+        "integrations/technical/http.py",
+        "integrations/technical/adapters.py",
+        "docs/TECHNICAL-EXECUTION.md"
+      ],
+      "residual_risks": [
+        "Playwright browser releases remain coupled to Playwright package versions and require operational refresh after upgrades.",
+        "DNS-rebinding and proxy policy remain deployment-environment concerns despite per-request public-host checks."
+      ],
+      "required_changes": [],
+      "submitted_at": "2026-07-12T02:47:30Z",
+      "saw_other_reviewer_verdict": false,
+      "is_builder": false
+    }
+  ],
+  "lessons": [
+    "Browser capability belongs in an optional independently removable pack, while health and fixture behavior belong in core tests.",
+    "Every redirect and browser request must be revalidated rather than trusting the initial public URL.",
+    "Technical eligibility, Google index state, and Google-selected canonical are separate evidence products.",
+    "Structured-data detection, baseline syntax validation, and rich-result eligibility must remain distinct claims.",
+    "A blocked browser download smoke test must remain visible and cannot be converted into fixture-proven live parity."
+  ],
+  "next_action": "Submit the green code contract for normal squash merge while preserving browser and controlled-site live-smoke parity as GAP_OPEN; rerun the smoke test in an environment with Playwright CDN access.",
+  "direct_merge_permitted": false,
+  "created_at": "2026-07-12T02:47:00Z",
+  "updated_at": "2026-07-12T02:47:30Z"
+}
