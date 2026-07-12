@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,7 +18,20 @@ class FakeGSC:
         return AdapterResult(
             source="google_search_console",
             status="ok",
-            data={"totals_source": "dimensionless_aggregate_query", "kwargs": kwargs},
+            data={"aggregate_source": "dimensionless_aggregate_query", "kwargs": kwargs},
+            warnings=[],
+        )
+
+    def aggregate(self, **kwargs):
+        return AdapterResult(
+            source="google_search_console",
+            status="ok",
+            data={
+                "aggregate": {"clicks": 10.0, "impressions": 100.0, "ctr": 0.1, "position": 2.0},
+                "aggregate_source": "dimensionless_aggregate_query",
+                "dimensions": [],
+                "kwargs": kwargs,
+            },
             warnings=[],
         )
 
@@ -29,6 +40,16 @@ class FakeGSC:
             source="google_search_console",
             status="ok",
             data={"inspection_scope": "google_index_version_only", "kwargs": kwargs},
+            warnings=[],
+        )
+
+
+class FakeSitemaps:
+    def fetch(self, **kwargs):
+        return AdapterResult(
+            source="google_search_console_sitemaps",
+            status="ok",
+            data={"read_only": True, "sitemap_count": 1, "kwargs": kwargs},
             warnings=[],
         )
 
@@ -53,7 +74,24 @@ class FakePageSpeed:
         )
 
 
-class FakeCrUX:
+class FakeCrUXCurrent:
+    def fetch(self, **kwargs):
+        return AdapterResult(
+            source="google_crux_current",
+            status="ok",
+            data={
+                "target": kwargs["target"],
+                "target_type": kwargs["target_type"],
+                "form_factor": "PHONE",
+                "data_state": "AVAILABLE",
+                "metrics": {"largest_contentful_paint": {"p75": 2200.0}},
+                "kwargs": kwargs,
+            },
+            warnings=[],
+        )
+
+
+class FakeCrUXHistory:
     def fetch(self, **kwargs):
         return AdapterResult(
             source="google_crux_history",
@@ -62,8 +100,13 @@ class FakeCrUX:
                 "target": kwargs["target"],
                 "target_type": kwargs["target_type"],
                 "form_factor": "PHONE",
+                "data_state": "AVAILABLE",
                 "collection_period_count_returned": 25,
-                "lcp_subparts": {"parts_complete": True},
+                "lcp_subparts": {
+                    "parts_complete": True,
+                    "evidence_state": "AVAILABLE",
+                },
+                "request_metadata": {},
                 "limitations": [],
                 "kwargs": kwargs,
             },
@@ -73,9 +116,11 @@ class FakeCrUX:
 
 def test_google_commands_route_to_real_connector_boundaries(monkeypatch):
     monkeypatch.setattr(google_cli, "GoogleSearchConsoleAdapter", FakeGSC)
+    monkeypatch.setattr(google_cli, "GoogleSitemapsAdapter", FakeSitemaps)
     monkeypatch.setattr(google_cli, "GoogleAnalyticsDataAdapter", FakeGA4)
     monkeypatch.setattr(google_cli, "GooglePageSpeedLiveAdapter", FakePageSpeed)
-    monkeypatch.setattr(google_cli, "CrUXHistoryAdapter", FakeCrUX)
+    monkeypatch.setattr(google_cli, "CrUXCurrentAdapter", FakeCrUXCurrent)
+    monkeypatch.setattr(google_cli, "CrUXHistoryAdapter", FakeCrUXHistory)
 
     payload, code = google_cli.run([
         "gsc-query", "--site-url", "sc-domain:example.com",
@@ -83,14 +128,28 @@ def test_google_commands_route_to_real_connector_boundaries(monkeypatch):
         "--dimension", "query",
     ])
     assert code == EXIT_OK
-    assert payload["data"]["totals_source"] == "dimensionless_aggregate_query"
+    assert payload["data"]["aggregate_source"] == "dimensionless_aggregate_query"
 
     payload, code = google_cli.run([
-        "gsc-inspect", "--url", "https://example.com/page",
+        "gsc-aggregate", "--site-url", "sc-domain:example.com",
+        "--start-date", "2026-06-01", "--end-date", "2026-06-30",
+    ])
+    assert code == EXIT_OK
+    assert payload["data"]["dimensions"] == []
+
+    payload, code = google_cli.run([
+        "url-inspection", "--url", "https://example.com/page",
         "--site-url", "sc-domain:example.com",
     ])
     assert code == EXIT_OK
     assert payload["data"]["inspection_scope"] == "google_index_version_only"
+
+    payload, code = google_cli.run([
+        "sitemap-status", "--site-url", "sc-domain:example.com",
+        "--sitemap-url", "https://example.com/sitemap.xml",
+    ])
+    assert code == EXIT_OK
+    assert payload["data"]["read_only"] is True
 
     payload, code = google_cli.run([
         "ga4-report", "--property-id", "123", "--metric", "sessions",
@@ -102,6 +161,10 @@ def test_google_commands_route_to_real_connector_boundaries(monkeypatch):
     assert code == EXIT_OK
     assert payload["data"]["credential_transport"] == "X-Goog-Api-Key header"
 
+    payload, code = google_cli.run(["crux-current", "--target", "https://example.com"])
+    assert code == EXIT_OK
+    assert payload["data"]["data_state"] == "AVAILABLE"
+
     payload, code = google_cli.run(["crux-history", "--target", "https://example.com"])
     assert code == EXIT_OK
     assert payload["data"]["collection_period_count_returned"] == 25
@@ -111,16 +174,27 @@ def test_google_commands_route_to_real_connector_boundaries(monkeypatch):
     assert payload["data"]["lcp_subparts"]["parts_complete"] is True
 
 
-def test_missing_live_credentials_return_unavailable_not_false_clean(monkeypatch):
+def test_deprecated_gsc_inspect_alias_remains_compatible(monkeypatch):
+    monkeypatch.setattr(google_cli, "GoogleSearchConsoleAdapter", FakeGSC)
+    payload, code = google_cli.run([
+        "gsc-inspect", "--url", "https://example.com/page",
+        "--site-url", "sc-domain:example.com",
+    ])
+    assert code == EXIT_OK
+    assert payload["data"]["inspection_scope"] == "google_index_version_only"
+
+
+def test_missing_live_credentials_remain_truthfully_unavailable(monkeypatch):
     for key in ("GOOGLE_PAGESPEED_API_KEY", "GOOGLE_CRUX_API_KEY"):
         monkeypatch.delenv(key, raising=False)
     payload, code = google_cli.run(["pagespeed", "--url", "https://example.com"])
     assert code == EXIT_UNAVAILABLE
-    assert payload["status"] == "unavailable"
+    assert payload["status"] in {"unavailable", "not_configured"}
     assert payload["error"]["type"] == "AdapterNotConfigured"
+    assert payload["error"]["state"] == "NOT_CONFIGURED"
 
 
-def test_installed_module_exposes_google_help():
+def test_installed_module_exposes_complete_google_help():
     completed = subprocess.run(
         [sys.executable, "-m", "seoctl", "google", "--help"],
         cwd=ROOT,
@@ -129,9 +203,18 @@ def test_installed_module_exposes_google_help():
         text=True,
     )
     assert completed.returncode == 0, completed.stderr
-    assert "gsc-query" in completed.stdout
-    assert "ga4-report" in completed.stdout
-    assert "crux-history" in completed.stdout
+    for command in (
+        "gsc-query",
+        "gsc-aggregate",
+        "ga4-report",
+        "pagespeed",
+        "crux-current",
+        "crux-history",
+        "lcp-subparts",
+        "url-inspection",
+        "sitemap-status",
+    ):
+        assert command in completed.stdout
 
 
 def test_every_registry_handler_resolves_across_command_families():
