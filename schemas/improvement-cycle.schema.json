@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://world-class-seo.local/schemas/improvement-cycle.json",
+  "title": "Controlled Comparative Improvement Cycle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cycle_id",
+    "gap_id",
+    "iteration",
+    "state",
+    "baseline",
+    "hypothesis",
+    "files_changed",
+    "tests_added",
+    "verification",
+    "claude_comparison",
+    "builder_rating",
+    "reviewer_verdicts",
+    "lessons",
+    "next_action",
+    "direct_merge_permitted"
+  ],
+  "properties": {
+    "cycle_id": {"type": "string", "pattern": "^cycle-[0-9]{4,}$"},
+    "gap_id": {"type": "string", "minLength": 3},
+    "iteration": {"type": "integer", "minimum": 1, "maximum": 99},
+    "state": {
+      "enum": [
+        "DISCOVER",
+        "BASELINE",
+        "HYPOTHESIS",
+        "RED_VERIFIED",
+        "IMPLEMENTED",
+        "VERIFIED",
+        "COMPARED",
+        "UNDER_REVIEW",
+        "REWORK_REQUIRED",
+        "ARCHITECTURAL_REDESIGN",
+        "APPROVED_GREAT",
+        "REJECTED_BAD"
+      ]
+    },
+    "baseline": {
+      "type": "object",
+      "required": ["target_commit", "claude_commit", "target_metrics", "claude_metrics"],
+      "properties": {
+        "target_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "claude_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "target_metrics": {"type": "object"},
+        "claude_metrics": {"type": "object"}
+      }
+    },
+    "hypothesis": {"type": "string", "minLength": 20},
+    "files_changed": {"type": "array", "items": {"type": "string"}},
+    "tests_added": {"type": "array", "items": {"type": "string"}},
+    "verification": {
+      "type": "object",
+      "required": ["tests_passed", "regressions", "evidence_refs", "live_state"],
+      "properties": {
+        "tests_passed": {"type": "boolean"},
+        "regressions": {"type": "array", "items": {"type": "string"}},
+        "evidence_refs": {"type": "array", "items": {"type": "string"}},
+        "live_state": {"enum": ["VERIFIED", "FIXTURE_ONLY", "NOT_REQUIRED", "NOT_RUN", "BLOCKED"]},
+        "security_passed": {"type": "boolean"},
+        "documentation_executed": {"type": "boolean"}
+      }
+    },
+    "claude_comparison": {
+      "type": "object",
+      "required": ["functional", "accuracy", "security", "cost_control", "documentation", "verdict"],
+      "properties": {
+        "functional": {"type": "number"},
+        "accuracy": {"type": "number"},
+        "security": {"type": "number"},
+        "cost_control": {"type": "number"},
+        "documentation": {"type": "number"},
+        "verdict": {"enum": ["SUPERIOR", "PARITY", "INFERIOR", "REJECTED"]}
+      }
+    },
+    "builder_rating": {"enum": ["GREAT", "GOOD", "BAD"]},
+    "reviewer_verdicts": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {"$ref": "reviewer-verdict.schema.json"}
+    },
+    "lessons": {"type": "array", "items": {"type": "string"}},
+    "next_action": {"type": "string", "minLength": 3},
+    "direct_merge_permitted": {"const": false},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}
