@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-11",
+  "branch": "improvement/pr4-rendering-technical-pack",
+  "baseline_commit": "aa3574bfce0a58134541b9e9a9f3c7148cd96097",
+  "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+  "builder_rating": "GOOD",
+  "overall_state": "CODE_CONTRACT_IN_REVIEW",
+  "capabilities": [
+    {
+      "id": "render-health",
+      "command": "seoctl render health",
+      "implementation": "integrations/technical/browser.py",
+      "verified": [
+        "Optional dependency remains outside core",
+        "Missing package and browser return NOT_CONFIGURED",
+        "Install and uninstall commands are exposed",
+        "Clean-install ModuleNotFoundError is sanitized"
+      ],
+      "not_verified": [
+        "Chromium launch in every supported operator environment"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "render-page",
+      "command": "seoctl render page",
+      "implementation": "integrations/technical/browser.py",
+      "verified": [
+        "Canonical public URL safety",
+        "Subresource public-host guard",
+        "Bounded timeout, viewport, console and request failures",
+        "Injected-browser rendered HTML contract"
+      ],
+      "not_verified": [
+        "Authorized live browser-network smoke test"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "render-screenshot",
+      "command": "seoctl render screenshot",
+      "implementation": "integrations/technical/browser.py",
+      "verified": [
+        "PNG-only output",
+        "25 MB output ceiling",
+        "Atomic file replacement",
+        "Full-page and viewport metadata",
+        "Injected-browser screenshot contract"
+      ],
+      "not_verified": [
+        "Authorized live screenshot smoke test"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "technical-public-http",
+      "commands": [
+        "seoctl technical robots",
+        "seoctl technical sitemap",
+        "seoctl technical hreflang",
+        "seoctl technical preload",
+        "seoctl technical redirect-chain",
+        "seoctl technical indexability"
+      ],
+      "implementation": "integrations/technical/http.py",
+      "verified": [
+        "Manual redirect handling",
+        "Every hop uses canonical public URL safety",
+        "Bounded timeout, response size, and redirect count",
+        "No cookies, credentials, POST requests, or writes",
+        "Loop and blocked-target evidence"
+      ],
+      "not_verified": [
+        "Production-network behavior across proxies and enterprise egress controls"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "technical-inspections",
+      "implementation": "integrations/technical/inspection.py",
+      "verified": [
+        "Robots groups and directives preserved",
+        "Sitemap duplicate and unsafe-location detection",
+        "Hreflang format, target, duplicate, and x-default checks",
+        "Preload attributes preserved without performance claims",
+        "Technical indexability kept distinct from Google index state",
+        "Fixture-based deterministic evidence"
+      ],
+      "not_verified": [
+        "Live smoke tests on controlled benchmark sites"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "technical-cwv",
+      "command": "seoctl technical cwv",
+      "implementation": "integrations/technical/inspection.py",
+      "verified": [
+        "Current LCP, INP, and CLS good thresholds",
+        "Fixture mode is explicitly not live",
+        "Existing PageSpeed adapter is reused",
+        "Lab and field evidence remain distinct"
+      ],
+      "not_verified": [
+        "Authorized live PageSpeed request in this phase"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "schema-execution",
+      "commands": [
+        "seoctl schema detect",
+        "seoctl schema validate",
+        "seoctl schema generate"
+      ],
+      "implementation": "integrations/technical/inspection.py",
+      "verified": [
+        "JSON-LD detection and syntax parsing",
+        "Baseline @context and @type validation",
+        "No rich-result eligibility claim",
+        "Bounded type and field allowlists",
+        "Operator-supplied facts only",
+        "No invented ratings, reviews, offers, identities, or medical claims"
+      ],
+      "not_verified": [
+        "Google feature-specific eligibility for generated markup"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "runtime-and-agent-wiring",
+      "implementation": "integrations/technical/adapters.py",
+      "verified": [
+        "Canonical command registry ownership and skills",
+        "ToolDispatcher-compatible adapters",
+        "Normalized AdapterResult evidence",
+        "Generated command documentation",
+        "Existing fixture adapters retained for compatibility"
+      ],
+      "not_verified": [],
+      "parity_status": "CODE_CONTRACT_READY"
+    }
+  ],
+  "release_gate": {
+    "code_contract_state": "CI_IN_PROGRESS",
+    "browser_live_state": "BLOCKED",
+    "public_web_live_state": "NOT_RUN",
+    "required_for_live_closure": "Optional Playwright installation and authorized controlled-site smoke evidence",
+    "must_not_do": [
+      "Do not install Playwright or browser binaries as core dependencies",
+      "Do not follow redirects without validating each target",
+      "Do not claim Google index state from a page-level technical inspection",
+      "Do not claim rich-result eligibility from baseline JSON-LD validation",
+      "Do not infer performance improvement from preload markup alone"
+    ]
+  }
+}
