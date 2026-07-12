@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    {"name":"Core Audit Skills","skills":["full-site-audit","seo-diagnostic-stack-design","technical-audit","crawl-map","indexation-reality-check","sitemap-audit","analytics-synthesis","seo-drift-monitor","score-normalization"]},
+    {"name":"Technical Implementation Skills","skills":["schema-detect-validate-generate","core-web-vitals-triage","redirect-validation","internal-link-map","seo-ci-checks","technical-implementation","programmatic-seo-governance","rendered-visual-audit","single-page-audit","faceted-navigation-governance"]},
+    {"name":"Content and IA Skills","skills":["content-brief","content-audit","content-decay","anti-ai-public-writing","keyword-cluster","content-inventory","sxo-page-fit","metadata-generation","conversion-intent-map","landing-page-cro-audit","competitor-comparison-page-build","flow-prompt-run","serp-overlap-cluster","desktop-commander-execution","consent-mode-diagnostic"]},
+    {"name":"Local, International, and Media Skills","skills":["local-seo-audit","citation-audit","review-strategy","local-landing-page-brief","regional-keyword-map","hreflang-audit","international-url-architecture","localized-content-review","image-seo-audit","video-seo-audit","accessibility-audit","geo-grid-rank-scan","gbp-profile-audit","competitor-radius-map","cross-platform-nap-verify"]},
+    {"name":"E-commerce Skills","skills":["product-page-seo-audit","product-schema-validate-generate","marketplace-intelligence","marketplace-keyword-gap","merchant-data-consistency-audit","agentic-commerce-readiness-check"]},
+    {"name":"GEO, Entity, and Conversational Skills","skills":["geo-aio-citation-audit","brand-serp-audit","knowledge-graph-sync","conversational-query-map","official-source-monitor","knowledge-sync"]},
+    {"name":"Authority, Risk, and Strategy Skills","skills":["backlink-profile","backlink-gap","digital-pr-asset-brief","outreach-prospecting","negative-seo-threat-review","security-indexation-check","compliance-review","spam-policy-check","claims-risk-review","competitive-gap","competitor-change-monitor","forecasting","trend-monitor","seo-roadmap","executive-summary","plain-language-seo-report","content-calendar","request-routing","prioritization-matrix","scrummaster-debate","experiment-design","decision-record","definition-of-done"]}
+  ]
+}
