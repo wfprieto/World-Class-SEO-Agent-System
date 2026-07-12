@@ -41,6 +41,9 @@ jobs:
       - name: Validate comparative rebaseline and capability ledger
         run: python scripts/inventory_comparator.py
 
+      - name: Validate controlled improvement governance
+        run: python scripts/validate_improvement_evidence.py
+
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
 
