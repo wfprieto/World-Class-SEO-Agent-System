@@ -11,6 +11,7 @@ def _cycle() -> dict:
         "gap_id": "tooling-gsc-query",
         "iteration": 1,
         "state": "UNDER_REVIEW",
+        "builder_context_id": BUILDER_CONTEXT,
         "baseline": {
             "target_commit": "8e6f666506ff723eb6f8f354e4150b30073fb67f",
             "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
