@@ -30,8 +30,8 @@
     {"id":"technical.preload","path":["technical","preload"],"handler":"technical_preload","owner":"SEO Technical Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"live_optional"},
     {"id":"technical.redirect-chain","path":["technical","redirect-chain"],"handler":"technical_redirect_chain","owner":"SEO Technical Agent","skills":["technical-audit"],"execution_class":"executable","network":"live_optional"},
     {"id":"technical.indexability","path":["technical","indexability"],"handler":"technical_indexability","owner":"SEO Technical Agent","skills":["indexation-reality-check"],"execution_class":"executable","network":"live_optional"},
-    {"id":"technical.cwv","path":["technical","cwv"],"handler":"technical_cwv","owner":"SEO Diagnostic Infrastructure Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"fixture_or_live_optional"},
-    {"id":"schema.detect","path":["schema","detect"],"handler":"schema_detect","owner":"SEO Technical Agent","skills":["schema-detect-validate-generate"],"execution_class":"executable","network":"fixture_or_live_optional"},
+    {"id":"technical.cwv","path":["technical","cwv"],"handler":"technical_cwv","owner":"SEO Diagnostic Infrastructure Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"live_optional"},
+    {"id":"schema.detect","path":["schema","detect"],"handler":"schema_detect","owner":"SEO Technical Agent","skills":["schema-detect-validate-generate"],"execution_class":"executable","network":"live_optional"},
     {"id":"schema.validate","path":["schema","validate"],"handler":"schema_validate","owner":"SEO Technical Agent","skills":["schema-detect-validate-generate"],"execution_class":"executable","network":"none"},
     {"id":"schema.generate","path":["schema","generate"],"handler":"schema_generate","owner":"Senior SEO Engineer Agent","skills":["schema-detect-validate-generate"],"execution_class":"executable","network":"none"}
   ],
