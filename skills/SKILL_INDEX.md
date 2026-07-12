@@ -1,39 +1,39 @@
 # Skill Index
 
-Skills are reusable capabilities. Agents call skills when the request requires that capability. A skill is not an agent; it is a repeatable workflow with inputs, outputs, execution steps, failure handling, and quality gates.
+This file is generated from `skills/skill-catalog.json` and `skills/package-registry.json`. Do not edit it manually.
 
-All skills must follow `skill-definition-standard.md`. Additional referenced skills that are not grouped in the core category files are defined in `missing-skills.md`.
+Skills are reusable capabilities. Priority packages add machine-readable execution metadata while `skills/deep-skill-procedures.md` remains the canonical procedure authority.
 
 ## Core Audit Skills
 
-- `full-site-audit`
+- `full-site-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#full-site-audit`
 - `seo-diagnostic-stack-design`
-- `technical-audit`
+- `technical-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-audit`
 - `crawl-map`
 - `indexation-reality-check`
 - `sitemap-audit`
 - `analytics-synthesis`
-- `seo-drift-monitor`
+- `seo-drift-monitor` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#seo-drift-monitor`
 - `score-normalization`
 
 ## Technical Implementation Skills
 
-- `schema-detect-validate-generate`
-- `core-web-vitals-triage`
+- `schema-detect-validate-generate` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#schema-detect-validate-generate`
+- `core-web-vitals-triage` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#core-web-vitals-triage`
 - `redirect-validation`
 - `internal-link-map`
 - `seo-ci-checks`
-- `technical-implementation`
-- `programmatic-seo-governance`
-- `rendered-visual-audit`
-- `single-page-audit`
+- `technical-implementation` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-implementation`
+- `programmatic-seo-governance` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#programmatic-seo-governance`
+- `rendered-visual-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#rendered-visual-audit`
+- `single-page-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#single-page-audit`
 - `faceted-navigation-governance`
 
 ## Content and IA Skills
 
-- `content-brief`
-- `content-audit`
-- `content-decay`
+- `content-brief` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-brief`
+- `content-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-audit`
+- `content-decay` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-decay`
 - `anti-ai-public-writing`
 - `keyword-cluster`
 - `content-inventory`
@@ -41,20 +41,20 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `metadata-generation`
 - `conversion-intent-map`
 - `landing-page-cro-audit`
-- `competitor-comparison-page-build`
+- `competitor-comparison-page-build` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#competitor-comparison-page-build`
 - `flow-prompt-run`
 - `serp-overlap-cluster`
 - `desktop-commander-execution`
-- `consent-mode-diagnostic`
+- `consent-mode-diagnostic` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#consent-mode-diagnostic`
 
 ## Local, International, and Media Skills
 
-- `local-seo-audit`
+- `local-seo-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#local-seo-audit`
 - `citation-audit`
 - `review-strategy`
 - `local-landing-page-brief`
 - `regional-keyword-map`
-- `hreflang-audit`
+- `hreflang-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#hreflang-audit`
 - `international-url-architecture`
 - `localized-content-review`
 - `image-seo-audit`
@@ -67,7 +67,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 
 ## E-commerce Skills
 
-- `product-page-seo-audit`
+- `product-page-seo-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#product-page-seo-audit`
 - `product-schema-validate-generate`
 - `marketplace-intelligence`
 - `marketplace-keyword-gap`
@@ -76,7 +76,7 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 
 ## GEO, Entity, and Conversational Skills
 
-- `geo-aio-citation-audit`
+- `geo-aio-citation-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#geo-aio-citation-audit`
 - `brand-serp-audit`
 - `knowledge-graph-sync`
 - `conversational-query-map`
@@ -85,13 +85,13 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 
 ## Authority, Risk, and Strategy Skills
 
-- `backlink-profile`
+- `backlink-profile` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#backlink-profile`
 - `backlink-gap`
 - `digital-pr-asset-brief`
 - `outreach-prospecting`
 - `negative-seo-threat-review`
 - `security-indexation-check`
-- `compliance-review`
+- `compliance-review` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#compliance-review`
 - `spam-policy-check`
 - `claims-risk-review`
 - `competitive-gap`
@@ -109,22 +109,28 @@ All skills must follow `skill-definition-standard.md`. Additional referenced ski
 - `decision-record`
 - `definition-of-done`
 
-## Skill Definition Files
+## Package coverage
 
-- `skill-definition-standard.md`: required structure for every skill.
-- `core-skills.md`: core audit and technical discovery skills.
-- `content-ia-skills.md`: content, metadata, IA, and SXO skills.
-- `specialist-skills.md`: local, international, media, GEO, entity, and authority skills.
-- `strategy-governance-skills.md`: roadmap, prioritization, debate, experimentation, compliance, and knowledge skills.
-- `missing-skills.md`: complete definitions for additional referenced skills.
-- `public-facing-writing-skills.md`: required writing quality gate for anything a website or app visitor can read.
-- `skill-execution-playbooks.md`: procedural playbooks that add step-by-step execution depth to grouped skills.
-- `deep-skill-procedures.md`: tool-aware procedures, decision points, failure handling, and time estimates for the original grouped skills.
-- `ecommerce-seo-skills.md`: e-commerce, product schema, marketplace, and faceted-navigation skills.
-- `programmatic-seo-governance.md`: scaled-page governance skill.
-- `geo-grid-local-rank-skills.md`: geo-grid rank, GBP audit, competitor radius, NAP verification.
-- `competitor-comparison-pages.md`: comparison and alternatives page build skill.
-- `rendered-visual-audit-and-page-entry.md`: rendered visual audit and single-page audit entry.
-- `seo-flow-skill.md`: FLOW stage prompt library; stage files in `flow-prompts/` are references, not separate skills.
-- `seo-cluster-skill.md`: SERP-overlap topic clustering.
-- `local-execution-skills.md`: bounded local execution layer for approved local operations.
+- Indexed skills: 84
+- Priority packages: 20
+- Package document: `skills/packages/PRIORITY_SKILL_PACKAGES.md`
+- Package metadata: `skills/package-registry.json`
+- Canonical procedures: `skills/deep-skill-procedures.md`
+- Definition standard: `skills/skill-definition-standard.md`
+
+## Supporting definition files
+
+- `core-skills.md`
+- `content-ia-skills.md`
+- `specialist-skills.md`
+- `strategy-governance-skills.md`
+- `missing-skills.md`
+- `public-facing-writing-skills.md`
+- `ecommerce-seo-skills.md`
+- `programmatic-seo-governance.md`
+- `geo-grid-local-rank-skills.md`
+- `competitor-comparison-pages.md`
+- `rendered-visual-audit-and-page-entry.md`
+- `seo-flow-skill.md`
+- `seo-cluster-skill.md`
+- `local-execution-skills.md`
