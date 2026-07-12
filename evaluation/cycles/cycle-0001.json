@@ -3,6 +3,7 @@
   "gap_id": "unified-command-surface",
   "iteration": 1,
   "state": "APPROVED_GREAT",
+  "builder_context_id": "builder-seoctl-context-0001",
   "baseline": {
     "target_commit": "69c93bb32db2aa161c1566738676fadeb355514e",
     "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
