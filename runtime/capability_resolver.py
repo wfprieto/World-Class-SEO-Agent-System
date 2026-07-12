@@ -1,4 +1,4 @@
-"""Resolve the exact agent, skill, knowledge, and template context for a workflow node."""
+"""Resolve exact agent, skill, package, knowledge, and template context."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Any
 
 
 class CapabilityResolutionError(RuntimeError):
-    """Raised when a capability registry entry is missing or points to an invalid file."""
+    """Raised when capability metadata is missing or invalid."""
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class CapabilityBundle:
 
 
 class CapabilityResolver:
-    """One machine-readable registry for runtime context assembly."""
+    """Assemble canonical runtime context without duplicating procedure authority."""
 
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root
@@ -35,21 +35,37 @@ class CapabilityResolver:
         raw = json.loads(path.read_text(encoding="utf-8"))
         self.registry: dict[str, dict[str, Any]] = raw.get("agents", {})
         self.shared: dict[str, Any] = raw.get("shared", {})
+        package_raw = json.loads(
+            (repo_root / "skills" / "package-registry.json").read_text(encoding="utf-8")
+        )
+        self.packages: dict[str, dict[str, Any]] = package_raw.get("packages", {})
+        self.package_document = str(package_raw.get("package_document", ""))
 
     def bundle(self, agent_name: str) -> CapabilityBundle:
         row = self.registry.get(agent_name)
         if row is None:
             raise CapabilityResolutionError(f"agent not registered: {agent_name}")
+        skills = tuple(row.get("skills", []))
+        grouped_files = tuple(row.get("skill_files", []))
+        package_files = (
+            (self.package_document,)
+            if self.package_document and any(skill in self.packages for skill in skills)
+            else ()
+        )
+        skill_files = tuple(dict.fromkeys((*grouped_files, *package_files)))
         bundle = CapabilityBundle(
             agent=agent_name,
             agent_file=str(row["agent_file"]),
-            skills=tuple(row.get("skills", [])),
-            skill_files=tuple(row.get("skill_files", [])),
+            skills=skills,
+            skill_files=skill_files,
             knowledge_files=tuple(row.get("knowledge_files", [])),
             templates=tuple(row.get("templates", [])),
             required_evidence=tuple(row.get("required_evidence", [])),
         )
-        for relative in (bundle.agent_file, *bundle.skill_files, *bundle.knowledge_files, *bundle.templates):
+        for relative in (
+            bundle.agent_file, *bundle.skill_files,
+            *bundle.knowledge_files, *bundle.templates,
+        ):
             if not (self.repo_root / relative).exists():
                 raise CapabilityResolutionError(
                     f"{agent_name} capability path does not exist: {relative}"
@@ -58,19 +74,21 @@ class CapabilityResolver:
 
     def load_context(self, agent_name: str) -> dict[str, Any]:
         bundle = self.bundle(agent_name)
-        skill_procedures = self._procedure_sections(bundle.skills)
         return {
             "bundle": bundle,
             "agent_spec": self._read(bundle.agent_file),
             "skill_context": [
-                {"path": path, "content": self._read(path)} for path in bundle.skill_files
+                {"path": path, "content": self._read(path)}
+                for path in bundle.skill_files
             ],
-            "deep_procedures": skill_procedures,
+            "deep_procedures": self._procedure_sections(bundle.skills),
             "knowledge_context": [
-                {"path": path, "content": self._read(path)} for path in bundle.knowledge_files
+                {"path": path, "content": self._read(path)}
+                for path in bundle.knowledge_files
             ],
             "template_context": [
-                {"path": path, "content": self._read(path)} for path in bundle.templates
+                {"path": path, "content": self._read(path)}
+                for path in bundle.templates
             ],
         }
 
@@ -82,13 +100,16 @@ class CapabilityResolver:
                 "agent": agent_name,
                 "skills": list(bundle.skills),
                 "paths": [
-                    bundle.agent_file,
-                    *bundle.skill_files,
-                    *bundle.knowledge_files,
-                    *bundle.templates,
+                    bundle.agent_file, *bundle.skill_files,
+                    *bundle.knowledge_files, *bundle.templates,
                 ],
             })
-        return {"status": "ok", "agent_count": len(agents), "agents": agents}
+        return {
+            "status": "ok",
+            "agent_count": len(agents),
+            "package_count": len(self.packages),
+            "agents": agents,
+        }
 
     def _read(self, relative: str) -> str:
         return (self.repo_root / relative).read_text(encoding="utf-8")
@@ -102,7 +123,4 @@ class CapabilityResolver:
         for index, match in enumerate(matches):
             end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             sections[match.group(1)] = text[match.start():end].strip()
-        return [
-            {"skill": skill, "content": sections.get(skill, "")}
-            for skill in skills
-        ]
+        return [{"skill": skill, "content": sections.get(skill, "")} for skill in skills]
