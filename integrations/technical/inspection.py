@@ -16,9 +16,9 @@ from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
 from adapters.url_safety import validate_public_url
 from integrations.technical.http import BoundedHttpClient, HttpHop
 
-
 _BCP47 = re.compile(
-    r"^(?:[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?(?:-[A-Za-z0-9]{5,8}|-\d[A-Za-z0-9]{3})*|x-default)$"
+    r"^(?:[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?"
+    r"(?:-[A-Za-z0-9]{5,8}|-\d[A-Za-z0-9]{3})*|x-default)$"
 )
 _SUPPORTED_SCHEMA: dict[str, dict[str, tuple[str, ...]]] = {
     "Organization": {
@@ -31,7 +31,14 @@ _SUPPORTED_SCHEMA: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "Article": {
         "required": ("headline", "url"),
-        "optional": ("datePublished", "dateModified", "author", "image", "publisher", "description"),
+        "optional": (
+            "datePublished",
+            "dateModified",
+            "author",
+            "image",
+            "publisher",
+            "description",
+        ),
     },
     "Product": {
         "required": ("name", "url"),
@@ -50,29 +57,30 @@ class _PageParser(HTMLParser):
         self.links: list[dict[str, str]] = []
         self.metas: list[dict[str, str]] = []
         self.jsonld_texts: list[str] = []
-        self._in_jsonld = False
-        self._jsonld_parts: list[str] = []
+        self._jsonld_parts: list[str] | None = None
 
     def handle_starttag(self, tag: str, attrs) -> None:  # type: ignore[no-untyped-def]
-        normalized = {str(key).lower(): str(value or "") for key, value in attrs}
+        values = {str(key).lower(): str(value or "") for key, value in attrs}
         lower = tag.lower()
         if lower == "link":
-            self.links.append(normalized)
+            self.links.append(values)
         elif lower == "meta":
-            self.metas.append(normalized)
-        elif lower == "script" and normalized.get("type", "").lower().split(";", 1)[0].strip() == "application/ld+json":
-            self._in_jsonld = True
+            self.metas.append(values)
+        elif (
+            lower == "script"
+            and values.get("type", "").lower().split(";", 1)[0].strip()
+            == "application/ld+json"
+        ):
             self._jsonld_parts = []
 
     def handle_data(self, data: str) -> None:
-        if self._in_jsonld:
+        if self._jsonld_parts is not None:
             self._jsonld_parts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
-        if tag.lower() == "script" and self._in_jsonld:
+        if tag.lower() == "script" and self._jsonld_parts is not None:
             self.jsonld_texts.append("".join(self._jsonld_parts).strip())
-            self._in_jsonld = False
-            self._jsonld_parts = []
+            self._jsonld_parts = None
 
 
 class TechnicalInspectionService:
@@ -90,17 +98,23 @@ class TechnicalInspectionService:
     def robots(self, url: str, **_: Any) -> AdapterResult:
         safe = validate_public_url(url)
         parsed = urllib.parse.urlsplit(safe)
-        robots_url = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, "/robots.txt", "", ""))
+        robots_url = urllib.parse.urlunsplit(
+            (parsed.scheme, parsed.netloc, "/robots.txt", "", "")
+        )
         hop = self.http.get(robots_url)
         text = self._decode(hop)
         groups, sitemaps, unknown = self._parse_robots(text)
         warnings: list[str] = []
         if hop.status_code == 404:
-            warnings.append("robots.txt was not found; this is not equivalent to a crawl block.")
+            warnings.append(
+                "robots.txt was not found; this is not equivalent to a crawl block."
+            )
         elif not 200 <= hop.status_code < 300:
             warnings.append(f"robots.txt returned HTTP {hop.status_code}.")
         if unknown:
-            warnings.append(f"{len(unknown)} unrecognized robots.txt directive line(s) were preserved.")
+            warnings.append(
+                f"{len(unknown)} unrecognized robots.txt directive line(s) were preserved."
+            )
         return AdapterResult(
             source=self.name,
             status="ok" if not warnings else "needs-review",
@@ -116,8 +130,8 @@ class TechnicalInspectionService:
                 "data_state": "AVAILABLE" if text else "EMPTY",
                 "request_metadata": {"elapsed_ms": hop.elapsed_ms},
                 "limitations": [
-                    "This parser reports directives; it does not claim how every crawler implements them.",
-                    "Robots rules control crawling, not guaranteed indexing removal.",
+                    "The parser reports directives and does not claim how every crawler implements them.",
+                    "Robots rules govern crawling, not guaranteed removal from an index.",
                 ],
             },
             warnings=warnings,
@@ -126,7 +140,6 @@ class TechnicalInspectionService:
     def sitemap(self, url: str, **_: Any) -> AdapterResult:
         safe = validate_public_url(url)
         hop = self.http.get(safe)
-        warnings: list[str] = []
         try:
             root = ET.fromstring(hop.body)
         except ET.ParseError as exc:
@@ -143,30 +156,40 @@ class TechnicalInspectionService:
                 warnings=["Sitemap response is not valid XML."],
             )
         kind = self._local_name(root.tag)
-        if kind not in {"urlset", "sitemapindex"}:
-            warnings.append(f"Unexpected sitemap root element: {kind or 'unknown'}.")
         locations = [
             (element.text or "").strip()
             for element in root.iter()
-            if self._local_name(element.tag) == "loc" and (element.text or "").strip()
+            if self._local_name(element.tag) == "loc"
+            and (element.text or "").strip()
         ]
         truncated = len(locations) > 50_000
         analyzed = locations[:50_000]
         counts = Counter(analyzed)
-        duplicates = sorted(value for value, count in counts.items() if count > 1)
-        unsafe_locations: list[str] = []
+        duplicates = sorted(
+            location for location, count in counts.items() if count > 1
+        )
         safe_locations: list[str] = []
+        unsafe_locations: list[str] = []
         for location in analyzed:
             try:
                 safe_locations.append(validate_public_url(location))
             except ValueError:
                 unsafe_locations.append(location)
+        warnings: list[str] = []
+        if kind not in {"urlset", "sitemapindex"}:
+            warnings.append(f"Unexpected sitemap root element: {kind or 'unknown'}.")
         if duplicates:
-            warnings.append(f"{len(duplicates)} duplicate sitemap location(s) found.")
+            warnings.append(
+                f"{len(duplicates)} duplicate sitemap location(s) found."
+            )
         if unsafe_locations:
-            warnings.append(f"{len(unsafe_locations)} non-public or invalid sitemap location(s) found.")
+            warnings.append(
+                f"{len(unsafe_locations)} invalid or non-public sitemap location(s) found."
+            )
         if truncated:
-            warnings.append("Sitemap exceeds the 50,000-location analysis ceiling; remaining entries were not analyzed.")
+            warnings.append(
+                "Sitemap exceeds the 50,000-location analysis ceiling; remaining entries were not analyzed."
+            )
         if not locations:
             warnings.append("No sitemap <loc> elements were found.")
         if not 200 <= hop.status_code < 300:
@@ -193,45 +216,55 @@ class TechnicalInspectionService:
         )
 
     def hreflang(self, url: str, **_: Any) -> AdapterResult:
-        safe, hop, html, parser = self._page(url)
+        safe, hop, parser = self._page(url)
         alternates: list[dict[str, Any]] = []
         invalid_codes: list[str] = []
         invalid_targets: list[str] = []
         for link in parser.links:
             rel = self._tokens(link.get("rel"))
-            lang = link.get("hreflang", "").strip()
+            language = link.get("hreflang", "").strip()
             href = link.get("href", "").strip()
-            if "alternate" not in rel or not lang:
+            if "alternate" not in rel or not language:
                 continue
             resolved = urllib.parse.urljoin(hop.final_url, href) if href else ""
-            valid_code = bool(_BCP47.fullmatch(lang))
+            valid_code = bool(_BCP47.fullmatch(language))
             if not valid_code:
-                invalid_codes.append(lang)
+                invalid_codes.append(language)
             try:
                 target = validate_public_url(resolved)
-                target_valid = True
+                target_public = True
             except ValueError:
                 target = resolved
-                target_valid = False
+                target_public = False
                 invalid_targets.append(resolved)
             alternates.append(
                 {
-                    "hreflang": lang,
+                    "hreflang": language,
                     "href": target,
                     "language_code_valid": valid_code,
-                    "target_public": target_valid,
+                    "target_public": target_public,
                 }
             )
         duplicate_codes = sorted(
-            code for code, count in Counter(item["hreflang"].lower() for item in alternates).items() if count > 1
+            code
+            for code, count in Counter(
+                item["hreflang"].lower() for item in alternates
+            ).items()
+            if count > 1
         )
         warnings: list[str] = []
         if invalid_codes:
-            warnings.append(f"{len(invalid_codes)} hreflang value(s) do not match the bounded BCP-47 validator.")
+            warnings.append(
+                f"{len(invalid_codes)} hreflang value(s) failed the bounded BCP-47 format check."
+            )
         if invalid_targets:
-            warnings.append(f"{len(invalid_targets)} hreflang target(s) are invalid or non-public.")
+            warnings.append(
+                f"{len(invalid_targets)} hreflang target(s) are invalid or non-public."
+            )
         if duplicate_codes:
-            warnings.append(f"Duplicate hreflang codes found: {', '.join(duplicate_codes)}.")
+            warnings.append(
+                "Duplicate hreflang codes found: " + ", ".join(duplicate_codes)
+            )
         if not alternates:
             warnings.append("No HTML hreflang alternates were found.")
         return AdapterResult(
@@ -244,21 +277,24 @@ class TechnicalInspectionService:
                 "status_code": hop.status_code,
                 "alternates": alternates,
                 "alternate_count": len(alternates),
-                "has_x_default": any(item["hreflang"].lower() == "x-default" for item in alternates),
+                "has_x_default": any(
+                    item["hreflang"].lower() == "x-default"
+                    for item in alternates
+                ),
                 "invalid_language_codes": invalid_codes,
                 "invalid_targets": invalid_targets,
                 "duplicate_language_codes": duplicate_codes,
                 "data_state": "AVAILABLE" if alternates else "EMPTY",
                 "limitations": [
                     "A single-page inspection cannot prove reciprocal return links across alternate pages.",
-                    "HTTP headers and XML-sitemap hreflang annotations are outside this HTML-only result.",
+                    "HTTP-header and XML-sitemap hreflang annotations are outside this HTML result.",
                 ],
             },
             warnings=warnings,
         )
 
     def preload(self, url: str, **_: Any) -> AdapterResult:
-        safe, hop, html, parser = self._page(url)
+        safe, hop, parser = self._page(url)
         preloads: list[dict[str, Any]] = []
         warnings: list[str] = []
         for link in parser.links:
@@ -267,22 +303,28 @@ class TechnicalInspectionService:
                 continue
             href = link.get("href", "").strip()
             resolved = urllib.parse.urljoin(hop.final_url, href) if href else ""
-            entry = {
+            item = {
                 "rel": sorted(rel),
                 "href": resolved,
                 "as": link.get("as") or None,
                 "type": link.get("type") or None,
                 "media": link.get("media") or None,
                 "crossorigin": link.get("crossorigin") or None,
-                "fetchpriority": (link.get("fetchpriority") or "").lower() or None,
+                "fetchpriority": (
+                    (link.get("fetchpriority") or "").lower() or None
+                ),
             }
-            preloads.append(entry)
+            preloads.append(item)
             if not href:
                 warnings.append("A preload declaration is missing href.")
-            if "preload" in rel and not entry["as"]:
-                warnings.append(f"Preload {resolved or '[missing href]'} is missing an 'as' value.")
+            if "preload" in rel and not item["as"]:
+                warnings.append(
+                    f"Preload {resolved or '[missing href]'} is missing an 'as' value."
+                )
         high_priority_images = [
-            item for item in preloads if item["as"] == "image" and item["fetchpriority"] == "high"
+            item
+            for item in preloads
+            if item["as"] == "image" and item["fetchpriority"] == "high"
         ]
         return AdapterResult(
             source=self.name,
@@ -297,14 +339,19 @@ class TechnicalInspectionService:
                 "high_priority_image_count": len(high_priority_images),
                 "data_state": "AVAILABLE" if preloads else "EMPTY",
                 "limitations": [
-                    "Presence of preload markup does not prove the resource was useful or discovered early enough.",
+                    "Markup presence does not prove that a preload was useful or timely.",
                     "Performance impact requires browser or field evidence.",
                 ],
             },
             warnings=warnings,
         )
 
-    def redirect_chain(self, url: str, max_redirects: int = 10, **_: Any) -> AdapterResult:
+    def redirect_chain(
+        self,
+        url: str,
+        max_redirects: int = 10,
+        **_: Any,
+    ) -> AdapterResult:
         chain = self.http.redirect_chain(url, max_redirects=max_redirects)
         warnings: list[str] = []
         if chain["loop_detected"]:
@@ -312,41 +359,52 @@ class TechnicalInspectionService:
         if chain["limit_reached"]:
             warnings.append("Redirect chain reached the configured hop ceiling.")
         if chain["blocked_target"]:
-            warnings.append("Redirect target was blocked by canonical public-URL safety.")
+            warnings.append(
+                "Redirect target was blocked by canonical public-URL safety."
+            )
         if chain["hop_count"] > 2:
-            warnings.append(f"Redirect chain contains {chain['hop_count']} HTTP responses.")
+            warnings.append(
+                f"Redirect chain contains {chain['hop_count']} HTTP responses."
+            )
+        status = "ok" if not warnings else (
+            "blocked" if chain["data_state"] == "BLOCKED" else "needs-review"
+        )
         return AdapterResult(
             source=self.name,
-            status="ok" if not warnings else ("blocked" if chain["data_state"] == "BLOCKED" else "needs-review"),
+            status=status,
             data={"operation": "redirect-chain", **chain},
             warnings=warnings,
         )
 
     def indexability(self, url: str, **_: Any) -> AdapterResult:
-        safe, hop, html, parser = self._page(url)
+        safe, hop, parser = self._page(url)
         header_robots = self._header(hop.headers, "x-robots-tag") or ""
         meta_values = [
             meta.get("content", "")
             for meta in parser.metas
-            if meta.get("name", "").lower() in {"robots", "googlebot", "googlebot-news"}
+            if meta.get("name", "").lower()
+            in {"robots", "googlebot", "googlebot-news"}
         ]
-        directives = self._directive_tokens([header_robots, *meta_values])
-        canonical_values = []
-        for link in parser.links:
-            if "canonical" in self._tokens(link.get("rel")) and link.get("href"):
-                canonical_values.append(urllib.parse.urljoin(hop.final_url, link["href"]))
+        header_directives = self._directive_tokens([header_robots])
+        meta_directives = self._directive_tokens(meta_values)
+        directives = header_directives | meta_directives
+        canonicals = [
+            urllib.parse.urljoin(hop.final_url, link["href"])
+            for link in parser.links
+            if "canonical" in self._tokens(link.get("rel"))
+            and link.get("href")
+        ]
         blocking: list[str] = []
         if not 200 <= hop.status_code < 300:
             blocking.append(f"http_status_{hop.status_code}")
-        if "noindex" in directives or "none" in directives:
-            if any("noindex" in self._directive_tokens([value]) or "none" in self._directive_tokens([value]) for value in meta_values):
-                blocking.append("meta_robots_noindex")
-            if "noindex" in self._directive_tokens([header_robots]) or "none" in self._directive_tokens([header_robots]):
-                blocking.append("x_robots_tag_noindex")
-        if len(canonical_values) > 1:
+        if {"noindex", "none"} & meta_directives:
+            blocking.append("meta_robots_noindex")
+        if {"noindex", "none"} & header_directives:
+            blocking.append("x_robots_tag_noindex")
+        if len(canonicals) > 1:
             blocking.append("multiple_html_canonicals")
-        canonical = canonical_values[0] if len(canonical_values) == 1 else None
-        canonical_public = None
+        canonical = canonicals[0] if len(canonicals) == 1 else None
+        canonical_public: bool | None = None
         if canonical:
             try:
                 canonical = validate_public_url(canonical)
@@ -355,7 +413,6 @@ class TechnicalInspectionService:
                 canonical_public = False
                 blocking.append("invalid_or_non_public_canonical")
         indexable = not blocking
-        warnings = [f"Technical indexability blocker: {item}." for item in blocking]
         return AdapterResult(
             source=self.name,
             status="ok" if indexable else "needs-review",
@@ -369,7 +426,7 @@ class TechnicalInspectionService:
                 "directives": sorted(directives),
                 "canonical": canonical,
                 "canonical_public": canonical_public,
-                "canonical_count": len(canonical_values),
+                "canonical_count": len(canonicals),
                 "indexable": indexable,
                 "blocking_reasons": blocking,
                 "data_state": "AVAILABLE",
@@ -378,7 +435,9 @@ class TechnicalInspectionService:
                     "Robots.txt crawl rules and Google index state require separate evidence.",
                 ],
             },
-            warnings=warnings,
+            warnings=[
+                f"Technical indexability blocker: {reason}." for reason in blocking
+            ],
         )
 
     def cwv(
@@ -394,32 +453,38 @@ class TechnicalInspectionService:
         if strategy not in {"mobile", "desktop"}:
             raise ValueError("strategy must be mobile or desktop")
         if fixture_path:
-            raw = json.loads(Path(fixture_path).read_text(encoding="utf-8-sig"))
+            payload = json.loads(
+                Path(fixture_path).read_text(encoding="utf-8-sig")
+            )
             source = "fixture"
             live = False
-            normalized = raw
             warnings: list[str] = []
         else:
-            adapter = self.pagespeed or GooglePageSpeedLiveAdapter()
-            live_result = adapter.fetch(url=str(url), strategy=strategy, include_crux=True)
+            result = (self.pagespeed or GooglePageSpeedLiveAdapter()).fetch(
+                url=str(url),
+                strategy=strategy,
+                include_crux=True,
+            )
+            payload = result.data
             source = "pagespeed_live"
             live = True
-            normalized = live_result.data
-            warnings = list(live_result.warnings)
-        metrics = self._cwv_metrics(normalized)
-        missing = [name for name, item in metrics.items() if item["value"] is None]
+            warnings = list(result.warnings)
+        metrics = self._cwv_metrics(payload)
+        missing = [
+            name for name, item in metrics.items() if item["value"] is None
+        ]
         if missing:
-            warnings.append("Missing Core Web Vitals evidence for: " + ", ".join(missing))
-        status = "ok" if not missing else "partial"
-        performance_score = self._performance_score(normalized)
+            warnings.append(
+                "Missing Core Web Vitals evidence for: " + ", ".join(missing)
+            )
         return AdapterResult(
             source=self.name,
-            status=status,
+            status="ok" if not missing else "partial",
             data={
                 "operation": "cwv",
                 "source": source,
                 "strategy": strategy,
-                "performance_score": performance_score,
+                "performance_score": self._performance_score(payload),
                 "metrics": metrics,
                 "data_state": "AVAILABLE" if not missing else "PARTIAL",
                 "live_measurement": live,
@@ -442,33 +507,32 @@ class TechnicalInspectionService:
         if bool(url) == bool(html):
             raise ValueError("provide exactly one of url or html")
         if url:
-            safe, hop, html_value, parser = self._page(url)
+            safe, hop, parser = self._page(url)
             source_value = hop.final_url
         else:
             safe = None
-            html_value = str(html)
             parser = _PageParser()
-            parser.feed(html_value)
+            parser.feed(str(html))
             source_value = source or "html"
         items: list[Any] = []
         invalid: list[dict[str, Any]] = []
         for index, text in enumerate(parser.jsonld_texts):
             if not text:
-                invalid.append({"script_index": index, "error": "empty JSON-LD script"})
+                invalid.append(
+                    {"script_index": index, "error": "empty JSON-LD script"}
+                )
                 continue
             try:
                 parsed = json.loads(text)
             except json.JSONDecodeError as exc:
                 invalid.append({"script_index": index, "error": str(exc)})
                 continue
-            if isinstance(parsed, list):
-                items.extend(parsed)
-            else:
-                items.append(parsed)
-        types = sorted(self._schema_types(items))
-        warnings = []
+            items.extend(parsed if isinstance(parsed, list) else [parsed])
+        warnings: list[str] = []
         if invalid:
-            warnings.append(f"{len(invalid)} JSON-LD script(s) could not be parsed.")
+            warnings.append(
+                f"{len(invalid)} JSON-LD script(s) could not be parsed."
+            )
         if not items:
             warnings.append("No parseable JSON-LD items were found.")
         return AdapterResult(
@@ -480,18 +544,23 @@ class TechnicalInspectionService:
                 "source": source_value,
                 "items": items,
                 "item_count": len(items),
-                "types": types,
+                "types": sorted(self._schema_types(items)),
                 "invalid_scripts": invalid,
                 "data_state": "AVAILABLE" if items else "EMPTY",
                 "limitations": [
-                    "Detection and JSON parsing do not prove eligibility for a Google rich result.",
-                    "Google feature-specific required properties must be checked against current official documentation.",
+                    "Detection and JSON parsing do not prove Google rich-result eligibility.",
+                    "Feature-specific required properties require current official validation.",
                 ],
             },
             warnings=warnings,
         )
 
-    def schema_validate(self, *, jsonld: str | dict[str, Any] | list[Any], **_: Any) -> AdapterResult:
+    def schema_validate(
+        self,
+        *,
+        jsonld: str | dict[str, Any] | list[Any],
+        **_: Any,
+    ) -> AdapterResult:
         if isinstance(jsonld, str):
             try:
                 payload = json.loads(jsonld)
@@ -513,14 +582,15 @@ class TechnicalInspectionService:
         types: set[str] = set()
         for index, item in enumerate(items):
             if not isinstance(item, dict):
-                errors.append({"item": index, "error": "item must be a JSON object"})
+                errors.append(
+                    {"item": index, "error": "item must be a JSON object"}
+                )
                 continue
             if "@context" not in item:
                 errors.append({"item": index, "error": "missing @context"})
             if "@type" not in item:
                 errors.append({"item": index, "error": "missing @type"})
             types.update(self._type_values(item.get("@type")))
-        warnings = [entry["error"] for entry in errors]
         return AdapterResult(
             source=self.name,
             status="ok" if not errors else "needs-review",
@@ -535,10 +605,10 @@ class TechnicalInspectionService:
                 "validation_scope": "json_syntax_and_schema_org_baseline_only",
                 "limitations": [
                     "This validator does not claim Google rich-result eligibility.",
-                    "Feature-specific required and recommended properties change and require current official validation.",
+                    "Feature-specific required and recommended properties require current official validation.",
                 ],
             },
-            warnings=warnings,
+            warnings=[entry["error"] for entry in errors],
         )
 
     def schema_generate(
@@ -549,55 +619,75 @@ class TechnicalInspectionService:
         **_: Any,
     ) -> AdapterResult:
         if schema_type not in _SUPPORTED_SCHEMA:
-            raise ValueError(f"schema_type must be one of the supported types: {sorted(_SUPPORTED_SCHEMA)}")
+            raise ValueError(
+                "schema_type must be one of the supported types: "
+                + ", ".join(sorted(_SUPPORTED_SCHEMA))
+            )
         if not isinstance(values, dict):
             raise TypeError("values must be an object")
         contract = _SUPPORTED_SCHEMA[schema_type]
         allowed = set(contract["required"]) | set(contract["optional"])
         unknown = sorted(set(values) - allowed)
         if unknown:
-            raise ValueError("unsupported fields for this bounded generator: " + ", ".join(unknown))
-        missing = [field for field in contract["required"] if values.get(field) in {None, "", []}]
+            raise ValueError(
+                "unsupported fields for this bounded generator: "
+                + ", ".join(unknown)
+            )
+        missing = [
+            field
+            for field in contract["required"]
+            if self._is_missing(values.get(field))
+        ]
         if missing:
             raise ValueError("missing required fields: " + ", ".join(missing))
-        jsonld: dict[str, Any] = {
+        output: dict[str, Any] = {
             "@context": "https://schema.org",
             "@type": schema_type,
         }
         for field in (*contract["required"], *contract["optional"]):
-            if field in values and values[field] not in {None, "", []}:
-                jsonld[field] = values[field]
-        omitted = [field for field in contract["optional"] if field not in jsonld]
+            value = values.get(field)
+            if not self._is_missing(value):
+                output[field] = value
+        omitted = [
+            field for field in contract["optional"] if field not in output
+        ]
         return AdapterResult(
             source=self.name,
             status="ok",
             data={
                 "operation": "schema-generate",
-                "jsonld": jsonld,
+                "jsonld": output,
                 "schema_type": schema_type,
                 "omitted_optional_fields": omitted,
                 "data_state": "AVAILABLE",
                 "provenance": "operator_supplied_values_only",
                 "limitations": [
                     "The generator includes only operator-supplied facts and does not invent ratings, reviews, offers, identity, or eligibility claims.",
-                    "Generated baseline markup still requires page-level and Google feature-specific validation.",
+                    "Generated markup still requires page-level and feature-specific validation.",
                 ],
             },
             warnings=[],
         )
 
-    def _page(self, url: str) -> tuple[str, HttpHop, str, _PageParser]:
+    def _page(self, url: str) -> tuple[str, HttpHop, _PageParser]:
         safe = validate_public_url(url)
         hop = self.http.get(safe)
-        html = self._decode(hop)
         parser = _PageParser()
-        parser.feed(html)
-        return safe, hop, html, parser
+        parser.feed(self._decode(hop))
+        return safe, hop, parser
+
+    @staticmethod
+    def _is_missing(value: Any) -> bool:
+        return value is None or value == "" or value == []
 
     @staticmethod
     def _decode(hop: HttpHop) -> str:
-        content_type = TechnicalInspectionService._header(hop.headers, "content-type") or ""
-        match = re.search(r"charset=([A-Za-z0-9._-]+)", content_type, flags=re.I)
+        content_type = TechnicalInspectionService._header(
+            hop.headers, "content-type"
+        ) or ""
+        match = re.search(
+            r"charset=([A-Za-z0-9._-]+)", content_type, flags=re.I
+        )
         encoding = match.group(1) if match else "utf-8"
         try:
             return hop.body.decode(encoding, "replace")
@@ -605,21 +695,24 @@ class TechnicalInspectionService:
             return hop.body.decode("utf-8", "replace")
 
     @staticmethod
-    def _parse_robots(text: str) -> tuple[list[dict[str, Any]], list[str], list[str]]:
+    def _parse_robots(
+        text: str,
+    ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
         groups: list[dict[str, Any]] = []
-        current_agents: list[str] = []
-        current_rules: list[dict[str, str]] = []
+        agents: list[str] = []
+        rules: list[dict[str, str]] = []
         sitemaps: list[str] = []
         unknown: list[str] = []
+        rules_started = False
 
         def flush() -> None:
-            nonlocal current_agents, current_rules
-            if current_agents:
-                groups.append({"user_agents": current_agents, "rules": current_rules})
-            current_agents = []
-            current_rules = []
+            nonlocal agents, rules, rules_started
+            if agents:
+                groups.append({"user_agents": agents, "rules": rules})
+            agents = []
+            rules = []
+            rules_started = False
 
-        rules_started = False
         for raw in text.splitlines():
             line = raw.split("#", 1)[0].strip()
             if not line or ":" not in line:
@@ -629,12 +722,11 @@ class TechnicalInspectionService:
             if directive == "user-agent":
                 if rules_started:
                     flush()
-                    rules_started = False
-                current_agents.append(value)
+                agents.append(value)
             elif directive in {"allow", "disallow"}:
-                if not current_agents:
-                    current_agents = ["*"]
-                current_rules.append({"directive": directive, "value": value})
+                if not agents:
+                    agents = ["*"]
+                rules.append({"directive": directive, "value": value})
                 rules_started = True
             elif directive == "sitemap":
                 if value:
@@ -650,7 +742,11 @@ class TechnicalInspectionService:
 
     @staticmethod
     def _tokens(value: str | None) -> set[str]:
-        return {item.lower() for item in re.split(r"[\s,]+", value or "") if item}
+        return {
+            token.lower()
+            for token in re.split(r"[\s,]+", value or "")
+            if token
+        }
 
     @staticmethod
     def _directive_tokens(values: list[str]) -> set[str]:
@@ -685,26 +781,48 @@ class TechnicalInspectionService:
         if isinstance(value, str):
             return {value}
         if isinstance(value, list):
-            return {str(item) for item in value if isinstance(item, str)}
+            return {item for item in value if isinstance(item, str)}
         return set()
 
     @classmethod
-    def _cwv_metrics(cls, payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    def _cwv_metrics(
+        cls, payload: dict[str, Any]
+    ) -> dict[str, dict[str, Any]]:
         lighthouse = payload.get("lighthouseResult") or payload
         audits = lighthouse.get("audits") or {}
         raw = {
-            "lcp_ms": cls._audit_number(audits, "largest-contentful-paint", payload, "lcp_ms"),
-            "inp_ms": cls._audit_number(audits, "interaction-to-next-paint", payload, "inp_ms"),
-            "cls": cls._audit_number(audits, "cumulative-layout-shift", payload, "cls"),
+            "lcp_ms": cls._audit_number(
+                audits, "largest-contentful-paint", payload, "lcp_ms"
+            ),
+            "inp_ms": cls._audit_number(
+                audits, "interaction-to-next-paint", payload, "inp_ms"
+            ),
+            "cls": cls._audit_number(
+                audits, "cumulative-layout-shift", payload, "cls"
+            ),
         }
         return {
-            "lcp_ms": {"value": raw["lcp_ms"], "rating": cls._rating(raw["lcp_ms"], 2500, 4000)},
-            "inp_ms": {"value": raw["inp_ms"], "rating": cls._rating(raw["inp_ms"], 200, 500)},
-            "cls": {"value": raw["cls"], "rating": cls._rating(raw["cls"], 0.1, 0.25)},
+            "lcp_ms": {
+                "value": raw["lcp_ms"],
+                "rating": cls._rating(raw["lcp_ms"], 2500, 4000),
+            },
+            "inp_ms": {
+                "value": raw["inp_ms"],
+                "rating": cls._rating(raw["inp_ms"], 200, 500),
+            },
+            "cls": {
+                "value": raw["cls"],
+                "rating": cls._rating(raw["cls"], 0.1, 0.25),
+            },
         }
 
     @staticmethod
-    def _audit_number(audits: dict[str, Any], audit_id: str, payload: dict[str, Any], fallback: str) -> float | None:
+    def _audit_number(
+        audits: dict[str, Any],
+        audit_id: str,
+        payload: dict[str, Any],
+        fallback: str,
+    ) -> float | None:
         value = (audits.get(audit_id) or {}).get("numericValue")
         if value is None:
             value = payload.get(fallback)
@@ -716,7 +834,11 @@ class TechnicalInspectionService:
     @staticmethod
     def _performance_score(payload: dict[str, Any]) -> float | None:
         lighthouse = payload.get("lighthouseResult") or payload
-        value = ((lighthouse.get("categories") or {}).get("performance") or {}).get("score")
+        value = (
+            ((lighthouse.get("categories") or {}).get("performance") or {}).get(
+                "score"
+            )
+        )
         if value is None:
             value = payload.get("performance_score")
         try:
