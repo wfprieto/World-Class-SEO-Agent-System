@@ -9,9 +9,16 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl benchmark compare` | AI Principal SEO Scientist | `experiment-design` | `none` |
 | `seoctl benchmark tracer` | SEO Research and Development Agent | `experiment-design` | `none` |
 | `seoctl cluster serp` | SEO Information Architecture Agent | `serp-overlap-cluster` | `none` |
+| `seoctl content brief` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` |
+| `seoctl content compare` | Competitive Intelligence Agent | `content-audit` | `none` |
+| `seoctl content decay` | Predictive SEO Trend Agent | `content-decay` | `none` |
+| `seoctl content entities` | SEO Knowledge Graph Sync Agent | `content-audit` | `none` |
+| `seoctl content humanize` | SEO Copywriter/Content Agent | `content-audit` | `none` |
+| `seoctl content quality` | SEO Copywriter/Content Agent | `content-audit` | `none` |
 | `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content serp` | SEO Copywriter/Content Agent | `content-brief` | `none` |
+| `seoctl content verify` | SEO Compliance & Legal Agent | `compliance-review` | `none` |
 | `seoctl google crux-current` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google crux-history` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google ga4-report` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
