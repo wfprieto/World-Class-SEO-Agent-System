@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-11",
+  "branch": "improvement/pr5-content-intelligence-pack",
+  "baseline_commit": "23cb3052629e605708ba6f1c3a8457fb93c2f4d7",
+  "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+  "builder_rating": "GOOD",
+  "overall_state": "CODE_CONTRACT_IN_REVIEW",
+  "capabilities": [
+    {
+      "id": "content-quality",
+      "command": "seoctl content quality",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Deterministic measurable editorial metrics",
+        "Explicit diagnostic score scope",
+        "No Google score or ranking probability",
+        "No invented expertise, originality, factual accuracy, experience, or user satisfaction",
+        "High-stakes review warning"
+      ],
+      "not_verified": [
+        "Human usefulness across controlled benchmark content",
+        "Factual accuracy and originality"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "claim-citation-review",
+      "command": "seoctl content verify",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Bounded claim and source registers",
+        "Support requires a supplied reviewer and review date",
+        "Missing sources and contradictions remain explicit",
+        "Source URL alone never verifies a claim",
+        "Independent source fetch remains NOT_RUN"
+      ],
+      "not_verified": [
+        "Independent source retrieval",
+        "Independent semantic claim-to-source verification",
+        "Source authenticity and current availability"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "entity-analysis",
+      "command": "seoctl content entities",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Operator-supplied catalog string matching",
+        "Low-confidence heuristic candidates remain separate",
+        "No knowledge-graph or identity claim"
+      ],
+      "not_verified": [
+        "Knowledge-graph identity",
+        "Entity relationships and salience"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "evidence-gated-brief",
+      "command": "seoctl content brief",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Canonical relevance and SERP brief gate reused",
+        "Information gain and source register required",
+        "Audience, intent, primary question, and sections required",
+        "Draft authorization remains distinct from publication"
+      ],
+      "not_verified": [
+        "Draft quality against controlled benchmark briefs"
+      ],
+      "parity_status": "CODE_CONTRACT_READY"
+    },
+    {
+      "id": "content-decay",
+      "command": "seoctl content decay",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Non-overlapping period validation",
+        "Absolute and percentage changes",
+        "Lower-is-better metric handling",
+        "Observed decline remains noncausal",
+        "Publication dates are not automatically modified"
+      ],
+      "not_verified": [
+        "Causal attribution using technical, SERP, competitor, seasonality, and conversion evidence"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "content-comparison",
+      "command": "seoctl content compare",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Word, sentence, heading, citation, overlap, and term comparison",
+        "No unsupported winner",
+        "No copyright, originality, accuracy, usefulness, or ranking claim"
+      ],
+      "not_verified": [
+        "Human usefulness scoring against controlled criteria"
+      ],
+      "parity_status": "CODE_CONTRACT_READY"
+    },
+    {
+      "id": "clarity-transformation",
+      "command": "seoctl content humanize",
+      "implementation": "integrations/content_intelligence/service.py",
+      "verified": [
+        "Allowlisted filler removal",
+        "Whitespace and punctuation normalization",
+        "Detected numbers, URLs, and citations preserved",
+        "AI-detector evasion and authorship concealment explicitly unsupported",
+        "Facts remain unverified"
+      ],
+      "not_verified": [
+        "Human editorial preference across benchmark audiences"
+      ],
+      "parity_status": "CODE_CONTRACT_READY"
+    },
+    {
+      "id": "runtime-and-command-wiring",
+      "implementation": "integrations/content_intelligence/adapters.py",
+      "verified": [
+        "One canonical content intelligence adapter",
+        "ToolDispatcher-compatible AdapterResult evidence",
+        "Legacy content commands delegated to their canonical implementation",
+        "Seven new commands registered to existing agents and skills",
+        "Generated command documentation synchronized"
+      ],
+      "not_verified": [],
+      "parity_status": "CODE_CONTRACT_READY"
+    }
+  ],
+  "release_gate": {
+    "code_contract_state": "CI_IN_PROGRESS",
+    "network_state": "NOT_APPLICABLE",
+    "independent_source_verification_state": "NOT_RUN",
+    "required_for_full_parity": "Controlled benchmark review and an authorized independent source-verification capability in a later phase",
+    "must_not_do": [
+      "Do not present editorial diagnostics as a Google score or ranking probability",
+      "Do not treat a citation or source URL as proof of claim support",
+      "Do not turn heuristic entities into verified identities",
+      "Do not assign cause from period-over-period decline alone",
+      "Do not support AI-detector evasion or authorship concealment",
+      "Do not automatically change publication dates to simulate freshness"
+    ]
+  }
+}
