@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "commands": [
+    {"id":"system.route","path":["system","route"],"handler":"system_route","owner":"SEO Scrummaster Agent","skills":["request-routing"],"execution_class":"executable","network":"none"},
+    {"id":"system.run","path":["system","run"],"handler":"system_run","owner":"SEO Full Audit/Analyst Agent","skills":["full-site-audit"],"execution_class":"executable","network":"provider_optional"},
+    {"id":"content.relevance","path":["content","relevance"],"handler":"content_relevance","owner":"SEO Copywriter/Content Agent","skills":["content-brief"],"execution_class":"executable","network":"none"},
+    {"id":"content.serp","path":["content","serp"],"handler":"content_serp","owner":"SEO Copywriter/Content Agent","skills":["content-brief"],"execution_class":"executable","network":"none"},
+    {"id":"content.brief-decision","path":["content","brief-decision"],"handler":"content_brief_decision","owner":"SEO Copywriter/Content Agent","skills":["content-brief"],"execution_class":"executable","network":"none"},
+    {"id":"cluster.serp","path":["cluster","serp"],"handler":"cluster_serp","owner":"SEO Information Architecture Agent","skills":["serp-overlap-cluster"],"execution_class":"executable","network":"none"},
+    {"id":"profile.resolve","path":["profile","resolve"],"handler":"profile_resolve","owner":"SEO Scrummaster Agent","skills":["request-routing"],"execution_class":"executable","network":"none"},
+    {"id":"privacy.consent","path":["privacy","consent"],"handler":"privacy_consent","owner":"SEO Compliance & Legal Agent","skills":["consent-mode-diagnostic"],"execution_class":"executable","network":"none"},
+    {"id":"report.render","path":["report","render"],"handler":"report_render","owner":"SEO Output Report Agent","skills":["plain-language-seo-report"],"execution_class":"executable","network":"none"},
+    {"id":"benchmark.compare","path":["benchmark","compare"],"handler":"benchmark_compare","owner":"AI Principal SEO Scientist","skills":["experiment-design"],"execution_class":"executable","network":"none"},
+    {"id":"benchmark.tracer","path":["benchmark","tracer"],"handler":"benchmark_tracer","owner":"SEO Research and Development Agent","skills":["experiment-design"],"execution_class":"executable","network":"none"}
+  ],
+  "agents": {
+    "SEO Technical Agent":{"execution_class":"executable","commands":["system.run"]},
+    "SEO Copywriter/Content Agent":{"execution_class":"executable","commands":["content.relevance","content.serp","content.brief-decision"]},
+    "SEO Information Architecture Agent":{"execution_class":"executable","commands":["cluster.serp"]},
+    "SEO Accessibility Agent":{"execution_class":"advisory","commands":[]},
+    "SEO CRO Agent":{"execution_class":"advisory","commands":[]},
+    "Local SEO Agent":{"execution_class":"advisory","commands":[]},
+    "Senior SEO Strategist Agent":{"execution_class":"executable","commands":["system.run"]},
+    "Senior SEO Engineer Agent":{"execution_class":"executable","commands":["system.run"]},
+    "SEO Scrummaster Agent":{"execution_class":"governance","commands":["system.route","profile.resolve"]},
+    "SEO Full Audit/Analyst Agent":{"execution_class":"executable","commands":["system.run"]},
+    "SEO Output Report Agent":{"execution_class":"executable","commands":["report.render"]},
+    "SEO Diagnostic Infrastructure Agent":{"execution_class":"executable","commands":["benchmark.compare"]},
+    "GEO / AIO Optimization Agent":{"execution_class":"advisory","commands":[]},
+    "Visual & Video Search Agent":{"execution_class":"advisory","commands":[]},
+    "Voice Search & Conversational Agent":{"execution_class":"advisory","commands":[]},
+    "SEO Compliance & Legal Agent":{"execution_class":"executable","commands":["privacy.consent"]},
+    "Negative SEO & Security Agent":{"execution_class":"advisory","commands":[]},
+    "International & Multilingual SEO Agent":{"execution_class":"advisory","commands":[]},
+    "Digital PR & Programmatic Link Outreach Agent":{"execution_class":"advisory","commands":[]},
+    "Predictive SEO Trend Agent":{"execution_class":"advisory","commands":[]},
+    "Competitive Intelligence Agent":{"execution_class":"advisory","commands":[]},
+    "SEO Research and Development Agent":{"execution_class":"executable","commands":["benchmark.tracer"]},
+    "SEO Knowledge Graph Sync Agent":{"execution_class":"advisory","commands":[]},
+    "AI Principal SEO Scientist":{"execution_class":"executable","commands":["benchmark.compare","benchmark.tracer"]},
+    "SEO E-commerce Agent":{"execution_class":"advisory","commands":[]}
+  }
+}
