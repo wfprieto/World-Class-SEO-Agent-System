@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.1.0",
+  "as_of": "2026-07-11",
+  "branch": "improvement/pr3-google-first-party-pack",
+  "baseline_commit": "56337cdd1843855ef07842255da27a5f17cdbb23",
+  "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+  "builder_rating": "GOOD",
+  "overall_state": "PRODUCTION_CAPABLE_LIVE_BLOCKED",
+  "capabilities": [
+    {
+      "id": "google-gsc-query",
+      "implementation": "integrations/google/gsc.py",
+      "command": "seoctl google gsc-query",
+      "state": "GOOD",
+      "verified": [
+        "Scoped OAuth transport",
+        "Separate dimensionless aggregate totals",
+        "Bounded dimension-row pagination",
+        "Anonymized-row limitation disclosure",
+        "Dates, dimensions, provider metadata and request telemetry preserved",
+        "Agent and canonical command registry wiring"
+      ],
+      "not_verified": [
+        "Live Search Console property request",
+        "Real quota and permission response",
+        "OAuth refresh against an approved client"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-gsc-aggregate",
+      "implementation": "integrations/google/gsc.py",
+      "command": "seoctl google gsc-aggregate",
+      "state": "GOOD",
+      "verified": [
+        "Dimensionless property aggregate query",
+        "Aggregate output is not inferred from visible rows",
+        "Explicit AVAILABLE, PARTIAL and EMPTY states"
+      ],
+      "not_verified": [
+        "Live aggregate request against an approved property"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-url-inspection",
+      "implementation": "integrations/google/gsc.py",
+      "command": "seoctl google url-inspection",
+      "state": "GOOD",
+      "verified": [
+        "Property containment",
+        "Canonical public URL safety",
+        "Index-version limitation disclosure",
+        "Provider verdicts preserved without reinterpretation",
+        "No write or indexing-request action"
+      ],
+      "not_verified": [
+        "Live URL Inspection request against an approved property"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-sitemap-status",
+      "implementation": "integrations/google/sitemaps.py",
+      "command": "seoctl google sitemap-status",
+      "state": "GOOD",
+      "verified": [
+        "Read-only list and get operations",
+        "GET requests with no request body",
+        "Warnings and errors normalized separately",
+        "Property containment for requested sitemap URLs",
+        "No submit or delete operation"
+      ],
+      "not_verified": [
+        "Live sitemap status request against an approved property"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-ga4-report",
+      "implementation": "integrations/google/ga4.py",
+      "command": "seoctl google ga4-report",
+      "state": "GOOD",
+      "verified": [
+        "Scoped OAuth transport",
+        "Provider TOTAL aggregation",
+        "Typed dimensions and metrics",
+        "Property quota metadata",
+        "Pagination and data-loss warnings",
+        "Current keyEvents terminology"
+      ],
+      "not_verified": [
+        "Live GA4 property request",
+        "Real property quota behavior",
+        "OAuth refresh against an approved client"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-pagespeed",
+      "implementation": "adapters/google_pagespeed_live.py",
+      "command": "seoctl google pagespeed",
+      "state": "GOOD",
+      "verified": [
+        "Shared bounded transport",
+        "Header-only API key",
+        "Canonical target URL safety",
+        "Current CrUX kept distinct in normalized evidence",
+        "Credential redaction and response-size controls"
+      ],
+      "not_verified": [
+        "Live PageSpeed request in this improvement cycle"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-crux-current",
+      "implementation": "integrations/google/crux.py",
+      "command": "seoctl google crux-current",
+      "state": "GOOD",
+      "verified": [
+        "Current record endpoint and response shape",
+        "URL and origin targeting",
+        "Mobile, desktop and tablet separation",
+        "404 becomes NOT_FOUND rather than zero performance",
+        "Histogram and p75 normalization"
+      ],
+      "not_verified": [
+        "Live current CrUX request in this improvement cycle"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-crux-history",
+      "implementation": "integrations/google/crux.py",
+      "command": "seoctl google crux-history",
+      "state": "GOOD",
+      "verified": [
+        "Official 1 to 40 period bound",
+        "Default 25 periods",
+        "Official percentile and histogram timeseries shapes",
+        "Rolling-window disclosure",
+        "404 NOT_FOUND truthfulness"
+      ],
+      "not_verified": [
+        "Live CrUX History request in this improvement cycle"
+      ],
+      "parity_status": "GAP_OPEN"
+    },
+    {
+      "id": "google-lcp-subparts",
+      "implementation": "integrations/google/crux.py",
+      "command": "seoctl google lcp-subparts",
+      "state": "GOOD",
+      "verified": [
+        "Observed field subpart normalization",
+        "Milliseconds and source identity preserved",
+        "INSUFFICIENT_EVIDENCE when required metrics are absent",
+        "No estimation of missing values",
+        "Residual calculation only when all parts exist"
+      ],
+      "not_verified": [
+        "Live image-LCP subpart availability across approved production-like URLs"
+      ],
+      "parity_status": "GAP_OPEN"
+    }
+  ],
+  "release_gate": {
+    "code_contract_state": "READY_FOR_CI_AND_INDEPENDENT_REVIEW",
+    "live_state": "BLOCKED",
+    "required_for_live_closure": "Authorized read-only smoke tests with redacted evidence",
+    "must_not_do": [
+      "Do not store provider tokens",
+      "Do not claim live parity from fixtures",
+      "Do not change provider properties",
+      "Do not submit or delete sitemaps",
+      "Do not lower the comparative scoring maturity threshold"
+    ]
+  }
+}

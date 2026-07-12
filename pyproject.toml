@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-seoctl = "seoctl.cli:main"
+seoctl = "seoctl.entrypoint:main"
 
 [project.optional-dependencies]
 dev = [
@@ -24,7 +24,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["adapters*", "evaluation*", "runtime*", "scripts*", "seoctl*"]
+include = ["adapters*", "evaluation*", "integrations*", "runtime*", "scripts*", "seoctl*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
