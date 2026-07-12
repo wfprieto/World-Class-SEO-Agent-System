@@ -10,11 +10,13 @@ def test_command_documentation_matches_registry_exactly():
     assert documented == render()
 
 
-def test_every_command_has_owner_skill_network_and_handler():
+def test_every_command_has_owner_skill_network_and_resolved_handler():
+    from seoctl.cli import HANDLERS
     from seoctl.registry import command_specs
 
     for spec in command_specs():
         assert spec.owner
         assert spec.skills
-        assert spec.handler
+        assert spec.handler in HANDLERS
+        assert callable(HANDLERS[spec.handler])
         assert spec.network
