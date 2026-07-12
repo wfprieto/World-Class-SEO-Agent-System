@@ -1,14 +1,18 @@
-"""Chrome UX Report History API integration and LCP subpart analysis."""
+"""Chrome UX Report current/history integrations and LCP subpart analysis."""
 
 from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import urlsplit
 
 from adapters.base import AdapterNotConfigured, AdapterResult
 from adapters.url_safety import validate_public_url
-from integrations.google.client import GoogleJsonClient
+from integrations.google.client import GoogleAPIError, GoogleJsonClient
 
+CRUX_CURRENT_ENDPOINT = (
+    "https://chromeuxreport.googleapis.com/v1/records:queryRecord"
+)
 CRUX_HISTORY_ENDPOINT = (
     "https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord"
 )
@@ -32,6 +36,173 @@ _LCP_PARTS = [
 ]
 
 
+def _credentials(api_key: str | None) -> str:
+    resolved = (
+        api_key
+        or os.getenv("GOOGLE_CRUX_API_KEY")
+        or os.getenv("GOOGLE_PAGESPEED_API_KEY")
+    )
+    if not resolved:
+        raise AdapterNotConfigured(
+            "Set GOOGLE_CRUX_API_KEY or GOOGLE_PAGESPEED_API_KEY."
+        )
+    return resolved
+
+
+def _target(value: str, target_type: str) -> tuple[str, str]:
+    normalized_type = target_type.strip().lower()
+    if normalized_type not in {"url", "origin"}:
+        raise ValueError("target_type must be url or origin")
+    safe_target = validate_public_url(value)
+    if normalized_type == "origin":
+        parsed = urlsplit(safe_target)
+        safe_target = f"{parsed.scheme}://{parsed.netloc}"
+    return safe_target, normalized_type
+
+
+def _form_factor(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized not in _FORM_FACTORS:
+        raise ValueError(f"form_factor must be one of {sorted(_FORM_FACTORS)}")
+    return _FORM_FACTORS[normalized]
+
+
+def _metrics(values: list[str] | None) -> list[str]:
+    selected = list(values or _DEFAULT_METRICS)
+    if not selected or len(selected) != len(set(selected)):
+        raise ValueError("metrics must be a non-empty unique list")
+    if len(selected) > 50 or any(not isinstance(item, str) or not item for item in selected):
+        raise ValueError("metrics must contain at most 50 non-empty names")
+    return selected
+
+
+def _not_found(
+    *,
+    source: str,
+    target: str,
+    target_type: str,
+    form_factor: str,
+    error: GoogleAPIError,
+) -> AdapterResult:
+    return AdapterResult(
+        source=source,
+        status="not_found",
+        data={
+            "target": target,
+            "target_type": target_type,
+            "form_factor": form_factor,
+            "data_state": "NOT_FOUND",
+            "metrics": {},
+            "request_metadata": {},
+            "limitations": [
+                "No eligible CrUX field record was found for this target and form factor.",
+                "A missing record is not a zero score and does not prove good or bad performance.",
+            ],
+        },
+        warnings=[str(error)],
+    )
+
+
+class CrUXCurrentAdapter:
+    name = "google_crux_current"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        *,
+        client: GoogleJsonClient | None = None,
+    ) -> None:
+        self.api_key = api_key
+        self.client = client or GoogleJsonClient(
+            allowed_hosts={"chromeuxreport.googleapis.com"}
+        )
+
+    def fetch(
+        self,
+        target: str,
+        target_type: str = "url",
+        form_factor: str = "mobile",
+        metrics: list[str] | None = None,
+        **_: Any,
+    ) -> AdapterResult:
+        key = _credentials(self.api_key)
+        safe_target, normalized_type = _target(target, target_type)
+        normalized_form = _form_factor(form_factor)
+        selected_metrics = _metrics(metrics)
+        try:
+            response = self.client.request(
+                CRUX_CURRENT_ENDPOINT,
+                service="crux_current",
+                payload={
+                    normalized_type: safe_target,
+                    "formFactor": normalized_form,
+                    "metrics": selected_metrics,
+                },
+                api_key=key,
+            )
+        except GoogleAPIError as exc:
+            if exc.state == "NOT_FOUND":
+                return _not_found(
+                    source=self.name,
+                    target=safe_target,
+                    target_type=normalized_type,
+                    form_factor=normalized_form,
+                    error=exc,
+                )
+            raise
+        record = response.get("record") or {}
+        raw_metrics = record.get("metrics") or {}
+        normalized_metrics = {
+            name: self._normalize_metric(raw_metrics.get(name) or {})
+            for name in selected_metrics
+            if raw_metrics.get(name)
+        }
+        warnings: list[str] = []
+        unavailable = sorted(set(selected_metrics) - set(normalized_metrics))
+        if unavailable:
+            warnings.append("No current CrUX evidence was returned for: " + ", ".join(unavailable))
+        data_state = "AVAILABLE" if normalized_metrics else "EMPTY"
+        return AdapterResult(
+            source=self.name,
+            status="ok" if normalized_metrics else "partial",
+            data={
+                "target": safe_target,
+                "target_type": normalized_type,
+                "form_factor": normalized_form,
+                "collection_period": record.get("collectionPeriod"),
+                "metrics": normalized_metrics,
+                "data_state": data_state,
+                "request_metadata": dict(getattr(self.client, "last_telemetry", {}) or {}),
+                "limitations": [
+                    "CrUX current data is an eligible-user field aggregate, not a lab test.",
+                    "Mobile, desktop, and tablet records are separate and are never blended.",
+                ],
+            },
+            warnings=warnings,
+        )
+
+    @staticmethod
+    def _normalize_metric(metric: dict[str, Any]) -> dict[str, Any]:
+        percentiles = metric.get("percentiles") or {}
+        value = percentiles.get("p75")
+        try:
+            p75 = float(value) if value is not None else None
+        except (TypeError, ValueError):
+            p75 = None
+        histogram = []
+        for item in metric.get("histogram") or []:
+            if not isinstance(item, dict):
+                continue
+            histogram.append(
+                {
+                    "start": item.get("start"),
+                    "end": item.get("end"),
+                    "density": item.get("density"),
+                }
+            )
+        return {"p75": p75, "histogram": histogram}
+
+
 class CrUXHistoryAdapter:
     name = "google_crux_history"
 
@@ -41,11 +212,7 @@ class CrUXHistoryAdapter:
         *,
         client: GoogleJsonClient | None = None,
     ) -> None:
-        self.api_key = (
-            api_key
-            or os.getenv("GOOGLE_CRUX_API_KEY")
-            or os.getenv("GOOGLE_PAGESPEED_API_KEY")
-        )
+        self.api_key = api_key
         self.client = client or GoogleJsonClient(
             allowed_hosts={"chromeuxreport.googleapis.com"}
         )
@@ -59,39 +226,34 @@ class CrUXHistoryAdapter:
         collection_period_count: int = 25,
         **_: Any,
     ) -> AdapterResult:
-        if not self.api_key:
-            raise AdapterNotConfigured(
-                "Set GOOGLE_CRUX_API_KEY or GOOGLE_PAGESPEED_API_KEY."
-            )
-        normalized_type = target_type.strip().lower()
-        if normalized_type not in {"url", "origin"}:
-            raise ValueError("target_type must be url or origin")
-        safe_target = validate_public_url(target)
-        if normalized_type == "origin":
-            from urllib.parse import urlsplit
-
-            parsed = urlsplit(safe_target)
-            safe_target = f"{parsed.scheme}://{parsed.netloc}"
-        normalized_form = form_factor.strip().lower()
-        if normalized_form not in _FORM_FACTORS:
-            raise ValueError(f"form_factor must be one of {sorted(_FORM_FACTORS)}")
+        key = _credentials(self.api_key)
+        safe_target, normalized_type = _target(target, target_type)
+        normalized_form = _form_factor(form_factor)
         if not isinstance(collection_period_count, int) or not 1 <= collection_period_count <= 40:
             raise ValueError("collection_period_count must be an integer from 1 to 40")
-        selected_metrics = list(metrics or _DEFAULT_METRICS)
-        if not selected_metrics or len(selected_metrics) != len(set(selected_metrics)):
-            raise ValueError("metrics must be a non-empty unique list")
-
-        response = self.client.request(
-            CRUX_HISTORY_ENDPOINT,
-            service="crux_history",
-            payload={
-                normalized_type: safe_target,
-                "formFactor": _FORM_FACTORS[normalized_form],
-                "metrics": selected_metrics,
-                "collectionPeriodCount": collection_period_count,
-            },
-            api_key=self.api_key,
-        )
+        selected_metrics = _metrics(metrics)
+        try:
+            response = self.client.request(
+                CRUX_HISTORY_ENDPOINT,
+                service="crux_history",
+                payload={
+                    normalized_type: safe_target,
+                    "formFactor": normalized_form,
+                    "metrics": selected_metrics,
+                    "collectionPeriodCount": collection_period_count,
+                },
+                api_key=key,
+            )
+        except GoogleAPIError as exc:
+            if exc.state == "NOT_FOUND":
+                return _not_found(
+                    source=self.name,
+                    target=safe_target,
+                    target_type=normalized_type,
+                    form_factor=normalized_form,
+                    error=exc,
+                )
+            raise
         record = response.get("record") or {}
         collection_periods = record.get("collectionPeriods") or []
         metric_data = record.get("metrics") or {}
@@ -113,18 +275,21 @@ class CrUXHistoryAdapter:
                 "No p75 history was available for: " + ", ".join(unavailable)
             )
         lcp = decompose_lcp_history(series)
+        data_state = "AVAILABLE" if collection_periods and available else "EMPTY"
         return AdapterResult(
             source=self.name,
-            status="ok" if collection_periods and available else "partial",
+            status="ok" if data_state == "AVAILABLE" else "partial",
             data={
                 "target": safe_target,
                 "target_type": normalized_type,
-                "form_factor": _FORM_FACTORS[normalized_form],
+                "form_factor": normalized_form,
                 "collection_period_count_requested": collection_period_count,
                 "collection_period_count_returned": len(collection_periods),
                 "collection_periods": collection_periods,
                 "metrics": series,
                 "lcp_subparts": lcp,
+                "data_state": data_state,
+                "request_metadata": dict(getattr(self.client, "last_telemetry", {}) or {}),
                 "update_model": {
                     "cadence": "weekly_best_effort",
                     "rolling_window_days": 28,
@@ -134,7 +299,7 @@ class CrUXHistoryAdapter:
                 },
                 "limitations": [
                     "Each weekly point is a 28-day rolling aggregate, so adjacent periods overlap.",
-                    "Missing CrUX data means the target lacks an eligible field record; it does not prove good or bad performance."
+                    "Missing CrUX data means the target lacks an eligible field record; it does not prove good or bad performance.",
                 ],
             },
             warnings=warnings,
@@ -188,7 +353,7 @@ class CrUXHistoryAdapter:
 def decompose_lcp_history(
     metric_series: dict[str, list[dict[str, Any]]]
 ) -> dict[str, Any]:
-    """Return latest observed image-LCP subparts without inventing missing values."""
+    """Return latest observed image-LCP subparts without inventing values."""
     latest: dict[str, float | None] = {}
     for metric in ["largest_contentful_paint", *_LCP_PARTS]:
         values = metric_series.get(metric) or []
@@ -224,6 +389,9 @@ def decompose_lcp_history(
         default=(None, None),
     )
     return {
+        "evidence_state": "AVAILABLE" if complete and observed_lcp is not None else "INSUFFICIENT_EVIDENCE",
+        "source": "crux_history_field_metrics",
+        "unit": "milliseconds",
         "latest_lcp_p75_ms": observed_lcp,
         "parts_ms": parts,
         "parts_complete": complete,
