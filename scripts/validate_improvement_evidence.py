@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from runtime.schema_registry import SchemaRegistry
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from runtime.schema_registry import SchemaRegistry
 
 
 def _load(path: Path) -> dict[str, Any]:
