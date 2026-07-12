@@ -11,7 +11,7 @@ def test_command_documentation_matches_registry_exactly():
 
 
 def test_every_command_has_owner_skill_network_and_resolved_handler():
-    from seoctl.cli import HANDLERS
+    from seoctl.entrypoint import HANDLERS
     from seoctl.registry import command_specs
 
     for spec in command_specs():
