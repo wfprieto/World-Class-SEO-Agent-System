@@ -78,7 +78,7 @@
       "context_id": "review-sm3-20260711-pr9",
       "provider": "OpenAI",
       "model": "GPT-5.6 Thinking",
-      "evidence_package_hash": "2ac555bed1e9fcb08718248bfaa5e220a755d268d618292e2a890049040a5e55",
+      "evidence_package_hash": "43bf99ec4a2c45a15e54eddfb75494def5f053fc9fea5a53c3b569deb926f3c3",
       "verdict": "APPROVE_GREAT",
       "strongest_objections": [
         "The browser dependency must remain optional; forcing browser binaries into core would worsen installation and maintenance burden.",
@@ -111,7 +111,7 @@
       "context_id": "review-vpe-20260711-pr9",
       "provider": "OpenAI",
       "model": "GPT-5.6 Thinking",
-      "evidence_package_hash": "2ac555bed1e9fcb08718248bfaa5e220a755d268d618292e2a890049040a5e55",
+      "evidence_package_hash": "43bf99ec4a2c45a15e54eddfb75494def5f053fc9fea5a53c3b569deb926f3c3",
       "verdict": "APPROVE_GREAT",
       "strongest_objections": [
         "Every navigation and redirect target, including browser subresources, must use the canonical public-host policy to prevent private-network access.",
