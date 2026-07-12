@@ -27,12 +27,12 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl render page` | SEO Technical Agent | `rendered-visual-audit` | `live_optional` |
 | `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
 | `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
-| `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `fixture_or_live_optional` |
+| `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
 | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
 | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
 | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
-| `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `fixture_or_live_optional` |
+| `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl technical hreflang` | International & Multilingual SEO Agent | `hreflang-audit` | `live_optional` |
 | `seoctl technical indexability` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
 | `seoctl technical preload` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
