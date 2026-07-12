@@ -1,12 +1,15 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.0.1",
   "as_of": "2026-07-12",
-  "target_commit": "0dbbda9d3f7587fddba39322b07392bd06091259",
+  "evaluated_target_commit": "e40e45c642abc442a098ea38862115a2b9e5877b",
+  "phase6_package_commit": "4570d700c9dba5d5fc3ab1925c9c317fa35eb2f6",
+  "phase6_ci_enforcement_commit": "e40e45c642abc442a098ea38862115a2b9e5877b",
   "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
   "release_candidate": "v2.0.0",
   "gates": {
     "phase4_deterministic": "PASS",
     "phase5_deterministic": "PASS",
+    "phase6_artifact_consistency": "PASS",
     "final_push_ci": "NOT_OBSERVABLE",
     "dependency_audit": "BLOCKED_BY_NETWORK",
     "live_authorized_smokes": "INCOMPLETE",
