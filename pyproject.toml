@@ -15,6 +15,9 @@ dependencies = [
 seoctl = "seoctl.entrypoint:main"
 
 [project.optional-dependencies]
+render = [
+  "playwright>=1.49,<2"
+]
 dev = [
   "jsonschema>=4.22.0",
   "pytest>=8.0.0",
