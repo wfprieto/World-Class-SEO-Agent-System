@@ -1,50 +1,33 @@
 # Skill Definition Standard
 
-Every skill definition must include:
+Every skill has one canonical procedure heading in `deep-skill-procedures.md`.
 
-1. Skill name
-2. Purpose
-3. System prompt
-4. Required inputs
-5. Execution steps
-6. Output format
-7. Quality gate
-8. Failure conditions and fallback behavior
+## Package eligibility
 
-## Required Format
+Add a record to `skills/package-registry.json` only when a skill has distinct inputs, outputs, commands or explicit advisory boundaries, failure behavior, references, and independent validation. The package record and its anchored section in `skills/packages/PRIORITY_SKILL_PACKAGES.md` are one self-contained capability unit.
 
-```markdown
-## `skill-name`
+Packages supplement grouped definitions. They do not replace the canonical procedure, command registry, evidence store, router, or scoring authority.
 
-Purpose: What this skill does.
+## Required package metadata
 
-System prompt: How the invoking agent should behave while using this skill.
+- `title`
+- `execution_class`: `executable`, `advisory`, or `hybrid`
+- `commands`
+- `owners`
+- `path` and `anchor`
+- `canonical_procedure`
+- `references`
+- `quality_gate`
+- `failure_states`
 
-Required inputs:
+## Grouped definition minimum
 
-- Input 1
-- Input 2
+Purpose, system prompt, required inputs, execution steps, output format, quality gate, failure conditions, and fallback.
 
-Execution steps:
+## Sources of truth
 
-1. Step one.
-2. Step two.
-3. Step three.
-
-Output format:
-
-- Template or schema.
-
-Quality gate:
-
-- What must be true before output is accepted.
-
-Failure conditions:
-
-- What can block or lower confidence.
-
-Fallback:
-
-- What to do when required data is missing.
-```
-
+- Inventory: `skills/skill-catalog.json`
+- Package mapping: `skills/package-registry.json`
+- Package document: `skills/packages/PRIORITY_SKILL_PACKAGES.md`
+- Procedures: `skills/deep-skill-procedures.md`
+- Generated index: `skills/SKILL_INDEX.md`
