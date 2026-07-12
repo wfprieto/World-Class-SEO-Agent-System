@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from seoctl import authority_cli, cli, content_cli, google_cli, technical_cli
+from seoctl import authority_cli, cli, content_cli, extensions_cli, google_cli, technical_cli
 
 HANDLERS = {
     **cli.HANDLERS,
@@ -12,6 +12,7 @@ HANDLERS = {
     **google_cli.HANDLERS,
     **technical_cli.HANDLERS,
     **authority_cli.HANDLERS,
+    **extensions_cli.HANDLERS,
 }
 
 
@@ -25,6 +26,8 @@ def main(argv: list[str] | None = None) -> int:
         return technical_cli.main(arguments)
     if arguments and arguments[0] in {"links", "domain", "media", "drift"}:
         return authority_cli.main(arguments)
+    if arguments and arguments[0] in {"integrations", "bing", "indexnow"}:
+        return extensions_cli.main(arguments)
     return cli.main(arguments)
 
 

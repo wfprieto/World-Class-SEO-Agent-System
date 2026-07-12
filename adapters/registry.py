@@ -23,6 +23,7 @@ from adapters.schema_validation import SchemaValidationAdapter
 from adapters.sitemap_validator import SitemapValidatorAdapter
 from integrations.authority_media.adapters import AuthorityMediaAdapter, DriftExecutionAdapter
 from integrations.content_intelligence.adapters import ContentIntelligenceAdapter
+from integrations.extensions import ExtensionAdapter, IndexNowAdapter
 from integrations.google.crux import CrUXCurrentAdapter, CrUXHistoryAdapter
 from integrations.google.ga4 import GoogleAnalyticsDataAdapter
 from integrations.google.gsc import GoogleSearchConsoleAdapter
@@ -36,11 +37,15 @@ from integrations.technical.adapters import (
 def default_adapters() -> dict[str, object]:
     authority = AuthorityMediaAdapter()
     drift = DriftExecutionAdapter()
+    extensions = ExtensionAdapter()
+    indexnow = IndexNowAdapter()
     return {
         "accessibility_checker": AccessibilityCheckerAdapter(),
         "ai_citation_monitor": AICitationMonitorAdapter(),
         "authority_media": authority,
         "drift_execution": drift,
+        "optional_extensions": extensions,
+        "indexnow": indexnow,
         "backlinks": BacklinkCSVAdapter(),
         "backlink_csv": BacklinkCSVAdapter(),
         "content_intelligence": ContentIntelligenceAdapter(),

@@ -8,6 +8,7 @@ Run `python -m seoctl --help` for interactive argument details.
 |---|---|---|---|
 | `seoctl benchmark compare` | AI Principal SEO Scientist | `experiment-design` | `none` |
 | `seoctl benchmark tracer` | SEO Research and Development Agent | `experiment-design` | `none` |
+| `seoctl bing preflight` | SEO Technical Agent | `indexation-reality-check` | `none` |
 | `seoctl cluster serp` | SEO Information Architecture Agent | `serp-overlap-cluster` | `none` |
 | `seoctl content brief` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` |
@@ -34,6 +35,12 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl google pagespeed` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google sitemap-status` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
 | `seoctl google url-inspection` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
+| `seoctl indexnow submit` | Senior SEO Engineer Agent | `technical-implementation` | `live_optional` |
+| `seoctl indexnow validate` | SEO Technical Agent | `indexation-reality-check` | `none` |
+| `seoctl integrations config` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
+| `seoctl integrations estimate` | SEO Scrummaster Agent | `prioritization-matrix` | `none` |
+| `seoctl integrations list` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
+| `seoctl integrations preflight` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
 | `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` |
 | `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` |
 | `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` |
