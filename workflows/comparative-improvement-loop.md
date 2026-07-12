@@ -15,16 +15,21 @@ The loop is controlled. It may prepare branches, tests, evidence and review pack
 
 ## Required states
 
-```text
-DISCOVER
-→ BASELINE
-→ HYPOTHESIS
-→ RED_VERIFIED
-→ IMPLEMENTED
-→ VERIFIED
-→ COMPARED
-→ UNDER_REVIEW
-→ APPROVED_GREAT | REWORK_REQUIRED | REJECTED_BAD | ARCHITECTURAL_REDESIGN
+```mermaid
+flowchart TD
+    A[DISCOVER] --> B[BASELINE]
+    B --> C[HYPOTHESIS]
+    C --> D[RED_VERIFIED]
+    D --> E[IMPLEMENTED]
+    E --> F[VERIFIED]
+    F --> G[COMPARED]
+    G --> H[UNDER_REVIEW]
+    H -->|Both APPROVE_GREAT| I[APPROVED_GREAT]
+    H -->|Any REWORK_GOOD| J[REWORK_REQUIRED]
+    H -->|Any REJECT_BAD| K[REJECTED_BAD]
+    J -->|Iteration below 5| C
+    J -->|Iteration 5 or later| L[ARCHITECTURAL_REDESIGN]
+    L --> C
 ```
 
 ## Step 1: Discover
