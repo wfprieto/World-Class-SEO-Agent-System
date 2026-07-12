@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "commands": [
     {"id":"system.route","path":["system","route"],"handler":"system_route","owner":"SEO Scrummaster Agent","skills":["request-routing"],"execution_class":"executable","network":"none"},
     {"id":"system.run","path":["system","run"],"handler":"system_run","owner":"SEO Full Audit/Analyst Agent","skills":["full-site-audit"],"execution_class":"executable","network":"provider_optional"},
@@ -11,10 +11,16 @@
     {"id":"privacy.consent","path":["privacy","consent"],"handler":"privacy_consent","owner":"SEO Compliance & Legal Agent","skills":["consent-mode-diagnostic"],"execution_class":"executable","network":"none"},
     {"id":"report.render","path":["report","render"],"handler":"report_render","owner":"SEO Output Report Agent","skills":["plain-language-seo-report"],"execution_class":"executable","network":"none"},
     {"id":"benchmark.compare","path":["benchmark","compare"],"handler":"benchmark_compare","owner":"AI Principal SEO Scientist","skills":["experiment-design"],"execution_class":"executable","network":"none"},
-    {"id":"benchmark.tracer","path":["benchmark","tracer"],"handler":"benchmark_tracer","owner":"SEO Research and Development Agent","skills":["experiment-design"],"execution_class":"executable","network":"none"}
+    {"id":"benchmark.tracer","path":["benchmark","tracer"],"handler":"benchmark_tracer","owner":"SEO Research and Development Agent","skills":["experiment-design"],"execution_class":"executable","network":"none"},
+    {"id":"google.gsc-query","path":["google","gsc-query"],"handler":"google_gsc_query","owner":"SEO Full Audit/Analyst Agent","skills":["analytics-synthesis"],"execution_class":"executable","network":"live_optional"},
+    {"id":"google.gsc-inspect","path":["google","gsc-inspect"],"handler":"google_gsc_inspect","owner":"SEO Technical Agent","skills":["indexation-reality-check"],"execution_class":"executable","network":"live_optional"},
+    {"id":"google.ga4-report","path":["google","ga4-report"],"handler":"google_ga4_report","owner":"SEO Full Audit/Analyst Agent","skills":["analytics-synthesis"],"execution_class":"executable","network":"live_optional"},
+    {"id":"google.pagespeed","path":["google","pagespeed"],"handler":"google_pagespeed","owner":"SEO Technical Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"live_optional"},
+    {"id":"google.crux-history","path":["google","crux-history"],"handler":"google_crux_history","owner":"SEO Technical Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"live_optional"},
+    {"id":"google.lcp-subparts","path":["google","lcp-subparts"],"handler":"google_lcp_subparts","owner":"SEO Technical Agent","skills":["core-web-vitals-triage"],"execution_class":"executable","network":"live_optional"}
   ],
   "agents": {
-    "SEO Technical Agent":{"execution_class":"executable","commands":["system.run"]},
+    "SEO Technical Agent":{"execution_class":"executable","commands":["system.run","google.gsc-inspect","google.pagespeed","google.crux-history","google.lcp-subparts"]},
     "SEO Copywriter/Content Agent":{"execution_class":"executable","commands":["content.relevance","content.serp","content.brief-decision"]},
     "SEO Information Architecture Agent":{"execution_class":"executable","commands":["cluster.serp"]},
     "SEO Accessibility Agent":{"execution_class":"advisory","commands":[]},
@@ -23,9 +29,9 @@
     "Senior SEO Strategist Agent":{"execution_class":"executable","commands":["system.run"]},
     "Senior SEO Engineer Agent":{"execution_class":"executable","commands":["system.run"]},
     "SEO Scrummaster Agent":{"execution_class":"governance","commands":["system.route","profile.resolve"]},
-    "SEO Full Audit/Analyst Agent":{"execution_class":"executable","commands":["system.run"]},
+    "SEO Full Audit/Analyst Agent":{"execution_class":"executable","commands":["system.run","google.gsc-query","google.ga4-report"]},
     "SEO Output Report Agent":{"execution_class":"executable","commands":["report.render"]},
-    "SEO Diagnostic Infrastructure Agent":{"execution_class":"executable","commands":["benchmark.compare"]},
+    "SEO Diagnostic Infrastructure Agent":{"execution_class":"executable","commands":["benchmark.compare","google.pagespeed","google.crux-history"]},
     "GEO / AIO Optimization Agent":{"execution_class":"advisory","commands":[]},
     "Visual & Video Search Agent":{"execution_class":"advisory","commands":[]},
     "Voice Search & Conversational Agent":{"execution_class":"advisory","commands":[]},
