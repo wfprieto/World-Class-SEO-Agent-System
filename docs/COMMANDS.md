@@ -19,6 +19,12 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content serp` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content verify` | SEO Compliance & Legal Agent | `compliance-review` | `none` |
+| `seoctl domain history` | Negative SEO & Security Agent | `negative-seo-threat-review` | `live_optional` |
+| `seoctl drift baseline` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
+| `seoctl drift compare` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
+| `seoctl drift history` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
+| `seoctl drift report` | SEO Output Report Agent | `seo-drift-monitor` | `none` |
+| `seoctl drift watch` | SEO Diagnostic Infrastructure Agent | `seo-drift-monitor` | `none` |
 | `seoctl google crux-current` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google crux-history` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google ga4-report` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
@@ -28,6 +34,12 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl google pagespeed` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl google sitemap-status` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
 | `seoctl google url-inspection` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
+| `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` |
+| `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` |
+| `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` |
+| `seoctl media iptc-label` | Visual & Video Search Agent | `image-seo-audit` | `none` |
+| `seoctl media transcript-check` | Visual & Video Search Agent | `video-seo-audit` | `none` |
+| `seoctl media youtube-search` | Visual & Video Search Agent | `video-seo-audit` | `live_optional` |
 | `seoctl privacy consent` | SEO Compliance & Legal Agent | `consent-mode-diagnostic` | `none` |
 | `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl render health` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `none` |
