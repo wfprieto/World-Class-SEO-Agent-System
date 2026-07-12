@@ -8,7 +8,7 @@
     {"id":"content.brief-decision","path":["content","brief-decision"],"handler":"content_brief_decision","owner":"SEO Copywriter/Content Agent","skills":["content-brief"],"execution_class":"executable","network":"none"},
     {"id":"content.quality","path":["content","quality"],"handler":"content_quality","owner":"SEO Copywriter/Content Agent","skills":["content-audit"],"execution_class":"executable","network":"none"},
     {"id":"content.verify","path":["content","verify"],"handler":"content_verify","owner":"SEO Compliance & Legal Agent","skills":["compliance-review"],"execution_class":"executable","network":"none"},
-    {"id":"content.entities","path":["content","entities"],"handler":"content_entities","owner":"SEO Knowledge Graph Sync Agent","skills":["entity-analysis"],"execution_class":"executable","network":"none"},
+    {"id":"content.entities","path":["content","entities"],"handler":"content_entities","owner":"SEO Knowledge Graph Sync Agent","skills":["content-audit"],"execution_class":"executable","network":"none"},
     {"id":"content.brief","path":["content","brief"],"handler":"content_brief","owner":"SEO Copywriter/Content Agent","skills":["content-brief"],"execution_class":"executable","network":"none"},
     {"id":"content.decay","path":["content","decay"],"handler":"content_decay","owner":"Predictive SEO Trend Agent","skills":["content-decay"],"execution_class":"executable","network":"none"},
     {"id":"content.compare","path":["content","compare"],"handler":"content_compare","owner":"Competitive Intelligence Agent","skills":["content-audit"],"execution_class":"executable","network":"none"},
