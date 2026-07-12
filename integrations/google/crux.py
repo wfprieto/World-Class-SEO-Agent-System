@@ -147,7 +147,9 @@ class CrUXHistoryAdapter:
     ) -> list[dict[str, Any]]:
         percentiles = metric.get("percentilesTimeseries") or {}
         p75_values = percentiles.get("p75s") or []
-        histograms = (metric.get("histogramTimeseries") or {}).get("histogramTimeseries") or []
+        histograms = metric.get("histogramTimeseries") or []
+        if not isinstance(histograms, list):
+            histograms = []
         output: list[dict[str, Any]] = []
         count = max(len(collection_periods), len(p75_values))
         for index in range(count):
@@ -159,6 +161,8 @@ class CrUXHistoryAdapter:
                     value = None
             bins = []
             for histogram in histograms:
+                if not isinstance(histogram, dict):
+                    continue
                 densities = histogram.get("densities") or []
                 bins.append(
                     {
@@ -214,12 +218,10 @@ def decompose_lcp_history(
         _LCP_PARTS[3]: "element_render_delay",
     }
     parts = {names[key]: latest[key] for key in _LCP_PARTS}
-    largest = (
-        max(
-            ((name, value) for name, value in parts.items() if value is not None),
-            key=lambda item: item[1],
-            default=(None, None),
-        )
+    largest = max(
+        ((name, value) for name, value in parts.items() if value is not None),
+        key=lambda item: item[1],
+        default=(None, None),
     )
     return {
         "latest_lcp_p75_ms": observed_lcp,
