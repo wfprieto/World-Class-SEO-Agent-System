@@ -284,11 +284,11 @@ class GoogleJsonClient:
                 if exc.code in {429, 500, 502, 503, 504} and attempt < self.max_retries:
                     self.sleep(self._retry_delay(exc.headers.get("Retry-After"), attempt))
                     continue
-                raise GoogleAPIError(
-                    service,
-                    exc.code,
-                    self._safe_error_message(exc),
-                ) from exc
+                message = self._safe_error_message(exc)
+                for secret in (api_key, access_token):
+                    if secret:
+                        message = message.replace(secret, "[REDACTED]")
+                raise GoogleAPIError(service, exc.code, message) from exc
             except (urllib.error.URLError, TimeoutError, OSError) as exc:
                 if attempt < self.max_retries:
                     self.sleep(min(2**attempt, 4))
