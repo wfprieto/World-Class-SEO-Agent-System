@@ -41,7 +41,7 @@ jobs:
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
       - name: Upload improvement governance result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
           path: improvement-governance.json
@@ -78,7 +78,7 @@ jobs:
         run: pytest -q --junitxml=pytest-results.xml
       - name: Upload pytest result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
           path: pytest-results.xml
@@ -148,7 +148,7 @@ jobs:
           test -s /tmp/product-proof-wheel/run-manifest.json
       - name: Upload quality and release evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-security-release
           path: |
