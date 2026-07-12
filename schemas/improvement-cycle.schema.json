@@ -8,6 +8,7 @@
     "gap_id",
     "iteration",
     "state",
+    "builder_context_id",
     "baseline",
     "hypothesis",
     "files_changed",
@@ -40,6 +41,7 @@
         "REJECTED_BAD"
       ]
     },
+    "builder_context_id": {"type": "string", "minLength": 8},
     "baseline": {
       "type": "object",
       "required": ["target_commit", "claude_commit", "target_metrics", "claude_metrics"],
