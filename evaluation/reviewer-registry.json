@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "reviewers": [
+    {
+      "reviewer_id": "senior-scrummaster-3",
+      "role": "SENIOR_SCRUMMASTER_3",
+      "instructions": "evaluation/reviewers/senior-scrummaster-3.md",
+      "output_schema": "schemas/reviewer-verdict.schema.json",
+      "allowed_verdicts": ["REJECT_BAD", "REWORK_GOOD", "APPROVE_GREAT"],
+      "can_modify_code": false,
+      "can_modify_scorecard": false,
+      "can_merge": false,
+      "requires_fresh_context": true,
+      "requires_three_objections": true
+    },
+    {
+      "reviewer_id": "vp-engineering",
+      "role": "VP_ENGINEERING",
+      "instructions": "evaluation/reviewers/vp-engineering.md",
+      "output_schema": "schemas/reviewer-verdict.schema.json",
+      "allowed_verdicts": ["REJECT_BAD", "REWORK_GOOD", "APPROVE_GREAT"],
+      "can_modify_code": false,
+      "can_modify_scorecard": false,
+      "can_merge": false,
+      "requires_fresh_context": true,
+      "requires_three_objections": true
+    }
+  ],
+  "independence": {
+    "distinct_reviewer_ids": true,
+    "distinct_context_ids": true,
+    "other_verdict_hidden_until_submission": true,
+    "builder_cannot_review": true,
+    "one_rejection_blocks_approval": true,
+    "averaging_forbidden": true,
+    "different_provider_or_model_family_preferred": true
+  }
+}

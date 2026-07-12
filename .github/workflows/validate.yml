@@ -41,6 +41,24 @@ jobs:
       - name: Validate comparative rebaseline and capability ledger
         run: python scripts/inventory_comparator.py
 
+      - name: Validate controlled improvement governance
+        id: improvement_governance
+        continue-on-error: true
+        shell: bash
+        run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
+
+      - name: Upload improvement governance result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
+          path: improvement-governance.json
+          if-no-files-found: error
+
+      - name: Enforce controlled improvement governance
+        if: steps.improvement_governance.outcome == 'failure'
+        run: python -c "import sys; sys.exit(1)"
+
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
 
