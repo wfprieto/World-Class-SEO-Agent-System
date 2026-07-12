@@ -8,9 +8,9 @@ from adapters.backlinks import BacklinkCSVAdapter
 from adapters.crux import CrUXPayloadAdapter
 from adapters.crawler_csv import CrawlerCSVAdapter
 from adapters.ga4 import GA4ExportAdapter
-from adapters.gsc import GSCExportAdapter
 from adapters.gbp_local import GBPLocalAdapter
 from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
+from adapters.gsc import GSCExportAdapter
 from adapters.hreflang_validator import HreflangValidatorAdapter
 from adapters.knowledge_graph import KnowledgeGraphAdapter
 from adapters.log_parser import LogParserAdapter
@@ -25,6 +25,10 @@ from integrations.google.crux import CrUXCurrentAdapter, CrUXHistoryAdapter
 from integrations.google.ga4 import GoogleAnalyticsDataAdapter
 from integrations.google.gsc import GoogleSearchConsoleAdapter
 from integrations.google.sitemaps import GoogleSitemapsAdapter
+from integrations.technical.adapters import (
+    RenderedPageExecutionAdapter,
+    TechnicalExecutionAdapter,
+)
 
 
 def default_adapters() -> dict[str, object]:
@@ -65,4 +69,8 @@ def default_adapters() -> dict[str, object]:
         "crux_current": CrUXCurrentAdapter(),
         "google_crux_history": CrUXHistoryAdapter(),
         "crux_history": CrUXHistoryAdapter(),
+        "rendered_page_execution": RenderedPageExecutionAdapter(),
+        "playwright_render": RenderedPageExecutionAdapter(),
+        "technical_execution": TechnicalExecutionAdapter(),
+        "technical_inspection": TechnicalExecutionAdapter(),
     }
