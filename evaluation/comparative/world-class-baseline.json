@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-11",
+  "target_repository": "wfprieto/World-Class-SEO-Agent-System@8e6f666506ff723eb6f8f354e4150b30073fb67f",
+  "comparator": {
+    "repository": "AgriciDaniel/claude-seo",
+    "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+    "license": "MIT"
+  },
+  "formula": "sum((score / 10) * weight)",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Agent Depth & Specialization",
+      "weight": 10,
+      "score": 9.0,
+      "evidence_maturity": "LIVE_CAPABLE",
+      "evidence": [
+        {"source": "orchestration/capability-registry.json", "claim": "Twenty-five agents are mapped to canonical skills, knowledge, templates and evidence requirements.", "state": "VERIFIED"},
+        {"source": "runtime/workflow_runner.py", "claim": "Support agents execute as dependency-ordered workflow nodes rather than remaining routing metadata.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["Some agent definitions still lack direct operator-facing command entrypoints."]
+    },
+    {
+      "id": 2,
+      "name": "Skill Coverage & Breadth",
+      "weight": 10,
+      "score": 7.0,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "skills/SKILL_INDEX.md", "claim": "The current index contains a broad skill catalogue with enforced deep-procedure coverage.", "state": "VERIFIED"},
+        {"source": "skills/deep-skill-procedures.md", "claim": "Canonical procedure headings are validated, but many skills remain grouped rather than independently packaged.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["Executable high-value skills are not consistently self-contained packages.", "Reference depth per skill remains uneven."]
+    },
+    {
+      "id": 3,
+      "name": "Script & Execution Tooling",
+      "weight": 15,
+      "score": 6.0,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "scripts/", "claim": "The repository contains tested execution helpers, but the callable SEO command surface remains materially smaller than Claude SEO.", "state": "VERIFIED"},
+        {"source": "runtime/", "claim": "The runtime can orchestrate tools safely, but orchestration depth is ahead of direct data-acquisition and analysis command depth.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["No unified seoctl command surface.", "Major gaps remain in GSC, GA4, CrUX history, content intelligence, authority and media tooling."]
+    },
+    {
+      "id": 4,
+      "name": "Runtime Architecture & Governance",
+      "weight": 15,
+      "score": 10.0,
+      "evidence_maturity": "BEST_IN_CLASS",
+      "evidence": [
+        {"source": "runtime/workflow_graph.py", "claim": "The runtime uses a bounded multi-agent DAG with explicit dependency ordering.", "state": "VERIFIED"},
+        {"source": "runtime/structured_output.py", "claim": "Agent outputs are schema validated and arbitrary prose is not wrapped as success.", "state": "VERIFIED"},
+        {"source": "runtime/run_budget.py", "claim": "Nodes, LLM calls, corrections, runtime and optional cost are bounded before execution.", "state": "VERIFIED"}
+      ],
+      "open_gaps": []
+    },
+    {
+      "id": 5,
+      "name": "Data Integrations & Live APIs",
+      "weight": 10,
+      "score": 4.0,
+      "evidence_maturity": "STUB",
+      "evidence": [
+        {"source": "adapters/", "claim": "The adapter layer is broad and normalized, but most sources depend on supplied exports.", "state": "VERIFIED"},
+        {"source": "adapters/mcp_extensions.py", "claim": "MCP capability governance exists, but documented providers are not all installable, authenticated and smoke-tested integrations.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["Production GSC and GA4 connectors.", "Bing and IndexNow integration.", "Installable optional paid-provider packs.", "Authorized live smoke-test evidence."]
+    },
+    {
+      "id": 6,
+      "name": "Knowledge & Reference Depth",
+      "weight": 10,
+      "score": 6.0,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "knowledge/", "claim": "Several canonical rubrics and policy references are high quality and evidence labeled.", "state": "VERIFIED"},
+        {"source": "knowledge/knowledge-sources.md", "claim": "The source hierarchy is strong, but coverage is not yet comprehensive across every executable capability.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["Reference coverage is materially thinner than the comparator.", "Freshness enforcement is not yet complete across all time-sensitive references."]
+    },
+    {
+      "id": 7,
+      "name": "Test Coverage & CI/CD",
+      "weight": 10,
+      "score": 8.5,
+      "evidence_maturity": "PRODUCTION_READY",
+      "evidence": [
+        {"source": ".github/workflows/validate.yml", "claim": "CI runs on Windows and Ubuntu with Python 3.11 and 3.13 and enforces repository, schema, tracer and pytest gates.", "state": "VERIFIED"},
+        {"source": "docs/20-PASS-WORLD-CLASS-RUNTIME-REVIEW.md", "claim": "The post-remediation suite exceeded two hundred tests with cross-platform verification.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["No enforced coverage threshold.", "No secret scan, dependency audit, SBOM, typing or lint gate.", "README lacks evidence-linked status badges."]
+    },
+    {
+      "id": 8,
+      "name": "Content Generation Capability",
+      "weight": 5,
+      "score": 6.0,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "skills/flow-prompts/", "claim": "The FLOW layer is evidence grounded and integrated.", "state": "VERIFIED"},
+        {"source": "skills/public-facing-writing-skills.md", "claim": "Public writing has quality and claims controls, but the production prompt and analysis surface remains narrow.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["No modular content intelligence command family.", "No optional image-generation pack.", "No deterministic content verification and entity-analysis suite comparable to Claude SEO."]
+    },
+    {
+      "id": 9,
+      "name": "Documentation & Onboarding",
+      "weight": 10,
+      "score": 6.5,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "README.md", "claim": "The repository now includes Start Here guidance and executable CLI examples.", "state": "VERIFIED"},
+        {"source": "CONTRIBUTING.md", "claim": "A contribution standard exists, but install-to-success onboarding and generated command documentation remain incomplete.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["No dedicated installation and quick-start journey.", "No generated command reference.", "Architecture and integration diagrams are incomplete.", "No troubleshooting guide."]
+    },
+    {
+      "id": 10,
+      "name": "Community, Maturity & Ecosystem",
+      "weight": 5,
+      "score": 4.0,
+      "evidence_maturity": "FUNCTIONAL",
+      "evidence": [
+        {"source": "CHANGELOG.md", "claim": "The repository now has substantive version history and an Unreleased section.", "state": "VERIFIED"},
+        {"source": "GitHub repository state", "claim": "The project still lacks public release tags, issue templates, contributors metadata, CODEOWNERS and packaged distribution paths.", "state": "VERIFIED"}
+      ],
+      "open_gaps": ["No signed or checksummed public release.", "No CONTRIBUTORS.md or CITATION.cff.", "No issue and PR templates.", "No marketplace or installable platform packages."]
+    }
+  ],
+  "overall_score": 70.0,
+  "target_score": 92.0,
+  "notes": [
+    "The supplied 73/100 score was not mathematically reproducible from its category table and weights.",
+    "This baseline uses an explicit weighted formula and does not count file quantity as capability maturity.",
+    "Runtime architecture improvements are included; tooling, integrations, references and ecosystem remain the primary gaps."
+  ]
+}
