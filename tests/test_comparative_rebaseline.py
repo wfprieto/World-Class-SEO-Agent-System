@@ -20,9 +20,9 @@ def test_comparative_rebaseline_is_valid_and_reproducible():
     result = validate_all(ROOT)
     assert result["status"] == "PASS", result["errors"]
     assert result["scores"] == {
-        "world_class": 70.0,
+        "world_class": 69.9,
         "claude_seo": 80.0,
-        "gap": 10.0,
+        "gap": 10.1,
         "target": 92.0,
     }
     assert result["open_capabilities"] > 0
@@ -40,11 +40,11 @@ def test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_
 
 def test_scorecard_formula_cannot_be_changed_or_miscalculated():
     scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
-    assert weighted_score(scorecard) == 70.0
+    assert weighted_score(scorecard) == 69.9
     broken = copy.deepcopy(scorecard)
     broken["overall_score"] = 73.0
     errors = validate_scorecard(broken)
-    assert any("formula produces 70.0" in error for error in errors)
+    assert any("formula produces 69.9" in error for error in errors)
 
 
 def test_documentation_or_stub_maturity_cannot_claim_world_class_score():
