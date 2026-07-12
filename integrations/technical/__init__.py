@@ -1,5 +1,6 @@
 """Bounded rendering and technical SEO execution integrations."""
 
+from .adapters import RenderedPageExecutionAdapter, TechnicalExecutionAdapter
 from .browser import (
     BrowserHealth,
     BrowserNotConfigured,
@@ -15,6 +16,8 @@ __all__ = [
     "BrowserNotConfigured",
     "HttpHop",
     "PlaywrightRenderer",
+    "RenderedPageExecutionAdapter",
     "RenderedPageService",
+    "TechnicalExecutionAdapter",
     "TechnicalInspectionService",
 ]
