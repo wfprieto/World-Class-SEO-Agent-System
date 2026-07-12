@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+from runtime.assets import resolve_asset_root
+
+ROOT = resolve_asset_root(Path(__file__).resolve().parents[1])
 REGISTRY_PATH = Path(__file__).with_name("command-registry.json")
+OVERLAY_PATH = Path(__file__).with_name("command-registry-overlay.json")
 ALLOWED_EXECUTION_CLASSES = {"executable", "advisory", "governance"}
 ALLOWED_NETWORK = {"none", "provider_optional", "live_optional", "live_required"}
 
@@ -24,10 +28,34 @@ class CommandSpec:
     network: str
 
 
+def _merge_overlay(payload: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
+    active = copy.deepcopy(payload)
+    active["version"] = str(overlay.get("version") or active.get("version") or "")
+    active.setdefault("commands", []).extend(copy.deepcopy(overlay.get("commands", [])))
+    agents = active.setdefault("agents", {})
+    for agent, execution_class in overlay.get("agent_execution_classes", {}).items():
+        if agent not in agents:
+            raise ValueError(f"command overlay references unknown agent: {agent}")
+        agents[agent]["execution_class"] = str(execution_class)
+    for agent, command_ids in overlay.get("agent_commands", {}).items():
+        if agent not in agents:
+            raise ValueError(f"command overlay references unknown agent: {agent}")
+        commands = agents[agent].setdefault("commands", [])
+        for command_id in command_ids:
+            if command_id not in commands:
+                commands.append(command_id)
+    return active
+
+
 def load_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError("command registry must be an object")
+    if path.resolve() == REGISTRY_PATH.resolve() and OVERLAY_PATH.exists():
+        overlay = json.loads(OVERLAY_PATH.read_text(encoding="utf-8-sig"))
+        if not isinstance(overlay, dict):
+            raise ValueError("command registry overlay must be an object")
+        payload = _merge_overlay(payload, overlay)
     return payload
 
 

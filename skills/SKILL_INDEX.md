@@ -7,6 +7,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 ## Core Audit Skills
 
 - `full-site-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#full-site-audit`
+- `product-proof-technical-audit`
 - `seo-diagnostic-stack-design`
 - `technical-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-audit`
 - `crawl-map`
@@ -28,6 +29,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 - `rendered-visual-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#rendered-visual-audit`
 - `single-page-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#single-page-audit`
 - `faceted-navigation-governance`
+- `ai-retrieval-timeout-audit`
 
 ## Content and IA Skills
 
@@ -64,6 +66,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 - `gbp-profile-audit`
 - `competitor-radius-map`
 - `cross-platform-nap-verify`
+- `review-compliance-audit`
 
 ## E-commerce Skills
 
@@ -82,6 +85,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 - `conversational-query-map`
 - `official-source-monitor`
 - `knowledge-sync`
+- `ai-citation-opportunity-map`
 
 ## Authority, Risk, and Strategy Skills
 
@@ -108,10 +112,11 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 - `experiment-design`
 - `decision-record`
 - `definition-of-done`
+- `client-performance-narrative`
 
 ## Package coverage
 
-- Indexed skills: 84
+- Indexed skills: 89
 - Priority packages: 20
 - Package document: `skills/packages/PRIORITY_SKILL_PACKAGES.md`
 - Package metadata: `skills/package-registry.json`
@@ -121,6 +126,8 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 ## Supporting definition files
 
 - `core-skills.md`
+- `product-proof-technical-audit.md`
+- `product-proof-intelligence-skills.md`
 - `content-ia-skills.md`
 - `specialist-skills.md`
 - `strategy-governance-skills.md`

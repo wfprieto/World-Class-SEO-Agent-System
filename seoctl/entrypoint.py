@@ -4,7 +4,21 @@ from __future__ import annotations
 
 import sys
 
-from seoctl import authority_cli, cli, content_cli, extensions_cli, google_cli, technical_cli
+from runtime.assets import resolve_asset_root
+
+from seoctl import (
+    audit_cli,
+    authority_cli,
+    cli,
+    content_cli,
+    extensions_cli,
+    google_cli,
+    intelligence_cli,
+    technical_cli,
+)
+
+
+cli.ROOT = resolve_asset_root(cli.ROOT)
 
 HANDLERS = {
     **cli.HANDLERS,
@@ -13,6 +27,8 @@ HANDLERS = {
     **technical_cli.HANDLERS,
     **authority_cli.HANDLERS,
     **extensions_cli.HANDLERS,
+    **audit_cli.HANDLERS,
+    **intelligence_cli.HANDLERS,
 }
 
 
@@ -28,6 +44,10 @@ def main(argv: list[str] | None = None) -> int:
         return authority_cli.main(arguments)
     if arguments and arguments[0] in {"integrations", "bing", "indexnow"}:
         return extensions_cli.main(arguments)
+    if arguments and arguments[0] in {"audit", "knowledge"}:
+        return audit_cli.main(arguments)
+    if arguments and arguments[0] == "intelligence":
+        return intelligence_cli.main(arguments)
     return cli.main(arguments)
 
 

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_of_truth": "SEO BIBLE 2026 Parts 6, 8.0, 8.15, 12.4",
+  "entries": [
+    {"id":"fid-core-web-vital","state":"STALE","replacement":"INP","prohibited":"Teach FID as a current Core Web Vital.","verified_at":"2026-07-12"},
+    {"id":"universal-analytics","state":"STALE","replacement":"GA4","prohibited":"Use Universal Analytics Goals, Site Content reports, or legacy Pageviews as current instructions.","verified_at":"2026-07-12"},
+    {"id":"google-my-business","state":"STALE","replacement":"Google Business Profile","prohibited":"Present Google My Business as the current product name.","verified_at":"2026-07-12"},
+    {"id":"mobile-friendly-test","state":"STALE","replacement":"Current mobile and rendering diagnostics","prohibited":"Require Google's retired Mobile-Friendly Test.","verified_at":"2026-07-12"},
+    {"id":"structured-data-testing-tool","state":"STALE","replacement":"Rich Results Test and validator.schema.org","prohibited":"Direct users to the deprecated Structured Data Testing Tool.","verified_at":"2026-07-12"},
+    {"id":"fetch-as-google","state":"STALE","replacement":"URL Inspection live test","prohibited":"Direct users to Fetch as Google.","verified_at":"2026-07-12"},
+    {"id":"crawl-errors-report","state":"STALE","replacement":"Page Indexing report","prohibited":"Direct users to the retired Crawl Errors report.","verified_at":"2026-07-12"},
+    {"id":"url-parameters-tool","state":"STALE","replacement":"Faceted-navigation architecture and crawl controls","prohibited":"Recommend the retired Search Console URL Parameters tool.","verified_at":"2026-07-12"},
+    {"id":"google-cache-link","state":"STALE","replacement":"URL Inspection and fetched evidence","prohibited":"Use Google's removed cached-result link as a current diagnostic.","verified_at":"2026-07-12"},
+    {"id":"rel-next-prev-google","state":"STALE","replacement":"Real anchor pagination with self-canonicals","prohibited":"Claim Google uses rel=next/prev for pagination.","verified_at":"2026-07-12"},
+    {"id":"amp-ranking-benefit","state":"FALSE","replacement":"Normal performant mobile pages","prohibited":"Claim AMP pages receive a current ranking advantage.","verified_at":"2026-07-12"},
+    {"id":"meta-keywords","state":"FALSE","replacement":"No replacement; omit","prohibited":"Recommend meta keywords for Google or Bing rankings.","verified_at":"2026-07-12"},
+    {"id":"crawl-delay-google","state":"FALSE","replacement":"Server health and current crawler controls","prohibited":"Use crawl-delay to control Googlebot.","verified_at":"2026-07-12"},
+    {"id":"noindex-in-robots","state":"FALSE","replacement":"Meta robots or X-Robots-Tag","prohibited":"Use noindex as a robots.txt directive.","verified_at":"2026-07-12"},
+    {"id":"nofollow-directive-model","state":"STALE","replacement":"nofollow, sponsored, and ugc as hints","prohibited":"Present nofollow as an absolute modern directive in all contexts.","verified_at":"2026-07-12"},
+    {"id":"legacy-image-formats","state":"STALE","replacement":"WebP or AVIF where appropriate","prohibited":"Publish a modern image-format decision tree that omits WebP and AVIF.","verified_at":"2026-07-12"}
+  ]
+}

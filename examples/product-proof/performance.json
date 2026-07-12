@@ -1,0 +1,15 @@
+{
+  "metric": "qualified leads",
+  "baseline": 10,
+  "target": 12,
+  "actual": 14,
+  "unit": "",
+  "better_direction": "higher",
+  "target_set_before_period": true,
+  "lead_value": 500,
+  "close_rate": 0.25,
+  "cost": 1000,
+  "observed": {"qualified_leads": 14},
+  "proxy": {"branded_search_direction": "up"},
+  "modeled": {"expected_value": 1750}
+}

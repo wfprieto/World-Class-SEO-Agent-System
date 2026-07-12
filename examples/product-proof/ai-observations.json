@@ -1,0 +1,27 @@
+{
+  "observations": [
+    {
+      "observed_at": "2026-07-12",
+      "platform": "Google AI Overview",
+      "prompt": "best technical seo audit",
+      "aio_present": true,
+      "organic_position": 4,
+      "cited": false,
+      "competitors_cited": ["Competitor A"],
+      "evidence_source": "manual dated observation"
+    },
+    {
+      "observed_at": "2026-07-12",
+      "platform": "Perplexity",
+      "prompt": "technical seo governance",
+      "aio_present": false,
+      "organic_position": 2,
+      "cited": true,
+      "linked": true,
+      "recommendation_state": "RECOMMENDED",
+      "narrative_accuracy": "ACCURATE",
+      "source_mix": "BALANCED",
+      "evidence_source": "manual dated observation"
+    }
+  ]
+}

@@ -27,12 +27,9 @@ def render() -> str:
     lines = [
         "# Skill Index",
         "",
-        "This file is generated from `skills/skill-catalog.json` and "
-        "`skills/package-registry.json`. Do not edit it manually.",
+        "This file is generated from `skills/skill-catalog.json` and `skills/package-registry.json`. Do not edit it manually.",
         "",
-        "Skills are reusable capabilities. Priority packages add machine-readable "
-        "execution metadata while `skills/deep-skill-procedures.md` remains the "
-        "canonical procedure authority.",
+        "Skills are reusable capabilities. Priority packages add machine-readable execution metadata while `skills/deep-skill-procedures.md` remains the canonical procedure authority.",
         "",
     ]
     total = 0
@@ -56,13 +53,21 @@ def render() -> str:
         "- Canonical procedures: `skills/deep-skill-procedures.md`",
         "- Definition standard: `skills/skill-definition-standard.md`", "",
         "## Supporting definition files", "",
-        "- `core-skills.md`", "- `content-ia-skills.md`", "- `specialist-skills.md`",
-        "- `strategy-governance-skills.md`", "- `missing-skills.md`",
-        "- `public-facing-writing-skills.md`", "- `ecommerce-seo-skills.md`",
-        "- `programmatic-seo-governance.md`", "- `geo-grid-local-rank-skills.md`",
+        "- `core-skills.md`",
+        "- `product-proof-technical-audit.md`",
+        "- `product-proof-intelligence-skills.md`",
+        "- `content-ia-skills.md`",
+        "- `specialist-skills.md`",
+        "- `strategy-governance-skills.md`",
+        "- `missing-skills.md`",
+        "- `public-facing-writing-skills.md`",
+        "- `ecommerce-seo-skills.md`",
+        "- `programmatic-seo-governance.md`",
+        "- `geo-grid-local-rank-skills.md`",
         "- `competitor-comparison-pages.md`",
         "- `rendered-visual-audit-and-page-entry.md`",
-        "- `seo-flow-skill.md`", "- `seo-cluster-skill.md`",
+        "- `seo-flow-skill.md`",
+        "- `seo-cluster-skill.md`",
         "- `local-execution-skills.md`", "",
     ])
     return "\n".join(lines)

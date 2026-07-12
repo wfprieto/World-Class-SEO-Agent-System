@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "cycles": [
+    {
+      "cycle": 1,
+      "observation": "The first fixture suite failed because source-governance docs were required but not yet created.",
+      "learning": "Validation must require the explanatory source contract, not only JSON registries.",
+      "change": "Added primary-source technical pack, standalone skill and operator documentation.",
+      "verification": "Claim validator and focused tests passed."
+    },
+    {
+      "cycle": 2,
+      "observation": "The pagination fixture did not represent a true page-two-to-page-one canonical relationship.",
+      "learning": "Adversarial fixtures must encode the exact defect rather than merely resemble it.",
+      "change": "Changed the fixture to /?page=2 canonicalizing to the root.",
+      "verification": "The pagination finding was produced and asserted."
+    },
+    {
+      "cycle": 3,
+      "observation": "The first capability overlay rewrite would have removed current priority-package loading behavior.",
+      "learning": "New source governance must augment, not replace, mature capability resolution.",
+      "change": "Rebased the overlay on the current resolver and preserved package metadata and package_count.",
+      "verification": "Overlay regression test checks package preservation and shared knowledge loading."
+    },
+    {
+      "cycle": 4,
+      "observation": "The existing procedure validator assumed one monolithic procedure file.",
+      "learning": "A new flagship skill needs a non-duplicative procedure extension without editing the canonical catalog into another rulebook.",
+      "change": "Added product-proof-procedures.md and cross-file uniqueness validation.",
+      "verification": "Canonical skill consistency checks 85 indexed skills and one heading per skill."
+    },
+    {
+      "cycle": 5,
+      "signal": "The source plan identified three material tactics outside the flagship crawl path.",
+      "learning": "They can be implemented safely as operator-supplied evidence analyzers without pretending to have live access.",
+      "optimization": "Added AI timeout, citation opportunity, and review compliance services with limitations and CLI commands.",
+      "verification": "Focused intelligence tests pass."
+    },
+    {
+      "cycle": 6,
+      "signal": "Client reporting was documented but not executable.",
+      "learning": "Reporting frameworks become product capability only when target timing and modeled value are preserved in data.",
+      "optimization": "Added GOOD/BETTER/BEST performance narrative analyzer with separated evidence layers.",
+      "verification": "Target and value tests pass."
+    }
+  ]
+}

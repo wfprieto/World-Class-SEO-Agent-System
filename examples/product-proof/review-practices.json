@@ -1,0 +1,12 @@
+{
+  "practices": {
+    "pays_for_reviews": false,
+    "incentivizes_reviews": false,
+    "employees_review_business": false,
+    "review_kiosk": true,
+    "posts_for_customers": false,
+    "cherry_picks_testimonials": false,
+    "review_request_rate": 0.35,
+    "owner_response_rate": 0.40
+  }
+}

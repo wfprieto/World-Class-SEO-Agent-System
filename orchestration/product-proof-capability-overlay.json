@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.1.0",
+  "shared_knowledge_files": [
+    "knowledge/seo-claim-registry.json",
+    "knowledge/deprecation-registry.json",
+    "knowledge/primary-source-technical-seo.md"
+  ],
+  "agent_overrides": {
+    "SEO Technical Agent": {
+      "skills": ["product-proof-technical-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["canonical_crawl_dataset", "claim_ids"],
+      "knowledge_files": ["knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md"]
+    },
+    "SEO Information Architecture Agent": {
+      "skills": ["product-proof-technical-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["canonical_crawl_dataset", "internal_link_graph"],
+      "knowledge_files": ["knowledge/source-assets/content-information-gain.md", "knowledge/source-assets/authority-brand-and-links.md"]
+    },
+    "SEO Diagnostic Infrastructure Agent": {
+      "skills": ["product-proof-technical-audit", "ai-retrieval-timeout-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["transport_health", "crawl_limits", "failed_fetches", "dated_log_evidence"],
+      "knowledge_files": ["knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md", "knowledge/source-assets/client-reporting-roi.md", "knowledge/source-assets/measurement-and-attribution.md"]
+    },
+    "SEO Compliance & Legal Agent": {
+      "skills": ["product-proof-technical-audit", "review-compliance-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["extraction_controls", "approved_public_wording"],
+      "knowledge_files": ["knowledge/source-assets/local-reviews-compliance.md", "knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md"]
+    },
+    "SEO Full Audit/Analyst Agent": {
+      "skills": ["product-proof-technical-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["specialist_contributions", "root_cause_groups"],
+      "knowledge_files": ["knowledge/source-assets/client-reporting-roi.md", "knowledge/source-assets/measurement-and-attribution.md"]
+    },
+    "SEO Scrummaster Agent": {
+      "skills": ["product-proof-technical-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["claim_registry", "unsupported_claim_count", "decisions"]
+    },
+    "SEO Output Report Agent": {
+      "skills": ["product-proof-technical-audit", "client-performance-narrative"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["accepted_findings", "trust_summary", "verification_plan"],
+      "knowledge_files": ["knowledge/source-assets/client-reporting-roi.md", "knowledge/source-assets/measurement-and-attribution.md"]
+    },
+    "SEO E-commerce Agent": {
+      "skills": ["product-proof-technical-audit"],
+      "skill_files": ["skills/product-proof-technical-audit.md"],
+      "required_evidence": ["faceted_url_inventory", "empty_combination_status"],
+      "knowledge_files": ["knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md"]
+    },
+    "GEO / AIO Optimization Agent": {
+      "skills": ["ai-retrieval-timeout-audit", "ai-citation-opportunity-map"],
+      "knowledge_files": ["knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md", "knowledge/source-assets/authority-brand-and-links.md"],
+      "required_evidence": ["dated_ai_observations"]
+    },
+    "Local SEO Agent": {
+      "skills": ["review-compliance-audit"],
+      "knowledge_files": ["knowledge/source-assets/local-reviews-compliance.md"],
+      "required_evidence": ["review_practices", "platform_policy_context"]
+    },
+    "SEO Copywriter/Content Agent": {
+      "skills": [],
+      "knowledge_files": ["knowledge/source-assets/content-information-gain.md"],
+      "required_evidence": []
+    },
+    "Digital PR & Programmatic Link Outreach Agent": {
+      "skills": [],
+      "knowledge_files": ["knowledge/source-assets/authority-brand-and-links.md"],
+      "required_evidence": []
+    },
+    "Senior SEO Strategist Agent": {
+      "skills": ["client-performance-narrative"],
+      "knowledge_files": ["knowledge/source-assets/client-reporting-roi.md", "knowledge/source-assets/measurement-and-attribution.md"],
+      "required_evidence": []
+    },
+    "Competitive Intelligence Agent": {
+      "skills": ["ai-citation-opportunity-map"],
+      "knowledge_files": ["knowledge/source-assets/core-web-vitals-remediation.md", "knowledge/source-assets/ai-search-and-retrieval.md"],
+      "required_evidence": []
+    },
+    "SEO CRO Agent": {
+      "skills": [],
+      "knowledge_files": ["knowledge/source-assets/client-reporting-roi.md", "knowledge/source-assets/measurement-and-attribution.md"],
+      "required_evidence": []
+    }
+  }
+}

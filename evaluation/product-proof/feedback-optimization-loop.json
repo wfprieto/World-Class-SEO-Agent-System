@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "objective": "Maximize verified client value per unit of complexity while preserving source truth.",
+  "loops": [
+    {"measure":"Duplicate fetch and evidence risk","bottleneck":"Independent tools can refetch the same site differently","optimization":"One canonical crawl dataset","guardrail":"No second evidence database","verification":"All rules consume crawl.json"},
+    {"measure":"False-positive rate","bottleneck":"Industry heuristics represented as universal rules","optimization":"Claim-ID binding and recommendation-class gate","guardrail":"UNVERIFIED, DISPUTED, STALE and FALSE cannot create verified recommendations","verification":"unsupported_material_findings remains zero in fixture"},
+    {"measure":"Client actionability","bottleneck":"Raw issue counts and runtime jargon","optimization":"Root-cause groups, business impact, owner and verification","guardrail":"Engineering detail remains in technical report","verification":"Executive and technical reports generated separately"},
+    {"measure":"Multi-agent product truth","bottleneck":"Agent files without measurable contributions","optimization":"Contribution ledger with evidence and decisions","guardrail":"Do not equate deterministic roles with separate LLM calls","verification":"Seven contribution records in manifest"},
+    {"measure":"Operational safety","bottleneck":"Broad live crawling and silent partials","optimization":"Hard URL, depth, host, size and timeout ceilings","guardrail":"Truncation and failed fetches remain visible","verification":"CrawlConfig validation and trust summary"}
+  ]
+}

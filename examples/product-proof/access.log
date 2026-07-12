@@ -1,0 +1,2 @@
+203.0.113.10 - - [12/Jul/2026:10:00:00 -0400] "GET /pricing HTTP/1.1" 499 0 "-" "ChatGPT-User/1.0" request_time=3.200
+203.0.113.11 - - [12/Jul/2026:10:00:01 -0400] "GET /guide HTTP/1.1" 200 1200 "-" "PerplexityBot/1.0" request_time=0.220

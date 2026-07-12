@@ -19,7 +19,7 @@ def _write(path: Path, payload) -> str:
 def test_command_registry_is_complete_unique_and_covers_all_agents():
     registry = load_registry()
     assert validate_registry(registry) == []
-    assert len(command_specs(registry)) == 59
+    assert len(command_specs(registry)) == 67
     assert len(registry["agents"]) == 25
     assert {row["execution_class"] for row in registry["agents"].values()} == {
         "executable",
@@ -32,7 +32,7 @@ def test_registry_check_is_machine_readable_and_successful():
     payload, code = run(["--registry-check"])
     assert code == EXIT_OK
     assert payload["status"] == "ok"
-    assert payload["data"]["commands"] == 59
+    assert payload["data"]["commands"] == 67
     assert payload["data"]["agents"] == 25
 
 

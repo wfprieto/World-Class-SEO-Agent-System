@@ -3,8 +3,7 @@ name: Validate repository
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,38 +18,27 @@ jobs:
         python-version: ["3.11", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
       - name: Install validation dependencies
         run: python -m pip install -r requirements-dev.txt
-
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
-
       - name: Compile Python sources
         run: python -m compileall -q .
-
       - name: Validate canonical skill convergence
         run: python scripts/validate_canonical_skill_consistency.py
-
       - name: Validate release-version consistency
         run: python scripts/validate_release_version.py
-
       - name: Validate comparative rebaseline and capability ledger
         run: python scripts/inventory_comparator.py
-
       - name: Validate controlled improvement governance
         id: improvement_governance
         continue-on-error: true
         shell: bash
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
-
       - name: Upload improvement governance result
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,36 +46,36 @@ jobs:
           name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
           path: improvement-governance.json
           if-no-files-found: error
-
       - name: Enforce controlled improvement governance
         if: steps.improvement_governance.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
-
       - name: Validate generated operator references
         run: |
           seoctl --registry-check
           python scripts/generate_command_docs.py --check
           python scripts/generate_skill_index.py --check
           python scripts/validate_reference_freshness.py
-
-      - name: Validate Phase 6 release-readiness package
-        run: python scripts/validate_phase6_readiness.py
-
+          python scripts/validate_seo_claims.py
+          python scripts/validate_product_claims.py
+          python scripts/validate_product_proof_program.py
+      - name: Run deterministic product-proof fixture
+        shell: bash
+        run: |
+          rm -rf outputs/product-proof-fixture
+          seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/product-proof-fixture --max-urls 20
+          test -s outputs/product-proof-fixture/run-manifest.json
+          test -s outputs/product-proof-fixture/executive-summary.md
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
-
       - name: Validate legacy repository contracts
         shell: pwsh
         run: ./scripts/validate-repository.ps1
-
       - name: Validate example outputs against schemas
         run: python scripts/validate_schema_examples.py
-
       - name: Run semantic and runtime test suite
         id: pytest
         continue-on-error: true
         run: pytest -q --junitxml=pytest-results.xml
-
       - name: Upload pytest result
         if: always()
         uses: actions/upload-artifact@v4
@@ -95,7 +83,6 @@ jobs:
           name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
           path: pytest-results.xml
           if-no-files-found: error
-
       - name: Enforce pytest result
         if: steps.pytest.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
@@ -104,68 +91,46 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
       - name: Install quality dependencies
         run: python -m pip install -r requirements-dev.txt
-
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
-
       - name: Lint correctness-critical rules
         run: ruff check . --select E9,F63,F7,F82
-
-      - name: Type-check security and release surfaces
+      - name: Type-check security, product-proof and release surfaces
         run: >-
-          mypy runtime/telemetry.py runtime/run_budget.py runtime/tools.py
-          scripts/scan_secrets.py scripts/generate_sbom.py
-          scripts/generate_release_manifest.py scripts/validate_release_artifacts.py
-          scripts/run_performance_benchmarks.py scripts/run_security_mutation_checks.py
+          mypy runtime/telemetry.py runtime/run_budget.py runtime/tools.py runtime/assets.py
+          integrations/product_proof/models.py integrations/product_proof/crawler.py
+          integrations/product_proof/rules.py integrations/product_proof/report.py
+          integrations/product_proof/service.py integrations/product_proof/intelligence.py
+          scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py
+          scripts/validate_release_artifacts.py scripts/run_performance_benchmarks.py
+          scripts/run_security_mutation_checks.py scripts/validate_seo_claims.py
+          scripts/validate_product_claims.py scripts/validate_product_proof_program.py
           --ignore-missing-imports --check-untyped-defs
-
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py
-
       - name: Run security mutation probes
         run: python scripts/run_security_mutation_checks.py
-
       - name: Run coverage gate
         run: |
           mkdir -p outputs
-          pytest -q \
-            --cov=runtime --cov=seoctl --cov=integrations --cov=adapters \
-            --cov-report=term-missing \
-            --cov-report=xml:outputs/coverage.xml \
-            --cov-report=json:outputs/coverage.json \
-            --cov-fail-under=65 \
-            --junitxml=outputs/pytest-quality.xml
-
+          pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=65 --junitxml=outputs/pytest-quality.xml
       - name: Audit declared Python dependencies
         run: pip-audit -r requirements-dev.txt --desc off
-
       - name: Generate and validate release evidence
         run: |
           python scripts/generate_sbom.py --out outputs/sbom.cdx.json
-          python scripts/generate_release_manifest.py \
-            --sbom outputs/sbom.cdx.json \
-            --out outputs/release-manifest.json
-          python scripts/validate_release_artifacts.py \
-            --manifest outputs/release-manifest.json \
-            --sbom outputs/sbom.cdx.json
-          python scripts/run_performance_benchmarks.py \
-            --iterations 20 \
-            --out outputs/performance.json
-
+          python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
+          python scripts/validate_release_artifacts.py --manifest outputs/release-manifest.json --sbom outputs/sbom.cdx.json
+          python scripts/run_performance_benchmarks.py --iterations 20 --out outputs/performance.json
       - name: Build distributions
         run: python -m build
-
-      - name: Verify clean wheel installation
+      - name: Verify clean wheel installation and packaged product assets
         shell: bash
         run: |
           python -m venv .clean-install
@@ -175,8 +140,12 @@ jobs:
           printf "Formulaic filler text.\n" > /tmp/input.txt
           seoctl content humanize --input /tmp/input.txt --output /tmp/output.txt
           python -m seoctl integrations list
+          seoctl knowledge validate
+          seoctl knowledge product-claims --status BLOCKED
+          rm -rf /tmp/product-proof-wheel
+          seoctl audit technical --url https://example.com/ --fixture "$VIRTUAL_ENV/share/world-class-seo/examples/product-proof/site-fixture.json" --output /tmp/product-proof-wheel --max-urls 20
           test -s /tmp/output.txt
-
+          test -s /tmp/product-proof-wheel/run-manifest.json
       - name: Upload quality and release evidence
         if: always()
         uses: actions/upload-artifact@v4

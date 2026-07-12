@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.1.0",
+  "version": "2.0.0-product-proof",
+  "commands": [
+    {"id":"audit.technical","path":["audit","technical"],"handler":"audit_technical","owner":"SEO Full Audit/Analyst Agent","skills":["product-proof-technical-audit"],"execution_class":"executable","network":"live_optional"},
+    {"id":"knowledge.claims","path":["knowledge","claims"],"handler":"knowledge_claims","owner":"AI Principal SEO Scientist","skills":["official-source-monitor"],"execution_class":"executable","network":"none"},
+    {"id":"knowledge.validate","path":["knowledge","validate"],"handler":"knowledge_validate","owner":"SEO Scrummaster Agent","skills":["product-proof-technical-audit","definition-of-done"],"execution_class":"executable","network":"none"},
+    {"id":"intelligence.ai-timeouts","path":["intelligence","ai-timeouts"],"handler":"intelligence_ai_timeouts","owner":"SEO Diagnostic Infrastructure Agent","skills":["ai-retrieval-timeout-audit"],"execution_class":"executable","network":"none"},
+    {"id":"intelligence.ai-citations","path":["intelligence","ai-citations"],"handler":"intelligence_ai_citations","owner":"GEO / AIO Optimization Agent","skills":["ai-citation-opportunity-map"],"execution_class":"executable","network":"none"},
+    {"id":"intelligence.review-compliance","path":["intelligence","review-compliance"],"handler":"intelligence_review_compliance","owner":"SEO Compliance & Legal Agent","skills":["review-compliance-audit"],"execution_class":"executable","network":"none"},
+    {"id":"intelligence.performance-narrative","path":["intelligence","performance-narrative"],"handler":"intelligence_performance_narrative","owner":"SEO Output Report Agent","skills":["client-performance-narrative"],"execution_class":"executable","network":"none"},
+    {"id":"knowledge.product-claims","path":["knowledge","product-claims"],"handler":"knowledge_product_claims","owner":"SEO Scrummaster Agent","skills":["claims-risk-review","definition-of-done"],"execution_class":"executable","network":"none"}
+  ],
+  "agent_commands": {
+    "SEO Full Audit/Analyst Agent":["audit.technical"],
+    "SEO Technical Agent":["audit.technical"],
+    "SEO Information Architecture Agent":["audit.technical"],
+    "SEO Diagnostic Infrastructure Agent":["audit.technical","intelligence.ai-timeouts"],
+    "SEO Compliance & Legal Agent":["audit.technical","intelligence.review-compliance"],
+    "SEO Scrummaster Agent":["audit.technical","knowledge.validate","knowledge.product-claims"],
+    "SEO Output Report Agent":["audit.technical","intelligence.performance-narrative"],
+    "SEO E-commerce Agent":["audit.technical"],
+    "AI Principal SEO Scientist":["knowledge.claims","knowledge.validate","knowledge.product-claims"],
+    "GEO / AIO Optimization Agent":["intelligence.ai-timeouts","intelligence.ai-citations"],
+    "Competitive Intelligence Agent":["intelligence.ai-citations"],
+    "Local SEO Agent":["intelligence.review-compliance"],
+    "Senior SEO Strategist Agent":["intelligence.performance-narrative"]
+  },
+  "agent_execution_classes": {"GEO / AIO Optimization Agent":"executable","Local SEO Agent":"executable"}
+}

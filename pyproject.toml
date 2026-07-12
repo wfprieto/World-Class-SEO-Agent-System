@@ -7,33 +7,43 @@ name = "world-class-seo-agent-system"
 version = "1.7.0"
 description = "Model-agnostic SEO agent operating system with runtime contracts, adapters, schemas, workflows, and validation tests."
 requires-python = ">=3.10"
-dependencies = [
-  "jsonschema>=4.22.0",
-  "tenacity>=8.2.0"
-]
+dependencies = ["jsonschema>=4.22.0", "tenacity>=8.2.0"]
 
 [project.scripts]
 seoctl = "seoctl.entrypoint:main"
 
 [project.optional-dependencies]
-render = [
-  "playwright>=1.49,<2"
-]
-dev = [
-  "jsonschema>=4.22.0",
-  "pytest>=8.0.0",
-  "pytest-asyncio>=0.23.0",
-  "pytest-cov>=6.0,<8",
-  "PyYAML>=6.0.0",
-  "tenacity>=8.2.0",
-  "ruff>=0.9,<1",
-  "mypy>=1.15,<3",
-  "pip-audit>=2.7,<3",
-  "build>=1.2,<2"
-]
+render = ["playwright>=1.49,<2"]
+dev = ["jsonschema>=4.22.0","pytest>=8.0.0","pytest-asyncio>=0.23.0","pytest-cov>=6.0,<8","PyYAML>=6.0.0","tenacity>=8.2.0","ruff>=0.9,<1","mypy>=1.15,<3","pip-audit>=2.7,<3","build>=1.2,<2"]
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["adapters*", "evaluation*", "integrations*", "runtime*", "scripts*", "seoctl*"]
+
+[tool.setuptools.package-data]
+seoctl = ["*.json"]
+
+[tool.setuptools.data-files]
+"share/world-class-seo" = ["SYSTEM_SPEC.md", "SYSTEM_MAP.md"]
+"share/world-class-seo/agents" = ["agents/*.md"]
+"share/world-class-seo/knowledge" = ["knowledge/*.md", "knowledge/*.json"]
+"share/world-class-seo/knowledge/reference-packs" = ["knowledge/reference-packs/*.md"]
+"share/world-class-seo/knowledge/source-assets" = ["knowledge/source-assets/*.md"]
+"share/world-class-seo/skills" = ["skills/*.md", "skills/*.json"]
+"share/world-class-seo/skills/packages" = ["skills/packages/*.md"]
+"share/world-class-seo/skills/flow-prompts" = ["skills/flow-prompts/*.md"]
+"share/world-class-seo/orchestration" = ["orchestration/*.json", "orchestration/*.md"]
+"share/world-class-seo/templates" = ["templates/*.md"]
+"share/world-class-seo/workflows" = ["workflows/*.md"]
+"share/world-class-seo/schemas" = ["schemas/*.json"]
+"share/world-class-seo/prompts" = ["prompts/*.json", "prompts/*.md"]
+"share/world-class-seo/prompts/components" = ["prompts/components/*.md"]
+"share/world-class-seo/prompts/workflows" = ["prompts/workflows/*.json", "prompts/workflows/*.md"]
+"share/world-class-seo/evaluation/product-proof" = ["evaluation/product-proof/*.json"]
+"share/world-class-seo/evaluation/comparative" = ["evaluation/comparative/*.json", "evaluation/comparative/*.md"]
+"share/world-class-seo/examples/product-proof" = ["examples/product-proof/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

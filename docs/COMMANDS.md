@@ -1,11 +1,12 @@
 # seoctl Command Reference
 
-This file is generated from `seoctl/command-registry.json`. Do not edit it manually.
+This file is generated from `seoctl/command-registry.json` and approved overlays. Do not edit it manually.
 
 Run `python -m seoctl --help` for interactive argument details.
 
 | Command | Owner | Skills | Network |
 |---|---|---|---|
+| `seoctl audit technical` | SEO Full Audit/Analyst Agent | `product-proof-technical-audit` | `live_optional` |
 | `seoctl benchmark compare` | AI Principal SEO Scientist | `experiment-design` | `none` |
 | `seoctl benchmark tracer` | SEO Research and Development Agent | `experiment-design` | `none` |
 | `seoctl bing preflight` | SEO Technical Agent | `indexation-reality-check` | `none` |
@@ -41,6 +42,13 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl integrations estimate` | SEO Scrummaster Agent | `prioritization-matrix` | `none` |
 | `seoctl integrations list` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
 | `seoctl integrations preflight` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
+| `seoctl intelligence ai-citations` | GEO / AIO Optimization Agent | `ai-citation-opportunity-map` | `none` |
+| `seoctl intelligence ai-timeouts` | SEO Diagnostic Infrastructure Agent | `ai-retrieval-timeout-audit` | `none` |
+| `seoctl intelligence performance-narrative` | SEO Output Report Agent | `client-performance-narrative` | `none` |
+| `seoctl intelligence review-compliance` | SEO Compliance & Legal Agent | `review-compliance-audit` | `none` |
+| `seoctl knowledge claims` | AI Principal SEO Scientist | `official-source-monitor` | `none` |
+| `seoctl knowledge product-claims` | SEO Scrummaster Agent | `claims-risk-review`, `definition-of-done` | `none` |
+| `seoctl knowledge validate` | SEO Scrummaster Agent | `product-proof-technical-audit`, `definition-of-done` | `none` |
 | `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` |
 | `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` |
 | `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` |
@@ -51,11 +59,9 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl render health` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `none` |
 | `seoctl render page` | SEO Technical Agent | `rendered-visual-audit` | `live_optional` |
-| `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
-| `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
+| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
 | `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
 | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
-| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
 | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
 | `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
@@ -68,9 +74,9 @@ Run `python -m seoctl --help` for interactive argument details.
 
 ## Stable exit codes
 
-| Code | Meaning |
+|Code | Meaning |
 |---:|---|
-| 0 | Completed successfully or truthfully partial without a hard failure |
+| 0 | Completed successfully or truthfully partial without a hard failur |
 | 2 | Invalid or missing operator input |
 | 3 | Optional capability or provider unavailable |
 | 4 | Blocked by evidence, authorization, privacy or governance gate |
@@ -82,6 +88,10 @@ Every command writes one JSON envelope with `command`, `status`, `data`, `warnin
 
 ```bash
 python -m seoctl --registry-check
+python -m seoctl audit technical --url https://example.com --output audit-runs/example-com
+python -m seoctl knowledge validate
+python -m seoctl knowledge product-claims --status BLOCKED
+python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx
 python -m seoctl system route "Run a full SEO audit" --domain https://example.com --business-type saas
 python -m seoctl system run "Build an SEO content brief" --domain https://example.com --business-type saas
 python -m seoctl profile resolve --signal cart --signal checkout --signal visible_price

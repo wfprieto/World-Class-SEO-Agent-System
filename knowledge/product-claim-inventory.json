@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-12",
+  "claims": [
+    {
+      "id": "specialist-roster",
+      "public_claim": "The repository defines 25 specialist SEO agents.",
+      "required_proof": "Canonical capability and runtime registries contain the same 25 agent names.",
+      "status": "APPROVED",
+      "approved_wording": "The repository defines 25 specialist SEO agents.",
+      "prohibited_wording": "All 25 agents execute in every audit."
+    },
+    {
+      "id": "flagship-multi-role-audit",
+      "public_claim": "The flagship technical audit executes a governed multi-role workflow.",
+      "required_proof": "Contribution ledger, consumed stage handoffs, decisions, findings, and artifacts exist for the run.",
+      "status": "APPROVED_WITH_QUALIFIER",
+      "approved_wording": "The flagship technical audit records seven deterministic specialist and governance contributions; this does not mean seven independent LLM calls.",
+      "prohibited_wording": "The command launches seven autonomous AI agents."
+    },
+    {
+      "id": "live-integrations",
+      "public_claim": "The system includes live-capable first-party and public integrations.",
+      "required_proof": "Implementation exists and each provider has authorized smoke evidence before being called verified live.",
+      "status": "APPROVED_WITH_QUALIFIER",
+      "approved_wording": "Live-capable integrations are available when configured; fixture success is not live proof.",
+      "prohibited_wording": "All integrations are verified live."
+    },
+    {
+      "id": "production-ready",
+      "public_claim": "The project is production ready.",
+      "required_proof": "Observable CI, clean installation, vulnerability audit, authorized pilots, rollback, and independent reproduction.",
+      "status": "BLOCKED",
+      "approved_wording": "The project is under active product-proof and release validation.",
+      "prohibited_wording": "Production ready."
+    },
+    {
+      "id": "best-in-world",
+      "public_claim": "The system is the best SEO agent system in the world or proven superior to claude-seo.",
+      "required_proof": "Blinded benchmark, required score and margin, no critical loss, two APPROVE_GREAT reviews, and independent reproduction.",
+      "status": "BLOCKED",
+      "approved_wording": "An evidence-governed SEO operating system under comparative validation.",
+      "prohibited_wording": "Best in the world or proven superior."
+    },
+    {
+      "id": "client-ready-report",
+      "public_claim": "The flagship audit produces client and engineering deliverables.",
+      "required_proof": "Fixture and live run artifacts satisfy the artifact contract; only live runs may prove public-site execution.",
+      "status": "APPROVED_WITH_QUALIFIER",
+      "approved_wording": "The flagship audit produces deterministic client and engineering artifacts; live-site proof requires a live authorized run.",
+      "prohibited_wording": "The fixture report proves real-site client readiness."
+    }
+  ]
+}

@@ -28,6 +28,7 @@ from integrations.google.crux import CrUXCurrentAdapter, CrUXHistoryAdapter
 from integrations.google.ga4 import GoogleAnalyticsDataAdapter
 from integrations.google.gsc import GoogleSearchConsoleAdapter
 from integrations.google.sitemaps import GoogleSitemapsAdapter
+from integrations.product_proof.adapters import ProductProofIntelligenceAdapter, ProductProofTechnicalAuditAdapter
 from integrations.technical.adapters import (
     RenderedPageExecutionAdapter,
     TechnicalExecutionAdapter,
@@ -39,6 +40,8 @@ def default_adapters() -> dict[str, object]:
     drift = DriftExecutionAdapter()
     extensions = ExtensionAdapter()
     indexnow = IndexNowAdapter()
+    product_proof = ProductProofTechnicalAuditAdapter()
+    product_intelligence = ProductProofIntelligenceAdapter()
     return {
         "accessibility_checker": AccessibilityCheckerAdapter(),
         "ai_citation_monitor": AICitationMonitorAdapter(),
@@ -46,6 +49,8 @@ def default_adapters() -> dict[str, object]:
         "drift_execution": drift,
         "optional_extensions": extensions,
         "indexnow": indexnow,
+        "product_proof_technical_audit": product_proof,
+        "product_proof_intelligence": product_intelligence,
         "backlinks": BacklinkCSVAdapter(),
         "backlink_csv": BacklinkCSVAdapter(),
         "content_intelligence": ContentIntelligenceAdapter(),

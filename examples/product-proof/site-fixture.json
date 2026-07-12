@@ -1,0 +1,39 @@
+{
+  "responses": {
+    "https://example.com/": {
+      "status_code": 200,
+      "headers": {"Content-Type": "text/html; charset=utf-8"},
+      "body": "<html><head><title>Home</title><link rel=\"canonical\" href=\"https://example.com/\"><meta name=\"robots\" content=\"nosnippet\"></head><body><h1>Home</h1><img src=\"https://cdn.example.com/hero.webp\" loading=\"lazy\" alt=\"Hero\"><a href=\"/?page=2\">Page 2</a><a href=\"/missing\">Missing</a><a href=\"/facet?color=green\">Green</a><a href=\"/private\">Private</a></body></html>"
+    },
+    "https://example.com/?page=2": {
+      "status_code": 200,
+      "headers": {"Content-Type": "text/html"},
+      "body": "<html><head><title>Page 2</title><link rel=\"canonical\" href=\"https://example.com/\"><link rel=\"next\" href=\"?page=3\"></head><body><h1>Page 2</h1><p>Substantial page content is present here.</p></body></html>"
+    },
+    "https://example.com/missing": {
+      "status_code": 404,
+      "headers": {"Content-Type": "text/html"},
+      "body": "<html><title>Not found</title><body>Page not found</body></html>"
+    },
+    "https://example.com/facet?color=green": {
+      "status_code": 200,
+      "headers": {"Content-Type": "text/html"},
+      "body": "<html><title>No results</title><body>No results</body></html>"
+    },
+    "https://example.com/private": {
+      "status_code": 200,
+      "headers": {"Content-Type": "text/html"},
+      "body": "<html><head><title>Private</title><meta name=\"robots\" content=\"noindex\"></head><body>Private profile content.</body></html>"
+    },
+    "https://example.com/robots.txt": {
+      "status_code": 200,
+      "headers": {"Content-Type": "text/plain"},
+      "body": "User-agent: *\nDisallow: /private\nCrawl-delay: 10\nSitemap: https://example.com/sitemap.xml\n"
+    },
+    "https://cdn.example.com/robots.txt": {
+      "status_code": 500,
+      "headers": {"Content-Type": "text/plain"},
+      "body": "server error"
+    }
+  }
+}

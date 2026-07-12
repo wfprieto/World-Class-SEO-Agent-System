@@ -1,5 +1,4 @@
-"""Generate the seoctl command reference from the canonical command registry."""
-
+"""Generate the seoctl command reference from the canonical base registry plus overlays."""
 from __future__ import annotations
 
 import argparse
@@ -23,7 +22,7 @@ def render() -> str:
     lines = [
         "# seoctl Command Reference",
         "",
-        "This file is generated from `seoctl/command-registry.json`. Do not edit it manually.",
+        "This file is generated from `seoctl/command-registry.json` and approved overlays. Do not edit it manually.",
         "",
         "Run `python -m seoctl --help` for interactive argument details.",
         "",
@@ -36,39 +35,32 @@ def render() -> str:
             + ", ".join(f"`{skill}`" for skill in spec.skills) + " | `" + spec.network + "` |"
         )
     lines.extend([
-        "",
-        "## Stable exit codes",
-        "",
-        "| Code | Meaning |",
-        "|---:|---|",
+        "", "## Stable exit codes", "", "| Code | Meaning |", "|---:|---|",
         "| 0 | Completed successfully or truthfully partial without a hard failure |",
         "| 2 | Invalid or missing operator input |",
         "| 3 | Optional capability or provider unavailable |",
         "| 4 | Blocked by evidence, authorization, privacy or governance gate |",
-        "| 5 | Execution or validation failure |",
-        "",
+        "| 5 | Execution or validation failure |", "",
         "Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.",
-        "",
-        "## Examples",
-        "",
-        "```bash",
+        "", "## Examples", "", "```bash",
         "python -m seoctl --registry-check",
+        "python -m seoctl audit technical --url https://example.com --output audit-runs/example-com",
+        "python -m seoctl knowledge validate",
+        "python -m seoctl knowledge product-claims --status BLOCKED",
+        "python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx",
         "python -m seoctl system route \"Run a full SEO audit\" --domain https://example.com --business-type saas",
         "python -m seoctl system run \"Build an SEO content brief\" --domain https://example.com --business-type saas",
         "python -m seoctl profile resolve --signal cart --signal checkout --signal visible_price",
         "python -m seoctl cluster serp --serps examples/serps.json",
         "python -m seoctl privacy consent --config consent-fixture.json",
-        "python -m seoctl benchmark compare",
-        "```",
-        "",
-        "Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.",
-        "",
+        "python -m seoctl benchmark compare", "```", "",
+        "Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.", "",
     ])
     return "\n".join(lines)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate docs/COMMANDS.md from seoctl registry")
+    parser = argparse.ArgumentParser(description="Generate docs/COMMANDS.md from seoctl registries")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
