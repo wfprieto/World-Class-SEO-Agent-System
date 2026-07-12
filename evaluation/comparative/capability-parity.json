@@ -1,0 +1,305 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-11",
+  "target_commit": "8e6f666506ff723eb6f8f354e4150b30073fb67f",
+  "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+  "allowed_statuses": [
+    "VERIFIED_SUPERIOR",
+    "VERIFIED_PARITY",
+    "INTENTIONALLY_COMBINED",
+    "REJECTED_WITH_EVIDENCE",
+    "GAP_OPEN"
+  ],
+  "capabilities": [
+    {
+      "id": "agents-executable-entrypoints",
+      "category": "agents",
+      "claude_capability": "Agents reference exact commands and scripts.",
+      "target_capability": "Capability registry maps agents to skills and evidence but lacks complete command metadata.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR2",
+      "acceptance": ["All executable agents expose validated entrypoints.", "Advisory agents are explicitly labeled.", "No command path is missing."],
+      "evidence": ["orchestration/capability-registry.json"]
+    },
+    {
+      "id": "skills-self-contained-packages",
+      "category": "skills",
+      "claude_capability": "High-value skills are self-contained directories with references.",
+      "target_capability": "Many target skills remain grouped Markdown sections.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR8",
+      "acceptance": ["High-value executable skills have canonical packages.", "Skill index is generated.", "No duplicate rulebook is created."],
+      "evidence": ["skills/SKILL_INDEX.md", "skills/deep-skill-procedures.md"]
+    },
+    {
+      "id": "runtime-governance",
+      "category": "runtime",
+      "claude_capability": "Parallel agent execution with loose text handoffs.",
+      "target_capability": "Schema-valid bounded DAG, evidence binding, budgets, decisions and consumed handoffs.",
+      "status": "VERIFIED_SUPERIOR",
+      "target_pr": "COMPLETE",
+      "acceptance": ["Four-cell CI remains green.", "No new tool bypasses runtime contracts."],
+      "evidence": ["runtime/workflow_runner.py", "runtime/structured_output.py", "runtime/run_budget.py"]
+    },
+    {
+      "id": "unified-command-surface",
+      "category": "tooling",
+      "claude_capability": "Twenty-five documented user commands.",
+      "target_capability": "Powerful main.py runtime without a complete SEO operator command family.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR2",
+      "acceptance": ["seoctl command family exists.", "Every command supports help, JSON and stable exit codes.", "Command docs are generated from metadata."],
+      "evidence": ["main.py", "README.md"]
+    },
+    {
+      "id": "gsc-live",
+      "category": "integrations",
+      "claude_capability": "Live GSC queries and aggregate totals.",
+      "target_capability": "Example live adapter plus export parsers.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR3",
+      "acceptance": ["Production connector with scoped auth.", "Dimensionless totals avoid anonymized-query undercount.", "Fixtures and authorized smoke test."],
+      "evidence": ["adapters/gsc_live_example.py"]
+    },
+    {
+      "id": "ga4-live",
+      "category": "integrations",
+      "claude_capability": "Live GA4 reporting.",
+      "target_capability": "GA4 export parser only.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR3",
+      "acceptance": ["Production GA4 Data API connector.", "Property and metric validation.", "Redacted errors and fixture tests."],
+      "evidence": ["adapters/ga4_export.py"]
+    },
+    {
+      "id": "pagespeed-live",
+      "category": "integrations",
+      "claude_capability": "PageSpeed and CrUX queries.",
+      "target_capability": "Live PageSpeed adapter with shared URL safety.",
+      "status": "VERIFIED_PARITY",
+      "target_pr": "PR3-HARDEN",
+      "acceptance": ["CLI entrypoint.", "API key header handling.", "Smoke-test contract."],
+      "evidence": ["adapters/google_pagespeed_live.py", "adapters/url_safety.py"]
+    },
+    {
+      "id": "crux-history",
+      "category": "tooling",
+      "claude_capability": "Current and historical CrUX measurements.",
+      "target_capability": "Current PageSpeed/CrUX path without full historical command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR3",
+      "acceptance": ["Twenty-five-week history retrieval.", "Mobile and desktop separation.", "Missing-field truthfulness."],
+      "evidence": ["adapters/google_pagespeed_live.py"]
+    },
+    {
+      "id": "lcp-subparts",
+      "category": "tooling",
+      "claude_capability": "LCP subpart decomposition.",
+      "target_capability": "CWV triage guidance without a dedicated decomposition command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR3",
+      "acceptance": ["TTFB, load delay, load duration and render delay output.", "Field/lab distinction.", "Tests for missing data."],
+      "evidence": ["knowledge/core-web-vitals-gates.md"]
+    },
+    {
+      "id": "render-installable",
+      "category": "tooling",
+      "claude_capability": "Shared Playwright renderer with install flow.",
+      "target_capability": "Optional rendered-page adapter with no complete operator install path.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR4",
+      "acceptance": ["Browser install command.", "Availability diagnostic.", "Safe subresource routing.", "Cross-platform smoke tests."],
+      "evidence": ["adapters/rendered_page.py"]
+    },
+    {
+      "id": "technical-command-pack",
+      "category": "tooling",
+      "claude_capability": "Robots, sitemap, hreflang, redirect, preload, schema and indexability commands.",
+      "target_capability": "Adapters and skills exist but are not unified into operator commands.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR4",
+      "acceptance": ["Commands normalize outputs into AdapterResult/evidence.", "All use shared URL safety.", "No duplicated crawler."],
+      "evidence": ["adapters/", "skills/core-skills.md"]
+    },
+    {
+      "id": "content-quality",
+      "category": "content",
+      "claude_capability": "Deterministic quality and information-density analysis.",
+      "target_capability": "Rubrics and agent reasoning without a complete deterministic command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR5",
+      "acceptance": ["Explainable quality signals.", "No AI-detector evasion framing.", "Evidence-backed suggestions."],
+      "evidence": ["knowledge/eeat-quality-rubric.md"]
+    },
+    {
+      "id": "content-verify",
+      "category": "content",
+      "claude_capability": "Claim extraction and citation-gap detection.",
+      "target_capability": "Runtime material-claim binding for agent outputs, not general page copy verification.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR5",
+      "acceptance": ["Extract material claims from content.", "Map claims to supplied sources.", "Flag unsupported claims deterministically."],
+      "evidence": ["runtime/evidence_binding.py"]
+    },
+    {
+      "id": "content-humanize",
+      "category": "content",
+      "claude_capability": "Deterministic removal of formulaic AI-style phrasing.",
+      "target_capability": "Anti-AI public writing skill without a callable text transformation command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR5",
+      "acceptance": ["Improve clarity and naturalness.", "Do not claim AI detector evasion.", "Preserve facts and brand constraints."],
+      "evidence": ["skills/public-facing-writing-skills.md"]
+    },
+    {
+      "id": "nlp-entity-analysis",
+      "category": "content",
+      "claude_capability": "Entity analysis with metadata and salience.",
+      "target_capability": "Knowledge-graph guidance without production entity-analysis command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR5",
+      "acceptance": ["Local fallback plus optional provider path.", "Entity, salience and source metadata.", "Cost and credential controls."],
+      "evidence": ["knowledge/geo-readiness-rubric.md"]
+    },
+    {
+      "id": "commoncrawl-authority",
+      "category": "authority",
+      "claude_capability": "Common Crawl graph traversal.",
+      "target_capability": "Backlink adapters require exports or other sources.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR6",
+      "acceptance": ["Public Common Crawl retrieval.", "Canonical URL normalization.", "Bounded traversal and caching."],
+      "evidence": ["adapters/backlink_export.py"]
+    },
+    {
+      "id": "domain-history",
+      "category": "authority",
+      "claude_capability": "WHOIS-driven domain history and abuse check.",
+      "target_capability": "Policy reference without executable domain-history command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR6",
+      "acceptance": ["History evidence with uncertainty.", "No unsupported ownership inference.", "Rate-limit and privacy controls."],
+      "evidence": ["knowledge/parasite-seo-expired-domain-checks.md"]
+    },
+    {
+      "id": "youtube-search",
+      "category": "media",
+      "claude_capability": "YouTube search integration.",
+      "target_capability": "Video SEO audit guidance without a live search command.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR6",
+      "acceptance": ["YouTube Data API connector.", "Quota estimate.", "Normalized media evidence."],
+      "evidence": ["skills/specialist-skills.md"]
+    },
+    {
+      "id": "iptc-ai-labeling",
+      "category": "media",
+      "claude_capability": "IPTC AI labeling helper.",
+      "target_capability": "Reference guidance without executable metadata inspection/write planning.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR6",
+      "acceptance": ["Read and validate labels.", "Write only with explicit authorization.", "Rollback metadata changes."],
+      "evidence": ["knowledge/ai-image-labeling.md"]
+    },
+    {
+      "id": "drift-pipeline",
+      "category": "monitoring",
+      "claude_capability": "Baseline, compare, report and history commands.",
+      "target_capability": "Superior tamper-evident EvidenceStore and page-drift module without complete operator command family.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR6",
+      "acceptance": ["Baseline, compare, history, report and watch commands.", "One EvidenceStore only.", "Tamper checks before verdict."],
+      "evidence": ["adapters/evidence_store.py", "adapters/page_drift.py"]
+    },
+    {
+      "id": "bing-indexnow",
+      "category": "integrations",
+      "claude_capability": "Bing Webmaster and IndexNow extension.",
+      "target_capability": "Documented future connector only.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR7",
+      "acceptance": ["Installable connector.", "Submission dry run.", "Explicit write approval.", "Redacted key handling."],
+      "evidence": ["docs/mcp-server-mapping.md"]
+    },
+    {
+      "id": "paid-provider-packs",
+      "category": "integrations",
+      "claude_capability": "DataForSEO, Ahrefs, SE Ranking, Profound, Firecrawl and Unlighthouse extensions.",
+      "target_capability": "Governed registry descriptions without complete installable packs.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR7",
+      "acceptance": ["Each pack is optional and removable.", "Cost estimate and approval precede calls.", "Credential checks and smoke tests exist."],
+      "evidence": ["adapters/mcp_extensions.py"]
+    },
+    {
+      "id": "reference-library",
+      "category": "knowledge",
+      "claude_capability": "Large skill-coupled reference library.",
+      "target_capability": "Smaller but high-quality canonical knowledge set.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR8",
+      "acceptance": ["Every critical skill has sufficient reference coverage.", "Time-sensitive references have freshness metadata.", "No placeholder-only references."],
+      "evidence": ["knowledge/"]
+    },
+    {
+      "id": "content-prompt-pack",
+      "category": "content",
+      "claude_capability": "Granular FLOW and production prompts.",
+      "target_capability": "Five integrated FLOW stage files and shared writing governance.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR9",
+      "acceptance": ["Modular prompts compose shared evidence and claims components.", "No duplicated prompt policy.", "Prompts have fixture tests."],
+      "evidence": ["skills/flow-prompts/"]
+    },
+    {
+      "id": "image-generation-pack",
+      "category": "content",
+      "claude_capability": "Optional SEO image-generation extension.",
+      "target_capability": "No image-generation provider pack.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR9",
+      "acceptance": ["Optional provider only.", "Cost, provenance, rights, labeling and no-auto-publish controls.", "Alt text and optimization output."],
+      "evidence": []
+    },
+    {
+      "id": "quality-toolchain",
+      "category": "ci",
+      "claude_capability": "CI, tests and secret scanning.",
+      "target_capability": "Stronger cross-platform functional CI but missing coverage, typing, lint, dependency and SBOM gates.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR10",
+      "acceptance": ["Coverage, typing, lint, secret scan, dependency audit and SBOM gates.", "Security-critical branches explicitly tested."],
+      "evidence": [".github/workflows/validate.yml"]
+    },
+    {
+      "id": "documentation-install-success",
+      "category": "documentation",
+      "claude_capability": "Install, Quick Start and command reference.",
+      "target_capability": "Start Here and runtime examples without a complete clean-install journey.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR11",
+      "acceptance": ["Clone-to-report Quick Start is tested.", "Command docs are generated.", "Troubleshooting and integration guides exist."],
+      "evidence": ["README.md"]
+    },
+    {
+      "id": "community-infrastructure",
+      "category": "community",
+      "claude_capability": "Releases, contributors, marketplace, issue templates, badges and security process.",
+      "target_capability": "Changelog and contribution guide without full project infrastructure.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR11",
+      "acceptance": ["CONTRIBUTORS, CITATION, CODEOWNERS and templates.", "Evidence-linked badges.", "Governance and roadmap."],
+      "evidence": ["CHANGELOG.md", "CONTRIBUTING.md"]
+    },
+    {
+      "id": "release-distribution",
+      "category": "community",
+      "claude_capability": "Versioned releases and installable platform distribution.",
+      "target_capability": "Version metadata without current public release artifact and tag discipline.",
+      "status": "GAP_OPEN",
+      "target_pr": "PR12",
+      "acceptance": ["Signed or checksummed release.", "SBOM and migration guide.", "Generic CLI and platform packages install successfully."],
+      "evidence": ["pyproject.toml", "CHANGELOG.md"]
+    }
+  ]
+}

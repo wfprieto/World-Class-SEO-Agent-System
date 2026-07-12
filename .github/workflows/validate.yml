@@ -38,6 +38,9 @@ jobs:
       - name: Validate release-version consistency
         run: python scripts/validate_release_version.py
 
+      - name: Validate comparative rebaseline and capability ledger
+        run: python scripts/inventory_comparator.py
+
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
 
