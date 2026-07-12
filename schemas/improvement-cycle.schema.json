@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://world-class-seo.local/schemas/improvement-cycle.json",
   "title": "Controlled Comparative Improvement Cycle",
   "type": "object",
   "additionalProperties": false,
