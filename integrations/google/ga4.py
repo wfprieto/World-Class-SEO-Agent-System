@@ -53,7 +53,7 @@ class GoogleAnalyticsDataAdapter:
         property_name = self._property_name(property_id)
         start, end = self._date_range(start_date, end_date)
         dims = list(dimensions or ["landingPagePlusQueryString"])
-        mets = list(metrics or ["sessions", "engagedSessions", "conversions"])
+        mets = list(metrics or ["sessions", "engagedSessions", "keyEvents"])
         self._validate_names(dims, "dimension")
         self._validate_names(mets, "metric")
         if not isinstance(limit, int) or not 1 <= limit <= 250_000:
