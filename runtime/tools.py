@@ -1,4 +1,4 @@
-"""Tool dispatch for runtime adapters with per-tool failure isolation."""
+"""Tool dispatch for runtime adapters with per-tool failure isolation and telemetry."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Any
 
 from adapters.base import AdapterNotConfigured
 from adapters.registry import default_adapters
+from runtime.telemetry import OperationTelemetry, redact
 
 
 class ToolDispatchError(RuntimeError):
@@ -37,11 +38,33 @@ class ToolDispatchResult:
 
 
 class ToolDispatcher:
-    def __init__(self, adapters: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        adapters: dict[str, Any] | None = None,
+        *,
+        max_telemetry_events: int = 1_000,
+    ) -> None:
+        if not isinstance(max_telemetry_events, int) or not 1 <= max_telemetry_events <= 100_000:
+            raise ValueError("max_telemetry_events must be an integer from 1 to 100000")
         self.adapters = adapters or default_adapters()
+        self.max_telemetry_events = max_telemetry_events
+        self._telemetry: list[dict[str, Any]] = []
+
+    def _record(self, trace: OperationTelemetry, *, status: str, metadata: dict[str, Any]) -> None:
+        event = trace.finish(status=status, metadata=metadata)
+        if len(self._telemetry) >= self.max_telemetry_events:
+            self._telemetry.pop(0)
+        self._telemetry.append(event)
+
+    def telemetry_snapshot(self) -> list[dict[str, Any]]:
+        """Return a redacted copy of bounded per-operation telemetry."""
+        return [dict(event) for event in self._telemetry]
 
     async def dispatch(self, request: ToolRequest) -> ToolDispatchResult:
+        trace = OperationTelemetry(operation=request.tool)
+        trace.request_count = 1
         if request.tool not in self.adapters:
+            self._record(trace, status="FAILED", metadata={"required": request.required})
             return ToolDispatchResult(
                 tool=request.tool,
                 status="failed",
@@ -56,37 +79,41 @@ class ToolDispatcher:
         try:
             result = await asyncio.to_thread(adapter.fetch, **request.arguments)
         except AdapterNotConfigured as exc:
+            self._record(trace, status="NOT_CONFIGURED", metadata={"required": request.required})
             return ToolDispatchResult(
                 tool=request.tool,
                 status="unavailable",
                 data=None,
                 warnings=[],
                 error_type=type(exc).__name__,
-                sanitized_error=str(exc)[:500],
+                sanitized_error=str(redact(str(exc)))[:500],
                 evidence_state="BLOCKED" if request.required else "MISSING",
                 required=request.required,
             )
         except (TypeError, ValueError, OSError, RuntimeError) as exc:
+            self._record(trace, status="FAILED", metadata={"required": request.required})
             return ToolDispatchResult(
                 tool=request.tool,
                 status="failed",
                 data=None,
                 warnings=[],
                 error_type=type(exc).__name__,
-                sanitized_error=str(exc)[:500],
+                sanitized_error=str(redact(str(exc)))[:500],
                 evidence_state="BLOCKED" if request.required else "INVALID",
                 required=request.required,
             )
+        evidence_state = "AVAILABLE" if result.status in {"ok", "complete", "success"} else "PARTIAL"
+        self._record(
+            trace,
+            status=str(result.status).upper(),
+            metadata={"evidence_state": evidence_state, "required": request.required},
+        )
         return ToolDispatchResult(
             tool=request.tool,
             status=result.status,
             data=result.data,
             warnings=result.warnings,
-            evidence_state=(
-                "AVAILABLE"
-                if result.status in {"ok", "complete", "success"}
-                else "PARTIAL"
-            ),
+            evidence_state=evidence_state,
             required=request.required,
         )
 
