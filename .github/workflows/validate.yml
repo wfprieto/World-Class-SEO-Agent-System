@@ -70,6 +70,9 @@ jobs:
           python scripts/generate_skill_index.py --check
           python scripts/validate_reference_freshness.py
 
+      - name: Validate Phase 6 release-readiness package
+        run: python scripts/validate_phase6_readiness.py
+
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
 
