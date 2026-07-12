@@ -1,4 +1,4 @@
-"""Validate improvement-loop governance without executing or approving a cycle."""
+"""Validate improvement-loop governance without executing providers or merging work."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from runtime.schema_registry import SchemaRegistry
+from scripts.run_improvement_cycle import evaluate_cycle
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -103,8 +104,21 @@ def validate_cycle_files(root: Path = ROOT) -> list[str]:
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{path.relative_to(root)}: schema resolution failed: {exc}")
             continue
-        for error in schema_errors:
-            errors.append(f"{path.relative_to(root)}: {error}")
+        if schema_errors:
+            for error in schema_errors:
+                errors.append(f"{path.relative_to(root)}: {error}")
+            continue
+
+        builder_context_id = str(payload.get("builder_context_id", ""))
+        result = evaluate_cycle(payload, builder_context_id=builder_context_id)
+        declared_state = str(payload.get("state", ""))
+        if declared_state == "APPROVED_GREAT" and result.get("decision") != "APPROVE_GREAT":
+            errors.append(
+                f"{path.relative_to(root)} declares APPROVED_GREAT but evaluates as "
+                f"{result.get('decision')}: {result.get('errors', [])}"
+            )
+        if result.get("direct_merge_permitted") is not False:
+            errors.append(f"{path.relative_to(root)} improperly permits direct merge")
     return errors
 
 
