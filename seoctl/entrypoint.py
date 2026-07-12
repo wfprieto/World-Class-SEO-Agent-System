@@ -4,13 +4,20 @@ from __future__ import annotations
 
 import sys
 
-from seoctl import cli, google_cli, technical_cli
+from seoctl import cli, content_cli, google_cli, technical_cli
 
-HANDLERS = {**cli.HANDLERS, **google_cli.HANDLERS, **technical_cli.HANDLERS}
+HANDLERS = {
+    **cli.HANDLERS,
+    **content_cli.HANDLERS,
+    **google_cli.HANDLERS,
+    **technical_cli.HANDLERS,
+}
 
 
 def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "content":
+        return content_cli.main(arguments[1:])
     if arguments and arguments[0] == "google":
         return google_cli.main(arguments[1:])
     if arguments and arguments[0] in {"render", "technical", "schema"}:

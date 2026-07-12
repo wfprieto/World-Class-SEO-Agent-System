@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from adapters.base import AdapterResult
-from seoctl import cli
+from seoctl import content_cli
 from seoctl.cli import EXIT_BLOCKED, EXIT_OK
 from seoctl.entrypoint import HANDLERS
 from seoctl.registry import command_specs
@@ -41,7 +41,7 @@ def _write(path: Path, value) -> str:
 
 
 def test_all_content_intelligence_commands_route(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(cli, "ContentIntelligenceService", FakeContentService)
+    monkeypatch.setattr(content_cli, "ContentIntelligenceService", FakeContentService)
     text = _write(tmp_path / "content.md", "# Title\n\nUseful copy.")
     claims = _write(tmp_path / "claims.json", [{"id": "c1", "text": "Claim"}])
     sources = _write(tmp_path / "sources.json", [{"id": "s1", "title": "Source"}])
@@ -54,21 +54,21 @@ def test_all_content_intelligence_commands_route(monkeypatch, tmp_path: Path):
     right = _write(tmp_path / "right.md", "# Title\n\nOther useful copy.")
 
     commands = [
-        (["content", "quality", "--input", text, "--title", "Title"], "content.quality"),
-        (["content", "verify", "--claims", claims, "--sources", sources], "content.verify"),
-        (["content", "entities", "--input", text, "--catalog", catalog], "content.entities"),
+        (["quality", "--input", text, "--title", "Title"], "content.quality"),
+        (["verify", "--claims", claims, "--sources", sources], "content.verify"),
+        (["entities", "--input", text, "--catalog", catalog], "content.entities"),
         ([
-            "content", "brief", "--relevance", relevance, "--serp", serp,
+            "brief", "--relevance", relevance, "--serp", serp,
             "--information-gain", gains, "--sources", sources,
             "--audience", "SEO leaders", "--intent", "informational",
             "--primary-question", "What should we publish?", "--section", "Evidence",
         ], "content.brief"),
-        (["content", "decay", "--current", current, "--prior", prior], "content.decay"),
-        (["content", "compare", "--left", text, "--right", right], "content.compare"),
-        (["content", "humanize", "--input", text], "content.humanize"),
+        (["decay", "--current", current, "--prior", prior], "content.decay"),
+        (["compare", "--left", text, "--right", right], "content.compare"),
+        (["humanize", "--input", text], "content.humanize"),
     ]
     for argv, command_id in commands:
-        payload, code = cli.run(argv)
+        payload, code = content_cli.run(argv)
         assert code == EXIT_OK, (argv, payload)
         assert payload["command"] == command_id
 
@@ -78,13 +78,13 @@ def test_blocked_brief_returns_blocked_exit(monkeypatch, tmp_path: Path):
         def brief(self, **kwargs):
             return self._result("brief", status="blocked", **kwargs)
 
-    monkeypatch.setattr(cli, "ContentIntelligenceService", Blocked)
+    monkeypatch.setattr(content_cli, "ContentIntelligenceService", Blocked)
     relevance = _write(tmp_path / "relevance.json", {"verdict": "NOT_RELEVANT"})
     serp = _write(tmp_path / "serp.json", {"status": "SUFFICIENT"})
     gains = _write(tmp_path / "gains.json", [])
     sources = _write(tmp_path / "sources.json", [])
-    payload, code = cli.run([
-        "content", "brief", "--relevance", relevance, "--serp", serp,
+    payload, code = content_cli.run([
+        "brief", "--relevance", relevance, "--serp", serp,
         "--information-gain", gains, "--sources", sources,
         "--audience", "SEO leaders", "--intent", "informational",
         "--primary-question", "What should we publish?",
@@ -108,11 +108,11 @@ def test_humanize_can_write_reviewable_output(monkeypatch, tmp_path: Path):
                 warnings=[],
             )
 
-    monkeypatch.setattr(cli, "ContentIntelligenceService", Humanized)
+    monkeypatch.setattr(content_cli, "ContentIntelligenceService", Humanized)
     source = _write(tmp_path / "input.txt", "Filler text.")
     output = tmp_path / "output.txt"
-    payload, code = cli.run([
-        "content", "humanize", "--input", source, "--output", str(output)
+    payload, code = content_cli.run([
+        "humanize", "--input", source, "--output", str(output)
     ])
     assert code == EXIT_OK
     assert output.read_text(encoding="utf-8") == "Clear text."
