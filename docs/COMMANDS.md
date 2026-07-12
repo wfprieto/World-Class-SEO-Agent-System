@@ -12,6 +12,12 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` |
 | `seoctl content serp` | SEO Copywriter/Content Agent | `content-brief` | `none` |
+| `seoctl google crux-history` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
+| `seoctl google ga4-report` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
+| `seoctl google gsc-inspect` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
+| `seoctl google gsc-query` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
+| `seoctl google lcp-subparts` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
+| `seoctl google pagespeed` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
 | `seoctl privacy consent` | SEO Compliance & Legal Agent | `consent-mode-diagnostic` | `none` |
 | `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
