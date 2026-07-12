@@ -48,6 +48,7 @@ def command_specs(registry: dict[str, Any] | None = None) -> list[CommandSpec]:
 
 
 def validate_registry(registry: dict[str, Any] | None = None) -> list[str]:
+    from runtime.capability_resolver import CapabilityResolver
     from runtime.executor import AGENT_FILE_NAMES
 
     active = registry or load_registry()
@@ -59,24 +60,32 @@ def validate_registry(registry: dict[str, Any] | None = None) -> list[str]:
         errors.append("command ids must be unique")
     if len(paths) != len(set(paths)):
         errors.append("command paths must be unique")
-    handlers: set[str] = set()
+
+    canonical_agents = set(CapabilityResolver(ROOT).registry)
+    runtime_agents = set(AGENT_FILE_NAMES)
+    if canonical_agents != runtime_agents:
+        errors.append(
+            "capability and runtime agent registries disagree; "
+            f"capability_only={sorted(canonical_agents - runtime_agents)}; "
+            f"runtime_only={sorted(runtime_agents - canonical_agents)}"
+        )
+
     for spec in specs:
         if len(spec.path) != 2:
             errors.append(f"{spec.id} must use exactly two path segments")
-        if spec.owner not in AGENT_FILE_NAMES:
-            errors.append(f"{spec.id} has unknown owner {spec.owner!r}")
+        if spec.owner not in canonical_agents:
+            errors.append(f"{spec.id} has unknown canonical owner {spec.owner!r}")
         if spec.execution_class != "executable":
             errors.append(f"command {spec.id} must be executable")
         if spec.network not in ALLOWED_NETWORK:
             errors.append(f"{spec.id} has invalid network class {spec.network!r}")
-        handlers.add(spec.handler)
 
     agents = active.get("agents")
     if not isinstance(agents, dict):
         return [*errors, "agent execution registry is missing"]
-    if set(agents) != set(AGENT_FILE_NAMES):
-        missing = sorted(set(AGENT_FILE_NAMES) - set(agents))
-        extra = sorted(set(agents) - set(AGENT_FILE_NAMES))
+    if set(agents) != canonical_agents:
+        missing = sorted(canonical_agents - set(agents))
+        extra = sorted(set(agents) - canonical_agents)
         errors.append(f"agent registry mismatch; missing={missing}; extra={extra}")
     command_ids = set(ids)
     for agent, row in agents.items():
