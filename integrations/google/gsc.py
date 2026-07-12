@@ -6,6 +6,7 @@ from dimension rows because Search Console can omit anonymized low-volume rows.
 
 from __future__ import annotations
 
+import re
 import urllib.parse
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -36,6 +37,8 @@ _ALLOWED_DIMENSIONS = {
 _ALLOWED_SEARCH_TYPES = {"web", "image", "video", "news", "discover", "googleNews"}
 _ALLOWED_AGGREGATION = {"auto", "byPage", "byProperty"}
 _ALLOWED_DATA_STATES = {"final", "all", "hourly_all"}
+_DOMAIN_PROPERTY = re.compile(r"^sc-domain:([A-Za-z0-9.-]+)$")
+_LANGUAGE = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
 
 
 class GoogleSearchConsoleAdapter:
@@ -61,9 +64,15 @@ class GoogleSearchConsoleAdapter:
         normalized = operation.strip().lower().replace("_", "-")
         if normalized in {"query", "search-analytics"}:
             return self.query(**kwargs)
-        if normalized in {"inspect", "url-inspection"}:
+        if normalized in {"aggregate", "gsc-aggregate"}:
+            return self.aggregate(**kwargs)
+        if normalized in {"inspect", "url-inspection", "gsc-inspect"}:
             return self.inspect(**kwargs)
-        raise ValueError("operation must be query or inspect")
+        raise ValueError("operation must be query, aggregate, or inspect")
+
+    def aggregate(self, site_url: str, **kwargs: Any) -> AdapterResult:
+        kwargs.pop("dimensions", None)
+        return self.query(site_url=site_url, dimensions=[], **kwargs)
 
     def query(
         self,
@@ -79,6 +88,7 @@ class GoogleSearchConsoleAdapter:
         dimension_filter_groups: list[dict[str, Any]] | None = None,
         **_: Any,
     ) -> AdapterResult:
+        property_value = self._validate_property(site_url)
         start, end = self._date_range(start_date, end_date)
         dims = list(dimensions or [])
         if len(dims) != len(set(dims)) or any(item not in _ALLOWED_DIMENSIONS for item in dims):
@@ -93,6 +103,7 @@ class GoogleSearchConsoleAdapter:
             raise ValueError(f"aggregation_type must be one of {sorted(_ALLOWED_AGGREGATION)}")
         if data_state not in _ALLOWED_DATA_STATES:
             raise ValueError(f"data_state must be one of {sorted(_ALLOWED_DATA_STATES)}")
+        self._validate_filter_groups(dimension_filter_groups)
         if aggregation_type == "byProperty" and (
             "page" in dims or self._filters_dimension(dimension_filter_groups, "page")
         ):
@@ -100,7 +111,7 @@ class GoogleSearchConsoleAdapter:
 
         token = self.oauth.token()
         endpoint = SEARCH_ANALYTICS.format(
-            site=urllib.parse.quote(site_url, safe="")
+            site=urllib.parse.quote(property_value, safe="")
         )
         common: dict[str, Any] = {
             "startDate": start,
@@ -112,6 +123,7 @@ class GoogleSearchConsoleAdapter:
         if dimension_filter_groups:
             common["dimensionFilterGroups"] = dimension_filter_groups
 
+        request_telemetry: list[dict[str, Any]] = []
         aggregate_payload = dict(common)
         aggregate_payload["rowLimit"] = 1
         aggregate_response = self.client.request(
@@ -120,20 +132,20 @@ class GoogleSearchConsoleAdapter:
             payload=aggregate_payload,
             access_token=token,
         )
-        aggregate_row = (aggregate_response.get("rows") or [{}])[0]
-        totals = {
+        self._capture_telemetry(request_telemetry)
+        aggregate_rows = aggregate_response.get("rows") or []
+        aggregate_row = aggregate_rows[0] if aggregate_rows else {}
+        aggregate = {
             "clicks": float(aggregate_row.get("clicks", 0.0)),
             "impressions": float(aggregate_row.get("impressions", 0.0)),
             "ctr": float(aggregate_row.get("ctr", 0.0)),
-            "position": (
-                float(aggregate_row["position"])
-                if aggregate_row.get("position") is not None
-                else None
-            ),
+            "position": float(aggregate_row.get("position", 0.0)),
         }
 
         rows: list[dict[str, Any]] = []
         truncated = False
+        detail_pages = 0
+        detail_metadata: list[dict[str, Any]] = []
         if dims:
             for page_index in range(max_pages):
                 request_payload = {
@@ -148,6 +160,11 @@ class GoogleSearchConsoleAdapter:
                     payload=request_payload,
                     access_token=token,
                 )
+                detail_pages += 1
+                self._capture_telemetry(request_telemetry)
+                metadata = response.get("metadata") or {}
+                if metadata:
+                    detail_metadata.append(metadata)
                 raw_rows = response.get("rows") or []
                 for raw in raw_rows:
                     keys = list(raw.get("keys") or [])
@@ -175,35 +192,66 @@ class GoogleSearchConsoleAdapter:
         warnings: list[str] = []
         if truncated:
             warnings.append(
-                "Dimension rows reached the configured pagination ceiling; totals remain valid but row coverage is partial."
+                "Dimension rows reached the configured pagination ceiling; aggregate totals remain valid but row coverage is partial."
             )
-        metadata = aggregate_response.get("metadata") or {}
-        if metadata:
+        aggregate_metadata = aggregate_response.get("metadata") or {}
+        if aggregate_metadata or detail_metadata:
             warnings.append(
-                "Search Console reported incomplete recent data; inspect response metadata before comparison."
+                "Search Console reported incomplete recent data; inspect provider metadata before comparison."
             )
+        if dims:
+            warnings.append(
+                "Visible dimension rows can exclude anonymized or lower-volume data and must not be summed as property totals."
+            )
+
+        if not aggregate_rows and not rows:
+            normalized_state = "EMPTY"
+        elif truncated or aggregate_metadata or detail_metadata:
+            normalized_state = "PARTIAL"
+        else:
+            normalized_state = "AVAILABLE"
+        adapter_status = {
+            "AVAILABLE": "ok",
+            "EMPTY": "ok",
+            "PARTIAL": "partial",
+        }[normalized_state]
         return AdapterResult(
             source=self.name,
-            status="partial" if truncated else "ok",
+            status=adapter_status,
             data={
-                "site_url": site_url,
-                "date_range": {"start": start, "end": end, "timezone": "America/Los_Angeles"},
+                "site_url": property_value,
+                "aggregate": aggregate,
+                "aggregate_source": "dimensionless_aggregate_query",
+                "rows": rows,
+                "row_count": len(rows),
+                "dimensions": dims,
+                "date_range": {
+                    "start": start,
+                    "end": end,
+                    "timezone": "America/Los_Angeles",
+                },
+                "pagination": {
+                    "row_limit": row_limit,
+                    "max_pages": max_pages,
+                    "detail_pages_requested": detail_pages,
+                    "rows_truncated": truncated,
+                },
+                "data_state": normalized_state,
+                "provider_data_state": data_state,
                 "search_type": search_type,
                 "aggregation_type": aggregate_response.get(
                     "responseAggregationType",
                     aggregation_type,
                 ),
-                "data_state": data_state,
-                "totals": totals,
-                "totals_source": "dimensionless_aggregate_query",
-                "dimensions": dims,
-                "rows": rows,
-                "row_count": len(rows),
-                "rows_truncated": truncated,
-                "metadata": metadata,
+                "provider_metadata": {
+                    "aggregate": aggregate_metadata,
+                    "detail_pages": detail_metadata,
+                },
+                "request_metadata": request_telemetry,
+                "warnings": warnings,
                 "limitations": [
                     "Search Analytics returns top rows and does not guarantee every dimension row.",
-                    "Dimension rows must not be summed to replace the separate aggregate totals."
+                    "Dimension rows must not be summed to replace the separate aggregate totals.",
                 ],
             },
             warnings=warnings,
@@ -217,27 +265,34 @@ class GoogleSearchConsoleAdapter:
         **_: Any,
     ) -> AdapterResult:
         public_url = validate_public_url(inspection_url)
-        if not self._belongs_to_property(public_url, site_url):
+        property_value = self._validate_property(site_url)
+        if not self._belongs_to_property(public_url, property_value):
             raise ValueError("inspection_url must belong to the supplied Search Console property")
+        if not _LANGUAGE.fullmatch(language_code):
+            raise ValueError("language_code must be a BCP-47 style language tag")
         token = self.oauth.token()
         response = self.client.request(
             URL_INSPECTION,
             service="gsc_url_inspection",
             payload={
                 "inspectionUrl": public_url,
-                "siteUrl": site_url,
+                "siteUrl": property_value,
                 "languageCode": language_code,
             },
             access_token=token,
         )
         inspection = response.get("inspectionResult") or {}
         index = inspection.get("indexStatusResult") or {}
+        normalized_state = "AVAILABLE" if index else "PARTIAL"
+        warnings = [] if index else ["URL Inspection returned no indexStatusResult."]
         return AdapterResult(
             source=self.name,
             status="ok" if index else "partial",
             data={
                 "inspection_url": public_url,
-                "site_url": site_url,
+                "site_url": property_value,
+                "language_code": language_code,
+                "data_state": normalized_state,
                 "verdict": index.get("verdict"),
                 "coverage_state": index.get("coverageState"),
                 "indexing_state": index.get("indexingState"),
@@ -248,15 +303,16 @@ class GoogleSearchConsoleAdapter:
                 "last_crawl_time": index.get("lastCrawlTime"),
                 "crawled_as": index.get("crawledAs"),
                 "referring_urls": index.get("referringUrls") or [],
-                "sitemap": index.get("sitemap") or [],
-                "mobile_usability": inspection.get("mobileUsabilityResult"),
-                "rich_results": inspection.get("richResultsResult"),
+                "sitemaps": index.get("sitemap") or [],
+                "provider_inspection_result": inspection,
                 "inspection_scope": "google_index_version_only",
+                "request_metadata": dict(getattr(self.client, "last_telemetry", {}) or {}),
                 "limitations": [
-                    "The URL Inspection API reports the version in Google's index and does not test the live URL."
+                    "The URL Inspection API reports the version in Google's index and does not test the live URL.",
+                    "Provider verdicts are preserved without converting absence into an indexing conclusion.",
                 ],
             },
-            warnings=[] if index else ["URL Inspection returned no indexStatusResult."],
+            warnings=warnings,
         )
 
     @staticmethod
@@ -264,13 +320,48 @@ class GoogleSearchConsoleAdapter:
         end_value = end or (date.today() - timedelta(days=3)).isoformat()
         start_value = start or (date.today() - timedelta(days=31)).isoformat()
         try:
-            start_date = datetime.strptime(start_value, "%Y-%m-%d").date()
+            start_date = datetime.strptime(end_value if False else start_value, "%Y-%m-%d").date()
             end_date = datetime.strptime(end_value, "%Y-%m-%d").date()
         except ValueError as exc:
             raise ValueError("dates must use YYYY-MM-DD") from exc
         if start_date > end_date:
             raise ValueError("start_date must be on or before end_date")
         return start_date.isoformat(), end_date.isoformat()
+
+    @staticmethod
+    def _validate_property(value: str) -> str:
+        normalized = str(value).strip()
+        match = _DOMAIN_PROPERTY.fullmatch(normalized)
+        if match:
+            domain = match.group(1).lower().strip(".")
+            if not domain or ".." in domain or "." not in domain:
+                raise ValueError("invalid sc-domain Search Console property")
+            return "sc-domain:" + domain
+        safe = validate_public_url(normalized)
+        if not safe.endswith("/"):
+            raise ValueError("URL-prefix Search Console properties must include a trailing slash")
+        return safe
+
+    @staticmethod
+    def _validate_filter_groups(groups: list[dict[str, Any]] | None) -> None:
+        if groups is None:
+            return
+        if not isinstance(groups, list) or len(groups) > 20:
+            raise ValueError("dimension_filter_groups must contain at most 20 groups")
+        for group in groups:
+            if not isinstance(group, dict) or group.get("groupType", "and") != "and":
+                raise ValueError("each filter group must be an object using groupType 'and'")
+            filters = group.get("filters") or []
+            if not isinstance(filters, list) or len(filters) > 20:
+                raise ValueError("each filter group must contain at most 20 filters")
+            for item in filters:
+                if not isinstance(item, dict):
+                    raise ValueError("each dimension filter must be an object")
+                if item.get("dimension") not in _ALLOWED_DIMENSIONS:
+                    raise ValueError("dimension filter uses an unsupported dimension")
+                expression = item.get("expression", "")
+                if not isinstance(expression, str) or len(expression) > 4096:
+                    raise ValueError("dimension filter expressions must be strings up to 4096 characters")
 
     @staticmethod
     def _filters_dimension(groups: list[dict[str, Any]] | None, dimension: str) -> bool:
@@ -288,5 +379,17 @@ class GoogleSearchConsoleAdapter:
             domain = property_value.removeprefix("sc-domain:").lower().strip(".")
             host = (parsed.hostname or "").lower().strip(".")
             return host == domain or host.endswith("." + domain)
-        normalized = property_value.rstrip("/") + "/"
-        return url.startswith(normalized)
+        property_url = urllib.parse.urlsplit(property_value)
+        if (
+            parsed.scheme.lower() != property_url.scheme.lower()
+            or (parsed.hostname or "").lower() != (property_url.hostname or "").lower()
+            or parsed.port != property_url.port
+        ):
+            return False
+        prefix_path = property_url.path or "/"
+        return parsed.path.startswith(prefix_path)
+
+    def _capture_telemetry(self, output: list[dict[str, Any]]) -> None:
+        telemetry = getattr(self.client, "last_telemetry", None)
+        if isinstance(telemetry, dict) and telemetry:
+            output.append(dict(telemetry))
