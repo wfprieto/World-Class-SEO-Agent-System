@@ -95,7 +95,12 @@ def validate_cycle_files(root: Path = ROOT) -> list[str]:
     registry = SchemaRegistry(root)
     for path in sorted(directory.glob("*.json")):
         payload = _load(path)
-        for error in registry.errors("improvement-cycle", payload):
+        try:
+            schema_errors = registry.errors("improvement-cycle", payload)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{path.relative_to(root)}: schema resolution failed: {exc}")
+            continue
+        for error in schema_errors:
             errors.append(f"{path.relative_to(root)}: {error}")
     return errors
 
@@ -115,8 +120,16 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
 
 
 def main() -> int:
-    result = validate_all(ROOT)
-    print(json.dumps(result, indent=2, sort_keys=True))
+    try:
+        result = validate_all(ROOT)
+    except Exception as exc:  # noqa: BLE001
+        result = {
+            "status": "FAIL",
+            "errors": [f"unhandled validator error: {type(exc).__name__}: {exc}"],
+            "reviewers": 0,
+            "direct_merge_permitted": False,
+        }
+    print(json.dumps(result, indent=2, sort_keys=True), flush=True)
     return 0 if result["status"] == "PASS" else 1
 
 
