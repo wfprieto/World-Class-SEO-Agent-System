@@ -13,7 +13,6 @@ from typing import Any, Protocol
 from adapters.base import AdapterResult
 from adapters.url_safety import host_is_public, validate_public_url
 
-
 _WAIT_UNTIL = {"commit", "domcontentloaded", "load", "networkidle"}
 _RESOURCE_TYPES = {
     "document",
@@ -55,10 +54,20 @@ class BrowserRenderer(Protocol):
 class PlaywrightRenderer:
     """Launch one isolated Chromium context for one bounded inspection."""
 
+    @staticmethod
+    def _commands() -> tuple[str, str]:
+        return (
+            "python -m playwright install chromium",
+            "python -m playwright uninstall chromium",
+        )
+
     def health(self) -> BrowserHealth:
-        install = "python -m playwright install chromium"
-        uninstall = "python -m playwright uninstall chromium"
-        if importlib.util.find_spec("playwright.sync_api") is None:
+        install, uninstall = self._commands()
+        try:
+            dependency = importlib.util.find_spec("playwright.sync_api")
+        except (ImportError, ModuleNotFoundError, ValueError):
+            dependency = None
+        if dependency is None:
             return BrowserHealth(
                 dependency="missing",
                 browser="unknown",
@@ -70,8 +79,8 @@ class PlaywrightRenderer:
         try:
             from playwright.sync_api import sync_playwright
 
-            with sync_playwright() as pw:
-                executable = str(pw.chromium.executable_path)
+            with sync_playwright() as playwright:
+                executable = str(playwright.chromium.executable_path)
             installed = bool(executable and Path(executable).is_file())
             return BrowserHealth(
                 dependency="installed",
@@ -118,8 +127,10 @@ class PlaywrightRenderer:
         if not isinstance(height, int) or not 200 <= height <= 4320:
             raise ValueError("height must be an integer from 200 to 4320")
         blocked = tuple(block_resource_types)
-        if any(value not in _RESOURCE_TYPES for value in blocked):
-            raise ValueError(f"block_resource_types must use {sorted(_RESOURCE_TYPES)}")
+        if any(resource not in _RESOURCE_TYPES for resource in blocked):
+            raise ValueError(
+                f"block_resource_types must use {sorted(_RESOURCE_TYPES)}"
+            )
         safe_url = validate_public_url(url)
 
         from playwright.sync_api import sync_playwright
@@ -129,8 +140,14 @@ class PlaywrightRenderer:
         page_errors: list[str] = []
         failed_requests: list[dict[str, Any]] = []
         screenshot_bytes: bytes | None = None
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=True)
+        final_url = safe_url
+        status_code: int | None = None
+        html = ""
+        title = ""
+        text = ""
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
             context = browser.new_context(
                 viewport={"width": width, "height": height},
                 user_agent=user_agent,
@@ -140,16 +157,15 @@ class PlaywrightRenderer:
             page = context.new_page()
 
             def guard(route):  # type: ignore[no-untyped-def]
-                request_url = route.request.url
-                parsed = urllib.parse.urlsplit(request_url)
+                request = route.request
+                parsed = urllib.parse.urlsplit(request.url)
                 if parsed.scheme in {"data", "blob", "about"}:
                     return route.continue_()
                 if parsed.scheme not in {"http", "https"}:
                     return route.abort("blockedbyclient")
-                host = parsed.hostname
-                if not host or not host_is_public(host):
+                if not parsed.hostname or not host_is_public(parsed.hostname):
                     return route.abort("blockedbyclient")
-                if route.request.resource_type in blocked:
+                if request.resource_type in blocked:
                     return route.abort("blockedbyclient")
                 return route.continue_()
 
@@ -178,10 +194,13 @@ class PlaywrightRenderer:
                     timeout=timeout_ms,
                 )
                 final_url = validate_public_url(page.url)
+                status_code = response.status if response else None
                 html = page.content()
                 title = page.title()
                 try:
-                    text = page.locator("body").inner_text(timeout=min(timeout_ms, 10_000))
+                    text = page.locator("body").inner_text(
+                        timeout=min(timeout_ms, 10_000)
+                    )
                 except Exception:  # noqa: BLE001
                     text = ""
                 if include_screenshot:
@@ -190,7 +209,6 @@ class PlaywrightRenderer:
                         type="png",
                         animations="disabled",
                     )
-                status_code = response.status if response else None
             finally:
                 context.close()
                 browser.close()
@@ -270,7 +288,11 @@ class RenderedPageService:
                 },
                 warnings=[f"render_failed: {type(exc).__name__}: {exc}"],
             )
-        data = {key: value for key, value in result.items() if key != "screenshot_bytes"}
+        data = {
+            key: value
+            for key, value in result.items()
+            if key != "screenshot_bytes"
+        }
         data.update(
             {
                 "rendered": True,
@@ -281,7 +303,12 @@ class RenderedPageService:
                 },
             }
         )
-        return AdapterResult(source=self.name, status="ok", data=data, warnings=[])
+        return AdapterResult(
+            source=self.name,
+            status="ok",
+            data=data,
+            warnings=[],
+        )
 
     def screenshot(
         self,
@@ -326,8 +353,23 @@ class RenderedPageService:
                 },
                 warnings=[str(exc)],
             )
+        except Exception as exc:  # noqa: BLE001
+            return AdapterResult(
+                source=self.name,
+                status="failed",
+                data={
+                    "url": safe_url,
+                    "path": str(path),
+                    "rendered": False,
+                    "data_state": "FAILED",
+                },
+                warnings=[f"screenshot_failed: {type(exc).__name__}: {exc}"],
+            )
         screenshot = result.get("screenshot_bytes")
-        if not isinstance(screenshot, (bytes, bytearray)) or not bytes(screenshot).startswith(b"\x89PNG"):
+        if (
+            not isinstance(screenshot, (bytes, bytearray))
+            or not bytes(screenshot).startswith(b"\x89PNG")
+        ):
             return AdapterResult(
                 source=self.name,
                 status="invalid_response",
@@ -337,7 +379,9 @@ class RenderedPageService:
                     "rendered": True,
                     "data_state": "INVALID_RESPONSE",
                 },
-                warnings=["Browser renderer did not return a valid PNG screenshot."],
+                warnings=[
+                    "Browser renderer did not return a valid PNG screenshot."
+                ],
             )
         if len(screenshot) > 25_000_000:
             return AdapterResult(
