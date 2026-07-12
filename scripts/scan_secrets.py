@@ -80,7 +80,12 @@ def scan(root: Path = ROOT) -> list[Finding]:
             for kind, pattern in _PATTERNS.items():
                 for match in pattern.finditer(line):
                     candidate = match.group(1) if match.lastindex else match.group(0)
-                    if _placeholder(candidate) or "os.environ" in line or "getenv(" in line:
+                    if (
+                        _placeholder(candidate)
+                        or _placeholder(line)
+                        or "os.environ" in line
+                        or "getenv(" in line
+                    ):
                         continue
                     findings.append(
                         Finding(relative, line_number, kind, candidate[:4] + "…REDACTED")
