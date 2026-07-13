@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: ed5d8a2e423bdec43f32a0ea8a7334b35e44b05b
-Generated: 2026-07-13T18:43:17Z
+Commit: 48150ef825490e93d3c19932fd5604240781c634
+Generated: 2026-07-13T18:46:12Z
 
 ## Command
 ```text
@@ -31,13 +31,11 @@ python scripts/validate_seo_claims.py
 ## Output
 ```text
 {
-  "status": "failed",
-  "failures": [
-    "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'"
-  ]
+  "status": "ok",
+  "claims": 38
 }
 
-EXIT_CODE=1
+EXIT_CODE=0
 ```
 
 ## Command
@@ -204,96 +202,8 @@ python -m pytest -q
 ........................................................................ [ 20%]
 ........................................................................ [ 41%]
 ........................................................................ [ 62%]
-................................................F.F..................... [ 83%]
-...................................F....................                 [100%]
-=================================== FAILURES ===================================
-________________ test_claim_registry_and_deprecations_validate _________________
-
-    def test_claim_registry_and_deprecations_validate():
->       assert validate(ROOT, as_of=date(2026,7,12)) == []
-E       assert ["internal-li...SERVATIONAL'"] == []
-E         
-E         Left contains one more item: "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'"
-E         
-E         Full diff:
-E         - []
-E         + [
-E         +     "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'",
-E         + ]
-
-tests/test_product_proof_technical_audit.py:63: AssertionError
-______________________ test_cli_claims_and_audit_fixture _______________________
-
-tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_cli_claims_and_audit_fixt0')
-
-    def test_cli_claims_and_audit_fixture(tmp_path: Path):
-        claims, code = run(['knowledge','claims','--evidence-class','UNVERIFIED'])
-        assert code == 0
-        assert claims['data']['count'] >= 2
-        check, code = run(['knowledge','validate'])
->       assert code == 0 and check['status']=='ok'
-E       assert (5 == 0)
-
-tests/test_product_proof_technical_audit.py:96: AssertionError
-_____________ test_command_documentation_matches_registry_exactly ______________
-
-    def test_command_documentation_matches_registry_exactly():
-        documented = (ROOT / "docs" / "COMMANDS.md").read_text(encoding="utf-8")
->       assert documented == render()
-E       assert '# seoctl Com...oval gates.\n' == '# seoctl Com...oval gates.\n'
-E         
-E         Skipping 5486 identical leading characters in diff, use -v to show
-E         + | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
-E         - | `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
-E         - | `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
-E           | `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
-E           | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
-E         - | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
-E           | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
-E           | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
-E           | `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
-E           | `seoctl technical hreflang` | International & Multilingual SEO Agent | `hreflang-audit` | `live_optional` |
-E           | `seoctl technical indexability` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
-E           | `seoctl technical preload` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-E           | `seoctl technical redirect-chain` | SEO Technical Agent | `technical-audit` | `live_optional` |
-E           | `seoctl technical robots` | SEO Technical Agent | `technical-audit` | `live_optional` |
-E           | `seoctl technical sitemap` | SEO Technical Agent | `technical-audit` | `live_optional` |
-E           
-E           ## Stable exit codes
-E           
-E         - | Code | Meaning |
-E         ?  -
-E         + |Code | Meaning |
-E           |---:|---|
-E         - | 0 | Completed successfully or truthfully partial without a hard failure |
-E         ?                                                                         -
-E         + | 0 | Completed successfully or truthfully partial without a hard failur |
-E           | 2 | Invalid or missing operator input |
-E           | 3 | Optional capability or provider unavailable |
-E           | 4 | Blocked by evidence, authorization, privacy or governance gate |
-E           | 5 | Execution or validation failure |
-E           
-E           Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.
-E           
-E           ## Examples
-E           
-E           ```bash
-E           python -m seoctl --registry-check
-E           python -m seoctl audit technical --url https://example.com --output audit-runs/example-com
-E           python -m seoctl knowledge validate
-E           python -m seoctl knowledge product-claims --status BLOCKED
-E           python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx
-E           python -m seoctl system route "Run a full SEO audit" --domain https://example.com --business-type saas
-E           python -m seoctl system run "Build an SEO content brief" --domain https://example.com --business-type saas
-E           python -m seoctl profile resolve --signal cart --signal checkout --signal visible_price
-E           python -m seoctl cluster serp --serps examples/serps.json
-E           python -m seoctl privacy consent --config consent-fixture.json
-E           python -m seoctl benchmark compare
-E           ```
-E           
-E           Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-
-tests/test_seoctl_docs.py:10: AssertionError
+........................................................................ [ 83%]
+........................................................                 [100%]
 =============================== warnings summary ===============================
 runtime/schema_registry.py:9
 runtime/schema_registry.py:9
@@ -301,72 +211,9 @@ runtime/schema_registry.py:9
     from jsonschema import Draft202012Validator, RefResolver
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-FAILED tests/test_product_proof_technical_audit.py::test_claim_registry_and_deprecations_validate - assert ["internal-li...SERVATIONAL'"] == []
-  
-  Left contains one more item: "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'"
-  
-  Full diff:
-  - []
-  + [
-  +     "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'",
-  + ]
-FAILED tests/test_product_proof_technical_audit.py::test_cli_claims_and_audit_fixture - assert (5 == 0)
-FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_exactly - assert '# seoctl Com...oval gates.\n' == '# seoctl Com...oval gates.\n'
-  
-  Skipping 5486 identical leading characters in diff, use -v to show
-  + | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
-  - | `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
-  - | `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
-    | `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
-    | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
-  - | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
-    | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
-    | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
-    | `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
-    | `seoctl technical hreflang` | International & Multilingual SEO Agent | `hreflang-audit` | `live_optional` |
-    | `seoctl technical indexability` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
-    | `seoctl technical preload` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-    | `seoctl technical redirect-chain` | SEO Technical Agent | `technical-audit` | `live_optional` |
-    | `seoctl technical robots` | SEO Technical Agent | `technical-audit` | `live_optional` |
-    | `seoctl technical sitemap` | SEO Technical Agent | `technical-audit` | `live_optional` |
-    
-    ## Stable exit codes
-    
-  - | Code | Meaning |
-  ?  -
-  + |Code | Meaning |
-    |---:|---|
-  - | 0 | Completed successfully or truthfully partial without a hard failure |
-  ?                                                                         -
-  + | 0 | Completed successfully or truthfully partial without a hard failur |
-    | 2 | Invalid or missing operator input |
-    | 3 | Optional capability or provider unavailable |
-    | 4 | Blocked by evidence, authorization, privacy or governance gate |
-    | 5 | Execution or validation failure |
-    
-    Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.
-    
-    ## Examples
-    
-    ```bash
-    python -m seoctl --registry-check
-    python -m seoctl audit technical --url https://example.com --output audit-runs/example-com
-    python -m seoctl knowledge validate
-    python -m seoctl knowledge product-claims --status BLOCKED
-    python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx
-    python -m seoctl system route "Run a full SEO audit" --domain https://example.com --business-type saas
-    python -m seoctl system run "Build an SEO content brief" --domain https://example.com --business-type saas
-    python -m seoctl profile resolve --signal cart --signal checkout --signal visible_price
-    python -m seoctl cluster serp --serps examples/serps.json
-    python -m seoctl privacy consent --config consent-fixture.json
-    python -m seoctl benchmark compare
-    ```
-    
-    Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-3 failed, 341 passed, 2 warnings in 4.47s
+344 passed, 2 warnings in 3.72s
 
-EXIT_CODE=1
+EXIT_CODE=0
 ```
 
 ## Command
