@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   diagnose:
@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -22,20 +24,32 @@ jobs:
       - name: Run release and security script type check
         shell: bash
         run: |
-          mkdir -p outputs
+          mkdir -p evaluation
           set +e
-          python -m mypy scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py \
-            scripts/validate_release_artifacts.py scripts/run_performance_benchmarks.py \
-            scripts/run_security_mutation_checks.py scripts/validate_seo_claims.py \
-            scripts/validate_product_claims.py scripts/validate_product_proof_program.py \
-            --ignore-missing-imports --check-untyped-defs > outputs/release-script-mypy.txt 2>&1
-          code=$?
-          cat outputs/release-script-mypy.txt
-          echo "EXIT_CODE=$code" >> outputs/release-script-mypy.txt
-          exit 0
-      - name: Upload diagnostic
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-script-mypy
-          path: outputs/release-script-mypy.txt
-          if-no-files-found: error
+          {
+            echo '# Release and Security Script Mypy Diagnostic'
+            echo
+            echo "Commit: $GITHUB_SHA"
+            echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo '```text'
+            python -m mypy scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py \
+              scripts/validate_release_artifacts.py scripts/run_performance_benchmarks.py \
+              scripts/run_security_mutation_checks.py scripts/validate_seo_claims.py \
+              scripts/validate_product_claims.py scripts/validate_product_proof_program.py \
+              --ignore-missing-imports --check-untyped-defs
+            code=$?
+            echo
+            echo "EXIT_CODE=$code"
+            echo '```'
+          } > evaluation/release-script-mypy.md 2>&1
+          cat evaluation/release-script-mypy.md
+      - name: Commit diagnostic report
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add evaluation/release-script-mypy.md
+          git commit -m 'chore: record release script mypy diagnostic [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
