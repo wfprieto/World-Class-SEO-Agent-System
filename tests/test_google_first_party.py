@@ -102,12 +102,12 @@ def test_google_json_client_sends_api_key_in_header_not_url():
         "https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord",
         service="crux_history",
         payload={"origin": "https://example.com"},
-        api_key="top-secret-key",
+        api_key="test-placeholder-api-key",
     )
     assert result == {"ok": True}
     request, _ = opener.requests[0]
-    assert "top-secret-key" not in request.full_url
-    assert request.headers["X-goog-api-key"] == "top-secret-key"
+    assert "test-placeholder-api-key" not in request.full_url
+    assert request.headers["X-goog-api-key"] == "test-placeholder-api-key"
     assert client.last_telemetry["request_attempts"] == 1
 
 
@@ -199,8 +199,8 @@ def test_google_json_client_rejects_oversized_and_non_object_responses():
 
 def test_oauth_supports_direct_token_and_bounds_refresh_response():
     assert GoogleOAuthProvider(
-        GoogleOAuthConfig(access_token="direct-token")
-    ).token() == "direct-token"
+        GoogleOAuthConfig(access_token="test-placeholder-access-token")
+    ).token() == "test-placeholder-access-token"
 
     provider = GoogleOAuthProvider(
         GoogleOAuthConfig(),
