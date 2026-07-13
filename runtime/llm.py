@@ -46,7 +46,7 @@ class LLMClient(Protocol):
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         """Return one completed model response."""
 
-    async def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:
+    def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:
         """Yield response chunks."""
 
 
@@ -115,7 +115,7 @@ class OpenAICompatibleClient:
         *,
         allow_custom_base_url: bool = False,
     ) -> None:
-        raw_base = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        raw_base = base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
         env_approval = os.getenv("ALLOW_CUSTOM_LLM_BASE_URL", "").lower() in {
             "1", "true", "yes",
         }
@@ -123,14 +123,13 @@ class OpenAICompatibleClient:
             raw_base,
             allow_custom=allow_custom_base_url or env_approval,
         )
-        # A custom endpoint does not silently inherit the OpenAI production credential.
         configured_key = (
             os.getenv("OPENAI_COMPATIBLE_API_KEY")
             if custom and api_key is None
             else os.getenv("OPENAI_API_KEY")
         )
         self.api_key = api_key or configured_key
-        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4.1")
+        self.model = model or os.getenv("OPENAI_MODEL") or "gpt-4.1"
         if not self.api_key:
             variable = "OPENAI_COMPATIBLE_API_KEY" if custom else "OPENAI_API_KEY"
             raise LLMConfigurationError(f"{variable} is required for this endpoint.")
@@ -193,7 +192,7 @@ class AnthropicClient:
 
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
+        self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"
         if not self.api_key:
             raise LLMConfigurationError("ANTHROPIC_API_KEY is required for the Anthropic client.")
 
