@@ -1,0 +1,55 @@
+name: Delete stale branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/delete-stale-branches.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  delete-stale-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Delete every remote branch except main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          mapfile -t branches < <(
+            git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin \
+              | grep -v '^HEAD$' \
+              | grep -v '^main$' \
+              | sort -u
+          )
+
+          if [ "${#branches[@]}" -eq 0 ]; then
+            echo "No stale branches found."
+            exit 0
+          fi
+
+          printf 'Deleting %s stale branch(es):\n' "${#branches[@]}"
+          printf ' - %s\n' "${branches[@]}"
+
+          for branch in "${branches[@]}"; do
+            git push origin --delete "$branch"
+          done
+
+          git fetch origin --prune
+          remaining=$(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | grep -v '^HEAD$' | sort -u)
+          if [ "$remaining" != "main" ]; then
+            echo "Unexpected remaining branches:"
+            printf '%s\n' "$remaining"
+            exit 1
+          fi
+
+          echo "Only main remains."
