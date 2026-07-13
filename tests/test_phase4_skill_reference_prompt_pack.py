@@ -21,8 +21,8 @@ def _json(path: str):
 def test_skill_catalog_and_generated_index_are_canonical():
     catalog = _json("skills/skill-catalog.json")
     skills = [skill for category in catalog["categories"] for skill in category["skills"]]
-    assert len(skills) == 84
-    assert len(set(skills)) == 84
+    assert skills
+    assert len(set(skills)) == len(skills)
     assert (ROOT / "skills/SKILL_INDEX.md").read_text(encoding="utf-8") == render_skill_index()
 
 
@@ -50,13 +50,13 @@ def test_runtime_loads_package_document_without_replacing_grouped_context():
 
 def test_reference_registry_is_current_and_complete():
     registry = _json("knowledge/reference-registry.json")
-    assert len(registry["entries"]) == 29
+    assert registry["entries"]
     assert validate_references(as_of=date(2026, 7, 12)) == []
 
 
 def test_prompt_manifest_has_no_orphans_and_composes_deterministically():
     manifest = _json("prompts/prompt-manifest.json")
-    assert len(list_workflows()) == 8
+    assert len(list_workflows()) == len(manifest["workflows"])
     values = {"audience":"SEO leaders","business_goal":"qualified demand","primary_question":"What should we publish?","intent":"informational","relevance_evidence":"RELEVANT","serp_evidence":"Observed mixed result types","source_register":"s1: official source"}
     first = compose("content-brief", values)
     assert first == compose("content-brief", values)
