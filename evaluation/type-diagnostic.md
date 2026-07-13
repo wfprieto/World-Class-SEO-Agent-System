@@ -1,14 +1,11 @@
 # Full Mypy Diagnostic
 
-Commit: b371faaa6b4c651fe1b064adcbd4aa661af715a6
-Generated: 2026-07-13T21:15:36Z
+Commit: 3007ee0058242ff387ff61d75ccabc0867dc61ec
+Generated: 2026-07-13T21:20:26Z
 
 ## Mypy
 ```text
 integrations/technical/browser.py:159: error: Unused "type: ignore" comment  [unused-ignore]
-integrations/product_proof/intelligence.py:56: error: Need type annotation for "ai_requests"  [var-annotated]
-integrations/product_proof/intelligence.py:56: error: Need type annotation for "statuses"  [var-annotated]
-integrations/product_proof/intelligence.py:56: error: Need type annotation for "path_counts"  [var-annotated]
 adapters/evidence_store.py:431: error: Argument 1 to "int" has incompatible type "int | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
 adapters/page_drift.py:40: error: Name "_sha256" already defined (possibly by an import)  [no-redef]
 adapters/page_drift.py:52: error: Argument 1 to "_sha256" has incompatible type "Any | None"; expected "str"  [arg-type]
@@ -45,7 +42,7 @@ seoctl/extensions_cli.py:31: error: Unused "type: ignore" comment  [unused-ignor
 seoctl/authority_cli.py:21: error: Unused "type: ignore" comment  [unused-ignore]
 seoctl/audit_cli.py:23: error: Unused "type: ignore" comment  [unused-ignore]
 seoctl/content_cli.py:36: error: Unused "type: ignore" comment  [unused-ignore]
-Found 36 errors in 23 files (checked 89 source files)
+Found 33 errors in 22 files (checked 89 source files)
 
 EXIT_CODE=1
 ```
@@ -64,7 +61,7 @@ runtime/schema_registry.py:9
     from jsonschema import Draft202012Validator, RefResolver
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-344 passed, 2 warnings in 4.21s
+344 passed, 2 warnings in 4.63s
 
 EXIT_CODE=0
 ```
