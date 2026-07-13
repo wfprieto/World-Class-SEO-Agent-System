@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: af56a58768155800caf1573d6add1bb135342ad3
-Generated: 2026-07-13T18:42:19Z
+Commit: ed5d8a2e423bdec43f32a0ea8a7334b35e44b05b
+Generated: 2026-07-13T18:43:17Z
 
 ## Command
 ```text
@@ -205,7 +205,7 @@ python -m pytest -q
 ........................................................................ [ 41%]
 ........................................................................ [ 62%]
 ................................................F.F..................... [ 83%]
-.....F.............................F....................                 [100%]
+...................................F....................                 [100%]
 =================================== FAILURES ===================================
 ________________ test_claim_registry_and_deprecations_validate _________________
 
@@ -235,17 +235,6 @@ tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_cli_claims_and_audit_f
 E       assert (5 == 0)
 
 tests/test_product_proof_technical_audit.py:96: AssertionError
-_________________ test_every_indexed_skill_has_deep_procedure __________________
-
-    def test_every_indexed_skill_has_deep_procedure():
-        index = (ROOT / "skills" / "SKILL_INDEX.md").read_text(encoding="utf-8")
-        procedures = (ROOT / "skills" / "deep-skill-procedures.md").read_text(encoding="utf-8")
-        indexed_skills = set(re.findall(r"`([a-z0-9-]+)`", index))
-        procedure_skills = set(re.findall(r"^## ([a-z0-9-]+)$", procedures, re.MULTILINE))
->       assert not indexed_skills - procedure_skills
-E       AssertionError: assert not ({'accessibility-audit', 'agentic-commerce-readiness-check', 'ai-citation-opportunity-map', 'ai-retrieval-timeout-audit', 'analytics-synthesis', 'anti-ai-public-writing', ...} - {'accessibility-audit', 'agentic-commerce-readiness-check', 'analytics-synthesis', 'anti-ai-public-writing', 'backlink-gap', 'backlink-profile', ...})
-
-tests/test_repository_semantics.py:44: AssertionError
 _____________ test_command_documentation_matches_registry_exactly ______________
 
     def test_command_documentation_matches_registry_exactly():
@@ -323,7 +312,6 @@ FAILED tests/test_product_proof_technical_audit.py::test_claim_registry_and_depr
   +     "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'",
   + ]
 FAILED tests/test_product_proof_technical_audit.py::test_cli_claims_and_audit_fixture - assert (5 == 0)
-FAILED tests/test_repository_semantics.py::test_every_indexed_skill_has_deep_procedure - AssertionError: assert not ({'accessibility-audit', 'agentic-commerce-readiness-check', 'ai-citation-opportunity-map', 'ai-retrieval-timeout-audit', 'analytics-synthesis', 'anti-ai-public-writing', ...} - {'accessibility-audit', 'agentic-commerce-readiness-check', 'analytics-synthesis', 'anti-ai-public-writing', 'backlink-gap', 'backlink-profile', ...})
 FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_exactly - assert '# seoctl Com...oval gates.\n' == '# seoctl Com...oval gates.\n'
   
   Skipping 5486 identical leading characters in diff, use -v to show
@@ -376,7 +364,7 @@ FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_ex
     ```
     
     Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-4 failed, 340 passed, 2 warnings in 5.79s
+3 failed, 341 passed, 2 warnings in 4.47s
 
 EXIT_CODE=1
 ```
