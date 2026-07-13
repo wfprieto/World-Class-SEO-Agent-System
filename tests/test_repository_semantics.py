@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
 from runtime.executor import AGENT_FILE_NAMES
 from runtime.routing import RequestRouter
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,10 +37,23 @@ def test_core_workflows_have_mermaid_diagrams():
 
 
 def test_every_indexed_skill_has_deep_procedure():
-    index = (ROOT / "skills" / "SKILL_INDEX.md").read_text(encoding="utf-8")
-    procedures = (ROOT / "skills" / "deep-skill-procedures.md").read_text(encoding="utf-8")
-    indexed_skills = set(re.findall(r"`([a-z0-9-]+)`", index))
-    procedure_skills = set(re.findall(r"^## ([a-z0-9-]+)$", procedures, re.MULTILINE))
+    catalog = json.loads((ROOT / "skills" / "skill-catalog.json").read_text(encoding="utf-8"))
+    indexed_skills = {
+        skill
+        for category in catalog["categories"]
+        for skill in category["skills"]
+    }
+    procedure_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            ROOT / "skills" / "deep-skill-procedures.md",
+            ROOT / "skills" / "product-proof-procedures.md",
+        )
+        if path.exists()
+    )
+    procedure_skills = set(
+        re.findall(r"^## ([a-z0-9-]+)$", procedure_text, re.MULTILINE)
+    )
     assert not indexed_skills - procedure_skills
 
 
@@ -64,7 +77,11 @@ def test_system_map_points_to_core_repository_sections():
 
 
 def test_executor_agent_map_covers_all_agent_files():
-    agent_files = {path.name for path in (ROOT / "agents").glob("*.md") if path.name != "AGENT_INDEX.md"}
+    agent_files = {
+        path.name
+        for path in (ROOT / "agents").glob("*.md")
+        if path.name != "AGENT_INDEX.md"
+    }
     mapped_files = set(AGENT_FILE_NAMES.values())
     assert agent_files == mapped_files
 
