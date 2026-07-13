@@ -17,7 +17,7 @@ TEXT_SUFFIXES = {".py", ".md", ".json", ".yaml", ".yml", ".toml", ".txt", ".ps1"
 PLACEHOLDER_MARKERS = (
     "placeholder", "example", "sample", "dummy", "fake", "test", "fixture",
     "invalid", "not-a-real", "redacted", "changeme", "your_", "${", "$env",
-    "<", ">", "***", "...",
+    "***", "...",
 )
 
 _PATTERNS = {
@@ -56,7 +56,13 @@ def _tracked_files(root: Path) -> Iterable[Path]:
 
 def _placeholder(value: str) -> bool:
     lowered = value.lower()
-    return any(marker in lowered for marker in PLACEHOLDER_MARKERS)
+    for marker in PLACEHOLDER_MARKERS:
+        if marker in {"${", "$env", "***", "...", "your_", "not-a-real"}:
+            if marker in lowered:
+                return True
+        elif re.search(rf"(?<![a-z0-9]){re.escape(marker)}(?![a-z0-9])", lowered):
+            return True
+    return False
 
 
 def scan(root: Path = ROOT) -> list[Finding]:
@@ -80,12 +86,7 @@ def scan(root: Path = ROOT) -> list[Finding]:
             for kind, pattern in _PATTERNS.items():
                 for match in pattern.finditer(line):
                     candidate = match.group(1) if match.lastindex else match.group(0)
-                    if (
-                        _placeholder(candidate)
-                        or _placeholder(line)
-                        or "os.environ" in line
-                        or "getenv(" in line
-                    ):
+                    if _placeholder(candidate) or "os.environ" in line or "getenv(" in line:
                         continue
                     findings.append(
                         Finding(relative, line_number, kind, candidate[:4] + "…REDACTED")
