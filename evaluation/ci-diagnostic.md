@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: 48150ef825490e93d3c19932fd5604240781c634
-Generated: 2026-07-13T18:46:12Z
+Commit: cda42cc41fdaf0dfd6a7a1aeb32a9df489dad720
+Generated: 2026-07-13T18:47:33Z
 
 ## Command
 ```text
@@ -211,7 +211,7 @@ runtime/schema_registry.py:9
     from jsonschema import Draft202012Validator, RefResolver
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-344 passed, 2 warnings in 3.72s
+344 passed, 2 warnings in 4.43s
 
 EXIT_CODE=0
 ```
@@ -222,7 +222,6 @@ python -m mypy runtime seoctl integrations adapters
 ```
 ## Output
 ```text
-adapters/gbp_local.py:18: error: Need type annotation for "duplicate_names" (hint: "duplicate_names: dict[<type>, <type>] = ...")  [var-annotated]
 integrations/technical/browser.py:159: error: Unused "type: ignore" comment  [unused-ignore]
 integrations/product_proof/intelligence.py:56: error: Need type annotation for "ai_requests"  [var-annotated]
 integrations/product_proof/intelligence.py:56: error: Need type annotation for "statuses"  [var-annotated]
@@ -296,7 +295,7 @@ seoctl/extensions_cli.py:31: error: Unused "type: ignore" comment  [unused-ignor
 seoctl/authority_cli.py:21: error: Unused "type: ignore" comment  [unused-ignore]
 seoctl/audit_cli.py:23: error: Unused "type: ignore" comment  [unused-ignore]
 seoctl/content_cli.py:36: error: Unused "type: ignore" comment  [unused-ignore]
-Found 52 errors in 32 files (checked 89 source files)
+Found 51 errors in 31 files (checked 89 source files)
 
 EXIT_CODE=1
 ```
