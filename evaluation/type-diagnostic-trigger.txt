@@ -1,1 +1,1 @@
-Run the temporary full mypy and pytest diagnostic against this main commit.
+Execute the residual deterministic type remediation and rerun full mypy and pytest.
