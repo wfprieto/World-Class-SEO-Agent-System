@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "version": "2.0.0-product-proof",
+  "version": "1.7.0",
   "commands": [
     {"id":"audit.technical","path":["audit","technical"],"handler":"audit_technical","owner":"SEO Full Audit/Analyst Agent","skills":["product-proof-technical-audit"],"execution_class":"executable","network":"live_optional"},
     {"id":"knowledge.claims","path":["knowledge","claims"],"handler":"knowledge_claims","owner":"AI Principal SEO Scientist","skills":["official-source-monitor"],"execution_class":"executable","network":"none"},
@@ -19,12 +19,14 @@
     "SEO Compliance & Legal Agent":["audit.technical","intelligence.review-compliance"],
     "SEO Scrummaster Agent":["audit.technical","knowledge.validate","knowledge.product-claims"],
     "SEO Output Report Agent":["audit.technical","intelligence.performance-narrative"],
-    "SEO E-commerce Agent":["audit.technical"],
     "AI Principal SEO Scientist":["knowledge.claims","knowledge.validate","knowledge.product-claims"],
     "GEO / AIO Optimization Agent":["intelligence.ai-timeouts","intelligence.ai-citations"],
     "Competitive Intelligence Agent":["intelligence.ai-citations"],
     "Local SEO Agent":["intelligence.review-compliance"],
     "Senior SEO Strategist Agent":["intelligence.performance-narrative"]
   },
-  "agent_execution_classes": {"GEO / AIO Optimization Agent":"executable","Local SEO Agent":"executable"}
+  "agent_execution_classes": {
+    "GEO / AIO Optimization Agent":"executable",
+    "Local SEO Agent":"executable"
+  }
 }
