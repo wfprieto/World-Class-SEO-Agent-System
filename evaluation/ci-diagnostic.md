@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: 2bdcbd9484006513c68cdf1d2b4af29377f4e518
-Generated: 2026-07-13T18:40:55Z
+Commit: af56a58768155800caf1573d6add1bb135342ad3
+Generated: 2026-07-13T18:42:19Z
 
 ## Command
 ```text
@@ -204,19 +204,9 @@ python -m pytest -q
 ........................................................................ [ 20%]
 ........................................................................ [ 41%]
 ........................................................................ [ 62%]
-.........................F......................F.F..................... [ 83%]
+................................................F.F..................... [ 83%]
 .....F.............................F....................                 [100%]
 =================================== FAILURES ===================================
-_____________ test_skill_catalog_and_generated_index_are_canonical _____________
-
-    def test_skill_catalog_and_generated_index_are_canonical():
-        catalog = _json("skills/skill-catalog.json")
-        skills = [skill for category in catalog["categories"] for skill in category["skills"]]
->       assert len(skills) == 84
-E       AssertionError: assert 89 == 84
-E        +  where 89 = len(['full-site-audit', 'product-proof-technical-audit', 'seo-diagnostic-stack-design', 'technical-audit', 'crawl-map', 'indexation-reality-check', ...])
-
-tests/test_phase4_skill_reference_prompt_pack.py:24: AssertionError
 ________________ test_claim_registry_and_deprecations_validate _________________
 
     def test_claim_registry_and_deprecations_validate():
@@ -323,8 +313,6 @@ runtime/schema_registry.py:9
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/test_phase4_skill_reference_prompt_pack.py::test_skill_catalog_and_generated_index_are_canonical - AssertionError: assert 89 == 84
- +  where 89 = len(['full-site-audit', 'product-proof-technical-audit', 'seo-diagnostic-stack-design', 'technical-audit', 'crawl-map', 'indexation-reality-check', ...])
 FAILED tests/test_product_proof_technical_audit.py::test_claim_registry_and_deprecations_validate - assert ["internal-li...SERVATIONAL'"] == []
   
   Left contains one more item: "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'"
@@ -388,7 +376,7 @@ FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_ex
     ```
     
     Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-5 failed, 339 passed, 2 warnings in 4.22s
+4 failed, 340 passed, 2 warnings in 5.79s
 
 EXIT_CODE=1
 ```
