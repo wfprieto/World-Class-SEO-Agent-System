@@ -74,7 +74,6 @@ def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
     assert result.data['agents_executed'] == 7
     assert result.data['trust_summary']['unsupported_material_findings'] == 0
     findings=json.loads((out/'findings.json').read_text())
-    ids={row['id'].split('-')[0] for row in findings}
     titles='\n'.join(row['title'] for row in findings)
     assert 'robots.txt returns a server-error response' in titles
     assert 'Paginated pages canonicalize to page one' in titles
@@ -175,7 +174,7 @@ def test_ai_timeout_citation_review_and_reporting_intelligence(tmp_path: Path):
     assert timeout.data['ai_requests'] == 2
     assert timeout.data['timeout_499_count'] == 1
     observations = tmp_path / 'observations.json'
-    observations.write_text(json.dump({'observeations':[
+    observations.write_text(json.dumps({'observations':[
         {'observed_at':'2026-07-12','platform':'Google AI Overview','prompt':'best technical seo audit','aio_present':True,'organic_position':4,'cited':False,'competitors_cited':['Competitor A']},
         {'observed_at':'2026-07-12','platform':'Perplexity','prompt':'technical seo governance','aio_present':False,'organic_position':2,'cited':True,'linked':True,'recommendation_state':'RECOMMENDED','narrative_accuracy':'ACCURATE'}
     ]}), encoding='utf-8')
