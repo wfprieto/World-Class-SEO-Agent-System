@@ -27,18 +27,11 @@ import serp_cluster  # noqa: E402
 import seo_pdf_report  # noqa: E402
 
 
-# --- URL safety / SSRF -------------------------------------------------------
-
 @pytest.mark.parametrize("bad", [
-    "http://127.0.0.1/admin",              # loopback
-    "http://localhost/",                   # loopback name
-    "http://10.0.0.5/",                    # private
-    "http://192.168.1.1/",                 # private
-    "http://169.254.169.254/latest/meta-data/",  # cloud metadata (link-local)
-    "file:///etc/passwd",                  # non-http scheme
-    "ftp://example.com/",                  # non-http scheme
-    "http://user:pass@example.com/",       # credentials
-    "http://example.com:8080/",            # non-standard port
+    "http://127.0.0.1/admin", "http://localhost/", "http://10.0.0.5/",
+    "http://192.168.1.1/", "http://169.254.169.254/latest/meta-data/",
+    "file:///etc/passwd", "ftp://example.com/", "http://user:pass@example.com/",
+    "http://example.com:8080/",
 ])
 def test_validate_public_url_rejects_hazards(bad):
     with pytest.raises(ValueError):
@@ -57,7 +50,6 @@ def test_rendered_page_blocks_ssrf_and_returns_adapter_result():
 
 
 def test_rendered_page_has_no_duplicate_validator():
-    """The adapter must reuse the canonical validator, not define its own."""
     src = Path("adapters/rendered_page.py").read_text(encoding="utf-8")
     assert "def _validate_public_url" not in src
     assert "def validate_public_url" not in src
@@ -79,12 +71,9 @@ def test_rendered_page_falls_back_when_playwright_unavailable(monkeypatch):
     assert result.data["mode_used"] == "raw"
     assert result.status == "partial"
     assert any("playwright" in w.lower() for w in result.warnings)
-    # Must not claim rendered/visual evidence it does not have
     assert result.data["render_engine"] is None
     assert result.data["accessibility_tree"] is None
 
-
-# --- SERP clustering ---------------------------------------------------------
 
 def _serps():
     return {
@@ -115,7 +104,7 @@ def test_clustering_handles_empty_and_duplicate_inputs():
 
 def test_clustering_handles_missing_urls():
     res = serp_cluster.cluster({"x": [], "y": []})
-    assert res["cluster_count"] == 2  # no overlap => no merge
+    assert res["cluster_count"] == 2
 
 
 def test_serp_cluster_reads_utf8_bom(tmp_path: Path):
@@ -125,18 +114,12 @@ def test_serp_cluster_reads_utf8_bom(tmp_path: Path):
     assert "cheap flights" in data
 
 
-# --- Page drift (over canonical EvidenceStore) -------------------------------
-
 def test_drift_uses_canonical_evidence_store_not_a_second_db(tmp_path: Path):
     db = tmp_path / "evidence.db"
     d = PageDrift(db_path=str(db))
-    d.capture("https://example.com", {"title": "A", "canonical": "https://example.com/",
-                                      "robots": "index", "status_code": 200,
-                                      "html": "x", "schema_json": "[1]"})
+    d.capture("https://example.com", {"title": "A", "canonical": "https://example.com/", "robots": "index", "status_code": 200, "html": "x", "schema_json": "[1]"})
     d.close()
-    # Single canonical store => the evidence table exists, no separate drift tables.
-    names = {r[0] for r in sqlite3.connect(db).execute(
-        "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    names = {r[0] for r in sqlite3.connect(db).execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     assert "baselines" not in names and "comparisons" not in names
 
 
@@ -145,22 +128,19 @@ def test_drift_insufficient_history_is_not_no_drift(tmp_path: Path):
     d.capture("https://example.com", {"title": "A", "status_code": 200, "html": "x"})
     res = d.compare("https://example.com")
     assert res["status"] == "insufficient_history"
-    assert "counts" not in res  # must not report "no drift"
+    assert "counts" not in res
     d.close()
 
 
 def test_drift_detects_unchanged_and_changed(tmp_path: Path):
     d = PageDrift(db_path=str(tmp_path / "e.db"))
-    fields = {"title": "A", "canonical": "https://example.com/", "robots": "index",
-              "status_code": 200, "html": "x", "schema_json": "[1]"}
+    fields = {"title": "A", "canonical": "https://example.com/", "robots": "index", "status_code": 200, "html": "x", "schema_json": "[1]"}
     d.capture("https://example.com", fields)
     d.capture("https://example.com", dict(fields))
     same = d.compare("https://example.com")
     assert same["status"] == "ok" and same["counts"]["critical"] == 0
     assert same["changes"] == []
-
-    changed = dict(fields, robots="noindex")
-    d.capture("https://example.com", changed)
+    d.capture("https://example.com", dict(fields, robots="noindex"))
     res = d.compare("https://example.com")
     assert res["counts"]["critical"] >= 1
     assert any(c["field"] == "robots" for c in res["changes"])
@@ -184,8 +164,6 @@ def test_fingerprint_is_deterministic_sha256():
     assert len(a["html_hash"]) == 64
 
 
-# --- MCP extension registry --------------------------------------------------
-
 def test_mcp_registry_reports_unavailable_without_credentials(monkeypatch):
     for ext in mcp_extensions.REGISTRY.values():
         for var in ext.env_vars:
@@ -208,12 +186,13 @@ def test_mcp_registry_never_reveals_secret_values(monkeypatch):
     assert "super-secret-value" not in blob
 
 
-def test_mcp_registry_declares_forbidden_ops_and_no_paid_calls():
+def test_mcp_registry_declares_forbidden_ops_and_cost_approval_contract():
+    report = mcp_extensions.capability_report(connected_mcp=set())
+    rows = {row["id"]: row for row in report["extensions"]}
     for ext in mcp_extensions.REGISTRY.values():
         assert ext.forbidden_operations, f"{ext.id} must declare forbidden operations"
         assert ext.cost_tier in {"free", "metered"}
-        if ext.cost_tier == "metered":
-            assert ext.requires_cost_approval is True
+        assert rows[ext.id]["requires_cost_approval"] is (ext.cost_tier == "metered")
 
 
 def test_mcp_registry_does_not_make_network_calls():
@@ -222,14 +201,10 @@ def test_mcp_registry_does_not_make_network_calls():
         assert banned not in src
 
 
-# --- PDF / HTML report -------------------------------------------------------
-
 def _canonical_agent_output():
     return {
-        "agent": "SEO Full Audit/Analyst Agent",
-        "summary": "Audit summary.",
-        "evidence": [{"source": "crawler_csv", "detail": "200 pages"}],
-        "confidence": "Medium",
+        "agent": "SEO Full Audit/Analyst Agent", "summary": "Audit summary.",
+        "evidence": [{"source": "crawler_csv", "detail": "200 pages"}], "confidence": "Medium",
         "findings": [{"title": "Missing title", "severity": "High", "detail": "No <title>."}],
         "recommended_actions": [{"action": "Add titles", "owner": "tech"}],
         "impact": "High", "effort": "Low", "risks": ["none"], "owner": "SEO Technical Agent",
@@ -241,8 +216,6 @@ def _canonical_agent_output():
 def test_report_consumes_canonical_agent_output_and_reports_format_truthfully(tmp_path: Path):
     out = tmp_path / "r.pdf"
     res = seo_pdf_report.write_report(_canonical_agent_output(), str(out))
-    # WeasyPrint is optional. The result must state exactly which artifact was produced,
-    # and pdf_verified must be True only when a real PDF file exists.
     assert res.format in {"pdf", "html"}
     assert res.path.exists()
     assert res.pdf_verified == (res.format == "pdf")
