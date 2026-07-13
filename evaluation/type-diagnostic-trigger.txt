@@ -1,0 +1,1 @@
+Run the temporary full mypy and pytest diagnostic against this main commit.
