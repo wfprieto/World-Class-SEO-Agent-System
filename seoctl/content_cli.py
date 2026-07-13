@@ -33,7 +33,7 @@ def _read_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
-def _result(command: str, result):  # type: ignore[no-untyped-def]
+def _result(command: str, result):
     if result.status in {"blocked"}:
         code = EXIT_BLOCKED
     elif result.status in {"not_configured", "unavailable"}:

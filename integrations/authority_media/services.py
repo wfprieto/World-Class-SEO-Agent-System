@@ -408,8 +408,10 @@ class YouTubeSearchService:
         for item in payload.get("items", []) if isinstance(payload.get("items"), list) else []:
             if not isinstance(item, dict):
                 continue
-            identifier = item.get("id") if isinstance(item.get("id"), dict) else {}
-            snippet = item.get("snippet") if isinstance(item.get("snippet"), dict) else {}
+            raw_identifier = item.get("id")
+            identifier: dict[str, Any] = raw_identifier if isinstance(raw_identifier, dict) else {}
+            raw_snippet = item.get("snippet")
+            snippet: dict[str, Any] = raw_snippet if isinstance(raw_snippet, dict) else {}
             video_id = identifier.get("videoId")
             if not video_id:
                 continue
@@ -426,7 +428,8 @@ class YouTubeSearchService:
                 }
             )
         status = "ok" if rows else "empty"
-        page_info = payload.get("pageInfo") if isinstance(payload.get("pageInfo"), dict) else {}
+        raw_page_info = payload.get("pageInfo")
+        page_info: dict[str, Any] = raw_page_info if isinstance(raw_page_info, dict) else {}
         return AdapterResult(
             source=source,
             status=status,
@@ -597,7 +600,7 @@ class TranscriptService:
         ]
         words = re.findall(r"\b[\w'-]+\b", " ".join(caption_lines), flags=re.UNICODE)
         repeated = [line for line, count in Counter(caption_lines).items() if count >= 3 and len(line) > 8]
-        issues = []
+        issues: list[dict[str, Any]] = []
         if not self.TIMESTAMP.search(text):
             issues.append({"code": "NO_TIMESTAMPS", "severity": "warning"})
         if len(words) < 50:

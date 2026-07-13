@@ -14,7 +14,7 @@ from integrations.product_proof.intelligence import (
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, envelope
 
 
-def _wrap(command: str, result):  # type: ignore[no-untyped-def]
+def _wrap(command: str, result):
     return envelope(command, result.status, result.data, warnings=result.warnings), EXIT_OK
 
 

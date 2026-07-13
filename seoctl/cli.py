@@ -7,7 +7,7 @@ import json
 import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -38,7 +38,7 @@ def _json(path: str) -> Any:
 
 def _plain(value: Any) -> Any:
     if is_dataclass(value):
-        return asdict(value)
+        return asdict(cast(Any, value))
     if hasattr(value, "to_dict") and callable(value.to_dict):
         return value.to_dict()
     if isinstance(value, Path):

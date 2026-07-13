@@ -160,7 +160,9 @@ def fetch(
             source="rendered_page", status="blocked", data={"url": url}, warnings=[str(exc)]
         )
 
-    raw_html, status, headers = "", None, {}
+    raw_html: str = ""
+    status: int | None = None
+    headers: dict[str, str] = {}
     try:
         raw_html, status, headers = _raw_fetch(safe_url)
     except Exception as exc:  # noqa: BLE001

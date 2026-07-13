@@ -72,7 +72,7 @@ class _NoCrossHostRedirects(urllib.request.HTTPRedirectHandler):
         super().__init__()
         self.allowed_hosts = set(allowed_hosts)
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         original = urllib.parse.urlsplit(req.full_url)
         redirected = urllib.parse.urlsplit(newurl)
         if (

@@ -218,7 +218,7 @@ class GooglePageSpeedLiveAdapter:
         self,
         endpoint: str,
         *,
-        params: dict[str, str | None],
+        params: dict[str, str | int | None],
         post_body: dict[str, Any] | None = None,
         api_key: str | None = None,
     ) -> dict[str, Any]:

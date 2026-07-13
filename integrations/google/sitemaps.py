@@ -48,7 +48,7 @@ class GoogleSitemapsAdapter:
         base = _SITEMAPS.format(
             site=urllib.parse.quote(property_value, safe="")
         )
-        query: dict[str, str] = {}
+        query: dict[str, str | int | None] = {}
         operation = "list"
         if sitemap_url:
             safe_sitemap = validate_public_url(sitemap_url)

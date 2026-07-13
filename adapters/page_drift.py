@@ -30,14 +30,14 @@ from adapters.evidence_store import (
     DEFAULT_DB,
     EvidenceIntegrityError,
     EvidenceStore,
-    _sha256,
+    _sha256 as _payload_sha256,
 )
 
 METRIC_GROUP = "page_state"
 _TRACKED = ("title", "canonical", "robots", "h1", "status_code", "html_hash", "schema_hash")
 
 
-def _sha256(text: str | None) -> str | None:
+def _hash_optional(text: str | None) -> str | None:
     return hashlib.sha256(text.encode("utf-8")).hexdigest() if text is not None else None
 
 
@@ -49,8 +49,8 @@ def fingerprint(fields: dict[str, Any]) -> dict[str, Any]:
         "robots": fields.get("robots"),
         "h1": fields.get("h1"),
         "status_code": fields.get("status_code"),
-        "html_hash": _sha256(fields.get("html")),
-        "schema_hash": _sha256(fields.get("schema_json")),
+        "html_hash": _hash_optional(fields.get("html") if isinstance(fields.get("html"), str) else None),
+        "schema_hash": _hash_optional(fields.get("schema_json") if isinstance(fields.get("schema_json"), str) else None),
     }
 
 
@@ -107,7 +107,7 @@ def verify_untampered(db_path: str | Path) -> dict[str, Any]:
         row["id"]
         for row in rows
         if not row["payload_sha256"]
-        or row["payload_sha256"] != _sha256(row["payload_json"])
+        or row["payload_sha256"] != _payload_sha256(row["payload_json"])
     ]
     if tampered:
         raise EvidenceIntegrityError(

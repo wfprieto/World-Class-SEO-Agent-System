@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from typing import Any
 
 from adapters.base import AdapterResult
@@ -34,7 +36,7 @@ class ProductProofIntelligenceAdapter:
         self.narrative = PerformanceNarrativeAnalyzer()
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "ai_timeouts": self.timeouts.analyze,
             "ai_citations": self.citations.analyze,
             "review_compliance": self.reviews.analyze,

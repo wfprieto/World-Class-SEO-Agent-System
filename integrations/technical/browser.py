@@ -156,7 +156,7 @@ class PlaywrightRenderer:
             )
             page = context.new_page()
 
-            def guard(route):  # type: ignore[no-untyped-def]
+            def guard(route):
                 request = route.request
                 parsed = urllib.parse.urlsplit(request.url)
                 if parsed.scheme in {"data", "blob", "about"}:

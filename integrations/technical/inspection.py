@@ -59,7 +59,7 @@ class _PageParser(HTMLParser):
         self.jsonld_texts: list[str] = []
         self._jsonld_parts: list[str] | None = None
 
-    def handle_starttag(self, tag: str, attrs) -> None:  # type: ignore[no-untyped-def]
+    def handle_starttag(self, tag: str, attrs) -> None:
         values = {str(key).lower(): str(value or "") for key, value in attrs}
         lower = tag.lower()
         if lower == "link":

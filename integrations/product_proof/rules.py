@@ -20,7 +20,7 @@ class ClaimPolicy:
  def approved_for_recommendation(self,ids): return all(self.claim(c)["evidence_class"] in self.allowed for c in ids)
 
 class TechnicalAuditRules:
- def __init__(self,policy): self.policy=policy; self.findings=[]; self.decisions=[]; self.counts=Counter()
+ def __init__(self,policy): self.policy=policy; self.findings=[]; self.decisions=[]; self.counts: Counter[str]=Counter()
  def add(self,i,t,s,cat,claims,obs,impact,action,verify,urls,owner,state="VERIFIED",confidence="High",missing=None):
   self.counts[i]+=1; fid=i if self.counts[i]==1 else f"{i}-{self.counts[i]}"
   if claims and not self.policy.approved_for_recommendation(claims): state,confidence="REQUIRES_VERIFICATION","Low"

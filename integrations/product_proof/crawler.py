@@ -67,9 +67,9 @@ class _HTMLAuditParser(HTMLParser):
                     if candidate:
                         self.assets.append(candidate)
         elif lower in {"script", "source", "video", "audio", "iframe"}:
-            candidate = values.get("src") or values.get("poster")
-            if candidate:
-                self.assets.append(candidate)
+            media_candidate: str | None = values.get("src") or values.get("poster")
+            if media_candidate:
+                self.assets.append(media_candidate)
             if lower == "script" and values.get("type", "").lower().split(";", 1)[0].strip() == "application/ld+json":
                 self.jsonld_parts = []
 

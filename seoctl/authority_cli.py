@@ -18,7 +18,7 @@ from integrations.authority_media.services import (
 from seoctl.cli import EXIT_BLOCKED, EXIT_FAILED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, envelope
 
 
-def _result(command: str, result):  # type: ignore[no-untyped-def]
+def _result(command: str, result):
     if result.status in {"ok", "empty", "partial"}:
         code = EXIT_OK
     elif result.status in {"not_configured", "not_found", "unavailable"}:

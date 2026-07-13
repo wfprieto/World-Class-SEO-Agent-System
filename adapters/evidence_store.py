@@ -428,6 +428,8 @@ class EvidenceStore:
                     ),
                 ),
             )
+            if cursor.lastrowid is None:
+                raise RuntimeError("snapshot insert did not return a row id")
             return int(cursor.lastrowid)
 
     def _decode_row(self, row: sqlite3.Row) -> dict[str, Any]:

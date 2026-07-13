@@ -28,7 +28,7 @@ def _indexnow() -> IndexNowService:
     return IndexNowService()
 
 
-def _result(command: str, result):  # type: ignore[no-untyped-def]
+def _result(command: str, result):
     code = EXIT_OK
     if result.status in {"not_configured", "unavailable"}:
         code = EXIT_UNAVAILABLE
