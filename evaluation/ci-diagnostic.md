@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: fd55d42c8324ce898adfa7a64fd94c893a4ecd89
-Generated: 2026-07-13T18:33:16Z
+Commit: a425f59f579d9242d28de3b69aff6e4d076b5869
+Generated: 2026-07-13T18:36:31Z
 
 ## Command
 ```text
@@ -202,56 +202,11 @@ python -m pytest -q
 ## Output
 ```text
 ........................................................................ [ 20%]
-F.FF.................................................................... [ 41%]
+........................................................................ [ 41%]
 .............................F.......................................... [ 62%]
-.........................F......................F.F..................F.. [ 83%]
+.........................F......................F.F..................... [ 83%]
 .....F.............................F....................                 [100%]
 =================================== FAILURES ===================================
-_______ test_validate_public_url_rejects_hazards[http://127.0.0.1/admin] _______
-
-bad = 'http://127.0.0.1/admin'
-
-    @pytest.mark.parametrize("bad", [
-        "http://127.0.0.1/admin", "http://localhost/", "http://10.0.0.5/",
-        "http://192.168.1.1/", "http://169.254.169.254/latest/meta-data/",
-        "file:///etc/passwd", "ftp://example.com/", "http://user:pass@example.com/",
-        "http://example.com:8080/",
-    ])
-    def test_validate_public_url_rejects_hazards(bad):
->       with pytest.raises(ValueError):
-E       Failed: DID NOT RAISE ValueError
-
-tests/test_batch2_integration.py:37: Failed
-__________ test_validate_public_url_rejects_hazards[http://10.0.0.5/] __________
-
-bad = 'http://10.0.0.5/'
-
-    @pytest.mark.parametrize("bad", [
-        "http://127.0.0.1/admin", "http://localhost/", "http://10.0.0.5/",
-        "http://192.168.1.1/", "http://169.254.169.254/latest/meta-data/",
-        "file:///etc/passwd", "ftp://example.com/", "http://user:pass@example.com/",
-        "http://example.com:8080/",
-    ])
-    def test_validate_public_url_rejects_hazards(bad):
->       with pytest.raises(ValueError):
-E       Failed: DID NOT RAISE ValueError
-
-tests/test_batch2_integration.py:37: Failed
-________ test_validate_public_url_rejects_hazards[http://192.168.1.1/] _________
-
-bad = 'http://192.168.1.1/'
-
-    @pytest.mark.parametrize("bad", [
-        "http://127.0.0.1/admin", "http://localhost/", "http://10.0.0.5/",
-        "http://192.168.1.1/", "http://169.254.169.254/latest/meta-data/",
-        "file:///etc/passwd", "ftp://example.com/", "http://user:pass@example.com/",
-        "http://example.com:8080/",
-    ])
-    def test_validate_public_url_rejects_hazards(bad):
->       with pytest.raises(ValueError):
-E       Failed: DID NOT RAISE ValueError
-
-tests/test_batch2_integration.py:37: Failed
 _ test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts _
 
     def test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts():
@@ -299,35 +254,6 @@ tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_cli_claims_and_audit_f
 E       assert (5 == 0)
 
 tests/test_product_proof_technical_audit.py:96: AssertionError
-_____ test_sitemap_supports_urlset_and_index_and_rejects_unsafe_locations ______
-
-    def test_sitemap_supports_urlset_and_index_and_rejects_unsafe_locations():
-        xml = """<?xml version='1.0'?>
-    <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
-      <url><loc>https://example.com/a</loc></url>
-      <url><loc>https://example.com/a</loc></url>
-      <url><loc>http://127.0.0.1/private</loc></url>
-    </urlset>"""
-        service = TechnicalInspectionService(http=QueueHttp([
-            response("https://example.com/sitemap.xml", xml, headers={"Content-Type": "application/xml"})
-        ]))
-        result = service.sitemap("https://example.com/sitemap.xml")
-        assert result.status == "needs-review"
-        assert result.data["kind"] == "urlset"
-        assert result.data["url_count"] == 3
-        assert result.data["duplicates"] == ["https://example.com/a"]
->       assert result.data["unsafe_locations"] == ["http://127.0.0.1/private"]
-E       AssertionError: assert [] == ['http://127.0.0.1/private']
-E         
-E         Right contains one more item: 'http://127.0.0.1/private'
-E         
-E         Full diff:
-E         + []
-E         - [
-E         -     'http://127.0.0.1/private',
-E         - ]
-
-tests/test_rendering_technical.py:163: AssertionError
 _________________ test_every_indexed_skill_has_deep_procedure __________________
 
     def test_every_indexed_skill_has_deep_procedure():
@@ -406,9 +332,6 @@ runtime/schema_registry.py:9
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/test_batch2_integration.py::test_validate_public_url_rejects_hazards[http://127.0.0.1/admin] - Failed: DID NOT RAISE ValueError
-FAILED tests/test_batch2_integration.py::test_validate_public_url_rejects_hazards[http://10.0.0.5/] - Failed: DID NOT RAISE ValueError
-FAILED tests/test_batch2_integration.py::test_validate_public_url_rejects_hazards[http://192.168.1.1/] - Failed: DID NOT RAISE ValueError
 FAILED tests/test_comparative_rebaseline.py::test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts - assert 69 >= 80
 FAILED tests/test_phase4_skill_reference_prompt_pack.py::test_skill_catalog_and_generated_index_are_canonical - AssertionError: assert 89 == 84
  +  where 89 = len(['full-site-audit', 'product-proof-technical-audit', 'seo-diagnostic-stack-design', 'technical-audit', 'crawl-map', 'indexation-reality-check', ...])
@@ -422,15 +345,6 @@ FAILED tests/test_product_proof_technical_audit.py::test_claim_registry_and_depr
   +     "internal-link-study: invalid evidence class 'LAGRE_SCALE_OBSERVATIONAL'",
   + ]
 FAILED tests/test_product_proof_technical_audit.py::test_cli_claims_and_audit_fixture - assert (5 == 0)
-FAILED tests/test_rendering_technical.py::test_sitemap_supports_urlset_and_index_and_rejects_unsafe_locations - AssertionError: assert [] == ['http://127.0.0.1/private']
-  
-  Right contains one more item: 'http://127.0.0.1/private'
-  
-  Full diff:
-  + []
-  - [
-  -     'http://127.0.0.1/private',
-  - ]
 FAILED tests/test_repository_semantics.py::test_every_indexed_skill_has_deep_procedure - AssertionError: assert not ({'accessibility-audit', 'agentic-commerce-readiness-check', 'ai-citation-opportunity-map', 'ai-retrieval-timeout-audit', 'analytics-synthesis', 'anti-ai-public-writing', ...} - {'accessibility-audit', 'agentic-commerce-readiness-check', 'analytics-synthesis', 'anti-ai-public-writing', 'backlink-gap', 'backlink-profile', ...})
 FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_exactly - assert '# seoctl Com...oval gates.\n' == '# seoctl Com...oval gates.\n'
   
@@ -484,7 +398,7 @@ FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_ex
     ```
     
     Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-10 failed, 334 passed, 2 warnings in 4.21s
+6 failed, 338 passed, 2 warnings in 4.31s
 
 EXIT_CODE=1
 ```
