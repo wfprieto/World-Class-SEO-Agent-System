@@ -1,7 +1,7 @@
 # Remediation CI Diagnostic
 
-Commit: a425f59f579d9242d28de3b69aff6e4d076b5869
-Generated: 2026-07-13T18:36:31Z
+Commit: 2bdcbd9484006513c68cdf1d2b4af29377f4e518
+Generated: 2026-07-13T18:40:55Z
 
 ## Command
 ```text
@@ -203,19 +203,10 @@ python -m pytest -q
 ```text
 ........................................................................ [ 20%]
 ........................................................................ [ 41%]
-.............................F.......................................... [ 62%]
+........................................................................ [ 62%]
 .........................F......................F.F..................... [ 83%]
 .....F.............................F....................                 [100%]
 =================================== FAILURES ===================================
-_ test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts _
-
-    def test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts():
-        inventory = inventory_repo(ROOT)
-        assert inventory["agent_files"] == 25
->       assert inventory["indexed_skills"] >= 80
-E       assert 69 >= 80
-
-tests/test_comparative_rebaseline.py:34: AssertionError
 _____________ test_skill_catalog_and_generated_index_are_canonical _____________
 
     def test_skill_catalog_and_generated_index_are_canonical():
@@ -332,7 +323,6 @@ runtime/schema_registry.py:9
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/test_comparative_rebaseline.py::test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts - assert 69 >= 80
 FAILED tests/test_phase4_skill_reference_prompt_pack.py::test_skill_catalog_and_generated_index_are_canonical - AssertionError: assert 89 == 84
  +  where 89 = len(['full-site-audit', 'product-proof-technical-audit', 'seo-diagnostic-stack-design', 'technical-audit', 'crawl-map', 'indexation-reality-check', ...])
 FAILED tests/test_product_proof_technical_audit.py::test_claim_registry_and_deprecations_validate - assert ["internal-li...SERVATIONAL'"] == []
@@ -398,7 +388,7 @@ FAILED tests/test_seoctl_docs.py::test_command_documentation_matches_registry_ex
     ```
     
     Commands that require live providers remain optional and must preserve runtime budgets, credential redaction, and approval gates.
-6 failed, 338 passed, 2 warnings in 4.31s
+5 failed, 339 passed, 2 warnings in 4.22s
 
 EXIT_CODE=1
 ```
