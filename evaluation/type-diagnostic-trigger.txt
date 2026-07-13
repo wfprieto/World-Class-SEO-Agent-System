@@ -1,1 +1,0 @@
-Execute the residual deterministic type remediation and rerun full mypy and pytest.
