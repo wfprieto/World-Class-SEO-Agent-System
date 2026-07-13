@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
@@ -25,15 +26,8 @@ class RenderedPageExecutionAdapter:
             return AdapterResult(
                 source=self.name,
                 status="ok" if health.state == "AVAILABLE" else "not_configured",
-                data={
-                    **asdict(health),
-                    "data_state": health.state,
-                },
-                warnings=(
-                    []
-                    if health.state == "AVAILABLE"
-                    else ["Optional Playwright Chromium is not configured."]
-                ),
+                data={**asdict(health), "data_state": health.state},
+                warnings=([] if health.state == "AVAILABLE" else ["Optional Playwright Chromium is not configured."]),
             )
         if normalized in {"page", "render"}:
             return self.service.render(**kwargs)
@@ -52,7 +46,7 @@ class TechnicalExecutionAdapter:
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
         normalized = operation.strip().lower().replace("_", "-")
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "robots": self.service.robots,
             "sitemap": self.service.sitemap,
             "hreflang": self.service.hreflang,
@@ -67,8 +61,7 @@ class TechnicalExecutionAdapter:
         handler = handlers.get(normalized)
         if handler is None:
             raise ValueError(
-                "operation must be robots, sitemap, hreflang, preload, "
-                "redirect-chain, indexability, cwv, schema-detect, "
-                "schema-validate, or schema-generate"
+                "operation must be robots, sitemap, hreflang, preload, redirect-chain, "
+                "indexability, cwv, schema-detect, schema-validate, or schema-generate"
             )
         return handler(**kwargs)
