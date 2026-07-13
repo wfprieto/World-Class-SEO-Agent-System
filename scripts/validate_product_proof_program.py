@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
@@ -10,6 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def _path_exists(root: Path, path: str) -> tuple[bool, str]:
+    return (root / path).exists(), f"{path} exists"
 
 
 def validate(root: Path = ROOT) -> dict[str, Any]:
@@ -97,7 +102,7 @@ def validate(root: Path = ROOT) -> dict[str, Any]:
         ("Capability overlay", "orchestration/product-proof-capability-overlay.json"),
     ]
     for name, path in checks:
-        record(name, lambda path=path: ((root / path).exists(), f"{path} exists"))
+        record(name, partial(_path_exists, root, path))
 
     service_text = (root / "integrations/product_proof/service.py").read_text(
         encoding="utf-8"
