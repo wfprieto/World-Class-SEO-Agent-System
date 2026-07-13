@@ -46,7 +46,9 @@ class ToolDispatcher:
     ) -> None:
         if not isinstance(max_telemetry_events, int) or not 1 <= max_telemetry_events <= 100_000:
             raise ValueError("max_telemetry_events must be an integer from 1 to 100000")
-        self.adapters = adapters or default_adapters()
+        self.adapters: dict[str, Any] = (
+            adapters if adapters is not None else dict(default_adapters())
+        )
         self.max_telemetry_events = max_telemetry_events
         self._telemetry: list[dict[str, Any]] = []
 
