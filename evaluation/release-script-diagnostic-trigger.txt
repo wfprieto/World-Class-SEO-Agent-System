@@ -1,1 +1,1 @@
-Run the temporary release and security script type diagnostic.
+Run the temporary release and security script type diagnostic after the matrix failure.
