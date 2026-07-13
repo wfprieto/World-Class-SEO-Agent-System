@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from adapters.base import AdapterResult
@@ -87,7 +88,7 @@ class ExtensionAdapter:
         self.providers = ProviderService()
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "list": self.providers.list,
             "preflight": self.providers.preflight,
             "config": self.providers.config,
