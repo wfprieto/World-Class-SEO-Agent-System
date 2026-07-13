@@ -1,0 +1,1 @@
+Run the temporary release and security script type diagnostic.
