@@ -47,15 +47,12 @@ def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
     categories = scorecard.get("categories")
     if not isinstance(categories, list) or len(categories) != 10:
         return ["scorecard must contain exactly ten categories"]
-
     ids = [row.get("id") for row in categories if isinstance(row, dict)]
     if sorted(ids) != list(range(1, 11)):
         errors.append("category ids must be unique integers 1 through 10")
-
     weight = sum(float(row.get("weight", 0)) for row in categories)
     if abs(weight - 100.0) > 0.0001:
         errors.append(f"category weights must total 100; found {weight}")
-
     for row in categories:
         if not isinstance(row, dict):
             errors.append("every category must be an object")
@@ -75,7 +72,6 @@ def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
             errors.append(f"category {row.get('id')} has no evidence")
         if score >= 8 and maturity not in {"LIVE_CAPABLE", "PRODUCTION_READY", "BEST_IN_CLASS"}:
             errors.append(f"category {row.get('id')} cannot score 8+ without live-capable evidence")
-
     calculated = weighted_score(scorecard)
     claimed = float(scorecard.get("overall_score", -1))
     if abs(calculated - claimed) > 0.0001:
@@ -87,7 +83,13 @@ def _skill_ids(path: Path) -> set[str]:
     if not path.exists():
         return set()
     text = path.read_text(encoding="utf-8-sig")
-    return set(re.findall(r"^- `([a-z0-9-]+)`\s*$", text, flags=re.MULTILINE))
+    return set(
+        re.findall(
+            r"^- `([a-z0-9-]+)`(?:\s+—\s+package:.*)?$",
+            text,
+            flags=re.MULTILINE,
+        )
+    )
 
 
 def _test_functions(path: Path) -> int:
@@ -106,11 +108,7 @@ def _test_functions(path: Path) -> int:
 
 
 def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
-    agent_files = [
-        path
-        for path in (root / "agents").glob("*.md")
-        if path.name != "AGENT_INDEX.md"
-    ]
+    agent_files = [path for path in (root / "agents").glob("*.md") if path.name != "AGENT_INDEX.md"]
     script_files = [path for path in (root / "scripts").glob("*.py") if path.name != "__init__.py"]
     adapter_files = [path for path in (root / "adapters").glob("*.py") if path.name != "__init__.py"]
     knowledge_files = [path for path in (root / "knowledge").iterdir() if path.is_file()]
@@ -183,9 +181,7 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
             "gap": round(weighted_score(claude) - weighted_score(world), 4),
             "target": float(world.get("target_score", 92)),
         },
-        "open_capabilities": sum(
-            1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"
-        ),
+        "open_capabilities": sum(1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"),
     }
 
 
