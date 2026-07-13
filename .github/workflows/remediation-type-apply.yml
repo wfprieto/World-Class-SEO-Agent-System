@@ -1,0 +1,50 @@
+name: Apply Type Remediation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: type-remediation-main
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply type remediation') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install supported environment
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+      - name: Apply deterministic remediation
+        run: python scripts/apply_type_remediation.py
+      - name: Verify executable suite
+        run: python -m pytest -q
+      - name: Record type-check result
+        shell: bash
+        run: |
+          set +e
+          mkdir -p evaluation
+          python -m mypy runtime seoctl integrations adapters > evaluation/type-remediation.md 2>&1
+          code=$?
+          {
+            echo
+            echo "EXIT_CODE=$code"
+          } >> evaluation/type-remediation.md
+          cat evaluation/type-remediation.md
+      - name: Commit and fast-forward main
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add adapters integrations runtime seoctl evaluation/type-remediation.md
+          git commit -m 'Apply type remediation batch' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
