@@ -59,9 +59,11 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl render health` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `none` |
 | `seoctl render page` | SEO Technical Agent | `rendered-visual-audit` | `live_optional` |
-| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
+| `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
+| `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
 | `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
 | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
+| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
 | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
 | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
 | `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
@@ -74,9 +76,9 @@ Run `python -m seoctl --help` for interactive argument details.
 
 ## Stable exit codes
 
-|Code | Meaning |
+| Code | Meaning |
 |---:|---|
-| 0 | Completed successfully or truthfully partial without a hard failur |
+| 0 | Completed successfully or truthfully partial without a hard failure |
 | 2 | Invalid or missing operator input |
 | 3 | Optional capability or provider unavailable |
 | 4 | Blocked by evidence, authorization, privacy or governance gate |

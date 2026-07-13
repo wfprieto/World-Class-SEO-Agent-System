@@ -436,7 +436,7 @@
     {
       "id": "internal-link-study",
       "claim": "A large observational study associated higher internal-link counts with more Google clicks, but it does not establish a universal 40-to-50-link requirement for every page.",
-      "evidence_class": "LAGRE_SCALE_OBSERVATIONAL",
+      "evidence_class": "LARGE_SCALE_OBSERVATIONAL",
       "source_section": "1.2, 5.3",
       "source_url": "https://zyppy.com/seo/internal-links/seo-study/",
       "verified_at": "2026-07-12",
