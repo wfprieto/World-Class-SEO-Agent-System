@@ -53,7 +53,11 @@ class AITimeoutAnalyzer:
         if not stack:
             raise ValueError("server_stack is required because 499 is server-specific evidence")
         records: list[TimeoutRecord] = []
-        ai_requests = Counter(); statuses = Counter(); path_counts = Counter(); response_samples: dict[str, list[float]] = defaultdict(list); malformed = 0
+        ai_requests: Counter[str] = Counter()
+        statuses: Counter[tuple[str, int]] = Counter()
+        path_counts: Counter[str] = Counter()
+        response_samples: dict[str, list[float]] = defaultdict(list)
+        malformed = 0
         text = Path(log_path).read_text(encoding="utf-8-sig", errors="replace")
         for line_number, raw in enumerate(text.splitlines(), 1):
             match = _COMMON_LOG.search(raw)
