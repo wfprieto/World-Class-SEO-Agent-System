@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from adapters.base import AdapterResult
@@ -18,7 +19,7 @@ class ContentIntelligenceAdapter:
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
         normalized = operation.strip().lower().replace("_", "-")
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "quality": self.service.quality,
             "verify": self.service.verify,
             "entities": self.service.entities,
