@@ -1,8 +1,8 @@
-"""Apply the first evidence-backed static typing remediation batch.
+"""Apply the residual evidence-backed static typing remediation batch.
 
-This temporary remediation helper is intentionally deterministic and idempotent. It
-fails when neither the original nor expected replacement is present, so repository
-drift cannot be hidden by a successful no-op.
+This temporary helper is deterministic and idempotent. It fails when neither an
+original pattern nor its expected replacement exists, so repository drift cannot
+be hidden by a successful no-op.
 """
 from __future__ import annotations
 
@@ -29,6 +29,23 @@ def remove_stale_ignores(path: str) -> None:
     target.write_text(re.sub(r"\s+# type: ignore\[[^\]]+\]", "", text), encoding="utf-8")
 
 
+def type_handler_map(path: str, count: int = 1) -> None:
+    target = ROOT / path
+    text = target.read_text(encoding="utf-8")
+    if "from collections.abc import Callable" not in text:
+        text = text.replace(
+            "from __future__ import annotations\n",
+            "from __future__ import annotations\n\nfrom collections.abc import Callable\n",
+        )
+    original = "        handlers = {"
+    replacement = "        handlers: dict[str, Callable[..., AdapterResult]] = {"
+    if original in text:
+        text = text.replace(original, replacement, count)
+    elif text.count(replacement) < count:
+        raise RuntimeError(f"missing handler-map pattern in {path}")
+    target.write_text(text, encoding="utf-8")
+
+
 def main() -> int:
     for path in [
         "integrations/technical/browser.py",
@@ -46,12 +63,6 @@ def main() -> int:
     ]:
         remove_stale_ignores(path)
 
-    edit("integrations/product_proof/intelligence.py", [
-        (
-            "ai_requests = Counter(); statuses = Counter(); path_counts = Counter(); response_samples: dict[str, list[float]] = defaultdict(list); malformed = 0",
-            "ai_requests: Counter[str] = Counter(); statuses: Counter[tuple[str, int]] = Counter(); path_counts: Counter[str] = Counter(); response_samples: dict[str, list[float]] = defaultdict(list); malformed = 0",
-        )
-    ])
     edit("integrations/product_proof/rules.py", [
         (
             "self.policy=policy; self.findings=[]; self.decisions=[]; self.counts=Counter()",
@@ -113,61 +124,8 @@ def main() -> int:
         ),
     ])
 
-    handler_files = {
-        "integrations/extensions/providers.py": 1,
-        "integrations/content_intelligence/adapters.py": 1,
-        "integrations/authority_media/adapters.py": 2,
-        "integrations/technical/adapters.py": 1,
-        "integrations/product_proof/adapters.py": 1,
-    }
-    for path, count in handler_files.items():
-        target = ROOT / path
-        text = target.read_text(encoding="utf-8")
-        if "from collections.abc import Callable" not in text:
-            text = text.replace(
-                "from __future__ import annotations\n",
-                "from __future__ import annotations\n\nfrom collections.abc import Callable\n",
-            )
-        original = "        handlers = {"
-        replacement = "        handlers: dict[str, Callable[..., AdapterResult]] = {"
-        if original in text:
-            text = text.replace(original, replacement, count)
-        elif text.count(replacement) < count:
-            raise RuntimeError(f"missing handler-map pattern in {path}")
-        target.write_text(text, encoding="utf-8")
+    type_handler_map("integrations/product_proof/adapters.py")
 
-    edit("runtime/llm.py", [
-        (
-            "    async def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:",
-            "    def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:",
-        ),
-        (
-            '        raw_base = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")',
-            '        raw_base = base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"',
-        ),
-        (
-            '        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4.1")',
-            '        self.model = model or os.getenv("OPENAI_MODEL") or "gpt-4.1"',
-        ),
-        (
-            '        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")',
-            '        self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"',
-        ),
-    ])
-    edit("runtime/structured_output.py", [
-        (
-            "            output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)\n            errors = self._errors(output, expected_agent=agent_name)",
-            "            synthetic_output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)\n            synthetic_errors = self._errors(synthetic_output, expected_agent=agent_name)",
-        ),
-        (
-            '                status="ok" if not errors else "failed",\n                output=output if not errors else None,\n                errors=errors,',
-            '                status="ok" if not synthetic_errors else "failed",\n                output=synthetic_output if not synthetic_errors else None,\n                errors=synthetic_errors,',
-        ),
-        (
-            "        errors: list[str] = []\n\n        for correction",
-            "        errors: list[str] = []\n        output: dict[str, Any] | None = None\n\n        for correction",
-        ),
-    ])
     edit("seoctl/cli.py", [
         ("from typing import Any, Callable", "from typing import Any, Callable, cast"),
         ("        return asdict(value)", "        return asdict(cast(Any, value))"),
