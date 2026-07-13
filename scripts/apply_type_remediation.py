@@ -1,0 +1,179 @@
+"""Apply the first evidence-backed static typing remediation batch.
+
+This temporary remediation helper is intentionally deterministic and idempotent. It
+fails when neither the original nor expected replacement is present, so repository
+drift cannot be hidden by a successful no-op.
+"""
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def edit(path: str, replacements: list[tuple[str, str]]) -> None:
+    target = ROOT / path
+    text = target.read_text(encoding="utf-8")
+    for old, new in replacements:
+        if old in text:
+            text = text.replace(old, new)
+        elif new not in text:
+            raise RuntimeError(f"missing remediation pattern in {path}: {old[:100]!r}")
+    target.write_text(text, encoding="utf-8")
+
+
+def remove_stale_ignores(path: str) -> None:
+    target = ROOT / path
+    text = target.read_text(encoding="utf-8")
+    target.write_text(re.sub(r"\s+# type: ignore\[[^\]]+\]", "", text), encoding="utf-8")
+
+
+def main() -> int:
+    for path in [
+        "integrations/technical/browser.py",
+        "integrations/technical/http.py",
+        "integrations/google/client.py",
+        "integrations/extensions/indexnow.py",
+        "integrations/authority_media/transport.py",
+        "integrations/technical/inspection.py",
+        "seoctl/technical_cli.py",
+        "seoctl/intelligence_cli.py",
+        "seoctl/extensions_cli.py",
+        "seoctl/authority_cli.py",
+        "seoctl/audit_cli.py",
+        "seoctl/content_cli.py",
+    ]:
+        remove_stale_ignores(path)
+
+    edit("integrations/product_proof/intelligence.py", [
+        (
+            "ai_requests = Counter(); statuses = Counter(); path_counts = Counter(); response_samples: dict[str, list[float]] = defaultdict(list); malformed = 0",
+            "ai_requests: Counter[str] = Counter(); statuses: Counter[tuple[str, int]] = Counter(); path_counts: Counter[str] = Counter(); response_samples: dict[str, list[float]] = defaultdict(list); malformed = 0",
+        )
+    ])
+    edit("integrations/product_proof/rules.py", [
+        (
+            "self.policy=policy; self.findings=[]; self.decisions=[]; self.counts=Counter()",
+            "self.policy=policy; self.findings=[]; self.decisions=[]; self.counts: Counter[str]=Counter()",
+        )
+    ])
+    edit("adapters/evidence_store.py", [
+        (
+            "            return int(cursor.lastrowid)",
+            "            if cursor.lastrowid is None:\n                raise RuntimeError(\"snapshot insert did not return a row id\")\n            return int(cursor.lastrowid)",
+        )
+    ])
+    edit("adapters/page_drift.py", [
+        ("    _sha256,\n", "    _sha256 as _payload_sha256,\n"),
+        ("def _sha256(text: str | None) -> str | None:", "def _hash_optional(text: str | None) -> str | None:"),
+        (
+            '"html_hash": _sha256(fields.get("html")),',
+            '"html_hash": _hash_optional(fields.get("html") if isinstance(fields.get("html"), str) else None),',
+        ),
+        (
+            '"schema_hash": _sha256(fields.get("schema_json")),',
+            '"schema_hash": _hash_optional(fields.get("schema_json") if isinstance(fields.get("schema_json"), str) else None),',
+        ),
+        (
+            'row["payload_sha256"] != _sha256(row["payload_json"])',
+            'row["payload_sha256"] != _payload_sha256(row["payload_json"])',
+        ),
+    ])
+    edit("adapters/rendered_page.py", [
+        (
+            '    raw_html, status, headers = "", None, {}',
+            '    raw_html: str = ""\n    status: int | None = None\n    headers: dict[str, str] = {}',
+        )
+    ])
+    edit("integrations/product_proof/crawler.py", [
+        (
+            '            candidate = values.get("src") or values.get("poster")\n            if candidate:\n                self.assets.append(candidate)',
+            '            media_candidate: str | None = values.get("src") or values.get("poster")\n            if media_candidate:\n                self.assets.append(media_candidate)',
+        )
+    ])
+    edit("adapters/google_pagespeed_live.py", [
+        ("        params: dict[str, str | None],", "        params: dict[str, str | int | None],")
+    ])
+    edit("integrations/google/sitemaps.py", [
+        ("        query: dict[str, str] = {}", "        query: dict[str, str | int | None] = {}")
+    ])
+    edit("integrations/authority_media/services.py", [
+        (
+            '            identifier = item.get("id") if isinstance(item.get("id"), dict) else {}\n            snippet = item.get("snippet") if isinstance(item.get("snippet"), dict) else {}',
+            '            raw_identifier = item.get("id")\n            identifier: dict[str, Any] = raw_identifier if isinstance(raw_identifier, dict) else {}\n            raw_snippet = item.get("snippet")\n            snippet: dict[str, Any] = raw_snippet if isinstance(raw_snippet, dict) else {}',
+        ),
+        (
+            '        page_info = payload.get("pageInfo") if isinstance(payload.get("pageInfo"), dict) else {}',
+            '        raw_page_info = payload.get("pageInfo")\n        page_info: dict[str, Any] = raw_page_info if isinstance(raw_page_info, dict) else {}',
+        ),
+        (
+            "        issues = []\n        if not self.TIMESTAMP.search(text):",
+            "        issues: list[dict[str, Any]] = []\n        if not self.TIMESTAMP.search(text):",
+        ),
+    ])
+
+    handler_files = {
+        "integrations/extensions/providers.py": 1,
+        "integrations/content_intelligence/adapters.py": 1,
+        "integrations/authority_media/adapters.py": 2,
+        "integrations/technical/adapters.py": 1,
+        "integrations/product_proof/adapters.py": 1,
+    }
+    for path, count in handler_files.items():
+        target = ROOT / path
+        text = target.read_text(encoding="utf-8")
+        if "from collections.abc import Callable" not in text:
+            text = text.replace(
+                "from __future__ import annotations\n",
+                "from __future__ import annotations\n\nfrom collections.abc import Callable\n",
+            )
+        original = "        handlers = {"
+        replacement = "        handlers: dict[str, Callable[..., AdapterResult]] = {"
+        if original in text:
+            text = text.replace(original, replacement, count)
+        elif text.count(replacement) < count:
+            raise RuntimeError(f"missing handler-map pattern in {path}")
+        target.write_text(text, encoding="utf-8")
+
+    edit("runtime/llm.py", [
+        (
+            "    async def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:",
+            "    def stream(self, messages: list[LLMMessage]) -> AsyncIterator[str]:",
+        ),
+        (
+            '        raw_base = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")',
+            '        raw_base = base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"',
+        ),
+        (
+            '        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4.1")',
+            '        self.model = model or os.getenv("OPENAI_MODEL") or "gpt-4.1"',
+        ),
+        (
+            '        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")',
+            '        self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"',
+        ),
+    ])
+    edit("runtime/structured_output.py", [
+        (
+            "            output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)\n            errors = self._errors(output, expected_agent=agent_name)",
+            "            synthetic_output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)\n            synthetic_errors = self._errors(synthetic_output, expected_agent=agent_name)",
+        ),
+        (
+            '                status="ok" if not errors else "failed",\n                output=output if not errors else None,\n                errors=errors,',
+            '                status="ok" if not synthetic_errors else "failed",\n                output=synthetic_output if not synthetic_errors else None,\n                errors=synthetic_errors,',
+        ),
+        (
+            "        errors: list[str] = []\n\n        for correction",
+            "        errors: list[str] = []\n        output: dict[str, Any] | None = None\n\n        for correction",
+        ),
+    ])
+    edit("seoctl/cli.py", [
+        ("from typing import Any, Callable", "from typing import Any, Callable, cast"),
+        ("        return asdict(value)", "        return asdict(cast(Any, value))"),
+    ])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
