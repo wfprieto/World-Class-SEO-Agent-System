@@ -144,12 +144,16 @@ class StructuredOutputService:
         budget: RunBudget,
     ) -> StructuredOutputResult:
         if getattr(client, "provider", "") == "echo":
-            output = _echo_output(agent_name, request, domain, skills, knowledge, prior_outputs)
-            errors = self._errors(output, expected_agent=agent_name)
+            synthetic_output = _echo_output(
+                agent_name, request, domain, skills, knowledge, prior_outputs
+            )
+            synthetic_errors = self._errors(
+                synthetic_output, expected_agent=agent_name
+            )
             return StructuredOutputResult(
-                status="ok" if not errors else "failed",
-                output=output if not errors else None,
-                errors=errors,
+                status="ok" if not synthetic_errors else "failed",
+                output=synthetic_output if not synthetic_errors else None,
+                errors=synthetic_errors,
                 attempts=0,
                 response=None,
                 synthetic=True,
@@ -171,6 +175,7 @@ class StructuredOutputService:
         attempts = 0
         last_response: LLMResponse | None = None
         errors: list[str] = []
+        output: dict[str, Any] | None = None
 
         for correction in range(budget.limits.max_correction_attempts + 1):
             try:
