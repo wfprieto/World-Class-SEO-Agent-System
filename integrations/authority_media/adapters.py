@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from adapters.base import AdapterResult
@@ -28,7 +29,7 @@ class AuthorityMediaAdapter:
         self.transcripts = TranscriptService()
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "commoncrawl": self.commoncrawl.search,
             "link_profile": self.backlinks.profile,
             "link_gap": self.backlinks.gap,
@@ -49,7 +50,7 @@ class DriftExecutionAdapter:
         self.service = DriftService()
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
-        handlers = {
+        handlers: dict[str, Callable[..., AdapterResult]] = {
             "baseline": self.service.baseline,
             "compare": self.service.compare,
             "history": self.service.history,
