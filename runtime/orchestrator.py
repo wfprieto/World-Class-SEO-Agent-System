@@ -12,6 +12,7 @@ from runtime.executor import AgentExecutor
 from runtime.llm import LLMClient, build_llm_client
 from runtime.memory import MemoryStore
 from runtime.routing import RequestRouter, RouteResult
+from runtime.safe_paths import resolve_repository_path
 from runtime.state import EvidenceItem, SessionState
 from runtime.tools import ToolDispatcher, ToolRequest
 from runtime.workflow_runner import WorkflowRunner
@@ -27,16 +28,16 @@ class SEOOrchestrator:
         tool_dispatcher: ToolDispatcher | None = None,
         memory: MemoryStore | None = None,
     ) -> None:
-        self.repo_root = repo_root
+        self.repo_root = repo_root.resolve()
         self.router = RequestRouter()
         self.llm_client = llm_client or build_llm_client("echo")
         self.executor = AgentExecutor(
-            repo_root=repo_root,
+            repo_root=self.repo_root,
             llm_client=self.llm_client,
             tool_dispatcher=tool_dispatcher,
             memory=memory,
         )
-        self.workflow_runner = WorkflowRunner(repo_root, self.executor)
+        self.workflow_runner = WorkflowRunner(self.repo_root, self.executor)
 
     def start_session(
         self,
@@ -164,7 +165,11 @@ class SEOOrchestrator:
         return result
 
     def load_artifact(self, relative_path: str) -> str:
-        path = self.repo_root / relative_path
+        path = resolve_repository_path(
+            self.repo_root,
+            relative_path,
+            allowed_suffixes={".md", ".json", ".yaml", ".yml", ".txt", ".csv"},
+        )
         return path.read_text(encoding="utf-8")
 
     def session_snapshot(self, session: SessionState) -> dict[str, Any]:
@@ -200,12 +205,19 @@ class SEOOrchestrator:
         execution_mode: str = "multi-agent",
         limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
-        return asyncio.run(
-            self.execute_async(
-                session,
-                route,
-                tool_requests,
-                execution_mode=execution_mode,
-                limits=limits,
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(
+                self.execute_async(
+                    session,
+                    route,
+                    tool_requests,
+                    execution_mode=execution_mode,
+                    limits=limits,
+                )
             )
+        raise RuntimeError(
+            "SEOOrchestrator.execute() cannot run inside an active event loop; "
+            "await execute_async() instead."
         )
