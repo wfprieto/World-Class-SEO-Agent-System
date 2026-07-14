@@ -1,0 +1,42 @@
+name: Apply final runtime hardening
+
+on:
+  push:
+    paths:
+      - evaluation/final-runtime-hardening-trigger.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply deterministic patch
+        run: python scripts/apply_final_runtime_hardening.py
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Validate runtime hardening
+        run: |
+          python -m mypy runtime seoctl integrations adapters scripts
+          python -m pytest -q
+      - name: Remove one-time infrastructure
+        run: |
+          rm scripts/apply_final_runtime_hardening.py
+          rm evaluation/final-runtime-hardening-trigger.txt
+          rm .github/workflows/apply-final-runtime-hardening.yml
+      - name: Commit verified remediation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Complete runtime isolation and governance hardening'
+          git pull --rebase origin main
+          git push origin HEAD:main
