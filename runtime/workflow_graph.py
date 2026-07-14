@@ -30,6 +30,7 @@ class WorkflowNode:
 class WorkflowGraph:
     id: str
     nodes: list[WorkflowNode] = field(default_factory=list)
+    deliverable_node_id: str = ""
 
     def validate(self, *, max_nodes: int, max_depth: int) -> None:
         if not self.nodes:
@@ -42,6 +43,12 @@ class WorkflowGraph:
         if len(ids) != len(set(ids)):
             raise WorkflowGraphError("workflow graph contains duplicate node ids")
         known = set(ids)
+        if not self.deliverable_node_id:
+            raise WorkflowGraphError("workflow graph has no explicit deliverable node")
+        if self.deliverable_node_id not in known:
+            raise WorkflowGraphError(
+                f"deliverable node {self.deliverable_node_id!r} does not exist"
+            )
         for node in self.nodes:
             unknown = set(node.depends_on) - known
             if unknown:
@@ -72,6 +79,13 @@ class WorkflowGraph:
                 f"workflow depth {graph_depth} exceeds max_workflow_depth={max_depth}"
             )
 
+        downstream: dict[str, set[str]] = {node.id: set() for node in self.nodes}
+        for node in self.nodes:
+            for dependency in node.depends_on:
+                downstream[dependency].add(node.id)
+        if downstream[self.deliverable_node_id]:
+            raise WorkflowGraphError("deliverable node must be terminal")
+
     def levels(self) -> list[list[WorkflowNode]]:
         """Topological levels. Nodes inside one level may run concurrently."""
         remaining = {node.id: node for node in self.nodes}
@@ -93,7 +107,11 @@ class WorkflowGraph:
         return levels
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "nodes": [node.to_dict() for node in self.nodes]}
+        return {
+            "id": self.id,
+            "deliverable_node_id": self.deliverable_node_id,
+            "nodes": [node.to_dict() for node in self.nodes],
+        }
 
 
 def _slug(agent: str) -> str:
@@ -178,12 +196,19 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
         return WorkflowGraph(
             id="full-audit-v2",
             nodes=[*specialist_nodes, lead, scrum, strategy, report],
+            deliverable_node_id=report.id,
         )
 
     support = [
         agent
         for agent in route.supporting_agents
-        if agent not in {route.lead_agent, "SEO Scrummaster Agent", "Senior SEO Strategist Agent", "SEO Output Report Agent"}
+        if agent
+        not in {
+            route.lead_agent,
+            "SEO Scrummaster Agent",
+            "Senior SEO Strategist Agent",
+            "SEO Output Report Agent",
+        }
     ]
     support = _dedupe(support)[:6]
     support_nodes = [
@@ -201,6 +226,7 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
         role="lead",
     )
     nodes: list[WorkflowNode] = [*support_nodes, lead]
+    final_dependency = lead.id
 
     if "SEO Scrummaster Agent" in route.supporting_agents or route.confidence == "Low":
         scrum = WorkflowNode(
@@ -211,8 +237,6 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
         )
         nodes.append(scrum)
         final_dependency = scrum.id
-    else:
-        final_dependency = lead.id
 
     if route.lead_agent == "Senior SEO Strategist Agent":
         final_dependency = lead.id
@@ -235,5 +259,10 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
             role="report",
         )
         nodes.append(report)
+        final_dependency = report.id
 
-    return WorkflowGraph(id=f"routed-{_slug(route.lead_agent)}-v2", nodes=nodes)
+    return WorkflowGraph(
+        id=f"routed-{_slug(route.lead_agent)}-v2",
+        nodes=nodes,
+        deliverable_node_id=final_dependency,
+    )
