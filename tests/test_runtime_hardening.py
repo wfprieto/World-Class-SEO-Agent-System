@@ -24,7 +24,7 @@ class ExplodingAdapter:
 
 class SlowAdapter:
     def fetch(self, **kwargs):
-        time.sleep(0.2)
+        time.sleep(0.25)
         return AdapterResult(source="slow", status="ok", data={}, warnings=[])
 
 
@@ -70,7 +70,7 @@ async def test_dispatch_many_isolates_unexpected_adapter_failure() -> None:
 
 @pytest.mark.asyncio
 async def test_dispatch_enforces_timeout() -> None:
-    dispatcher = ToolDispatcher({"slow": SlowAdapter()}, default_timeout_seconds=0.05)
+    dispatcher = ToolDispatcher({"slow": SlowAdapter()}, default_timeout_seconds=0.1)
     result = await dispatcher.dispatch(ToolRequest("slow", {}))
     assert result.status == "failed"
     assert result.error_type == "ToolTimeout"
