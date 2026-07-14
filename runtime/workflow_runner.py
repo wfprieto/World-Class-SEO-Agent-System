@@ -1,5 +1,4 @@
-"""Bounded execution of SEO workflow graphs with real handoff consumption."""
-
+"""Bounded execution of SEO workflow graphs with evidence-backed handoff consumption."""
 from __future__ import annotations
 
 import asyncio
@@ -53,8 +52,6 @@ class WorkflowRunner:
                 f"Required tool {tool.tool} did not produce usable evidence: {tool.status}."
             )
 
-        # Open risks are routed to the Scrummaster as a real handoff before specialist work.
-        # It remains CREATED until a Scrummaster node actually consumes it.
         if session.open_risks and route.lead_agent != "SEO Scrummaster Agent":
             session.handoffs.append(
                 Handoff(
@@ -124,11 +121,25 @@ class WorkflowRunner:
                 )
 
             output_id = str(output.get("output_id") or output.get("agent") or node.id)
-            # Consume every pending handoff addressed to this agent, including the initial
-            # risk escalation and direct dependency handoffs.
+            referenced_evidence = {
+                str(reference)
+                for finding in output.get("findings", [])
+                if isinstance(finding, dict)
+                for reference in finding.get("evidence_refs", [])
+            }
+            referenced_evidence.update(
+                str(item.get("id"))
+                for item in output.get("evidence", [])
+                if isinstance(item, dict) and item.get("id")
+            )
             for pending in session.handoffs:
-                if pending.status == "CREATED" and pending.to_agent == node.agent:
+                if pending.status != "CREATED" or pending.to_agent != node.agent:
+                    continue
+                if pending.evidence_refs and set(pending.evidence_refs).intersection(
+                    referenced_evidence
+                ):
                     pending.consume(output_id)
+
             outputs_by_node[node.id] = output
             session.agent_outputs.append(output)
             if result.status == "ok":
@@ -142,9 +153,6 @@ class WorkflowRunner:
             session.add_event(node.id, node.agent, state, "; ".join(result.errors[:3]))
 
         for level in graph.levels():
-            # Every node in a level sees the same completed-state snapshot. This avoids
-            # nondeterministic same-level leakage while giving downstream agents all prior
-            # validated specialist work, not only the immediately preceding handoff.
             shared_snapshot = list(outputs_by_node.values())
             await asyncio.gather(*(run_node(node, shared_snapshot) for node in level))
 
@@ -170,7 +178,11 @@ class WorkflowRunner:
                 {
                     "decision_id": f"{session.session_id}-decision-governance-001",
                     "proposal": "Advance the validated findings to strategy and reporting.",
-                    "decision": "Defer" if any(state == "SYNTHETIC" for state in states.values()) else "Approve",
+                    "decision": (
+                        "Defer"
+                        if any(state == "SYNTHETIC" for state in states.values())
+                        else "Approve"
+                    ),
                     "evidence": [
                         str(item.get("id"))
                         for item in normalized_findings
@@ -189,8 +201,13 @@ class WorkflowRunner:
                         if any(state == "SYNTHETIC" for state in states.values())
                         else "Preserve evidence, owner, acceptance criteria, and rollback controls.",
                     ],
-                    "verification": "Validate the complete session state and re-run affected specialists when evidence changes.",
-                    "rollback": "Do not implement recommendations that lack verified evidence or approval.",
+                    "verification": (
+                        "Validate the complete session state and re-run affected specialists "
+                        "when evidence changes."
+                    ),
+                    "rollback": (
+                        "Do not implement recommendations that lack verified evidence or approval."
+                    ),
                 }
             )
 
@@ -212,25 +229,26 @@ class WorkflowRunner:
         unresolved_handoffs = [
             handoff for handoff in session.handoffs if handoff.status != "CONSUMED"
         ]
-        if required_failures:
+        final_node = graph.deliverable_node_id
+        final_output = (
+            outputs_by_node.get(final_node)
+            if states.get(final_node) in {"COMPLETE", "SYNTHETIC"}
+            else None
+        )
+        if required_failures or final_output is None:
             workflow_status = "FAILED"
-        elif optional_failures or required_tool_failures or conflicts or has_synthetic or unresolved_handoffs:
+        elif (
+            optional_failures
+            or required_tool_failures
+            or conflicts
+            or has_synthetic
+            or unresolved_handoffs
+        ):
             workflow_status = "PARTIAL"
         else:
             workflow_status = "COMPLETE"
         session.workflow_status = workflow_status
         session.budget_usage = budget.snapshot()
-
-        final_node = next(
-            (
-                node.id
-                for node in reversed(graph.nodes)
-                if node.id in outputs_by_node
-                and states.get(node.id) in {"COMPLETE", "SYNTHETIC"}
-            ),
-            None,
-        )
-        final_output = outputs_by_node.get(final_node) if final_node else None
         consumed = sum(1 for handoff in session.handoffs if handoff.status == "CONSUMED")
 
         session_payload = session.to_dict()
