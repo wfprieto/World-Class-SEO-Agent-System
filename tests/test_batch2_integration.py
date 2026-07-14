@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -119,7 +120,8 @@ def test_drift_uses_canonical_evidence_store_not_a_second_db(tmp_path: Path):
     d = PageDrift(db_path=str(db))
     d.capture("https://example.com", {"title": "A", "canonical": "https://example.com/", "robots": "index", "status_code": 200, "html": "x", "schema_json": "[1]"})
     d.close()
-    names = {r[0] for r in sqlite3.connect(db).execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    with closing(sqlite3.connect(db)) as con:
+        names = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     assert "baselines" not in names and "comparisons" not in names
 
 

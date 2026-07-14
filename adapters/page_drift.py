@@ -125,6 +125,11 @@ class PageDrift:
         if verify_integrity:
             verify_untampered(target)  # fail closed before migration can re-bless digests
         self._store = EvidenceStore(db_path) if db_path else EvidenceStore()
+        try:
+            self._store.integrity_check()
+        except Exception:
+            self._store.close()
+            raise
 
     def capture(self, url: str, fields: dict[str, Any], **kwargs: Any) -> int:
         return self._store.record(url, METRIC_GROUP, fingerprint(fields), **kwargs)

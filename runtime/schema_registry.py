@@ -6,7 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator, RefResolver
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 
 class SchemaValidationError(ValueError):
@@ -24,6 +25,7 @@ class SchemaRegistry:
         self.schema_root = repo_root / "schemas"
         self._schemas: dict[str, dict[str, Any]] = {}
         self._paths: dict[str, Path] = {}
+        self._registry: Registry[Any] | None = None
 
     def _path(self, schema_name: str) -> Path:
         normalized = schema_name.removesuffix(".schema.json").removesuffix(".json")
@@ -43,12 +45,28 @@ class SchemaRegistry:
             self._paths[key] = path
         return self._schemas[key]
 
+    def _reference_registry(self) -> Registry[Any]:
+        if self._registry is None:
+            resources = []
+            schema_paths = list(self.schema_root.glob("*.schema.json"))
+            schema_paths.append(self.repo_root / "orchestration" / "session-state.schema.json")
+            for path in schema_paths:
+                if path.exists():
+                    contents = json.loads(path.read_text(encoding="utf-8"))
+                    resources.append((path.resolve().as_uri(), Resource.from_contents(contents)))
+            self._registry = Registry().with_resources(resources)
+        return self._registry
+
     def errors(self, schema_name: str, payload: Any) -> list[str]:
         key = schema_name.removesuffix(".schema.json").removesuffix(".json")
         schema = self.load(key)
-        path = self._paths[key]
-        resolver = RefResolver(base_uri=path.resolve().as_uri(), referrer=schema)
-        validator = Draft202012Validator(schema, resolver=resolver)
+        base_uri = self._paths[key].resolve().as_uri()
+        registry = self._reference_registry()
+        validator = Draft202012Validator(
+            schema,
+            registry=registry,
+            _resolver=registry.resolver(base_uri=base_uri),
+        )
         return [
             f"{'.'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
             for error in sorted(validator.iter_errors(payload), key=lambda item: list(item.absolute_path))

@@ -15,6 +15,7 @@ import re
 import sqlite3
 import sys
 import threading
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -124,10 +125,9 @@ def test_concurrent_writes_through_evidence_store(tmp_path: Path):
 
 
 def _tamper(db: Path) -> None:
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET payload_json = ?", (json.dumps({"title": "EVIL"}),))
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET payload_json = ?", (json.dumps({"title": "EVIL"}),))
+        con.commit()
 
 
 def test_corrupted_payload_is_detected_and_drift_fails_closed(tmp_path: Path):
@@ -163,21 +163,19 @@ def test_partial_or_missing_digest_fails_closed(tmp_path: Path):
     drift = PageDrift(db_path=str(db))
     drift.capture("https://example.com", {"title": "A", "status_code": 200, "html": "v1"})
     drift.close()
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET payload_sha256 = ''")  # interrupted/partial write
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET payload_sha256 = ''")  # interrupted/partial write
+        con.commit()
     with pytest.raises(EvidenceIntegrityError):
         verify_untampered(db)
 
 
 def _row(db: Path):
-    con = sqlite3.connect(db)
-    con.row_factory = sqlite3.Row
-    row = con.execute(
-        "SELECT url, payload_json, payload_sha256, record_sha256 FROM snapshots"
-    ).fetchone()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.row_factory = sqlite3.Row
+        row = con.execute(
+            "SELECT url, payload_json, payload_sha256, record_sha256 FROM snapshots"
+        ).fetchone()
     return row
 
 
@@ -208,10 +206,9 @@ def test_reopening_detects_tampered_protected_metadata(tmp_path: Path):
     store.record("https://example.com", "page_state", {"title": "A"})
     store.close()
 
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET status = 'forged'")
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET status = 'forged'")
+        con.commit()
 
     store = EvidenceStore(str(db))
     try:
@@ -262,14 +259,13 @@ def test_migration_backfills_legacy_rows_only_when_hashes_absent(tmp_path: Path)
     kept_before = _row(db)
 
     # Simulate a legacy row written before digests existed.
-    con = sqlite3.connect(db)
-    con.execute(
-        "INSERT INTO snapshots (url, metric_group, captured_at, payload_json, schema_version,"
-        " status, scope_json, payload_sha256, record_sha256)"
-        " VALUES ('https://legacy.example.com', 'page_state', 1.0, '{\"t\":1}', '1', 'ok', '{}', '', '')"
-    )
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute(
+            "INSERT INTO snapshots (url, metric_group, captured_at, payload_json, schema_version,"
+            " status, scope_json, payload_sha256, record_sha256)"
+            " VALUES ('https://legacy.example.com', 'page_state', 1.0, '{\"t\":1}', '1', 'ok', '{}', '', '')"
+        )
+        con.commit()
 
     store = EvidenceStore(str(db))
     try:
@@ -278,11 +274,10 @@ def test_migration_backfills_legacy_rows_only_when_hashes_absent(tmp_path: Path)
     finally:
         store.close()
 
-    con = sqlite3.connect(db)
-    con.row_factory = sqlite3.Row
-    rows = {r["url"]: r for r in con.execute(
-        "SELECT url, payload_sha256, record_sha256 FROM snapshots")}
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.row_factory = sqlite3.Row
+        rows = {r["url"]: r for r in con.execute(
+            "SELECT url, payload_sha256, record_sha256 FROM snapshots")}
     assert all(rows[u]["payload_sha256"] for u in rows)          # legacy now hashed
     assert rows["https://example.com/kept"]["payload_sha256"] == kept_before["payload_sha256"]
 
@@ -295,19 +290,17 @@ def test_partially_populated_hash_fields_are_handled_safely(tmp_path: Path):
     store.close()
 
     # Valid payload digest, missing record digest -> safe backfill.
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET record_sha256 = ''")
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET record_sha256 = ''")
+        con.commit()
     store = EvidenceStore(str(db))
     assert store.integrity_check()["status"] == "ok"
     store.close()
 
     # Invalid payload digest, missing record digest -> must NOT be silently repaired.
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET payload_sha256 = 'deadbeef', record_sha256 = ''")
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET payload_sha256 = 'deadbeef', record_sha256 = ''")
+        con.commit()
     with pytest.raises(EvidenceIntegrityError):
         EvidenceStore(str(db))
 
@@ -319,10 +312,9 @@ def test_malformed_json_is_not_treated_as_unchanged(tmp_path: Path):
     store.close()
 
     # Legacy-style row (no digests) carrying malformed JSON -> backfilled hash, but decode must fail.
-    con = sqlite3.connect(db)
-    con.execute("UPDATE snapshots SET payload_json = '{not json', payload_sha256='', record_sha256=''")
-    con.commit()
-    con.close()
+    with closing(sqlite3.connect(db)) as con:
+        con.execute("UPDATE snapshots SET payload_json = '{not json', payload_sha256='', record_sha256=''")
+        con.commit()
 
     store = EvidenceStore(str(db))
     try:
