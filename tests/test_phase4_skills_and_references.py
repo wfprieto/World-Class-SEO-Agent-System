@@ -4,13 +4,18 @@ from datetime import date
 from pathlib import Path
 import pytest
 from runtime.capability_resolver import CapabilityResolver
+from scripts.generate_release_manifest import build_manifest
 from scripts.generate_skill_index import render as render_skill_index
 from scripts.render_content_prompt import compose,list_workflows
 from scripts.validate_reference_freshness import validate as validate_references
 ROOT=Path(__file__).resolve().parents[1]
 def _json(path):return json.loads((ROOT/path).read_text(encoding="utf-8-sig"))
+def _catalog_skills():
+ catalog=_json("skills/skill-catalog.json");return [s for c in catalog["categories"] for s in c["skills"]]
 def test_skill_catalog_and_generated_index_are_canonical():
- catalog=_json("skills/skill-catalog.json");skills=[s for c in catalog["categories"] for s in c["skills"]];assert len(skills)==89;assert len(set(skills))==89;assert (ROOT/"skills/SKILL_INDEX.md").read_text(encoding="utf-8")==render_skill_index()
+ skills=_catalog_skills();assert len(skills)>0;assert len(set(skills))==len(skills);assert (ROOT/"skills/SKILL_INDEX.md").read_text(encoding="utf-8")==render_skill_index()
+def test_release_manifest_skill_count_uses_canonical_catalog():
+ expected=len(_catalog_skills());assert build_manifest(ROOT)["skill_count"]==expected;assert f"- Indexed skills: {expected}" in render_skill_index()
 def test_twenty_priority_packages_are_synchronized_and_anchored():
  p=_json("skills/package-registry.json");r=p["packages"];d=(ROOT/p["package_document"]).read_text(encoding="utf-8");assert len(r)==20
  for skill,row in r.items():assert f'id="{row["anchor"]}"' in d;assert row["references"];assert p["defaults"]["quality_gate"];assert p["defaults"]["failure_states"]

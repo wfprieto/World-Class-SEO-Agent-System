@@ -15,6 +15,7 @@ from runtime.memory import InMemoryStore, JsonlMemoryStore
 from runtime.orchestrator import SEOOrchestrator
 from runtime.schema_registry import SchemaRegistry
 from runtime.tools import ToolDispatcher, ToolRequest
+from runtime.workflow_graph import WorkflowGraph, WorkflowGraphError, WorkflowNode
 from scripts import content_brief_evidence as cbe
 from scripts import consent_mode_diagnostic as cmd
 from scripts import seo_pdf_report
@@ -22,6 +23,14 @@ from scripts.validate_evidence_binding import validate_output
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FAST_RUNTIME_LIMITS = ExecutionLimits(
+    max_nodes=10,
+    max_llm_calls=10,
+    max_parallel_agents=2,
+    max_correction_attempts=0,
+    max_workflow_depth=5,
+    max_runtime_seconds=60,
+)
 
 
 class ValidStructuredClient:
@@ -107,6 +116,32 @@ class InvalidProseClient:
         yield "invalid"
 
 
+class InvalidForAgentClient(ValidStructuredClient):
+    provider = "fixture-partial-invalid"
+    model = "fixture-partial-invalid"
+
+    def __init__(self, invalid_agent: str) -> None:
+        super().__init__()
+        self.invalid_agent = invalid_agent
+
+    async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
+        instruction = next(
+            message.content for message in reversed(messages)
+            if message.role == "system" and message.content.startswith("You are ")
+        )
+        match = re.search(r"You are '([^']+)'", instruction)
+        assert match
+        if match.group(1) == self.invalid_agent:
+            self.calls += 1
+            return LLMResponse(
+                provider=self.provider,
+                model=self.model,
+                content="This deliverable agent failed to return JSON.",
+                raw={"fixture": True},
+            )
+        return await super().complete(messages)
+
+
 def _session(orchestrator: SEOOrchestrator, request: str = "Run a complete SEO audit"):
     return orchestrator.start_session(
         request=request,
@@ -165,6 +200,82 @@ def test_non_audit_route_executes_support_agents_before_lead():
     assert "GEO / AIO Optimization Agent" in agents
     assert "SEO CRO Agent" in agents
     assert result["handoffs_consumed"] == result["handoffs_created"]
+
+
+def test_dependency_handoff_requires_referenced_evidence_before_consumption():
+    orchestrator = SEOOrchestrator(ROOT, llm_client=ValidStructuredClient())
+    session = _session(orchestrator, "Build an SEO content brief")
+    result = orchestrator.execute(
+        session,
+        orchestrator.route(session),
+        limits=FAST_RUNTIME_LIMITS,
+    )
+    unconsumed = [
+        handoff for handoff in result["handoffs"]
+        if handoff["status"] == "CREATED"
+    ]
+    assert result["handoffs_created"] > 0
+    assert result["handoffs_consumed"] < result["handoffs_created"]
+    assert unconsumed
+    assert all(handoff["evidence_refs"] for handoff in unconsumed)
+    assert all(not handoff["receiving_output_id"] for handoff in unconsumed)
+    assert result["workflow_status"] == "PARTIAL"
+
+
+def test_workflow_graph_requires_explicit_deliverable_node():
+    graph = WorkflowGraph(
+        id="invalid-no-deliverable",
+        nodes=[WorkflowNode(id="lead", agent="SEO Technical Agent")],
+    )
+    with pytest.raises(WorkflowGraphError, match="no explicit deliverable"):
+        graph.validate(max_nodes=5, max_depth=5)
+
+
+def test_workflow_graph_rejects_non_terminal_deliverable_node():
+    graph = WorkflowGraph(
+        id="invalid-non-terminal-deliverable",
+        nodes=[
+            WorkflowNode(id="lead", agent="SEO Technical Agent"),
+            WorkflowNode(
+                id="report",
+                agent="SEO Output Report Agent",
+                depends_on=("lead",),
+            ),
+        ],
+        deliverable_node_id="lead",
+    )
+    with pytest.raises(WorkflowGraphError, match="deliverable node must be terminal"):
+        graph.validate(max_nodes=5, max_depth=5)
+
+
+def test_failed_deliverable_is_not_replaced_by_another_terminal_output(monkeypatch):
+    graph = WorkflowGraph(
+        id="two-terminal-deliverable-failure",
+        nodes=[
+            WorkflowNode(id="successful-terminal", agent="SEO Technical Agent"),
+            WorkflowNode(id="explicit-deliverable", agent="SEO Output Report Agent"),
+        ],
+        deliverable_node_id="explicit-deliverable",
+    )
+
+    def fixture_graph(route, session):
+        return graph
+
+    monkeypatch.setattr("runtime.workflow_runner.build_workflow_graph", fixture_graph)
+    orchestrator = SEOOrchestrator(
+        ROOT,
+        llm_client=InvalidForAgentClient("SEO Output Report Agent"),
+    )
+    session = _session(orchestrator, "Run a complete SEO audit")
+    result = orchestrator.execute(
+        session,
+        orchestrator.route(session),
+        limits=FAST_RUNTIME_LIMITS,
+    )
+    assert result["node_states"]["successful-terminal"] == "COMPLETE"
+    assert result["node_states"]["explicit-deliverable"] == "FAILED"
+    assert result["agent_output"] is None
+    assert result["workflow_status"] == "FAILED"
 
 
 def test_invalid_model_prose_is_failed_not_wrapped_as_success():
