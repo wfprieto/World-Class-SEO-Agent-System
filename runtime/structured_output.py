@@ -1,5 +1,4 @@
 """Strict, schema-validated agent output with one bounded correction attempt."""
-
 from __future__ import annotations
 
 import json
@@ -55,13 +54,20 @@ def _echo_output(
     prior_outputs: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Explicit synthetic output for deterministic offline execution, never a live finding."""
-    evidence_refs = [
+    prior_finding_ids = [
+        str(item.get("id"))
+        for prior in prior_outputs
+        for item in prior.get("findings", [])
+        if isinstance(item, dict) and item.get("id")
+    ]
+    prior_sources = [
         str(item.get("source"))
         for prior in prior_outputs
         for item in prior.get("evidence", [])
         if isinstance(item, dict) and item.get("source")
     ]
-    evidence_source = evidence_refs[0] if evidence_refs else "runtime_request"
+    evidence_refs = prior_finding_ids or prior_sources
+    evidence_source = prior_sources[0] if prior_sources else "runtime_request"
     slug = _slug(agent_name)
     return {
         "output_id": f"synthetic-{slug}",
@@ -85,7 +91,7 @@ def _echo_output(
                 "severity": "Low",
                 "finding": f"{agent_name} executed in synthetic offline mode for request: {request[:160]}",
                 "affected_scope": domain or "Unspecified property",
-                "evidence_refs": [evidence_source],
+                "evidence_refs": evidence_refs or [evidence_source],
             }
         ],
         "recommended_actions": [
@@ -167,7 +173,8 @@ class StructuredOutputService:
                 f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
                 "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
                 "provider results. Every factual numeric or URL claim must also appear in "
-                "material_claims with valid evidence_refs.\n\n"
+                "material_claims with valid evidence_refs. Downstream findings must explicitly "
+                "reference or challenge the supplied dependency evidence.\n\n"
                 + json.dumps(schema, separators=(",", ":"))
             ),
         )
