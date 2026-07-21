@@ -1,8 +1,34 @@
 # World-Class SEO Agent System
 
-A model-agnostic operating system for senior SEO engineering, technical SEO, content strategy, GEO/AIO optimization, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
+[![Validate repository](https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/workflows/validate.yml/badge.svg)](https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-This repository is designed as a single source of truth for coding professionals who want SEO agents and SEO skills that work together with clear routing, evidence standards, handoffs, quality gates, implementation templates, and verification rules.
+A model-agnostic, evidence-first operating system for technical SEO, content strategy, GEO/AIO, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
+
+It gives SEO professionals and coding teams a structured way to route work, use specialist agents and skills, apply evidence and quality gates, and produce verifiable implementation plans.
+
+## Get a working result in 60 seconds
+
+Requires Python 3.11 or later.
+
+```bash
+python -m pip install -e .
+seoctl --registry-check
+python main.py "Run a full SEO audit" --domain https://example.com
+```
+
+For a safe dry-run execution:
+
+```bash
+python main.py "Run a full SEO audit" --domain https://example.com --execute
+```
+
+Start with [SYSTEM_MAP.md](SYSTEM_MAP.md), then route a request with [workflows/request-routing.md](workflows/request-routing.md).
+
+## Safe and authorized use
+
+Only assess websites, data, APIs, and accounts you are authorized to access. Never commit credentials, client exports, personal data, or generated private artifacts. Live integrations are optional and read credentials from local environment variables; see [.env.example](.env.example).
 
 ## What This Is
 
