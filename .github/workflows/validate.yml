@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validation_matrix:
+    name: validate (${{ matrix.os }}, ${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
@@ -87,6 +88,16 @@ jobs:
         if: steps.pytest.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
 
+  validate:
+    name: validate
+    needs: validation_matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce validation matrix
+        shell: bash
+        run: test "${{ needs.validation_matrix.result }}" = "success"
+
   quality_security_release:
     needs: validate
     runs-on: ubuntu-latest
@@ -156,7 +167,7 @@ jobs:
 
   certification_status:
     name: repository-certification
-    needs: [validate, quality_security_release]
+    needs: [validation_matrix, validate, quality_security_release]
     if: always()
     runs-on: ubuntu-latest
     steps:
