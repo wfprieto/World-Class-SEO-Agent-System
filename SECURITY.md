@@ -1,34 +1,33 @@
 # Security Policy
 
-## Supported Versions
+## Supported version
 
-The latest version on the `main` branch is supported.
+The latest release on `main` is supported.
 
-## Reporting a Security Issue
+## Report a vulnerability privately
 
-If you find a security issue in this repository, please report it privately to the repository owner rather than opening a public issue.
+Do **not** disclose vulnerabilities, exploit details, credentials, client data, private URLs, or proof-of-concept code in a public issue.
 
-Include:
+1. Use the repository's **Security** tab and select **Report a vulnerability**.
+2. Include the affected version or commit, affected files or workflow, safe reproduction steps, impact, and any suggested remediation.
+3. If that private-reporting option is temporarily unavailable, open a minimal public issue requesting private coordination. Do not include sensitive details.
 
-- A clear description of the issue
-- Affected files or workflows
-- Steps to reproduce
-- Potential impact
-- Suggested remediation if known
+The maintainer will acknowledge reports and coordinate remediation privately when possible.
 
-## SEO Security Scope
+## Security scope
 
-This repository includes guidance for SEO security risks such as:
+Reports are welcome for vulnerabilities in repository code, workflows, dependencies, release artifacts, and example integrations. SEO-operational risks in scope include:
 
-- Hacked pages
-- Malware warnings
-- Index pollution
-- Spam injection
-- Malicious backlinks
-- Scraping and duplication
-- Robots, canonical, redirect, or sitemap changes that could harm visibility
+- Hacked-page or malware exposure
+- Index pollution or spam injection
+- Unsafe crawling or SSRF paths
+- Credential or sensitive-data exposure
+- Robots, canonical, redirect, or sitemap changes that could cause material visibility harm
 
-## Non-Security Issues
+## Out of scope
 
-Documentation improvements, missing skills, broken links, and normal SEO recommendations can be filed as public issues.
+Normal documentation issues, feature requests, SEO recommendations, and third-party service outages should be reported through the relevant public issue form.
 
+## Safe disclosure expectations
+
+Please give maintainers a reasonable opportunity to investigate and release a fix before public disclosure. Do not access data you are not authorized to access, disrupt services, or use a vulnerability beyond what is necessary to demonstrate impact.
