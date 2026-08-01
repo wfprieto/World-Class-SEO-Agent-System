@@ -10,6 +10,7 @@ from scripts.validate_remediation_program import (
     ROOT,
     SCHEMA_PATH,
     evidence_package_hash,
+    _validate_complete_phase,
     validate,
 )
 from scripts.validate_pytest_temp_isolation import validate as validate_temp_isolation
@@ -414,3 +415,12 @@ def test_pytest_temp_root_must_be_outside_repository_boundary(tmp_path: Path) ->
 
     assert validate_temp_isolation(repository / "nested", repository_root=repository)
     assert validate_temp_isolation(tmp_path / "isolated", repository_root=repository) == []
+
+
+def test_canonical_phase_zero_evidence_is_closable_at_verified_commit() -> None:
+    payload = _program()
+    phase = payload["phases"][0]
+    phase["status"] = "COMPLETE"
+    _refresh_review(payload, phase)
+
+    assert _validate_complete_phase(phase, payload, ROOT) == []

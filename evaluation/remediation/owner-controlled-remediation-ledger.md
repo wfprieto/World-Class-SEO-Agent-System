@@ -122,3 +122,20 @@ where older repository artifacts mention them.
   temporary worktree was removed through `git worktree remove`.
 - Phase 0 remains `IN_PROGRESS` until two new fresh-context canonical verdicts approve the same
   immutable evidence-package hash and the resulting closure commit passes certification.
+
+### Round-two review learning
+
+Both round-two reviewers returned `REWORK_GOOD`. Their counterexamples established that:
+
+- the review hash must bind global scope, APIVR tier, direct-merge policy, every phase contract,
+  and the complete audit inventory, while excluding only mutable phase status and verdict storage;
+- generic schema-valid reviewer IDs do not establish authority and must resolve through
+  `evaluation/reviewer-registry.json`;
+- every passing gate needs its own structured evidence rather than a bare status string;
+- failure and learning references, commits, and digests require the same validation as acceptance evidence;
+- rollback output must persist as a durable artifact; and
+- local pytest temporary-root isolation needs an executable detector, not a memory-based convention.
+
+Those controls were implemented at `86bbba3ccd591e0ecc50ec58eaac40f2645f38b5` and passed
+exact-commit run `30722374045`, including all matrix, quality/security, clean-wheel, and aggregate
+certification jobs. The next review package binds that implementation commit and run.
