@@ -1,32 +1,44 @@
-"""Generate a deterministic CycloneDX JSON SBOM for declared Python dependencies."""
+"""Generate a deterministic CycloneDX JSON SBOM from declared and locked dependencies."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.metadata
 import json
+import re
 import tomllib
 import uuid
 from pathlib import Path
 
+from packaging.requirements import Requirement
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _declared_dependencies(pyproject: Path) -> list[str]:
+def _declared_dependencies(pyproject: Path) -> list[tuple[Requirement, str | None]]:
     payload = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     project = payload.get("project", {})
-    raw = list(project.get("dependencies", []))
-    for values in project.get("optional-dependencies", {}).values():
-        raw.extend(values)
-    names = []
-    for requirement in raw:
-        name = str(requirement).split(";", 1)[0].strip()
-        for marker in ("[", "<", ">", "=", "!", "~", " "):
-            name = name.split(marker, 1)[0]
-        if name:
-            names.append(name)
-    return sorted(set(names), key=str.lower)
+    declared: list[tuple[Requirement, str | None]] = [
+        (Requirement(str(value)), None) for value in project.get("dependencies", [])
+    ]
+    for group, values in project.get("optional-dependencies", {}).items():
+        declared.extend((Requirement(str(value)), str(group)) for value in values)
+    return sorted(declared, key=lambda row: (row[0].name.lower(), row[1] or ""))
+
+
+def _normalized(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _locked_versions(lock_path: Path) -> dict[str, str]:
+    if not lock_path.is_file():
+        raise ValueError(f"dependency lock is missing: {lock_path}")
+    pins: dict[str, str] = {}
+    for raw in lock_path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^([A-Za-z0-9_.-]+)==([^\s;]+)", raw.strip())
+        if match:
+            pins[_normalized(match.group(1))] = match.group(2)
+    return pins
 
 
 def _project_version(pyproject: Path) -> str:
@@ -35,14 +47,33 @@ def _project_version(pyproject: Path) -> str:
 
 def build_sbom(root: Path = ROOT) -> dict:
     pyproject = root / "pyproject.toml"
+    pins = _locked_versions(root / "requirements-dev.txt")
     components = []
-    for name in _declared_dependencies(pyproject):
-        try:
-            version = importlib.metadata.version(name)
-        except importlib.metadata.PackageNotFoundError:
-            version = "NOT_INSTALLED"
-        purl = f"pkg:pypi/{name.lower()}" + (f"@{version}" if version != "NOT_INSTALLED" else "")
-        components.append({"type":"library","name":name,"version":version,"purl":purl,"properties":[{"name":"wcseo:declared","value":"true"}]})
+    for requirement, optional_group in _declared_dependencies(pyproject):
+        name = requirement.name
+        version = pins.get(_normalized(name))
+        if optional_group is None and version is None:
+            raise ValueError(f"required dependency is not resolved in requirements-dev.txt: {name}")
+        component = {
+            "type": "library",
+            "name": name,
+            "purl": f"pkg:pypi/{name.lower()}" + (f"@{version}" if version else ""),
+            "scope": "optional" if optional_group else "required",
+            "properties": [
+                {"name": "wcseo:declared_requirement", "value": str(requirement)},
+                {
+                    "name": "wcseo:resolution",
+                    "value": "LOCKED" if version else "DECLARED_OPTIONAL_UNRESOLVED",
+                },
+            ],
+        }
+        if version:
+            component["version"] = version
+        if optional_group:
+            component["properties"].append(
+                {"name": "wcseo:optional_group", "value": optional_group}
+            )
+        components.append(component)
     digest = hashlib.sha256(pyproject.read_bytes()).hexdigest()
     serial = uuid.uuid5(uuid.NAMESPACE_URL, f"wcseo:{digest}")
     return {"bomFormat":"CycloneDX","specVersion":"1.5","serialNumber":f"urn:uuid:{serial}","version":1,"metadata":{"component":{"type":"application","name":"world-class-seo-agent-system","version":_project_version(pyproject)},"properties":[{"name":"wcseo:pyproject_sha256","value":digest}]},"components":components}

@@ -9,6 +9,16 @@
     "schema_version": {"const": "1.0.0"},
     "as_of": {"type": "string", "format": "date"},
     "target_repository": {"type": "string", "minLength": 3},
+    "verification_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code_verified", "live_verified", "externally_reproduced"],
+      "properties": {
+        "code_verified": {"enum": ["PASS", "INCOMPLETE", "FAIL"]},
+        "live_verified": {"enum": ["PASS", "INCOMPLETE", "NOT_RUN", "FAIL"]},
+        "externally_reproduced": {"enum": ["PASS", "INCOMPLETE", "NOT_RUN", "FAIL"]}
+      }
+    },
     "comparator": {
       "type": "object",
       "additionalProperties": false,

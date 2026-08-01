@@ -13,7 +13,7 @@ from typing import Any, Mapping
 
 from adapters.base import AdapterResult
 from adapters.evidence_store import canonicalize_url
-from adapters.page_drift import PageDrift
+from integrations.authority_media.drift import DriftService
 from integrations.authority_media.transport import BoundedTransport
 
 MAX_INPUT_BYTES = 10_000_000
@@ -625,68 +625,4 @@ class TranscriptService:
                 "semantic_accuracy_verified": False,
             },
             warnings=["Structural transcript checks do not verify spoken-word accuracy, speaker identity, or legal accessibility compliance."],
-        )
-
-
-class DriftService:
-    ALLOWED_FIELDS = {"title", "canonical", "robots", "h1", "status_code", "html", "schema_json"}
-
-    @classmethod
-    def _state_file(cls, path: str) -> dict[str, Any]:
-        payload = _read_json(path)
-        if not isinstance(payload, dict):
-            raise ValueError("state file must contain a JSON object")
-        unknown = sorted(set(payload) - cls.ALLOWED_FIELDS)
-        if unknown:
-            raise ValueError("unsupported state fields: " + ", ".join(unknown))
-        return payload
-
-    def baseline(self, url: str, state_path: str, *, db_path: str | None = None) -> AdapterResult:
-        fields = self._state_file(state_path)
-        with PageDrift(db_path) as drift:
-            snapshot_id = drift.capture(url, fields, source=state_path, status="ok")
-        return AdapterResult(
-            source=state_path,
-            status="ok",
-            data={"data_state": "AVAILABLE", "url": canonicalize_url(url), "snapshot_id": snapshot_id, "action": "baseline_recorded"},
-            warnings=[],
-        )
-
-    def compare(self, url: str, *, db_path: str | None = None) -> AdapterResult:
-        with PageDrift(db_path) as drift:
-            result = drift.compare(url)
-        status = "ok" if result.get("status") == "ok" else "partial"
-        return AdapterResult("evidence_store", status, {"data_state": _state(status), **result}, [])
-
-    def history(self, url: str, *, db_path: str | None = None, limit: int = 20) -> AdapterResult:
-        if not 1 <= limit <= 1000:
-            raise ValueError("limit must be from 1 to 1000")
-        with PageDrift(db_path) as drift:
-            rows = drift.history(url, limit=limit)
-        status = "ok" if rows else "empty"
-        return AdapterResult("evidence_store", status, {"data_state": _state(status), "url": canonicalize_url(url), "history": rows, "count": len(rows)}, [])
-
-    def report(self, url: str, *, db_path: str | None = None, output_path: str | None = None) -> AdapterResult:
-        result = self.compare(url, db_path=db_path)
-        written = None
-        if output_path:
-            target = Path(output_path)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(json.dumps(result.data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            written = str(target)
-        result.data["report_path"] = written
-        result.warnings.append("The report reflects only stored snapshots and is not an ongoing monitor.")
-        return result
-
-    def watch(self, url: str, state_path: str, *, db_path: str | None = None) -> AdapterResult:
-        fields = self._state_file(state_path)
-        with PageDrift(db_path) as drift:
-            snapshot_id = drift.capture(url, fields, source=state_path, status="ok")
-            result = drift.compare(url)
-        status = "ok" if result.get("status") == "ok" else "partial"
-        return AdapterResult(
-            source=state_path,
-            status=status,
-            data={"data_state": _state(status), "snapshot_id": snapshot_id, "one_shot": True, **result},
-            warnings=["drift watch performs one bounded capture-and-compare; it does not create a background schedule."],
         )

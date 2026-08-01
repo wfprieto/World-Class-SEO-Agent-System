@@ -14,9 +14,7 @@ are not encryption or a trust boundary against a writer that can recompute them.
 
 from __future__ import annotations
 
-import hashlib
 import hmac
-import json
 import math
 import os
 import sqlite3
@@ -25,6 +23,14 @@ import time
 import urllib.parse
 from pathlib import Path
 from typing import Any, Final, Iterator, Mapping
+
+from adapters.evidence_integrity import (
+    SnapshotIntegrityFailure,
+    canonical_json as _canonical_json,
+    decode_verified_row,
+    record_digest as _record_digest,
+    sha256_text as _sha256,
+)
 
 
 __all__ = [
@@ -102,54 +108,6 @@ def canonicalize_url(url: str) -> str:
     netloc = display_host if port is None else f"{display_host}:{port}"
     path = parsed.path or "/"
     return urllib.parse.urlunsplit((scheme, netloc, path, parsed.query, ""))
-
-
-def _canonical_json(value: Any, field: str, max_bytes: int) -> str:
-    try:
-        encoded = json.dumps(
-            value,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            allow_nan=False,
-        )
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{field} must be finite JSON-compatible data") from exc
-    if len(encoded.encode("utf-8")) > max_bytes:
-        raise ValueError(f"{field} exceeds {max_bytes} bytes")
-    return encoded
-
-
-def _sha256(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _record_digest(
-    *,
-    url: str,
-    metric_group: str,
-    captured_at: float,
-    payload_json: str,
-    schema_version: str,
-    source: str | None,
-    status: str,
-    run_id: str | None,
-    scope_json: str,
-) -> str:
-    envelope = [
-        url,
-        metric_group,
-        float(captured_at).hex(),
-        payload_json,
-        schema_version,
-        source,
-        status,
-        run_id,
-        scope_json,
-    ]
-    return _sha256(
-        json.dumps(envelope, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
-    )
 
 
 def _json_pointer_escape(token: str) -> str:
@@ -433,56 +391,10 @@ class EvidenceStore:
             return int(cursor.lastrowid)
 
     def _decode_row(self, row: sqlite3.Row) -> dict[str, Any]:
-        payload_json = row["payload_json"]
-        expected_hash = row["payload_sha256"]
-        actual_hash = _sha256(payload_json)
-        if not expected_hash or not hmac.compare_digest(expected_hash, actual_hash):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} failed payload hash verification"
-            )
-        expected_record_hash = row["record_sha256"]
-        actual_record_hash = _record_digest(
-            url=row["url"],
-            metric_group=row["metric_group"],
-            captured_at=row["captured_at"],
-            payload_json=payload_json,
-            schema_version=row["schema_version"],
-            source=row["source"],
-            status=row["status"],
-            run_id=row["run_id"],
-            scope_json=row["scope_json"],
-        )
-        if not expected_record_hash or not hmac.compare_digest(
-            expected_record_hash, actual_record_hash
-        ):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} failed record hash verification"
-            )
         try:
-            payload = json.loads(payload_json)
-            scope = json.loads(row["scope_json"])
-        except json.JSONDecodeError as exc:
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} contains malformed JSON"
-            ) from exc
-        if not isinstance(payload, dict) or not isinstance(scope, dict):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} violates the payload or scope object contract"
-            )
-        return {
-            "id": row["id"],
-            "url": row["url"],
-            "metric_group": row["metric_group"],
-            "captured_at": row["captured_at"],
-            "payload": payload,
-            "schema_version": row["schema_version"],
-            "source": row["source"],
-            "status": row["status"],
-            "run_id": row["run_id"],
-            "scope": scope,
-            "payload_sha256": expected_hash,
-            "record_sha256": expected_record_hash,
-        }
+            return decode_verified_row(row)
+        except SnapshotIntegrityFailure as exc:
+            raise EvidenceIntegrityError(str(exc)) from exc
 
     def latest(
         self,

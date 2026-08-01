@@ -1,7 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "as_of": "2026-07-11",
-  "target_repository": "wfprieto/World-Class-SEO-Agent-System@8e6f666506ff723eb6f8f354e4150b30073fb67f",
+  "as_of": "2026-08-01",
+  "target_repository": "wfprieto/World-Class-SEO-Agent-System@1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+  "verification_state": {
+    "code_verified": "PASS",
+    "live_verified": "INCOMPLETE",
+    "externally_reproduced": "NOT_RUN"
+  },
   "comparator": {
     "repository": "AgriciDaniel/claude-seo",
     "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
@@ -40,10 +45,10 @@
       "score": 6.0,
       "evidence_maturity": "FUNCTIONAL",
       "evidence": [
-        {"source": "scripts/", "claim": "The repository contains tested execution helpers, but the callable SEO command surface remains materially smaller than Claude SEO.", "state": "VERIFIED"},
-        {"source": "runtime/", "claim": "The runtime can orchestrate tools safely, but orchestration depth is ahead of direct data-acquisition and analysis command depth.", "state": "VERIFIED"}
+        {"source": "seoctl/command-registry.json", "claim": "The canonical registry exposes 67 governed operator commands across system, content, Google, rendering, technical, schema, authority, media, drift and integration families.", "state": "VERIFIED"},
+        {"source": "seoctl/entrypoint.py", "claim": "Root help and family dispatch derive all 21 operator families from canonical command metadata while family parsers retain argument ownership.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["No unified seoctl command surface.", "Major gaps remain in GSC, GA4, CrUX history, content intelligence, authority and media tooling."]
+      "open_gaps": ["Live-provider behavior remains unverified without authorized smoke evidence."]
     },
     {
       "id": 4,
@@ -63,12 +68,12 @@
       "name": "Data Integrations & Live APIs",
       "weight": 10,
       "score": 4.0,
-      "evidence_maturity": "STUB",
+      "evidence_maturity": "FUNCTIONAL",
       "evidence": [
-        {"source": "adapters/", "claim": "The adapter layer is broad and normalized, but most sources depend on supplied exports.", "state": "VERIFIED"},
-        {"source": "adapters/mcp_extensions.py", "claim": "MCP capability governance exists, but documented providers are not all installable, authenticated and smoke-tested integrations.", "state": "VERIFIED"}
+        {"source": "integrations/google/", "claim": "GSC, GA4, URL Inspection, Sitemap, CrUX and PageSpeed code contracts are implemented and fixture tested.", "state": "VERIFIED"},
+        {"source": "integrations/authority_media/", "claim": "Authority and media provider paths are implemented with bounded transports and explicit evidence limitations.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["Production GSC and GA4 connectors.", "Bing and IndexNow integration.", "Installable optional paid-provider packs.", "Authorized live smoke-test evidence."]
+      "open_gaps": ["Authorized live smoke-test evidence for first-party and optional providers.", "Independent reproduction of provider setup and failure handling."]
     },
     {
       "id": 6,
@@ -92,7 +97,7 @@
         {"source": ".github/workflows/validate.yml", "claim": "CI runs on Windows and Ubuntu with Python 3.11 and 3.13 and enforces repository, schema, tracer and pytest gates.", "state": "VERIFIED"},
         {"source": "docs/20-PASS-WORLD-CLASS-RUNTIME-REVIEW.md", "claim": "The post-remediation suite exceeded two hundred tests with cross-platform verification.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["No enforced coverage threshold.", "No secret scan, dependency audit, SBOM, typing or lint gate.", "README lacks evidence-linked status badges."]
+      "open_gaps": ["Risk-weighted module thresholds are not yet enforced for every critical transport.", "External reproduction of the release toolchain remains outstanding."]
     },
     {
       "id": 8,
@@ -102,9 +107,9 @@
       "evidence_maturity": "FUNCTIONAL",
       "evidence": [
         {"source": "skills/flow-prompts/", "claim": "The FLOW layer is evidence grounded and integrated.", "state": "VERIFIED"},
-        {"source": "skills/public-facing-writing-skills.md", "claim": "Public writing has quality and claims controls, but the production prompt and analysis surface remains narrow.", "state": "VERIFIED"}
+        {"source": "integrations/content_intelligence/service.py", "claim": "Deterministic quality, verification, entity, brief, decay, comparison and clarity functions are callable through seoctl.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["No modular content intelligence command family.", "No optional image-generation pack.", "No deterministic content verification and entity-analysis suite comparable to Claude SEO."]
+      "open_gaps": ["Controlled human-usefulness benchmarking is not complete.", "Independent source retrieval and semantic verification remain unverified.", "No optional image-generation pack."]
     },
     {
       "id": 9,
@@ -114,9 +119,9 @@
       "evidence_maturity": "FUNCTIONAL",
       "evidence": [
         {"source": "README.md", "claim": "The repository now includes Start Here guidance and executable CLI examples.", "state": "VERIFIED"},
-        {"source": "CONTRIBUTING.md", "claim": "A contribution standard exists, but install-to-success onboarding and generated command documentation remain incomplete.", "state": "VERIFIED"}
+        {"source": "docs/QUICKSTART.md", "claim": "Install, quick-start, generated command, architecture, integration and troubleshooting documentation are present and validation-gated.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["No dedicated installation and quick-start journey.", "No generated command reference.", "Architecture and integration diagrams are incomplete.", "No troubleshooting guide."]
+      "open_gaps": ["Independent clean-install usability evidence is not yet recorded."]
     },
     {
       "id": 10,
@@ -126,9 +131,9 @@
       "evidence_maturity": "FUNCTIONAL",
       "evidence": [
         {"source": "CHANGELOG.md", "claim": "The repository now has substantive version history and an Unreleased section.", "state": "VERIFIED"},
-        {"source": "GitHub repository state", "claim": "The project still lacks public release tags, issue templates, contributors metadata, CODEOWNERS and packaged distribution paths.", "state": "VERIFIED"}
+        {"source": ".github/", "claim": "Issue templates, pull-request governance and CODEOWNERS are present; CONTRIBUTORS and CITATION metadata are versioned.", "state": "VERIFIED"}
       ],
-      "open_gaps": ["No signed or checksummed public release.", "No CONTRIBUTORS.md or CITATION.cff.", "No issue and PR templates.", "No marketplace or installable platform packages."]
+      "open_gaps": ["No signed or checksummed public release tag is verified.", "No externally reproduced package installation is recorded.", "No marketplace distribution is verified."]
     }
   ],
   "overall_score": 69.9,
@@ -136,6 +141,7 @@
   "notes": [
     "The supplied 73/100 score was not mathematically reproducible from its category table and weights.",
     "This baseline uses an explicit weighted formula and does not count file quantity as capability maturity.",
-    "Runtime architecture improvements are included; tooling, integrations, references and ecosystem remain the primary gaps."
+    "The numerical score is retained from the established evidence-constrained methodology; this rebaseline corrects capability facts but does not invent a new score without a separately reviewed rescoring exercise.",
+    "CODE_VERIFIED does not imply LIVE_VERIFIED or EXTERNALLY_REPRODUCED."
   ]
 }

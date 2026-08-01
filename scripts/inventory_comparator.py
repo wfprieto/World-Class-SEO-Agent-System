@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +37,102 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _git_head(root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    head = result.stdout.strip().lower()
+    return head if re.fullmatch(r"[0-9a-f]{40}", head) else None
+
+
+def _is_ancestor(root: Path, commit: str, head: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, head],
+            cwd=root,
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def _sha256(path: Path) -> str:
+    # Git may materialize text files with CRLF or LF depending on the runner.
+    # Pin the logical UTF-8 source while preserving every non-newline byte.
+    normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def validate_current_target_commits(
+    world: dict[str, Any],
+    parity: dict[str, Any],
+    readiness: dict[str, Any],
+    root: Path = ROOT,
+) -> list[str]:
+    """Reject unknown baselines while allowing reviewed descendant commits.
+
+    A reviewed baseline commit may remain valid on descendants because this
+    validator also pins the canonical inventories. This avoids making every
+    documentation-only commit stale while still failing closed when the
+    capability or command source of truth changes.
+    """
+    errors: list[str] = []
+    head = _git_head(root)
+    if head is None:
+        return ["cannot resolve current Git HEAD; comparative freshness is unverified"]
+    target_values = {
+        "world-class": str(world.get("target_repository", "")).rsplit("@", 1)[-1],
+        "parity": str(parity.get("target_commit", "")),
+        "release-readiness": str(readiness.get("evaluated_target_commit", "")),
+    }
+    for label, commit in target_values.items():
+        if not re.fullmatch(r"[0-9a-f]{40}", commit) or not _is_ancestor(root, commit, head):
+            errors.append(f"{label} target commit is stale or is not an ancestor of current HEAD {head}")
+
+    pins = parity.get("canonical_inventory_sha256", {})
+    for relative in ("seoctl/command-registry.json", "orchestration/capability-registry.json"):
+        path = root / relative
+        expected = pins.get(relative) if isinstance(pins, dict) else None
+        if not path.is_file() or expected != _sha256(path):
+            errors.append(f"canonical inventory drifted since evaluation: {relative}")
+    return errors
+
+
+def validate_capability_inventory(ledger: dict[str, Any], root: Path = ROOT) -> list[str]:
+    """Cross-check code-state claims against the canonical command registry."""
+    registry_path = root / "seoctl" / "command-registry.json"
+    if not registry_path.is_file():
+        return ["canonical command inventory is missing: seoctl/command-registry.json"]
+    registry = load_json(registry_path)
+    command_ids = {str(row.get("id")) for row in registry.get("commands", []) if isinstance(row, dict)}
+    errors: list[str] = []
+    for row in ledger.get("capabilities", []):
+        if not isinstance(row, dict):
+            continue
+        required = row.get("required_command_ids", [])
+        if not isinstance(required, list) or not required:
+            continue
+        required_ids = {str(item) for item in required}
+        present = required_ids.issubset(command_ids)
+        code_state = row.get("code_state")
+        row_id = row.get("id")
+        if present and code_state == "ABSENT":
+            errors.append(f"{row_id} contradicts the canonical command inventory: required commands exist")
+        if not present and code_state == "CODE_VERIFIED":
+            missing = sorted(required_ids - command_ids)
+            errors.append(f"{row_id} contradicts the canonical command inventory: missing {missing}")
+    return errors
+
+
 def weighted_score(scorecard: dict[str, Any]) -> float:
     return round(
         sum((float(row["score"]) / 10.0) * float(row["weight"]) for row in scorecard["categories"]),
@@ -47,8 +145,10 @@ def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
     categories = scorecard.get("categories")
     if not isinstance(categories, list) or len(categories) != 10:
         return ["scorecard must contain exactly ten categories"]
-    ids = [row.get("id") for row in categories if isinstance(row, dict)]
-    if sorted(ids) != list(range(1, 11)):
+    raw_ids = [row.get("id") for row in categories if isinstance(row, dict)]
+    if not all(isinstance(item, int) for item in raw_ids) or sorted(
+        item for item in raw_ids if isinstance(item, int)
+    ) != list(range(1, 11)):
         errors.append("category ids must be unique integers 1 through 10")
     weight = sum(float(row.get("weight", 0)) for row in categories)
     if abs(weight - 100.0) > 0.0001:
@@ -163,13 +263,17 @@ def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
 
 
 def validate_all(root: Path = ROOT) -> dict[str, Any]:
-    world = load_json(COMPARATIVE / "world-class-baseline.json")
-    claude = load_json(COMPARATIVE / "claude-seo-baseline.json")
-    parity = load_json(COMPARATIVE / "capability-parity.json")
+    comparative = root / "evaluation" / "comparative"
+    world = load_json(comparative / "world-class-baseline.json")
+    claude = load_json(comparative / "claude-seo-baseline.json")
+    parity = load_json(comparative / "capability-parity.json")
+    readiness = load_json(comparative / "final-release-readiness.json")
     errors = [
         *[f"world-class: {item}" for item in validate_scorecard(world)],
         *[f"claude-seo: {item}" for item in validate_scorecard(claude)],
         *[f"parity: {item}" for item in validate_parity_ledger(parity)],
+        *[f"freshness: {item}" for item in validate_current_target_commits(world, parity, readiness, root)],
+        *[f"inventory: {item}" for item in validate_capability_inventory(parity, root)],
     ]
     return {
         "status": "PASS" if not errors else "FAIL",
