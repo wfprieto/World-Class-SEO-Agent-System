@@ -66,7 +66,10 @@ def _is_ancestor(root: Path, commit: str, head: str) -> bool:
 
 
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Git may materialize text files with CRLF or LF depending on the runner.
+    # Pin the logical UTF-8 source while preserving every non-newline byte.
+    normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def validate_current_target_commits(

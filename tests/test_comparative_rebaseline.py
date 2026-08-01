@@ -5,6 +5,7 @@ from pathlib import Path
 
 from scripts.inventory_comparator import (
     COMPARATIVE,
+    _sha256,
     inventory_repo,
     load_json,
     validate_all,
@@ -16,6 +17,15 @@ from scripts.inventory_comparator import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_inventory_digest_is_stable_across_git_line_endings(tmp_path: Path):
+    lf = tmp_path / "lf.json"
+    crlf = tmp_path / "crlf.json"
+    lf.write_bytes(b'{\n  "value": 1\n}\n')
+    crlf.write_bytes(b'{\r\n  "value": 1\r\n}\r\n')
+
+    assert _sha256(lf) == _sha256(crlf)
 
 
 def test_comparative_rebaseline_is_valid_and_reproducible():

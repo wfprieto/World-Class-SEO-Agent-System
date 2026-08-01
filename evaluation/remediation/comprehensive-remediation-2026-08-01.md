@@ -23,6 +23,7 @@ Automated evidence, GitHub CI, deployed/provider evidence, and operational outco
 6. **Architecture:** Large mixed-responsibility modules obscured pure validation and parsing boundaries. Content analysis, technical parsing, authority drift, and evidence integrity are now isolated while service classes, persisted formats, and compatibility imports remain unchanged.
 7. **Release integrity:** Build evidence existed only as CI artifacts. A tag-triggered workflow now fails closed on release readiness, produces checksums and CycloneDX evidence, generates GitHub build/SBOM attestations, and publishes only after all gates pass.
 8. **CI ancestry:** Comparative freshness checks require the pinned baseline commit to exist locally. The first draft-PR run exposed the default shallow checkout; validation jobs now fetch complete history and a regression test protects that prerequisite.
+9. **Cross-platform inventory hashing:** The second draft-PR run exposed CRLF/LF byte drift in otherwise identical registry JSON. Inventory pins now normalize only line endings before SHA-256 hashing, with an explicit portability regression.
 
 ## Twenty-pass integration record
 
