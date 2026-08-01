@@ -77,6 +77,11 @@ def _gate_passes(actual: str, required: str | set[str]) -> bool:
     return actual in required if isinstance(required, set) else actual == required
 
 
+def canonical_text_digest(content: bytes) -> str:
+    """Hash repository text independently of Git checkout line-ending policy."""
+    return hashlib.sha256(content.replace(b"\r\n", b"\n")).hexdigest()
+
+
 def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str:
     """Hash the immutable phase evidence reviewed independently of verdict storage."""
     def phase_contract(item: dict[str, Any]) -> dict[str, Any]:
@@ -247,7 +252,7 @@ def _validate_complete_phase(
     expected_rollback_digest = phase.get("rollback_evidence_sha256")
     if not rollback_path.is_file() or not expected_rollback_digest:
         errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence is missing")
-    elif hashlib.sha256(rollback_path.read_bytes()).hexdigest() != expected_rollback_digest:
+    elif canonical_text_digest(rollback_path.read_bytes()) != expected_rollback_digest:
         errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence digest does not match reviewed package")
 
     authority = phase.get("authority_evidence", [])

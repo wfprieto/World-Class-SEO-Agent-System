@@ -11,6 +11,7 @@ from scripts.validate_remediation_program import (
     ROOT,
     SCHEMA_PATH,
     evidence_package_hash,
+    canonical_text_digest,
     _validate_complete_phase,
     validate,
 )
@@ -62,9 +63,9 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     phase["status"] = "COMPLETE"
     phase["verified_commit"] = payload["baseline"]["commit"]
     phase["frozen_package_commit"] = phase["verified_commit"]
-    phase["rollback_evidence_sha256"] = hashlib.sha256(
+    phase["rollback_evidence_sha256"] = canonical_text_digest(
         (ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json").read_bytes()
-    ).hexdigest()
+    )
     schema_digest = hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest()
     for criterion in phase["acceptance_criteria"]:
         criterion["status"] = "PASS"
@@ -492,6 +493,10 @@ def test_reviewer_registry_is_hash_bound_and_worktree_mutation_cannot_reauthoriz
     phase["authority_evidence"][0]["sha256"] = "0" * 64
 
     assert evidence_package_hash(payload, phase) != original
+
+
+def test_rollback_digest_is_checkout_line_ending_independent() -> None:
+    assert canonical_text_digest(b"one\ntwo\n") == canonical_text_digest(b"one\r\ntwo\r\n")
 
 
 def test_generic_or_unauthenticated_gate_evidence_is_rejected(tmp_path: Path) -> None:
