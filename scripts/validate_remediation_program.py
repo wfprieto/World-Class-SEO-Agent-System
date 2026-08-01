@@ -64,6 +64,34 @@ def _gate_passes(actual: str, required: str | set[str]) -> bool:
     return actual in required if isinstance(required, set) else actual == required
 
 
+def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str:
+    """Hash the immutable phase evidence reviewed independently of verdict storage."""
+    phase_payload = {key: value for key, value in phase.items() if key != "review"}
+    payload = {
+        "program_id": program.get("program_id"),
+        "baseline": program.get("baseline"),
+        "exclusions": program.get("exclusions"),
+        "phase": phase_payload,
+        "audit_findings": [
+            item
+            for item in program.get("audit_findings", [])
+            if item.get("phase_id") == phase.get("id")
+        ],
+        "failures": [
+            item
+            for item in program.get("failures", [])
+            if item.get("phase_id") == phase.get("id")
+        ],
+        "learning_records": [
+            item
+            for item in program.get("learning_records", [])
+            if item.get("phase_id") == phase.get("id")
+        ],
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _validate_sequence(program: dict[str, Any], root: Path) -> list[str]:
     errors: list[str] = []
     phases = program.get("phases", [])
@@ -210,6 +238,9 @@ def _validate_complete_phase(
     if len(verdicts) != 2 or any(item.get("verdict") != "APPROVE_GREAT" for item in verdicts):
         errors.append(f"{phase_id} requires two APPROVE_GREAT verdicts")
     package_hash = review.get("evidence_package_hash")
+    expected_package_hash = evidence_package_hash(program, phase)
+    if package_hash != expected_package_hash:
+        errors.append(f"{phase_id} review hash does not match the canonical evidence package")
     if not package_hash or any(item.get("evidence_package_hash") != package_hash for item in verdicts):
         errors.append(f"{phase_id} reviewers must inspect the same immutable evidence package")
     contexts = [item.get("context_id") for item in verdicts]

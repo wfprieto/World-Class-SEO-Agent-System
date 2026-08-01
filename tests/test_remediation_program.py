@@ -5,7 +5,13 @@ import hashlib
 import json
 from pathlib import Path
 
-from scripts.validate_remediation_program import PROGRAM_PATH, ROOT, SCHEMA_PATH, validate
+from scripts.validate_remediation_program import (
+    PROGRAM_PATH,
+    ROOT,
+    SCHEMA_PATH,
+    evidence_package_hash,
+    validate,
+)
 
 
 def _program() -> dict:
@@ -16,6 +22,13 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     fixture_payload = copy.deepcopy(payload)
     for finding in fixture_payload["audit_findings"]:
         finding["source_refs"] = ["schemas/remediation-program.schema.json"]
+    for phase in fixture_payload["phases"]:
+        verdicts = phase.get("review", {}).get("verdicts", [])
+        if verdicts:
+            package_hash = evidence_package_hash(fixture_payload, phase)
+            phase["review"]["evidence_package_hash"] = package_hash
+            for verdict in verdicts:
+                verdict["evidence_package_hash"] = package_hash
     program_path = tmp_path / PROGRAM_PATH.relative_to(ROOT)
     schema_path = tmp_path / SCHEMA_PATH.relative_to(ROOT)
     program_path.parent.mkdir(parents=True)
@@ -102,17 +115,10 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     }
     for evidence_class in phase["required_evidence_classes"]:
         phase["evidence_status"][evidence_class] = "PASS"
-    package_hash = hashlib.sha256(f"package-{phase['id']}".encode()).hexdigest()
-    phase["review"] = {
-        "evidence_package_hash": package_hash,
-        "verdicts": [
-            _verdict(phase["id"], "SENIOR_SCRUMMASTER_3", "scrum", package_hash),
-            _verdict(phase["id"], "VP_ENGINEERING", "vpeng", package_hash),
-        ],
-    }
     for finding in payload["audit_findings"]:
         if finding["phase_id"] == phase["id"]:
             finding["status"] = "RESOLVED"
+    _refresh_review(payload, phase)
 
 
 def _verdict(phase_id: str, role: str, reviewer: str, package_hash: str) -> dict:
@@ -139,6 +145,17 @@ def _verdict(phase_id: str, role: str, reviewer: str, package_hash: str) -> dict
     }
 
 
+def _refresh_review(payload: dict, phase: dict) -> None:
+    package_hash = evidence_package_hash(payload, phase)
+    phase["review"] = {
+        "evidence_package_hash": package_hash,
+        "verdicts": [
+            _verdict(phase["id"], "SENIOR_SCRUMMASTER_3", "scrum", package_hash),
+            _verdict(phase["id"], "VP_ENGINEERING", "vpeng", package_hash),
+        ],
+    }
+
+
 def test_current_remediation_program_is_valid() -> None:
     assert validate() == []
 
@@ -160,6 +177,16 @@ def test_phase_completion_requires_every_gate_evidence_and_independent_review(
 ) -> None:
     payload = _program()
     payload["phases"][0]["status"] = "COMPLETE"
+    payload["phases"][0]["verified_commit"] = None
+    for criterion in payload["phases"][0]["acceptance_criteria"]:
+        criterion["status"] = "NOT_RUN"
+        criterion["evidence_refs"] = []
+    payload["phases"][0]["evidence_status"]["AUTOMATED"] = "NOT_RUN"
+    payload["phases"][0]["evidence_status"]["CI"] = "NOT_RUN"
+    payload["phases"][0]["gates"] = {
+        key: "NOT_RUN" for key in payload["phases"][0]["gates"]
+    }
+    payload["phases"][0]["review"] = {"evidence_package_hash": None, "verdicts": []}
     payload["current_phase"] = "P1"
     payload["phases"][1]["status"] = "IN_PROGRESS"
 
@@ -173,6 +200,8 @@ def test_phase_completion_requires_every_gate_evidence_and_independent_review(
 
 def test_resolved_failure_requires_confirmed_recurrence_guardrail(tmp_path: Path) -> None:
     payload = _program()
+    payload["failures"] = []
+    payload["learning_records"] = []
     _complete_phase(payload, 0)
     payload["current_phase"] = "P1"
     payload["phases"][1]["status"] = "IN_PROGRESS"
@@ -193,6 +222,8 @@ def test_resolved_failure_requires_confirmed_recurrence_guardrail(tmp_path: Path
 
 def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> None:
     payload = _program()
+    payload["failures"] = []
+    payload["learning_records"] = []
     _complete_phase(payload, 0)
     payload["current_phase"] = "P1"
     payload["phases"][1]["status"] = "IN_PROGRESS"
@@ -235,6 +266,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
             "apivr_next_action": "Retain the regression in every certification run.",
         }
     ]
+    _refresh_review(payload, payload["phases"][0])
 
     assert validate(_write_fixture(tmp_path, payload)) == []
 

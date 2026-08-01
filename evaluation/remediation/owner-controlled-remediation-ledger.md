@@ -109,3 +109,16 @@ where older repository artifacts mention them.
   whitespace-only array items still produced `APPROVE_GREAT` after hashes were recomputed.
   The recurrence signature is any nominally non-empty evidence field whose normalized value is
   empty. Both schema patterns and evaluator defenses now reject it, with a forged-hash regression.
+
+### Exact-commit and rollback evidence
+
+- Candidate commit: `349e9e66ee8c6937a371e3e78adbd79fb68d64a3`
+- Draft pull request: `https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/24`
+- Exact-commit CI: `https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305`
+- Matrix result: Windows and Ubuntu on Python 3.11, 3.12, and 3.13 passed.
+- Quality/security, Ubuntu and Windows clean-wheel, and aggregate repository-certification jobs passed.
+- Rollback rehearsal: a detached worktree at baseline `e8c37abb5e939d4433e42ea8a02af63549ca0010`
+  passed `scripts/validate-repository.ps1` and all 10 baseline improvement-loop tests, then the
+  temporary worktree was removed through `git worktree remove`.
+- Phase 0 remains `IN_PROGRESS` until two new fresh-context canonical verdicts approve the same
+  immutable evidence-package hash and the resulting closure commit passes certification.

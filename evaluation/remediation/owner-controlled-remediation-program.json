@@ -35,7 +35,7 @@
       "id": "P0",
       "title": "Program controls and current-state audit",
       "status": "IN_PROGRESS",
-      "verified_commit": null,
+      "verified_commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3",
       "owner": "Repository maintainer",
       "approver": "Repository maintainer",
       "verifier": "Independent reviewers",
@@ -44,13 +44,43 @@
       "non_goals": ["feature implementation", "provider calls", "main-branch mutation"],
       "rollback": "Revert the Phase 0 program, validator, tests, and CI invocation as one bounded change.",
       "acceptance_criteria": [
-        {"id": "P0-AC-01", "description": "The validator rejects phase skipping and incomplete phase closure.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P0-AC-02", "description": "Every resolved failure requires a linked recurrence guardrail before phase completion.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P0-AC-03", "description": "Excluded evidence classes cannot be promoted to a passing completion claim.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+        {
+          "id": "P0-AC-01",
+          "description": "The validator rejects phase skipping and incomplete phase closure.",
+          "horizon": "IMMEDIATE",
+          "status": "PASS",
+          "evidence_refs": [
+            {"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "7673b92394478f98013835603d5ca10738680a1a639fd8358a19a586f06983d0", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The committed validator enforces ordered phase closure and canonical reviews."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "b00bf85e5b345fd5fafa67185c671645f412d8ad26b86b29aaede46a6e318cd1", "environment": "LOCAL", "status": "PASS", "assertion": "Mutation tests reject phase skipping, open findings, weak evidence, and reused contexts."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The exact commit passed Windows and Ubuntu validation on Python 3.11 through 3.13."}
+          ]
+        },
+        {
+          "id": "P0-AC-02",
+          "description": "Every resolved failure requires a linked recurrence guardrail before phase completion.",
+          "horizon": "IMMEDIATE",
+          "status": "PASS",
+          "evidence_refs": [
+            {"class": "SOURCE", "ref": "schemas/remediation-program.schema.json", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "759c44e31ed2ef27cfbc2d29abe5f84d92ead0d23f1964b307e5dd73b9fec105", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The committed schema requires structured failure-learning records."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "b00bf85e5b345fd5fafa67185c671645f412d8ad26b86b29aaede46a6e318cd1", "environment": "LOCAL", "status": "PASS", "assertion": "Resolved failures without confirmed guardrails are rejected."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Quality and aggregate repository certification passed on the exact commit."}
+          ]
+        },
+        {
+          "id": "P0-AC-03",
+          "description": "Excluded outcome claims remain prohibited while phase-specific provider evidence stays truthful.",
+          "horizon": "IMMEDIATE",
+          "status": "PASS",
+          "evidence_refs": [
+            {"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "59d3d02d6232b7a434ca30b23b62197687a7bfc7eac27f34e6573fe0152f8838", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The program preserves outcome exclusions and declares required evidence per phase."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "b00bf85e5b345fd5fafa67185c671645f412d8ad26b86b29aaede46a6e318cd1", "environment": "LOCAL", "status": "PASS", "assertion": "Tests reject unsupported passing evidence while preserving explicit exclusions."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The remediation and claim validators passed on the exact commit."}
+          ]
+        }
       ],
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
-      "evidence_status": {"SOURCE": "PASS", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
-      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "evidence_status": {"SOURCE": "PASS", "AUTOMATED": "PASS", "CI": "PASS", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "PASS", "focused_tests": "PASS", "full_certification": "PASS", "security_review": "PASS", "documentation": "PASS", "learning": "PASS", "unexpected_change_scan": "PASS"},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -228,7 +258,7 @@
       "phase_id": "P0",
       "severity": "HIGH",
       "summary": "Improvement-cycle approval could be forged with empty implementation and evidence arrays.",
-      "status": "IN_PROGRESS",
+      "status": "RESOLVED",
       "source_refs": ["schemas/improvement-cycle.schema.json", "scripts/run_improvement_cycle.py"],
       "remediation": "Require non-empty implementation, test, evidence, and learning records in schema and evaluator.",
       "acceptance": "A recomputed reviewer hash cannot turn an empty evidence package into approval."
@@ -374,6 +404,78 @@
       "acceptance": "Every controllable repository path has an owner, working intake, runbook, verification, and rollback trigger."
     }
   ],
-  "failures": [],
-  "learning_records": []
+  "failures": [
+    {"id": "FAIL-0001", "phase_id": "P0", "summary": "Improvement approval accepted empty evidence arrays after reviewer hashes were recomputed.", "status": "RESOLVED", "evidence_refs": ["tests/test_improvement_loop.py::test_empty_evidence_cannot_be_forged_into_an_approval"]},
+    {"id": "FAIL-0002", "phase_id": "P0", "summary": "Improvement approval accepted whitespace-only evidence records after reviewer hashes were recomputed.", "status": "RESOLVED", "evidence_refs": ["tests/test_improvement_loop.py::test_whitespace_evidence_cannot_be_forged_into_an_approval"]},
+    {"id": "FAIL-0003", "phase_id": "P0", "summary": "The first local mypy run rejected an overly broad inferred gate-table collection type.", "status": "RESOLVED", "evidence_refs": ["scripts/validate_remediation_program.py::COMPLETION_GATES"]},
+    {"id": "FAIL-0004", "phase_id": "P0", "summary": "Two local full-suite runs placed pytest fixtures inside a parent Git worktree and produced two harness-location failures.", "status": "RESOLVED", "evidence_refs": ["evaluation/remediation/owner-controlled-remediation-ledger.md::Observed failures and learning"]},
+    {"id": "FAIL-0005", "phase_id": "P0", "summary": "Initial independent reviews rejected weak reviewer authority, evidence binding, and evidence-class semantics.", "status": "RESOLVED", "evidence_refs": ["schemas/remediation-program.schema.json", "scripts/validate_remediation_program.py"]}
+  ],
+  "learning_records": [
+    {
+      "id": "LEARN-0001", "phase_id": "P0", "failure_id": "FAIL-0001", "status": "CONFIRMED",
+      "affected_invariant": "Approval requires concrete implementation, test, evidence, and learning records.",
+      "expected_result": "An empty evidence package can never reach APPROVE_GREAT.",
+      "observed_evidence": [{"class": "AUTOMATED", "ref": "tests/test_improvement_loop.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "eeb40ae8d8d788af610448433852d85405d2cfd86adb89194fe1bb132b3d8f5c", "environment": "CI", "status": "PASS", "assertion": "The forged-empty-evidence regression passed in exact-commit CI."}],
+      "learning": "Cardinality must be enforced in both schema and the production evaluator.",
+      "recurrence_signature": "Reviewer hashes are recomputed over empty approval evidence arrays.",
+      "guardrail": "Schema minItems and evaluator defensive checks reject empty records.",
+      "verification_ref": "tests/test_improvement_loop.py::test_empty_evidence_cannot_be_forged_into_an_approval",
+      "rollback_position": "Revert schema, evaluator, regression, and program gate as one bounded change.",
+      "residual_risk": "Opaque non-empty references require later provenance validation.", "owner": "Repository maintainer", "due_phase": "P0",
+      "apivr_next_action": "Retain the forged-hash mutation in every validation matrix run."
+    },
+    {
+      "id": "LEARN-0002", "phase_id": "P0", "failure_id": "FAIL-0002", "status": "CONFIRMED",
+      "affected_invariant": "Evidence records must remain meaningful after normalization.",
+      "expected_result": "Whitespace-only records are semantically empty and must fail.",
+      "observed_evidence": [{"class": "AUTOMATED", "ref": "tests/test_improvement_loop.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "eeb40ae8d8d788af610448433852d85405d2cfd86adb89194fe1bb132b3d8f5c", "environment": "CI", "status": "PASS", "assertion": "The whitespace forged-hash regression passed in exact-commit CI."}],
+      "learning": "Non-empty syntax is weaker than normalized semantic content.",
+      "recurrence_signature": "One or more required records contain only whitespace characters.",
+      "guardrail": "Schema non-whitespace patterns and evaluator strip checks run independently.",
+      "verification_ref": "tests/test_improvement_loop.py::test_whitespace_evidence_cannot_be_forged_into_an_approval",
+      "rollback_position": "Revert the schema pattern, evaluator normalization, and test together.",
+      "residual_risk": "Plausible-looking but false references require immutable evidence binding.", "owner": "Repository maintainer", "due_phase": "P0",
+      "apivr_next_action": "Add semantic counterexamples whenever a reviewer breaks a syntactic guard."
+    },
+    {
+      "id": "LEARN-0003", "phase_id": "P0", "failure_id": "FAIL-0003", "status": "CONFIRMED",
+      "affected_invariant": "The production gate validator must pass strict static typing.",
+      "expected_result": "The completion-gate table matches the gate helper's accepted union.",
+      "observed_evidence": [{"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "7673b92394478f98013835603d5ca10738680a1a639fd8358a19a586f06983d0", "environment": "CI", "status": "PASS", "assertion": "The explicitly typed gate table passed the exact-commit mypy job."}],
+      "learning": "Security and governance tables need explicit narrow types rather than inferred heterogeneous collections.",
+      "recurrence_signature": "Mypy infers Collection[str] where a gate accepts str or set[str].",
+      "guardrail": "CI type-checks the production remediation validator with check-untyped-defs.",
+      "verification_ref": ".github/workflows/validate.yml::Type-check security and release scripts",
+      "rollback_position": "Revert the annotation and validator together if the gate model changes.",
+      "residual_risk": "Future gate variants must extend the declared union deliberately.", "owner": "Quality owner", "due_phase": "P0",
+      "apivr_next_action": "Run mypy before every evidence-package freeze."
+    },
+    {
+      "id": "LEARN-0004", "phase_id": "P0", "failure_id": "FAIL-0004", "status": "CONFIRMED",
+      "affected_invariant": "Fixture repositories must be isolated from any parent Git index.",
+      "expected_result": "Security and manifest fixtures enumerate only their temporary repository.",
+      "observed_evidence": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Isolated GitHub runners passed all tests on six supported matrix cells."}],
+      "learning": "A pytest temp root nested inside another Git worktree is not an isolated repository fixture.",
+      "recurrence_signature": "Git fixture helpers resolve a parent index and miss files created below the supplied root.",
+      "guardrail": "Use isolated CI runners for certification and keep local fixture temp roots outside parent Git worktrees.",
+      "verification_ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30721534305",
+      "rollback_position": "No product rollback is required for a rejected local harness location.",
+      "residual_risk": "Developer machines with enclosing repositories can reproduce the harness collision.", "owner": "Quality owner", "due_phase": "P0",
+      "apivr_next_action": "Classify environment failures before modifying unrelated product code."
+    },
+    {
+      "id": "LEARN-0005", "phase_id": "P0", "failure_id": "FAIL-0005", "status": "CONFIRMED",
+      "affected_invariant": "Phase completion depends on immutable evidence and canonical independent verdicts.",
+      "expected_result": "Every required evidence class and reviewer verdict is structured and bound to the verified commit.",
+      "observed_evidence": [{"class": "SOURCE", "ref": "schemas/remediation-program.schema.json", "commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3", "sha256": "759c44e31ed2ef27cfbc2d29abe5f84d92ead0d23f1964b307e5dd73b9fec105", "environment": "CI", "status": "PASS", "assertion": "The revised canonical verdict and phase-specific evidence schema passed exact-commit certification."}],
+      "learning": "Outcome exclusions must not prohibit provider evidence needed to verify repository settings, and review summaries cannot replace canonical verdict objects.",
+      "recurrence_signature": "A phase claims PASS using unbound strings, reused contexts, or a globally forbidden evidence class.",
+      "guardrail": "Commit ancestry, content digests, phase-specific evidence classes, canonical verdict schemas, and context uniqueness are enforced.",
+      "verification_ref": "tests/test_remediation_program.py",
+      "rollback_position": "Revert the program schema, validator, tests, and CI invocation atomically.",
+      "residual_risk": "Provider run authenticity still relies on GitHub access controls and exact run URLs.", "owner": "Repository maintainer", "due_phase": "P0",
+      "apivr_next_action": "Require fresh independent review of the new immutable evidence package."
+    }
+  ]
 }
