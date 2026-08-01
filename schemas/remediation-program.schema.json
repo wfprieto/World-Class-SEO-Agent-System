@@ -130,7 +130,7 @@
       "required": [
         "id", "title", "status", "verified_commit", "owner", "approver", "verifier", "notify",
         "scope", "non_goals", "rollback", "acceptance_criteria", "required_evidence_classes",
-        "evidence_status", "gates", "review"
+        "evidence_status", "gates", "gate_evidence", "review"
       ],
       "properties": {
         "id": {"type": "string", "pattern": "^P[0-8]$"},
@@ -182,6 +182,23 @@
             "documentation": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
             "learning": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "NO_MATERIAL_LEARNING"]},
             "unexpected_change_scan": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]}
+          }
+        },
+        "gate_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "implementation_audit", "focused_tests", "full_certification", "security_review",
+            "documentation", "learning", "unexpected_change_scan"
+          ],
+          "properties": {
+            "implementation_audit": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "focused_tests": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "full_certification": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "security_review": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "documentation": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "learning": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "unexpected_change_scan": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
           }
         },
         "review": {

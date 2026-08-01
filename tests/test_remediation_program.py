@@ -12,6 +12,7 @@ from scripts.validate_remediation_program import (
     evidence_package_hash,
     validate,
 )
+from scripts.validate_pytest_temp_isolation import validate as validate_temp_isolation
 
 
 def _program() -> dict:
@@ -40,6 +41,9 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
         (ROOT / "schemas" / "reviewer-verdict.schema.json").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    reviewer_registry = tmp_path / "evaluation" / "reviewer-registry.json"
+    reviewer_registry.parent.mkdir(parents=True, exist_ok=True)
+    reviewer_registry.write_bytes((ROOT / "evaluation" / "reviewer-registry.json").read_bytes())
     return tmp_path
 
 
@@ -105,6 +109,18 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
         "learning": "NO_MATERIAL_LEARNING",
         "unexpected_change_scan": "PASS",
     }
+    gate_record = {
+        "class": "CI",
+        "ref": "https://ci.example.invalid/runs/phase",
+        "commit": phase["verified_commit"],
+        "sha256": None,
+        "environment": "CI",
+        "status": "PASS",
+        "assertion": "The exact verified commit passed this completion gate.",
+    }
+    phase["gate_evidence"] = {
+        gate: [copy.deepcopy(gate_record)] for gate in phase["gates"]
+    }
     phase["evidence_status"] = {
         "SOURCE": "PASS",
         "AUTOMATED": "PASS",
@@ -124,7 +140,7 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
 def _verdict(phase_id: str, role: str, reviewer: str, package_hash: str) -> dict:
     return {
         "review_id": f"review-{phase_id.lower()}-{reviewer}",
-        "reviewer_id": f"reviewer-{reviewer}-{phase_id.lower()}",
+        "reviewer_id": "senior-scrummaster-3" if role == "SENIOR_SCRUMMASTER_3" else "vp-engineering",
         "role": role,
         "context_id": f"context-{reviewer}-{phase_id.lower()}-fresh",
         "provider": "test-provider",
@@ -211,7 +227,7 @@ def test_resolved_failure_requires_confirmed_recurrence_guardrail(tmp_path: Path
             "phase_id": "P0",
             "summary": "The production-path validator initially accepted a skipped phase.",
             "status": "RESOLVED",
-            "evidence_refs": ["tests/test_remediation_program.py"],
+            "evidence_refs": ["schemas/remediation-program.schema.json"],
         }
     ]
 
@@ -233,7 +249,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
             "phase_id": "P0",
             "summary": "The production-path validator initially accepted a skipped phase.",
             "status": "RESOLVED",
-            "evidence_refs": ["tests/test_remediation_program.py"],
+            "evidence_refs": ["schemas/remediation-program.schema.json"],
         }
     ]
     payload["learning_records"] = [
@@ -258,7 +274,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
             "learning": "Phase ordering must be checked by the production validator.",
             "recurrence_signature": "A later phase starts while a predecessor is incomplete.",
             "guardrail": "Keep a child-fixture regression that skips P1.",
-            "verification_ref": "tests/test_remediation_program.py::test_phase_skipping_is_rejected",
+            "verification_ref": "schemas/remediation-program.schema.json",
             "rollback_position": "Revert the validator and its schema together.",
             "residual_risk": "Manual artifacts outside this program remain advisory.",
             "owner": "Quality owner",
@@ -269,6 +285,13 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
     _refresh_review(payload, payload["phases"][0])
 
     assert validate(_write_fixture(tmp_path, payload)) == []
+
+    payload["learning_records"][0]["observed_evidence"][0]["sha256"] = "0" * 64
+    payload["failures"][0]["evidence_refs"] = ["missing/failure-evidence.json"]
+    _refresh_review(payload, payload["phases"][0])
+    errors = validate(_write_fixture(tmp_path / "forged", payload))
+    assert any("learning LEARN-0001 evidence digest is not immutable" in item for item in errors)
+    assert any("references missing evidence" in item for item in errors)
 
 
 def test_reviewer_contexts_must_be_distinct(tmp_path: Path) -> None:
@@ -333,3 +356,61 @@ def test_reviewer_context_cannot_be_reused_across_phases(tmp_path: Path) -> None
     errors = validate(_write_fixture(tmp_path, payload))
 
     assert "reviewer contexts cannot be reused across phases or roles" in errors
+
+
+def test_evidence_hash_binds_material_program_controls_and_full_audit_inventory() -> None:
+    payload = _program()
+    original = evidence_package_hash(payload, payload["phases"][0])
+    mutations = []
+    for field, value in (
+        ("objective", "A materially different objective that remains long enough for the schema."),
+        ("scope", [*payload["scope"], "new material scope"]),
+        ("apivr_tier", "FORENSIC"),
+        ("direct_merge_permitted", True),
+    ):
+        changed = copy.deepcopy(payload)
+        changed[field] = value
+        mutations.append(changed)
+    changed_finding = copy.deepcopy(payload)
+    changed_finding["audit_findings"][-1]["summary"] += " Mutated."
+    mutations.append(changed_finding)
+
+    assert all(
+        evidence_package_hash(item, item["phases"][0]) != original for item in mutations
+    )
+
+
+def test_evidence_hash_survives_only_workflow_state_and_verdict_insertion() -> None:
+    payload = _program()
+    original = evidence_package_hash(payload, payload["phases"][0])
+    payload["current_phase"] = "P1"
+    payload["phases"][0]["status"] = "COMPLETE"
+    payload["phases"][1]["status"] = "IN_PROGRESS"
+    payload["phases"][0]["review"] = {
+        "evidence_package_hash": original,
+        "verdicts": [],
+    }
+
+    assert evidence_package_hash(payload, payload["phases"][0]) == original
+
+
+def test_unregistered_reviewer_identity_cannot_approve_phase(tmp_path: Path) -> None:
+    payload = _program()
+    payload["failures"] = []
+    payload["learning_records"] = []
+    _complete_phase(payload, 0)
+    payload["phases"][0]["review"]["verdicts"][0]["reviewer_id"] = "schema-valid-impostor"
+    payload["current_phase"] = "P1"
+    payload["phases"][1]["status"] = "IN_PROGRESS"
+
+    errors = validate(_write_fixture(tmp_path, payload))
+
+    assert any("not the canonical registered identity" in item for item in errors)
+
+
+def test_pytest_temp_root_must_be_outside_repository_boundary(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+
+    assert validate_temp_isolation(repository / "nested", repository_root=repository)
+    assert validate_temp_isolation(tmp_path / "isolated", repository_root=repository) == []

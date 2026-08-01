@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "phase_id": "P0",
+  "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+  "candidate_commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3",
+  "executed_at": "2026-08-01T22:42:00Z",
+  "environment": "Windows PowerShell with Python 3.13",
+  "worktree_path_class": "temporary detached worktree outside the candidate repository",
+  "commands": [
+    {
+      "command": "git worktree add --detach <temporary-path> e8c37abb5e939d4433e42ea8a02af63549ca0010",
+      "exit_code": 0,
+      "assertion": "The rollback target resolved to the exact baseline commit."
+    },
+    {
+      "command": "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1",
+      "exit_code": 0,
+      "assertion": "The baseline repository validator passed after removing the complete Phase 0 change set."
+    },
+    {
+      "command": "py -3.13 -m pytest -q tests/test_improvement_loop.py",
+      "exit_code": 0,
+      "assertion": "All 10 baseline improvement-loop tests passed in the rollback worktree."
+    },
+    {
+      "command": "git worktree remove <temporary-path>",
+      "exit_code": 0,
+      "assertion": "The disposable rollback worktree was removed through Git."
+    }
+  ],
+  "result": "PASS",
+  "recovery_position": "Revert the bounded Phase 0 commits together; baseline validation remains operational.",
+  "limitations": [
+    "This rehearsal validates source rollback and baseline governance tests, not public release or real-world SEO outcomes.",
+    "GitHub's immutable baseline certification remains a separate CI evidence record."
+  ]
+}

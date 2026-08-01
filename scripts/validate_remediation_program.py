@@ -66,17 +66,26 @@ def _gate_passes(actual: str, required: str | set[str]) -> bool:
 
 def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str:
     """Hash the immutable phase evidence reviewed independently of verdict storage."""
-    phase_payload = {key: value for key, value in phase.items() if key != "review"}
+    def phase_contract(item: dict[str, Any]) -> dict[str, Any]:
+        return {
+            key: value
+            for key, value in item.items()
+            if key not in {"status", "review"}
+        }
+
     payload = {
+        "schema_version": program.get("schema_version"),
         "program_id": program.get("program_id"),
+        "objective": program.get("objective"),
         "baseline": program.get("baseline"),
+        "apivr_tier": program.get("apivr_tier"),
+        "direct_merge_permitted": program.get("direct_merge_permitted"),
+        "scope": program.get("scope"),
         "exclusions": program.get("exclusions"),
-        "phase": phase_payload,
-        "audit_findings": [
-            item
-            for item in program.get("audit_findings", [])
-            if item.get("phase_id") == phase.get("id")
-        ],
+        "evidence_classes": program.get("evidence_classes"),
+        "phase_contracts": [phase_contract(item) for item in program.get("phases", [])],
+        "phase_id": phase.get("id"),
+        "audit_findings": program.get("audit_findings", []),
         "failures": [
             item
             for item in program.get("failures", [])
@@ -90,6 +99,39 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _evidence_errors(
+    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str
+) -> list[str]:
+    errors: list[str] = []
+    evidence_class = str(evidence.get("class", ""))
+    reference = str(evidence.get("ref", ""))
+    if evidence.get("commit") != verified_commit:
+        errors.append(f"{label} evidence is not bound to verified_commit")
+    source_path = reference.split("::", 1)[0]
+    if evidence_class in {"SOURCE", "AUTOMATED"}:
+        expected_digest = evidence.get("sha256")
+        content: bytes | None = None
+        if (root / ".git").exists() and verified_commit:
+            try:
+                content = subprocess.check_output(
+                    ["git", "show", f"{verified_commit}:{source_path}"],
+                    cwd=root,
+                    stderr=subprocess.DEVNULL,
+                    timeout=20,
+                )
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                content = None
+        elif (root / source_path).is_file():
+            content = (root / source_path).read_bytes()
+        if content is None:
+            errors.append(f"{label} evidence does not exist at verified_commit: {reference}")
+        elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
+            errors.append(f"{label} evidence digest is not immutable: {reference}")
+    if evidence.get("status") not in {"OBSERVED", "PASS"}:
+        errors.append(f"{label} evidence {reference} is not passing")
+    return errors
 
 
 def _validate_sequence(program: dict[str, Any], root: Path) -> list[str]:
@@ -164,40 +206,29 @@ def _validate_complete_phase(
         if not criterion.get("evidence_refs"):
             errors.append(f"{phase_id} cannot be COMPLETE: {criterion.get('id')} has no evidence")
         for evidence in criterion.get("evidence_refs", []):
-            evidence_class = str(evidence.get("class", ""))
-            reference = str(evidence.get("ref", ""))
-            if evidence.get("commit") != verified_commit:
-                errors.append(
-                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')} evidence is not bound to verified_commit"
+            errors.extend(
+                _evidence_errors(
+                    evidence,
+                    str(verified_commit) if verified_commit else None,
+                    root,
+                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')}",
                 )
-            source_path = reference.split("::", 1)[0]
-            if evidence_class in {"SOURCE", "AUTOMATED"}:
-                expected_digest = evidence.get("sha256")
-                content: bytes | None = None
-                if (root / ".git").exists() and verified_commit:
-                    try:
-                        content = subprocess.check_output(
-                            ["git", "show", f"{verified_commit}:{source_path}"],
-                            cwd=root,
-                            stderr=subprocess.DEVNULL,
-                            timeout=20,
-                        )
-                    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-                        content = None
-                elif (root / source_path).is_file():
-                    content = (root / source_path).read_bytes()
-                if content is None:
-                    errors.append(
-                        f"{phase_id} cannot be COMPLETE: {criterion.get('id')} evidence does not exist at verified_commit: {reference}"
-                    )
-                elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
-                    errors.append(
-                        f"{phase_id} cannot be COMPLETE: {criterion.get('id')} evidence digest is not immutable: {reference}"
-                    )
-            if evidence.get("status") not in {"OBSERVED", "PASS"}:
-                errors.append(
-                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')} evidence {reference} is not passing"
+            )
+
+    gate_evidence = phase.get("gate_evidence", {})
+    for gate, result in phase.get("gates", {}).items():
+        records = gate_evidence.get(gate, [])
+        if result in {"PASS", "NO_MATERIAL_LEARNING"} and not records:
+            errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} has no structured evidence")
+        for evidence in records:
+            errors.extend(
+                _evidence_errors(
+                    evidence,
+                    str(verified_commit) if verified_commit else None,
+                    root,
+                    f"{phase_id} cannot be COMPLETE: gate {gate}",
                 )
+            )
 
     evidence_status = phase.get("evidence_status", {})
     required_evidence = set(phase.get("required_evidence_classes", []))
@@ -247,6 +278,16 @@ def _validate_complete_phase(
     reviewer_ids = [item.get("reviewer_id") for item in verdicts]
     if len(set(contexts)) != 2 or len(set(reviewer_ids)) != 2:
         errors.append(f"{phase_id} requires distinct reviewer identities and contexts")
+    reviewer_registry = _load_object(root / "evaluation" / "reviewer-registry.json")
+    registered = {
+        item.get("role"): item.get("reviewer_id")
+        for item in reviewer_registry.get("reviewers", [])
+    }
+    for verdict in verdicts:
+        if registered.get(verdict.get("role")) != verdict.get("reviewer_id"):
+            errors.append(
+                f"{phase_id} reviewer {verdict.get('role')} is not the canonical registered identity"
+            )
 
     failures = [item for item in program.get("failures", []) if item.get("phase_id") == phase_id]
     findings = [
@@ -277,7 +318,34 @@ def _validate_complete_phase(
             errors.append(
                 f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} lacks a confirmed guardrail"
             )
+        for reference in failure.get("evidence_refs", []):
+            if not _reference_exists(str(reference), root):
+                errors.append(
+                    f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} references missing evidence {reference}"
+                )
+        for record in linked:
+            for evidence in record.get("observed_evidence", []):
+                errors.extend(
+                    _evidence_errors(
+                        evidence,
+                        str(verified_commit) if verified_commit else None,
+                        root,
+                        f"{phase_id} cannot be COMPLETE: learning {record.get('id')}",
+                    )
+                )
+            verification_ref = str(record.get("verification_ref", ""))
+            if not _reference_exists(verification_ref, root):
+                errors.append(
+                    f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification reference is missing"
+                )
     return errors
+
+
+def _reference_exists(reference: str, root: Path) -> bool:
+    if reference.startswith("https://"):
+        return True
+    source_path = reference.split("::", 1)[0]
+    return bool(source_path) and (root / source_path).exists()
 
 
 def _validate_program_rules(program: dict[str, Any], root: Path) -> list[str]:

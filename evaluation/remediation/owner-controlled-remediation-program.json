@@ -81,6 +81,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "PASS", "AUTOMATED": "PASS", "CI": "PASS", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "PASS", "focused_tests": "PASS", "full_certification": "PASS", "security_review": "PASS", "documentation": "PASS", "learning": "PASS", "unexpected_change_scan": "PASS"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -102,6 +103,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -123,6 +125,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -144,6 +147,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -165,6 +169,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -186,6 +191,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -207,6 +213,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -228,6 +235,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -249,6 +257,7 @@
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER"],
       "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
       "review": {"evidence_package_hash": null, "verdicts": []}
     }
   ],
