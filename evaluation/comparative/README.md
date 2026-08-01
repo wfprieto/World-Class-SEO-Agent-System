@@ -21,6 +21,9 @@ This directory is the canonical, machine-readable comparison between the World-C
 8. External facts must name their repository source and pinned commit.
 9. Documentation, mocks and fixtures cannot independently prove production readiness.
 10. The scoring schema may change only through a separately reviewed methodology migration with before-and-after results.
+11. Target baselines must identify a commit reachable from current `HEAD` and pin the canonical command and capability inventories; inventory drift fails validation.
+12. Code verification, authorized live verification, and external reproduction are independent evidence tiers.
+13. A rebaseline may correct stale capability facts without inventing a new numerical score; rescoring requires a separately reviewed evidence package.
 
 Run locally:
 

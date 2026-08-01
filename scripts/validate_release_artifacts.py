@@ -14,6 +14,24 @@ def validate(root: Path, manifest_path: Path, sbom_path: Path) -> list[str]:
     sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != "1.5":
         failures.append("SBOM is not CycloneDX 1.5")
+    for component in sbom.get("components", []):
+        name = component.get("name", "<unnamed>")
+        if component.get("version") == "NOT_INSTALLED":
+            failures.append(f"SBOM component has an unresolved pseudo-version: {name}")
+        properties = {
+            row.get("name"): row.get("value")
+            for row in component.get("properties", [])
+            if isinstance(row, dict)
+        }
+        resolution = properties.get("wcseo:resolution")
+        if component.get("scope") == "required" and (
+            resolution != "LOCKED" or not component.get("version")
+        ):
+            failures.append(f"required SBOM component is not lock-resolved: {name}")
+        if component.get("scope") == "optional" and not component.get("version") and (
+            resolution != "DECLARED_OPTIONAL_UNRESOLVED"
+        ):
+            failures.append(f"optional unresolved SBOM component is not explicit: {name}")
 
     catalog = json.loads(
         (root / "skills" / "skill-catalog.json").read_text(encoding="utf-8")

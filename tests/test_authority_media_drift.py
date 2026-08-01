@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from integrations.authority_media.adapters import AuthorityMediaAdapter, DriftExecutionAdapter
+from integrations.authority_media.drift import DriftService as ModularDriftService
 from integrations.authority_media.services import (
     BacklinkProfileService,
     CommonCrawlService,
@@ -209,6 +210,24 @@ def test_drift_command_family_uses_one_evidence_store(tmp_path: Path):
     report = service.report("https://example.com/", db_path=db, output_path=str(report_path))
     assert report_path.is_file()
     assert report.data["report_path"] == str(report_path)
+
+
+def test_drift_service_compatibility_import_uses_modular_implementation():
+    assert DriftService is ModularDriftService
+
+
+def test_drift_rejects_unknown_state_before_creating_evidence_store(tmp_path: Path):
+    state = _write(tmp_path / "state.json", {"title": "Safe", "unexpected": "not allowed"})
+    db = tmp_path / "evidence.db"
+
+    try:
+        DriftService().baseline("https://example.com/", state, db_path=str(db))
+    except ValueError as exc:
+        assert str(exc) == "unsupported state fields: unexpected"
+    else:
+        raise AssertionError("unknown drift state fields must be rejected")
+
+    assert not db.exists()
 
 
 def test_cli_registry_handlers_and_fixture_commands(tmp_path: Path, monkeypatch):

@@ -11,80 +11,29 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from datetime import date
 from typing import Any
-from urllib.parse import urlsplit
 
 from adapters.base import AdapterResult
+from integrations.content_intelligence.analysis import (
+    CAPITALIZED,
+    FILLER_PATTERNS,
+    bounded_records,
+    compare_texts,
+    diagnostic_check,
+    iso_date,
+    mean,
+    number_or_none,
+    parse_period,
+    protected_tokens,
+    quality_measurements,
+    require_unique_ids,
+    required_string,
+    safe_registry_url,
+    validate_text,
+)
 from scripts.content_brief_evidence import brief_decision
 
-_MAX_TEXT_CHARS = 2_000_000
-_MAX_RECORDS = 2_000
-_WORD = re.compile(r"[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)?")
-_HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.+?)\s*$", re.MULTILINE)
-_FIRST_PERSON = re.compile(r"\b(?:I|we|me|my|mine|us|our|ours)\b", re.IGNORECASE)
-_URL = re.compile(r"https?://[^\s<>)\]]+")
-_CITATION = re.compile(r"(?:\[\d+(?:\s*[-,]\s*\d+)*\]|\([A-Z][^()]{0,80},\s*\d{4}[a-z]?\))")
-_CAPITALIZED = re.compile(
-    r"\b(?:[A-Z][A-Za-z0-9&.'’\-]*|[A-Z]{2,})(?:\s+(?:[A-Z][A-Za-z0-9&.'’\-]*|[A-Z]{2,})){0,4}\b"
-)
 _ALLOWED_RELATIONS = {"supports", "contradicts", "partial", "context_only", "not_checked"}
-_STOPWORDS = {
-    "a",
-    "an",
-    "and",
-    "are",
-    "as",
-    "at",
-    "be",
-    "by",
-    "for",
-    "from",
-    "has",
-    "have",
-    "in",
-    "is",
-    "it",
-    "of",
-    "on",
-    "or",
-    "that",
-    "the",
-    "this",
-    "to",
-    "use",
-    "was",
-    "were",
-    "will",
-    "with",
-}
-_FILLER_PATTERNS: tuple[tuple[re.Pattern[str], str, str], ...] = (
-    (
-        re.compile(r"\bIn today['’]s fast-paced digital landscape,?\s*", re.IGNORECASE),
-        "",
-        "removed_generic_scene_setting",
-    ),
-    (
-        re.compile(r"\bit is important to note that\s+", re.IGNORECASE),
-        "",
-        "removed_meta_filler",
-    ),
-    (
-        re.compile(r"\bIt should be noted that\s+", re.IGNORECASE),
-        "",
-        "removed_meta_filler",
-    ),
-    (
-        re.compile(r"\bIn conclusion,?\s*", re.IGNORECASE),
-        "",
-        "removed_formulaic_transition",
-    ),
-    (
-        re.compile(r"\bAt the end of the day,?\s*", re.IGNORECASE),
-        "",
-        "removed_cliche",
-    ),
-)
 
 
 class ContentIntelligenceService:
@@ -105,54 +54,36 @@ class ContentIntelligenceService:
         risk_class: str = "general",
         **_: Any,
     ) -> AdapterResult:
-        value = self._text(text)
-        words = self._words(value)
-        sentences = self._sentences(value)
-        paragraphs = self._paragraphs(value)
-        headings = [item.strip() for item in _HEADING.findall(value)]
-        normalized_sentences = [self._normalize_sentence(item) for item in sentences]
-        sentence_counts = Counter(item for item in normalized_sentences if len(self._words(item)) >= 5)
-        duplicates = sorted(item for item, count in sentence_counts.items() if count > 1)
-        sentence_lengths = [len(self._words(item)) for item in sentences if self._words(item)]
-        paragraph_lengths = [len(self._words(item)) for item in paragraphs if self._words(item)]
-        source_rows = self._bounded_list(sources or [], "sources")
-        unique_words = {word.lower() for word in words}
-        first_person = bool(_FIRST_PERSON.search(value))
-        citation_markers = len(_CITATION.findall(value)) + len(_URL.findall(value))
-
-        metrics = {
-            "character_count": len(value),
-            "word_count": len(words),
-            "sentence_count": len(sentences),
-            "paragraph_count": len(paragraphs),
-            "heading_count": len(headings),
-            "average_sentence_words": self._mean(sentence_lengths),
-            "average_paragraph_words": self._mean(paragraph_lengths),
-            "long_sentence_count": sum(length > 30 for length in sentence_lengths),
-            "duplicate_sentence_count": len(duplicates),
-            "lexical_diversity": round(len(unique_words) / len(words), 4) if words else 0.0,
-            "citation_marker_count": citation_markers,
-        }
+        value = validate_text(text)
+        measurements = quality_measurements(value)
+        headings = measurements["headings"]
+        duplicates = measurements["duplicates"]
+        sentence_lengths = measurements["sentence_lengths"]
+        paragraph_lengths = measurements["paragraph_lengths"]
+        source_rows = bounded_records(sources or [], "sources")
+        first_person = measurements["first_person"]
+        citation_markers = measurements["citation_markers"]
+        metrics = measurements["metrics"]
         checks = [
-            self._check("descriptive_title_supplied", bool(title and 8 <= len(title.strip()) <= 100), 15, {"title": title}),
-            self._check("audience_supplied", bool(audience and audience.strip()), 10, {"audience": audience}),
-            self._check("purpose_supplied", bool(purpose and purpose.strip()), 10, {"purpose": purpose}),
-            self._check("authorship_supplied", bool(author and author.strip()), 10, {"author": author}),
-            self._check("source_register_supplied", bool(source_rows), 10, {"source_count": len(source_rows)}),
-            self._check(
+            diagnostic_check("descriptive_title_supplied", bool(title and 8 <= len(title.strip()) <= 100), 15, {"title": title}),
+            diagnostic_check("audience_supplied", bool(audience and audience.strip()), 10, {"audience": audience}),
+            diagnostic_check("purpose_supplied", bool(purpose and purpose.strip()), 10, {"purpose": purpose}),
+            diagnostic_check("authorship_supplied", bool(author and author.strip()), 10, {"author": author}),
+            diagnostic_check("source_register_supplied", bool(source_rows), 10, {"source_count": len(source_rows)}),
+            diagnostic_check(
                 "sentence_length_bounded",
-                not sentence_lengths or (self._mean(sentence_lengths) or 0) <= 25,
+                not sentence_lengths or (mean(sentence_lengths) or 0) <= 25,
                 15,
                 {"average_sentence_words": metrics["average_sentence_words"]},
             ),
-            self._check(
+            diagnostic_check(
                 "paragraph_length_bounded",
-                not paragraph_lengths or (self._mean(paragraph_lengths) or 0) <= 120,
+                not paragraph_lengths or (mean(paragraph_lengths) or 0) <= 120,
                 10,
                 {"average_paragraph_words": metrics["average_paragraph_words"]},
             ),
-            self._check("duplicate_sentences_absent", not duplicates, 10, {"duplicates": duplicates[:20]}),
-            self._check("heading_structure_present", bool(headings), 10, {"headings": headings[:50]}),
+            diagnostic_check("duplicate_sentences_absent", not duplicates, 10, {"duplicates": duplicates[:20]}),
+            diagnostic_check("heading_structure_present", bool(headings), 10, {"headings": headings[:50]}),
         ]
         available_weight = sum(item["weight"] for item in checks)
         earned_weight = sum(item["weight"] for item in checks if item["state"] == "PASS")
@@ -220,18 +151,18 @@ class ContentIntelligenceService:
         sources: list[dict[str, Any]],
         **_: Any,
     ) -> AdapterResult:
-        claim_rows = self._bounded_list(claims, "claims")
-        source_rows = self._bounded_list(sources, "sources")
-        self._unique_ids(claim_rows, "claim")
-        self._unique_ids(source_rows, "source")
+        claim_rows = bounded_records(claims, "claims")
+        source_rows = bounded_records(sources, "sources")
+        require_unique_ids(claim_rows, "claim")
+        require_unique_ids(source_rows, "source")
         source_map: dict[str, dict[str, Any]] = {}
         normalized_sources: list[dict[str, Any]] = []
         for source in source_rows:
-            source_id = self._required_string(source, "id", "source")
-            title = self._required_string(source, "title", f"source {source_id}")
+            source_id = required_string(source, "id", "source")
+            title = required_string(source, "title", f"source {source_id}")
             url = source.get("url")
             if url is not None:
-                self._safe_registry_url(str(url))
+                safe_registry_url(str(url))
             row = {
                 "id": source_id,
                 "title": title,
@@ -245,7 +176,7 @@ class ContentIntelligenceService:
             }
             for key in ("published_at", "accessed_at"):
                 if row[key]:
-                    self._iso_date(str(row[key]), f"source {source_id} {key}")
+                    iso_date(str(row[key]), f"source {source_id} {key}")
             source_map[source_id] = row
             normalized_sources.append(row)
 
@@ -253,19 +184,19 @@ class ContentIntelligenceService:
         state_counts: Counter[str] = Counter()
         warnings: list[str] = []
         for claim in claim_rows:
-            claim_id = self._required_string(claim, "id", "claim")
-            text = self._required_string(claim, "text", f"claim {claim_id}")
+            claim_id = required_string(claim, "id", "claim")
+            text = required_string(claim, "text", f"claim {claim_id}")
             source_ids = [str(item).strip() for item in claim.get("source_ids", []) if str(item).strip()]
             if len(source_ids) != len(set(source_ids)):
                 raise ValueError(f"claim {claim_id} contains duplicate source_ids")
             missing_sources = sorted(source_id for source_id in source_ids if source_id not in source_map)
-            assessments = self._bounded_list(claim.get("source_assessments", []), f"claim {claim_id} source_assessments")
+            assessments = bounded_records(claim.get("source_assessments", []), f"claim {claim_id} source_assessments")
             normalized_assessments: list[dict[str, Any]] = []
             valid_relations: list[str] = []
             assessment_issues: list[str] = []
             for assessment in assessments:
-                source_id = self._required_string(assessment, "source_id", f"claim {claim_id} assessment")
-                relation = self._required_string(assessment, "relation", f"claim {claim_id} assessment").lower()
+                source_id = required_string(assessment, "source_id", f"claim {claim_id} assessment")
+                relation = required_string(assessment, "relation", f"claim {claim_id} assessment").lower()
                 if relation not in _ALLOWED_RELATIONS:
                     raise ValueError(
                         f"claim {claim_id} assessment relation must be one of {sorted(_ALLOWED_RELATIONS)}"
@@ -278,7 +209,7 @@ class ContentIntelligenceService:
                     assessment_issues.append(f"assessment references missing source {source_id}")
                 review_complete = bool(reviewer and reviewed_at)
                 if reviewed_at:
-                    self._iso_date(reviewed_at, f"claim {claim_id} reviewed_at")
+                    iso_date(reviewed_at, f"claim {claim_id} reviewed_at")
                 if not review_complete:
                     assessment_issues.append(
                         f"assessment for source {source_id} lacks reviewer or reviewed_at"
@@ -364,14 +295,14 @@ class ContentIntelligenceService:
         catalog: list[dict[str, Any]] | None = None,
         **_: Any,
     ) -> AdapterResult:
-        value = self._text(text)
-        catalog_rows = self._bounded_list(catalog or [], "catalog")
-        self._unique_ids(catalog_rows, "entity")
+        value = validate_text(text)
+        catalog_rows = bounded_records(catalog or [], "catalog")
+        require_unique_ids(catalog_rows, "entity")
         known_terms: set[str] = set()
         matches: list[dict[str, Any]] = []
         for entity in catalog_rows:
-            entity_id = self._required_string(entity, "id", "entity")
-            name = self._required_string(entity, "name", f"entity {entity_id}")
+            entity_id = required_string(entity, "id", "entity")
+            name = required_string(entity, "name", f"entity {entity_id}")
             aliases = [str(item).strip() for item in entity.get("aliases", []) if str(item).strip()]
             terms = list(dict.fromkeys([name, *aliases]))
             occurrences: list[dict[str, Any]] = []
@@ -393,7 +324,7 @@ class ContentIntelligenceService:
                     }
                 )
         candidates: list[dict[str, Any]] = []
-        candidate_counts = Counter(match.group(0).strip() for match in _CAPITALIZED.finditer(value))
+        candidate_counts = Counter(match.group(0).strip() for match in CAPITALIZED.finditer(value))
         for candidate, count in sorted(candidate_counts.items()):
             if candidate.casefold() in known_terms:
                 continue
@@ -447,7 +378,7 @@ class ContentIntelligenceService:
         if not isinstance(relevance, dict) or not isinstance(serp, dict):
             raise TypeError("relevance and serp must be objects")
         gains = [str(item).strip() for item in information_gains if str(item).strip()]
-        source_rows = self._bounded_list(sources, "sources")
+        source_rows = bounded_records(sources, "sources")
         section_rows = [str(item).strip() for item in (required_sections or []) if str(item).strip()]
         decision = brief_decision(
             relevance,
@@ -506,8 +437,8 @@ class ContentIntelligenceService:
             raise TypeError("current and prior snapshots must be objects")
         if not isinstance(decline_threshold, (int, float)) or not 0 < float(decline_threshold) <= 1:
             raise ValueError("decline_threshold must be greater than 0 and at most 1")
-        current_range = self._period(current, "current")
-        prior_range = self._period(prior, "prior")
+        current_range = parse_period(current, "current")
+        prior_range = parse_period(prior, "prior")
         if current_range[0] <= prior_range[1]:
             raise ValueError("current period must start after prior period ends")
         current_metrics = current.get("metrics") or {}
@@ -519,8 +450,8 @@ class ContentIntelligenceService:
         decline_signals: list[str] = []
         warnings: list[str] = []
         for metric in metric_names:
-            previous = self._number_or_none(prior_metrics.get(metric), f"prior metric {metric}")
-            present = self._number_or_none(current_metrics.get(metric), f"current metric {metric}")
+            previous = number_or_none(prior_metrics.get(metric), f"prior metric {metric}")
+            present = number_or_none(current_metrics.get(metric), f"current metric {metric}")
             percent_change = None
             absolute_change = None
             direction = "not_comparable"
@@ -603,41 +534,16 @@ class ContentIntelligenceService:
         right_label: str = "right",
         **_: Any,
     ) -> AdapterResult:
-        left = self._text(left_text)
-        right = self._text(right_text)
-        left_sentences = {self._normalize_sentence(item) for item in self._sentences(left) if item.strip()}
-        right_sentences = {self._normalize_sentence(item) for item in self._sentences(right) if item.strip()}
-        overlap = sorted(item for item in left_sentences & right_sentences if item)
-        left_terms = self._meaningful_terms(left)
-        right_terms = self._meaningful_terms(right)
-        left_headings = [item.strip() for item in _HEADING.findall(left)]
-        right_headings = [item.strip() for item in _HEADING.findall(right)]
+        left = validate_text(left_text)
+        right = validate_text(right_text)
+        comparison = compare_texts(left, right, left_label, right_label)
         return AdapterResult(
             source=self.name,
             status="ok",
             data={
                 "operation": "compare",
                 "data_state": "AVAILABLE",
-                "left": {
-                    "label": left_label,
-                    "word_count": len(self._words(left)),
-                    "sentence_count": len(left_sentences),
-                    "headings": left_headings,
-                    "citation_marker_count": len(_CITATION.findall(left)) + len(_URL.findall(left)),
-                },
-                "right": {
-                    "label": right_label,
-                    "word_count": len(self._words(right)),
-                    "sentence_count": len(right_sentences),
-                    "headings": right_headings,
-                    "citation_marker_count": len(_CITATION.findall(right)) + len(_URL.findall(right)),
-                },
-                "exact_sentence_overlap": overlap,
-                "left_unique_terms": sorted(left_terms - right_terms)[:500],
-                "right_unique_terms": sorted(right_terms - left_terms)[:500],
-                "shared_terms": sorted(left_terms & right_terms)[:500],
-                "left_unique_headings": sorted(set(left_headings) - set(right_headings)),
-                "right_unique_headings": sorted(set(right_headings) - set(left_headings)),
+                **comparison,
                 "winner": None,
                 "quality_superiority": "NOT_ASSESSED",
                 "factual_accuracy_comparison": "NOT_RUN",
@@ -650,10 +556,10 @@ class ContentIntelligenceService:
         )
 
     def humanize(self, *, text: str, **_: Any) -> AdapterResult:
-        original = self._text(text)
+        original = validate_text(text)
         transformed = original
         changes: list[dict[str, Any]] = []
-        for pattern, replacement, change_id in _FILLER_PATTERNS:
+        for pattern, replacement, change_id in FILLER_PATTERNS:
             transformed, count = pattern.subn(replacement, transformed)
             if count:
                 changes.append({"change": change_id, "count": count})
@@ -665,8 +571,8 @@ class ContentIntelligenceService:
         normalized = normalized.strip()
         if normalized != transformed.strip():
             changes.append({"change": "normalized_whitespace_and_punctuation", "count": 1})
-        protected_before = self._protected_tokens(original)
-        protected_after = self._protected_tokens(normalized)
+        protected_before = protected_tokens(original)
+        protected_after = protected_tokens(normalized)
         protected_preserved = protected_before == protected_after
         warnings: list[str] = []
         if not protected_preserved:
@@ -696,137 +602,3 @@ class ContentIntelligenceService:
             },
             warnings=warnings,
         )
-
-    @staticmethod
-    def _text(value: str) -> str:
-        if not isinstance(value, str):
-            raise TypeError("text must be a string")
-        if len(value) > _MAX_TEXT_CHARS:
-            raise ValueError(f"text exceeds the {_MAX_TEXT_CHARS}-character ceiling")
-        if not value.strip():
-            raise ValueError("text cannot be empty")
-        return value
-
-    @staticmethod
-    def _bounded_list(value: Any, name: str) -> list[dict[str, Any]]:
-        if not isinstance(value, list):
-            raise TypeError(f"{name} must be a list")
-        if len(value) > _MAX_RECORDS:
-            raise ValueError(f"{name} exceeds the {_MAX_RECORDS}-record ceiling")
-        if any(not isinstance(item, dict) for item in value):
-            raise TypeError(f"every {name} item must be an object")
-        return list(value)
-
-    @staticmethod
-    def _unique_ids(rows: list[dict[str, Any]], label: str) -> None:
-        seen: set[str] = set()
-        for row in rows:
-            value = str(row.get("id") or "").strip()
-            if not value:
-                raise ValueError(f"{label} id is required")
-            if value in seen:
-                raise ValueError(f"duplicate {label} id: {value}")
-            seen.add(value)
-
-    @staticmethod
-    def _required_string(row: dict[str, Any], key: str, label: str) -> str:
-        value = str(row.get(key) or "").strip()
-        if not value:
-            raise ValueError(f"{label} {key} is required")
-        if len(value) > 20_000:
-            raise ValueError(f"{label} {key} exceeds the length ceiling")
-        return value
-
-    @staticmethod
-    def _safe_registry_url(value: str) -> None:
-        parsed = urlsplit(value)
-        if (
-            parsed.scheme not in {"http", "https"}
-            or not parsed.hostname
-            or parsed.username
-            or parsed.password
-        ):
-            raise ValueError("source url must be an HTTP(S) URL without embedded credentials")
-
-    @staticmethod
-    def _iso_date(value: str, label: str) -> date:
-        try:
-            return date.fromisoformat(value[:10])
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"{label} must use YYYY-MM-DD") from exc
-
-    @classmethod
-    def _period(cls, snapshot: dict[str, Any], label: str) -> tuple[date, date]:
-        start = cls._iso_date(str(snapshot.get("period_start") or ""), f"{label} period_start")
-        end = cls._iso_date(str(snapshot.get("period_end") or ""), f"{label} period_end")
-        if start > end:
-            raise ValueError(f"{label} period_start must be on or before period_end")
-        return start, end
-
-    @staticmethod
-    def _number_or_none(value: Any, label: str) -> float | None:
-        if value is None:
-            return None
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise TypeError(f"{label} must be numeric or null")
-        if not math.isfinite(float(value)):
-            raise ValueError(f"{label} must be finite")
-        return float(value)
-
-    @staticmethod
-    def _words(text: str) -> list[str]:
-        return _WORD.findall(text)
-
-    @staticmethod
-    def _sentences(text: str) -> list[str]:
-        cleaned = _HEADING.sub("", text)
-        return [
-            item.strip()
-            for item in re.split(r"(?<=[.!?])\s+|\n{2,}", cleaned)
-            if item.strip()
-        ]
-
-    @staticmethod
-    def _paragraphs(text: str) -> list[str]:
-        return [
-            item.strip()
-            for item in re.split(r"\n\s*\n", text)
-            if item.strip() and not _HEADING.fullmatch(item.strip())
-        ]
-
-    @staticmethod
-    def _normalize_sentence(value: str) -> str:
-        return re.sub(r"\s+", " ", value.strip()).casefold()
-
-    @staticmethod
-    def _mean(values: list[int]) -> float | None:
-        return round(sum(values) / len(values), 2) if values else None
-
-    @staticmethod
-    def _check(
-        check_id: str,
-        passed: bool,
-        weight: int,
-        evidence: dict[str, Any],
-    ) -> dict[str, Any]:
-        return {
-            "id": check_id,
-            "state": "PASS" if passed else "NEEDS_REVIEW",
-            "weight": weight,
-            "evidence": evidence,
-        }
-
-    @classmethod
-    def _meaningful_terms(cls, text: str) -> set[str]:
-        return {
-            word.casefold()
-            for word in cls._words(text)
-            if len(word) >= 4 and word.casefold() not in _STOPWORDS
-        }
-
-    @staticmethod
-    def _protected_tokens(text: str) -> set[str]:
-        numbers = re.findall(r"(?<!\w)[+-]?(?:\d[\d,]*)(?:\.\d+)?%?(?!\w)", text)
-        urls = _URL.findall(text)
-        citations = _CITATION.findall(text)
-        return set(numbers + urls + citations)

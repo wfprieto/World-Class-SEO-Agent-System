@@ -1,8 +1,17 @@
 # Security Policy
 
-## Supported version
+## Supported versions
 
-The latest release on `main` is supported.
+| Version or channel | Security support |
+|---|---|
+| Current `main` (`1.7.x` pre-release development) | Supported for coordinated fixes |
+| Tagged releases | None published yet |
+| Older commits and unmerged branches | Not supported |
+
+`main` is the current development source of truth, but it is not described as a
+published release. When the first versioned release is published, this table must
+name the supported tag series and retirement policy. Supported runtime versions are
+CPython 3.11, 3.12, and 3.13 on Windows and Ubuntu; Python 3.14+ is not certified.
 
 ## Report a vulnerability privately
 

@@ -2,7 +2,7 @@
 
 [![Validate repository](https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/workflows/validate.yml/badge.svg)](https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![Python 3.11–3.13](https://img.shields.io/badge/python-3.11%E2%80%933.13-blue.svg)](pyproject.toml)
 
 A model-agnostic, evidence-first operating system for technical SEO, content strategy, GEO/AIO, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
 
@@ -10,21 +10,24 @@ It gives SEO professionals and coding teams a structured way to route work, use 
 
 ## Get a working result in 60 seconds
 
-Requires Python 3.11 or later.
+Requires Python 3.11, 3.12, or 3.13.
 
 ```bash
 python -m pip install -e .
 seoctl --registry-check
-python main.py "Run a full SEO audit" --domain https://example.com
+seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/first-run --max-urls 20
 ```
 
-For a safe dry-run execution:
+This deterministic fixture audit makes no live request and writes six inspectable artifacts to the gitignored `outputs/first-run/` directory: `run-manifest.json`, `technical-audit.md`, `executive-summary.md`, `remediation-plan.csv`, `verification-plan.json`, and `agent-contributions.json`. The manifest labels the evidence mode `FIXTURE`; these results demonstrate the audit contract, not the condition of `example.com` or any other live site.
+
+Inspect every registered command family and its family-specific options:
 
 ```bash
-python main.py "Run a full SEO audit" --domain https://example.com --execute
+seoctl --help
+seoctl audit --help
 ```
 
-Start with [SYSTEM_MAP.md](SYSTEM_MAP.md), then route a request with [workflows/request-routing.md](workflows/request-routing.md).
+Continue with the [five-minute quick start](docs/QUICKSTART.md), then use [SYSTEM_MAP.md](SYSTEM_MAP.md) and [workflows/request-routing.md](workflows/request-routing.md) for orchestration. Live crawling and provider-backed execution are separate, optional steps that require authorization and may require credentials.
 
 ## Safe and authorized use
 

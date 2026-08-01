@@ -7,7 +7,6 @@ import re
 import urllib.parse
 import xml.etree.ElementTree as ET
 from collections import Counter
-from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -15,74 +14,27 @@ from adapters.base import AdapterResult
 from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
 from adapters.url_safety import validate_public_url
 from integrations.technical.http import BoundedHttpClient, HttpHop
+from integrations.technical.parsing import (
+    SUPPORTED_SCHEMA,
+    PageParser,
+    cwv_metrics,
+    decode_http_body,
+    directive_tokens,
+    header_value,
+    is_missing,
+    local_name,
+    parse_jsonld_scripts,
+    parse_robots,
+    performance_score,
+    schema_types,
+    tokens,
+    type_values,
+)
 
 _BCP47 = re.compile(
     r"^(?:[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?"
     r"(?:-[A-Za-z0-9]{5,8}|-\d[A-Za-z0-9]{3})*|x-default)$"
 )
-_SUPPORTED_SCHEMA: dict[str, dict[str, tuple[str, ...]]] = {
-    "Organization": {
-        "required": ("name", "url"),
-        "optional": ("logo", "sameAs", "description"),
-    },
-    "WebSite": {
-        "required": ("name", "url"),
-        "optional": ("alternateName", "description", "publisher"),
-    },
-    "Article": {
-        "required": ("headline", "url"),
-        "optional": (
-            "datePublished",
-            "dateModified",
-            "author",
-            "image",
-            "publisher",
-            "description",
-        ),
-    },
-    "Product": {
-        "required": ("name", "url"),
-        "optional": ("image", "description", "sku", "brand", "offers"),
-    },
-    "BreadcrumbList": {
-        "required": ("itemListElement",),
-        "optional": (),
-    },
-}
-
-
-class _PageParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.links: list[dict[str, str]] = []
-        self.metas: list[dict[str, str]] = []
-        self.jsonld_texts: list[str] = []
-        self._jsonld_parts: list[str] | None = None
-
-    def handle_starttag(self, tag: str, attrs) -> None:
-        values = {str(key).lower(): str(value or "") for key, value in attrs}
-        lower = tag.lower()
-        if lower == "link":
-            self.links.append(values)
-        elif lower == "meta":
-            self.metas.append(values)
-        elif (
-            lower == "script"
-            and values.get("type", "").lower().split(";", 1)[0].strip()
-            == "application/ld+json"
-        ):
-            self._jsonld_parts = []
-
-    def handle_data(self, data: str) -> None:
-        if self._jsonld_parts is not None:
-            self._jsonld_parts.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag.lower() == "script" and self._jsonld_parts is not None:
-            self.jsonld_texts.append("".join(self._jsonld_parts).strip())
-            self._jsonld_parts = None
-
-
 class TechnicalInspectionService:
     name = "technical_inspection"
 
@@ -102,8 +54,8 @@ class TechnicalInspectionService:
             (parsed.scheme, parsed.netloc, "/robots.txt", "", "")
         )
         hop = self.http.get(robots_url)
-        text = self._decode(hop)
-        groups, sitemaps, unknown = self._parse_robots(text)
+        text = decode_http_body(hop)
+        groups, sitemaps, unknown = parse_robots(text)
         warnings: list[str] = []
         if hop.status_code == 404:
             warnings.append(
@@ -155,11 +107,11 @@ class TechnicalInspectionService:
                 },
                 warnings=["Sitemap response is not valid XML."],
             )
-        kind = self._local_name(root.tag)
+        kind = local_name(root.tag)
         locations = [
             (element.text or "").strip()
             for element in root.iter()
-            if self._local_name(element.tag) == "loc"
+            if local_name(element.tag) == "loc"
             and (element.text or "").strip()
         ]
         truncated = len(locations) > 50_000
@@ -221,7 +173,7 @@ class TechnicalInspectionService:
         invalid_codes: list[str] = []
         invalid_targets: list[str] = []
         for link in parser.links:
-            rel = self._tokens(link.get("rel"))
+            rel = tokens(link.get("rel"))
             language = link.get("hreflang", "").strip()
             href = link.get("href", "").strip()
             if "alternate" not in rel or not language:
@@ -298,7 +250,7 @@ class TechnicalInspectionService:
         preloads: list[dict[str, Any]] = []
         warnings: list[str] = []
         for link in parser.links:
-            rel = self._tokens(link.get("rel"))
+            rel = tokens(link.get("rel"))
             if not ({"preload", "modulepreload"} & rel):
                 continue
             href = link.get("href", "").strip()
@@ -378,20 +330,20 @@ class TechnicalInspectionService:
 
     def indexability(self, url: str, **_: Any) -> AdapterResult:
         safe, hop, parser = self._page(url)
-        header_robots = self._header(hop.headers, "x-robots-tag") or ""
+        header_robots = header_value(hop.headers, "x-robots-tag") or ""
         meta_values = [
             meta.get("content", "")
             for meta in parser.metas
             if meta.get("name", "").lower()
             in {"robots", "googlebot", "googlebot-news"}
         ]
-        header_directives = self._directive_tokens([header_robots])
-        meta_directives = self._directive_tokens(meta_values)
+        header_directives = directive_tokens([header_robots])
+        meta_directives = directive_tokens(meta_values)
         directives = header_directives | meta_directives
         canonicals = [
             urllib.parse.urljoin(hop.final_url, link["href"])
             for link in parser.links
-            if "canonical" in self._tokens(link.get("rel"))
+            if "canonical" in tokens(link.get("rel"))
             and link.get("href")
         ]
         blocking: list[str] = []
@@ -469,7 +421,7 @@ class TechnicalInspectionService:
             source = "pagespeed_live"
             live = True
             warnings = list(result.warnings)
-        metrics = self._cwv_metrics(payload)
+        metrics = cwv_metrics(payload)
         missing = [
             name for name, item in metrics.items() if item["value"] is None
         ]
@@ -484,7 +436,7 @@ class TechnicalInspectionService:
                 "operation": "cwv",
                 "source": source,
                 "strategy": strategy,
-                "performance_score": self._performance_score(payload),
+                "performance_score": performance_score(payload),
                 "metrics": metrics,
                 "data_state": "AVAILABLE" if not missing else "PARTIAL",
                 "live_measurement": live,
@@ -511,23 +463,10 @@ class TechnicalInspectionService:
             source_value = hop.final_url
         else:
             safe = None
-            parser = _PageParser()
+            parser = PageParser()
             parser.feed(str(html))
             source_value = source or "html"
-        items: list[Any] = []
-        invalid: list[dict[str, Any]] = []
-        for index, text in enumerate(parser.jsonld_texts):
-            if not text:
-                invalid.append(
-                    {"script_index": index, "error": "empty JSON-LD script"}
-                )
-                continue
-            try:
-                parsed = json.loads(text)
-            except json.JSONDecodeError as exc:
-                invalid.append({"script_index": index, "error": str(exc)})
-                continue
-            items.extend(parsed if isinstance(parsed, list) else [parsed])
+        items, invalid = parse_jsonld_scripts(parser.jsonld_texts)
         warnings: list[str] = []
         if invalid:
             warnings.append(
@@ -544,7 +483,7 @@ class TechnicalInspectionService:
                 "source": source_value,
                 "items": items,
                 "item_count": len(items),
-                "types": sorted(self._schema_types(items)),
+                "types": sorted(schema_types(items)),
                 "invalid_scripts": invalid,
                 "data_state": "AVAILABLE" if items else "EMPTY",
                 "limitations": [
@@ -590,7 +529,7 @@ class TechnicalInspectionService:
                 errors.append({"item": index, "error": "missing @context"})
             if "@type" not in item:
                 errors.append({"item": index, "error": "missing @type"})
-            types.update(self._type_values(item.get("@type")))
+            types.update(type_values(item.get("@type")))
         return AdapterResult(
             source=self.name,
             status="ok" if not errors else "needs-review",
@@ -618,14 +557,14 @@ class TechnicalInspectionService:
         values: dict[str, Any],
         **_: Any,
     ) -> AdapterResult:
-        if schema_type not in _SUPPORTED_SCHEMA:
+        if schema_type not in SUPPORTED_SCHEMA:
             raise ValueError(
                 "schema_type must be one of the supported types: "
-                + ", ".join(sorted(_SUPPORTED_SCHEMA))
+                + ", ".join(sorted(SUPPORTED_SCHEMA))
             )
         if not isinstance(values, dict):
             raise TypeError("values must be an object")
-        contract = _SUPPORTED_SCHEMA[schema_type]
+        contract = SUPPORTED_SCHEMA[schema_type]
         allowed = set(contract["required"]) | set(contract["optional"])
         unknown = sorted(set(values) - allowed)
         if unknown:
@@ -636,7 +575,7 @@ class TechnicalInspectionService:
         missing = [
             field
             for field in contract["required"]
-            if self._is_missing(values.get(field))
+            if is_missing(values.get(field))
         ]
         if missing:
             raise ValueError("missing required fields: " + ", ".join(missing))
@@ -646,7 +585,7 @@ class TechnicalInspectionService:
         }
         for field in (*contract["required"], *contract["optional"]):
             value = values.get(field)
-            if not self._is_missing(value):
+            if not is_missing(value):
                 output[field] = value
         omitted = [
             field for field in contract["optional"] if field not in output
@@ -669,189 +608,9 @@ class TechnicalInspectionService:
             warnings=[],
         )
 
-    def _page(self, url: str) -> tuple[str, HttpHop, _PageParser]:
+    def _page(self, url: str) -> tuple[str, HttpHop, PageParser]:
         safe = validate_public_url(url)
         hop = self.http.get(safe)
-        parser = _PageParser()
-        parser.feed(self._decode(hop))
+        parser = PageParser()
+        parser.feed(decode_http_body(hop))
         return safe, hop, parser
-
-    @staticmethod
-    def _is_missing(value: Any) -> bool:
-        return value is None or value == "" or value == []
-
-    @staticmethod
-    def _decode(hop: HttpHop) -> str:
-        content_type = TechnicalInspectionService._header(
-            hop.headers, "content-type"
-        ) or ""
-        match = re.search(
-            r"charset=([A-Za-z0-9._-]+)", content_type, flags=re.I
-        )
-        encoding = match.group(1) if match else "utf-8"
-        try:
-            return hop.body.decode(encoding, "replace")
-        except LookupError:
-            return hop.body.decode("utf-8", "replace")
-
-    @staticmethod
-    def _parse_robots(
-        text: str,
-    ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
-        groups: list[dict[str, Any]] = []
-        agents: list[str] = []
-        rules: list[dict[str, str]] = []
-        sitemaps: list[str] = []
-        unknown: list[str] = []
-        rules_started = False
-
-        def flush() -> None:
-            nonlocal agents, rules, rules_started
-            if agents:
-                groups.append({"user_agents": agents, "rules": rules})
-            agents = []
-            rules = []
-            rules_started = False
-
-        for raw in text.splitlines():
-            line = raw.split("#", 1)[0].strip()
-            if not line or ":" not in line:
-                continue
-            name, value = (part.strip() for part in line.split(":", 1))
-            directive = name.lower()
-            if directive == "user-agent":
-                if rules_started:
-                    flush()
-                agents.append(value)
-            elif directive in {"allow", "disallow"}:
-                if not agents:
-                    agents = ["*"]
-                rules.append({"directive": directive, "value": value})
-                rules_started = True
-            elif directive == "sitemap":
-                if value:
-                    sitemaps.append(value)
-            elif directive not in {"crawl-delay", "host"}:
-                unknown.append(line)
-        flush()
-        return groups, list(dict.fromkeys(sitemaps)), unknown
-
-    @staticmethod
-    def _local_name(tag: str) -> str:
-        return tag.rsplit("}", 1)[-1].lower()
-
-    @staticmethod
-    def _tokens(value: str | None) -> set[str]:
-        return {
-            token.lower()
-            for token in re.split(r"[\s,]+", value or "")
-            if token
-        }
-
-    @staticmethod
-    def _directive_tokens(values: list[str]) -> set[str]:
-        return {
-            token.lower()
-            for value in values
-            for token in re.split(r"[\s,;]+", value or "")
-            if token
-        }
-
-    @staticmethod
-    def _header(headers: dict[str, str], name: str) -> str | None:
-        for key, value in headers.items():
-            if key.lower() == name.lower():
-                return value
-        return None
-
-    @classmethod
-    def _schema_types(cls, items: list[Any]) -> set[str]:
-        output: set[str] = set()
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            output.update(cls._type_values(item.get("@type")))
-            graph = item.get("@graph")
-            if isinstance(graph, list):
-                output.update(cls._schema_types(graph))
-        return output
-
-    @staticmethod
-    def _type_values(value: Any) -> set[str]:
-        if isinstance(value, str):
-            return {value}
-        if isinstance(value, list):
-            return {item for item in value if isinstance(item, str)}
-        return set()
-
-    @classmethod
-    def _cwv_metrics(
-        cls, payload: dict[str, Any]
-    ) -> dict[str, dict[str, Any]]:
-        lighthouse = payload.get("lighthouseResult") or payload
-        audits = lighthouse.get("audits") or {}
-        raw = {
-            "lcp_ms": cls._audit_number(
-                audits, "largest-contentful-paint", payload, "lcp_ms"
-            ),
-            "inp_ms": cls._audit_number(
-                audits, "interaction-to-next-paint", payload, "inp_ms"
-            ),
-            "cls": cls._audit_number(
-                audits, "cumulative-layout-shift", payload, "cls"
-            ),
-        }
-        return {
-            "lcp_ms": {
-                "value": raw["lcp_ms"],
-                "rating": cls._rating(raw["lcp_ms"], 2500, 4000),
-            },
-            "inp_ms": {
-                "value": raw["inp_ms"],
-                "rating": cls._rating(raw["inp_ms"], 200, 500),
-            },
-            "cls": {
-                "value": raw["cls"],
-                "rating": cls._rating(raw["cls"], 0.1, 0.25),
-            },
-        }
-
-    @staticmethod
-    def _audit_number(
-        audits: dict[str, Any],
-        audit_id: str,
-        payload: dict[str, Any],
-        fallback: str,
-    ) -> float | None:
-        value = (audits.get(audit_id) or {}).get("numericValue")
-        if value is None:
-            value = payload.get(fallback)
-        try:
-            return float(value) if value is not None else None
-        except (TypeError, ValueError):
-            return None
-
-    @staticmethod
-    def _performance_score(payload: dict[str, Any]) -> float | None:
-        lighthouse = payload.get("lighthouseResult") or payload
-        value = (
-            ((lighthouse.get("categories") or {}).get("performance") or {}).get(
-                "score"
-            )
-        )
-        if value is None:
-            value = payload.get("performance_score")
-        try:
-            return float(value) if value is not None else None
-        except (TypeError, ValueError):
-            return None
-
-    @staticmethod
-    def _rating(value: float | None, good: float, poor: float) -> str:
-        if value is None:
-            return "not_available"
-        if value <= good:
-            return "good"
-        if value <= poor:
-            return "needs_improvement"
-        return "poor"

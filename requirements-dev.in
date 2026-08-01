@@ -1,0 +1,14 @@
+# Canonical direct development requirements. Regenerate requirements-dev.txt with:
+#   python -m piptools compile --strip-extras --output-file requirements-dev.txt requirements-dev.in
+# Use a supported Python (3.11, 3.12, or 3.13); CI verifies the generated file on 3.13.
+jsonschema>=4.22.0,<5
+pytest>=8.0.0,<10
+pytest-asyncio>=0.23.0,<2
+pytest-cov>=6.0,<8
+PyYAML>=6.0.3,<7
+tenacity>=8.2.0,<10
+ruff>=0.9,<1
+mypy>=1.15,<3
+pip-audit>=2.7,<3
+build>=1.2,<2
+pip-tools>=7.5,<8

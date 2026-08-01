@@ -6,15 +6,20 @@ build-backend = "setuptools.build_meta"
 name = "world-class-seo-agent-system"
 version = "1.7.0"
 description = "Model-agnostic SEO agent operating system with runtime contracts, adapters, schemas, workflows, and validation tests."
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = ["jsonschema>=4.22.0,<5", "tenacity>=8.2.0"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 
 [project.scripts]
 seoctl = "seoctl.entrypoint:main"
 
 [project.optional-dependencies]
 render = ["playwright>=1.49,<2"]
-dev = ["jsonschema>=4.22.0,<5","pytest>=8.0.0","pytest-asyncio>=0.23.0","pytest-cov>=6.0,<8","tenacity>=8.2.0","ruff>=0.9,<1","mypy>=1.15,<3","pip-audit>=2.7,<3","build>=1.2,<2"]
+dev = ["jsonschema>=4.22.0,<5","pytest>=8.0.0,<10","pytest-asyncio>=0.23.0,<2","pytest-cov>=6.0,<8","PyYAML>=6.0.3,<7","tenacity>=8.2.0,<10","ruff>=0.9,<1","mypy>=1.15,<3","pip-audit>=2.7,<3","build>=1.2,<2","pip-tools>=7.5,<8"]
 
 [tool.setuptools]
 include-package-data = true
@@ -73,3 +78,13 @@ omit = ["tests/*"]
 fail_under = 65
 show_missing = true
 skip_covered = false
+
+# These are regression floors for high-risk network and provider boundaries. The
+# repository-wide 65% gate remains independently enforced; no file is omitted.
+[tool.wcseo.risk_coverage]
+"adapters/google_pagespeed_live.py" = 80
+"adapters/url_safety.py" = 80
+"integrations/authority_media/transport.py" = 65
+"integrations/technical/browser.py" = 42
+"integrations/technical/http.py" = 70
+"runtime/llm.py" = 60

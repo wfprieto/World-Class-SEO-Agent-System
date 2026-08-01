@@ -1,0 +1,64 @@
+name: Publish verified release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install locked release toolchain
+        run: python -m pip install -r requirements-dev.txt
+      - name: Enforce release and evidence gates
+        run: |
+          python scripts/validate_dependency_lock.py
+          python scripts/validate_release_version.py --release-mode
+          python scripts/validate_phase6_readiness.py --require-approved
+          python scripts/inventory_comparator.py
+          python scripts/scan_secrets.py
+      - name: Build and verify distributions
+        run: |
+          python -m build
+          wheel="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python scripts/verify_clean_wheel.py "$wheel"
+      - name: Generate release evidence and checksums
+        run: |
+          mkdir -p outputs
+          python scripts/generate_sbom.py --out outputs/sbom.cdx.json
+          python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
+          python scripts/validate_release_artifacts.py --manifest outputs/release-manifest.json --sbom outputs/sbom.cdx.json
+          sha256sum dist/* outputs/sbom.cdx.json outputs/release-manifest.json > outputs/SHA256SUMS
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*
+      - name: Attest wheel SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*.whl
+          sbom-path: outputs/sbom.cdx.json
+      - name: Publish immutable GitHub release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/* outputs/sbom.cdx.json
+          outputs/release-manifest.json outputs/SHA256SUMS --verify-tag
+          --title "$GITHUB_REF_NAME" --generate-notes

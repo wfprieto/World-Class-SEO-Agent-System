@@ -8,6 +8,8 @@ from scripts.inventory_comparator import (
     inventory_repo,
     load_json,
     validate_all,
+    validate_capability_inventory,
+    validate_current_target_commits,
     validate_parity_ledger,
     validate_scorecard,
     weighted_score,
@@ -78,3 +80,34 @@ def test_capability_ids_are_unique():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
     ids = [row["id"] for row in ledger["capabilities"]]
     assert len(ids) == len(set(ids))
+
+
+def test_comparative_artifacts_fail_closed_when_target_commit_is_stale():
+    world = load_json(COMPARATIVE / "world-class-baseline.json")
+    parity = load_json(COMPARATIVE / "capability-parity.json")
+    readiness = load_json(COMPARATIVE / "final-release-readiness.json")
+    world["target_repository"] = "wfprieto/World-Class-SEO-Agent-System@" + ("0" * 40)
+
+    errors = validate_current_target_commits(world, parity, readiness, ROOT)
+
+    assert any("world-class target commit is stale" in error for error in errors)
+
+
+def test_gap_claim_cannot_contradict_canonical_command_inventory():
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(item for item in broken["capabilities"] if item["id"] == "unified-command-surface")
+    row["code_state"] = "ABSENT"
+
+    errors = validate_capability_inventory(broken, ROOT)
+
+    assert any("unified-command-surface" in error and "canonical command inventory" in error for error in errors)
+
+
+def test_current_evidence_keeps_code_live_and_external_proof_separate():
+    world = load_json(COMPARATIVE / "world-class-baseline.json")
+    assert world["verification_state"] == {
+        "code_verified": "PASS",
+        "live_verified": "INCOMPLETE",
+        "externally_reproduced": "NOT_RUN",
+    }
