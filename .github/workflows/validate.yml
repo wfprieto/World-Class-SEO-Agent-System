@@ -44,6 +44,8 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
+      - name: Validate owner-controlled remediation program
+        run: python scripts/validate_remediation_program.py
       - name: Upload improvement governance result
         if: always()
         uses: actions/upload-artifact@v7
@@ -127,7 +129,7 @@ jobs:
           scripts/run_security_mutation_checks.py scripts/validate_seo_claims.py
           scripts/validate_product_claims.py scripts/validate_product_proof_program.py
           scripts/validate_dependency_lock.py scripts/validate_risk_coverage.py
-          scripts/verify_clean_wheel.py
+          scripts/verify_clean_wheel.py scripts/validate_remediation_program.py
           --ignore-missing-imports --check-untyped-defs
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py

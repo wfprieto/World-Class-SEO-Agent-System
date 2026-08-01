@@ -1,0 +1,379 @@
+{
+  "schema_version": "1.0.0",
+  "program_id": "owner-controlled-remediation",
+  "objective": "Improve every owner-controlled product, capability, agent, architecture, verification, security, documentation, report, knowledge, and repository-governance surface without fabricating excluded release, provider, adoption, or real-world outcome evidence.",
+  "baseline": {
+    "commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+    "branch": "main",
+    "working_branch": "agent/owner-controlled-remediation-loop",
+    "tests_collected": 404,
+    "coverage_percent": 78.48
+  },
+  "apivr_tier": "COMPREHENSIVE",
+  "current_phase": "P0",
+  "direct_merge_permitted": false,
+  "scope": [
+    "product identity and scope",
+    "executable SEO capabilities",
+    "agent differentiation",
+    "architecture and maintainability",
+    "testing and verification",
+    "security posture",
+    "documentation and onboarding",
+    "report quality",
+    "knowledge and reference quality",
+    "repository and community readiness"
+  ],
+  "exclusions": [
+    "public packaging and release maturity",
+    "real-world SEO effectiveness and external reproduction",
+    "provider or deployed SEO-effectiveness, adoption, ranking, traffic, conversion, and community-growth claims"
+  ],
+  "evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"],
+  "phases": [
+    {
+      "id": "P0",
+      "title": "Program controls and current-state audit",
+      "status": "IN_PROGRESS",
+      "verified_commit": null,
+      "owner": "Repository maintainer",
+      "approver": "Repository maintainer",
+      "verifier": "Independent reviewers",
+      "notify": ["Security owner", "Quality owner"],
+      "scope": ["canonical program", "baseline", "phase gates", "learning loop", "rollback controls"],
+      "non_goals": ["feature implementation", "provider calls", "main-branch mutation"],
+      "rollback": "Revert the Phase 0 program, validator, tests, and CI invocation as one bounded change.",
+      "acceptance_criteria": [
+        {"id": "P0-AC-01", "description": "The validator rejects phase skipping and incomplete phase closure.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P0-AC-02", "description": "Every resolved failure requires a linked recurrence guardrail before phase completion.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P0-AC-03", "description": "Excluded evidence classes cannot be promoted to a passing completion claim.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "PASS", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P1",
+      "title": "Immediate repository security and governance",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Security owner",
+      "approver": "Repository maintainer",
+      "verifier": "Independent security reviewer",
+      "notify": ["Quality owner", "Community maintainer"],
+      "scope": ["vulnerability reporting", "security services", "required certification", "support path"],
+      "non_goals": ["public release", "live provider verification"],
+      "rollback": "Restore the recorded repository settings and revert only the Phase 1 workflow and documentation changes.",
+      "acceptance_criteria": [
+        {"id": "P1-AC-01", "description": "The documented vulnerability-reporting and support paths resolve to enabled destinations.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P1-AC-02", "description": "Main requires repository certification and independent review for material changes.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P2",
+      "title": "Canonical product and capability contract",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Product authority",
+      "approver": "Repository maintainer",
+      "verifier": "Quality owner",
+      "notify": ["Documentation owner", "SEO capability owner"],
+      "scope": ["product category", "operator", "flagship outcome", "capability classification", "claims boundary"],
+      "non_goals": ["marketing superiority claim", "adoption measurement"],
+      "rollback": "Revert the canonical product contract and generated references while preserving executable compatibility.",
+      "acceptance_criteria": [
+        {"id": "P2-AC-01", "description": "Canonical product terminology is consistent across validated authorities.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P2-AC-02", "description": "Every command and capability has an honest machine-readable evidence classification.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P3",
+      "title": "Architecture and verification foundation",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Runtime architecture owner",
+      "approver": "Repository maintainer",
+      "verifier": "Quality owner",
+      "notify": ["Security owner", "SEO capability owner"],
+      "scope": ["typed contracts", "dependency boundaries", "complexity ratchets", "lint", "coverage", "adverse tests"],
+      "non_goals": ["unrelated rewrite", "new provider capability"],
+      "rollback": "Revert each bounded refactor with its compatibility tests; do not roll back unrelated user work.",
+      "acceptance_criteria": [
+        {"id": "P3-AC-01", "description": "Critical runtime boundaries use typed contracts and validated dependency direction.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P3-AC-02", "description": "Complexity, typing, lint, and coverage ratchets reject new debt.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P4",
+      "title": "Executable capability depth and failure semantics",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "SEO capability owner",
+      "approver": "Repository maintainer",
+      "verifier": "Quality owner",
+      "notify": ["Runtime architecture owner", "Documentation owner"],
+      "scope": ["command contracts", "cross-source analysis", "prioritization", "finding reconciliation", "typed failures"],
+      "non_goals": ["live provider claims", "autonomous SEO mutations"],
+      "rollback": "Revert one command family or analysis service at a time while retaining the prior public interface.",
+      "acceptance_criteria": [
+        {"id": "P4-AC-01", "description": "Every registered command maps to a handler, schema, tests, evidence mode, and failure contract.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P4-AC-02", "description": "Missing, stale, duplicate, and contradictory evidence produce truthful deterministic states.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P5",
+      "title": "Agent differentiation and handoff governance",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Agent architecture owner",
+      "approver": "Repository maintainer",
+      "verifier": "Quality owner",
+      "notify": ["SEO capability owner", "Documentation owner"],
+      "scope": ["responsibility matrix", "overlap validation", "agent-specific capability", "evaluation cases", "handoffs"],
+      "non_goals": ["protecting agent count", "persona-only specialization"],
+      "rollback": "Restore the previous capability bundle and routing records if compatibility or ownership tests fail.",
+      "acceptance_criteria": [
+        {"id": "P5-AC-01", "description": "Every retained agent has distinct evidence, tools, policy, or deterministic output responsibility.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P5-AC-02", "description": "Required handoffs are consumed or explicitly reported unresolved.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P6",
+      "title": "Transport and local-data security hardening",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Security owner",
+      "approver": "Repository maintainer",
+      "verifier": "Independent security reviewer",
+      "notify": ["Runtime architecture owner", "Quality owner"],
+      "scope": ["outbound transport", "LLM redirects", "dependency integrity", "workflow integrity", "local-data protection"],
+      "non_goals": ["provider dashboard mutation", "live credential use", "public release"],
+      "rollback": "Revert each security boundary only if legitimate compatibility tests fail; never restore a proven unsafe behavior.",
+      "acceptance_criteria": [
+        {"id": "P6-AC-01", "description": "Every outbound transport enforces or delegates to one canonical security policy.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P6-AC-02", "description": "Credentials and private evidence cannot cross unapproved redirects, logs, telemetry, or examples.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P7",
+      "title": "Reports documentation onboarding and knowledge",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Documentation and knowledge owner",
+      "approver": "Repository maintainer",
+      "verifier": "Quality owner",
+      "notify": ["SEO capability owner", "Community maintainer"],
+      "scope": ["report model", "evidence traceability", "doctor diagnostics", "documentation sync", "knowledge provenance"],
+      "non_goals": ["real-site case study", "external outcome claim"],
+      "rollback": "Revert generated and canonical documentation together and retain schema backward compatibility.",
+      "acceptance_criteria": [
+        {"id": "P7-AC-01", "description": "Material report values and scores are reproducible and evidence-bound.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P7-AC-02", "description": "Onboarding, support, counts, commands, matrices, and knowledge freshness are validator-backed.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    },
+    {
+      "id": "P8",
+      "title": "Repository operations and integrated re-audit",
+      "status": "NOT_STARTED",
+      "verified_commit": null,
+      "owner": "Community maintainer",
+      "approver": "Repository maintainer",
+      "verifier": "Independent reviewers",
+      "notify": ["All functional owners"],
+      "scope": ["issue backlog", "maintainer runbooks", "ownership", "governance metrics", "integrated certification", "re-audit"],
+      "non_goals": ["release publication", "adoption target", "real-world result claim"],
+      "rollback": "Revert repository-operation documents and settings individually while preserving the verified source improvements.",
+      "acceptance_criteria": [
+        {"id": "P8-AC-01", "description": "Every controllable critical path has an owner, issue, runbook, verification, and rollback trigger.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
+        {"id": "P8-AC-02", "description": "The integrated source passes full certification and two independent fresh-context reviews.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+      ],
+      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER"],
+      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
+      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
+      "review": {"evidence_package_hash": null, "verdicts": []}
+    }
+  ],
+  "audit_findings": [
+    {
+      "id": "AUD-001",
+      "phase_id": "P0",
+      "severity": "HIGH",
+      "summary": "Improvement-cycle approval could be forged with empty implementation and evidence arrays.",
+      "status": "IN_PROGRESS",
+      "source_refs": ["schemas/improvement-cycle.schema.json", "scripts/run_improvement_cycle.py"],
+      "remediation": "Require non-empty implementation, test, evidence, and learning records in schema and evaluator.",
+      "acceptance": "A recomputed reviewer hash cannot turn an empty evidence package into approval."
+    },
+    {
+      "id": "AUD-002",
+      "phase_id": "P1",
+      "severity": "HIGH",
+      "summary": "Repository security reporting and main-branch controls require live setting verification.",
+      "status": "OPEN",
+      "source_refs": ["SECURITY.md", ".github/workflows/validate.yml"],
+      "remediation": "Align documented private reporting and required certification with enabled GitHub settings.",
+      "acceptance": "Live repository settings and documented paths agree and material changes require review."
+    },
+    {
+      "id": "AUD-003",
+      "phase_id": "P2",
+      "severity": "MEDIUM",
+      "summary": "Product identity and maturity wording are not enforced across every metadata surface.",
+      "status": "OPEN",
+      "source_refs": ["README.md", "SYSTEM_SPEC.md", "knowledge/product-claim-inventory.json"],
+      "remediation": "Create one canonical maturity-qualified product contract and validate every authority against it.",
+      "acceptance": "Blocked superiority or production-readiness wording fails deterministic validation."
+    },
+    {
+      "id": "AUD-004",
+      "phase_id": "P3",
+      "severity": "MEDIUM",
+      "summary": "Large modules and partial typing need ratchets that prevent new maintainability debt.",
+      "status": "OPEN",
+      "source_refs": ["runtime", "seoctl", "integrations", ".github/workflows/validate.yml"],
+      "remediation": "Add typed boundary contracts, complexity budgets, full linting, and adverse-path coverage ratchets.",
+      "acceptance": "Certification rejects new complexity, typing, lint, dependency-direction, or critical coverage debt."
+    },
+    {
+      "id": "AUD-005",
+      "phase_id": "P4",
+      "severity": "HIGH",
+      "summary": "Invalid CLI arguments bypass the documented single JSON-envelope command contract.",
+      "status": "OPEN",
+      "source_refs": ["docs/COMMANDS.md", "seoctl/cli.py"],
+      "remediation": "Use one non-exiting parser error adapter with stable command IDs and error codes.",
+      "acceptance": "Every registered invalid invocation emits exactly one valid JSON envelope and exits two."
+    },
+    {
+      "id": "AUD-006",
+      "phase_id": "P4",
+      "severity": "HIGH",
+      "summary": "Comparative inventory validation omits effective command and capability overlays.",
+      "status": "OPEN",
+      "source_refs": ["scripts/inventory_comparator.py", "seoctl/command-registry-overlay.json", "orchestration/product-proof-capability-overlay.json"],
+      "remediation": "Hash and validate the effective merged registries, including every overlay.",
+      "acceptance": "Mutating either overlay makes comparative freshness validation fail."
+    },
+    {
+      "id": "AUD-007",
+      "phase_id": "P5",
+      "severity": "HIGH",
+      "summary": "Most agent documents disagree with runtime capability skills or template selection.",
+      "status": "OPEN",
+      "source_refs": ["agents", "orchestration/capability-registry.json", "runtime/capability_resolver.py"],
+      "remediation": "Define primary, supplemental, and execution-class fields once and generate or validate agent declarations.",
+      "acceptance": "All agent documents exactly match resolved bundles and advisory agents are visibly classified."
+    },
+    {
+      "id": "AUD-008",
+      "phase_id": "P5",
+      "severity": "MEDIUM",
+      "summary": "Agent handoff completion and specialist differentiation are incompletely measured.",
+      "status": "OPEN",
+      "source_refs": ["evaluation/tracer", "orchestration/capability-registry.json"],
+      "remediation": "Add responsibility, overlap, handoff-consumption, and specialist evaluation matrices.",
+      "acceptance": "Every retained agent has a distinct tested responsibility and every required handoff is consumed or reported."
+    },
+    {
+      "id": "AUD-009",
+      "phase_id": "P6",
+      "severity": "HIGH",
+      "summary": "Legacy rendered-page fetching can follow a validated public URL to an unvalidated private redirect.",
+      "status": "OPEN",
+      "source_refs": ["adapters/rendered_page.py", "adapters/registry.py"],
+      "remediation": "Route all rendered-page requests and redirects through the canonical bounded transport.",
+      "acceptance": "A public-to-private redirect target is rejected before any request reaches it."
+    },
+    {
+      "id": "AUD-010",
+      "phase_id": "P6",
+      "severity": "HIGH",
+      "summary": "Credential-bearing LLM requests follow redirects and retry permanent failures too broadly.",
+      "status": "OPEN",
+      "source_refs": ["runtime/llm.py"],
+      "remediation": "Disable unsafe credential redirects and retry only explicitly transient responses or network faults.",
+      "acceptance": "Credentials never cross hosts and permanent, malformed, or oversized failures execute once."
+    },
+    {
+      "id": "AUD-011",
+      "phase_id": "P6",
+      "severity": "HIGH",
+      "summary": "Timed-out threaded tools can continue side effects after the runtime reports failure.",
+      "status": "OPEN",
+      "source_refs": ["runtime/tools.py"],
+      "remediation": "Introduce determinate deadlines or indeterminate outcomes with stable operation identity and safe retry rules.",
+      "acceptance": "A timeout cannot cause an untracked duplicate side effect or a false definitive failure."
+    },
+    {
+      "id": "AUD-012",
+      "phase_id": "P6",
+      "severity": "MEDIUM",
+      "summary": "Local evidence privacy and several outbound integration boundaries are platform-incomplete.",
+      "status": "OPEN",
+      "source_refs": ["runtime", "adapters/gsc_live_example.py", ".github/workflows"],
+      "remediation": "Enforce Windows-aware private storage, bounded token endpoints, immutable actions, and transport inventory tests.",
+      "acceptance": "Platform and mutation tests prove private storage and every credentialed transport boundary."
+    },
+    {
+      "id": "AUD-013",
+      "phase_id": "P7",
+      "severity": "HIGH",
+      "summary": "Deterministic rule contributions are mislabeled as executed agents and reports obscure fixture evidence mode.",
+      "status": "OPEN",
+      "source_refs": ["integrations/product_proof/service.py", "integrations/product_proof/rules.py", "integrations/product_proof/report.py"],
+      "remediation": "Version contribution semantics and render evidence mode, ownership, verification, and missing evidence prominently.",
+      "acceptance": "No artifact claims agent execution without executor evidence and every report labels FIXTURE or LIVE_BOUNDED."
+    },
+    {
+      "id": "AUD-014",
+      "phase_id": "P7",
+      "severity": "MEDIUM",
+      "summary": "Documentation certification, artifact counts, command authority, and source freshness exceed observed evidence.",
+      "status": "OPEN",
+      "source_refs": ["docs/INSTALL.md", "docs/COMMANDS.md", "README.md", "scripts/validate_reference_freshness.py"],
+      "remediation": "Derive claims from immutable evidence and distinguish static metadata validation from live source review.",
+      "acceptance": "Docs, artifact inventory, command arguments, and per-source freshness are generated or validator-backed."
+    },
+    {
+      "id": "AUD-015",
+      "phase_id": "P8",
+      "severity": "MEDIUM",
+      "summary": "Support, conduct reporting, ownership depth, and repository operations need explicit accountable paths.",
+      "status": "OPEN",
+      "source_refs": ["SUPPORT.md", "CODE_OF_CONDUCT.md", ".github/CODEOWNERS", ".github/ISSUE_TEMPLATE"],
+      "remediation": "Provide private reporting, canonical issue intake, ownership backups, runbooks, and governance metrics.",
+      "acceptance": "Every controllable repository path has an owner, working intake, runbook, verification, and rollback trigger."
+    }
+  ],
+  "failures": [],
+  "learning_records": []
+}

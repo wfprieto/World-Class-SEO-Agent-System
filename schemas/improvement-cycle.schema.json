@@ -53,15 +53,15 @@
       }
     },
     "hypothesis": {"type": "string", "minLength": 20},
-    "files_changed": {"type": "array", "items": {"type": "string"}},
-    "tests_added": {"type": "array", "items": {"type": "string"}},
+    "files_changed": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
+    "tests_added": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
     "verification": {
       "type": "object",
       "required": ["tests_passed", "regressions", "evidence_refs", "live_state", "security_passed", "documentation_executed"],
       "properties": {
         "tests_passed": {"type": "boolean"},
         "regressions": {"type": "array", "items": {"type": "string"}},
-        "evidence_refs": {"type": "array", "items": {"type": "string"}},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
         "live_state": {"enum": ["VERIFIED", "FIXTURE_ONLY", "NOT_REQUIRED", "NOT_RUN", "BLOCKED"]},
         "security_passed": {"type": "boolean"},
         "documentation_executed": {"type": "boolean"}
@@ -85,7 +85,7 @@
       "maxItems": 2,
       "items": {"$ref": "reviewer-verdict.schema.json"}
     },
-    "lessons": {"type": "array", "items": {"type": "string"}},
+    "lessons": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
     "next_action": {"type": "string", "minLength": 3},
     "direct_merge_permitted": {"const": false},
     "created_at": {"type": "string", "format": "date-time"},
