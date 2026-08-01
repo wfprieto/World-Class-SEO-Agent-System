@@ -2,11 +2,14 @@
   "schema_version": "2.0.0",
   "phase_id": "P0",
   "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
-  "candidate_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
-  "executed_at": "2026-08-01T23:29:00Z",
+  "candidate_commit": "79f0908bccb271f10b464dd8816f4440347efd04",
+  "executed_at": "2026-08-01T23:48:00Z",
   "environment": "Windows PowerShell with Python 3.14",
   "worktree_path_class": "validated disposable Git worktree under the task workspace",
   "bounded_commits_reverted_newest_first": [
+    "79f0908bccb271f10b464dd8816f4440347efd04",
+    "ce3df1b8f049ba2a56626f8172ff185266b50b53",
+    "baf4cd2c345fc4e4bb2803d2ae28ce634a76688f",
     "3fc8320bf2690805ebadbb59057ada76137c11c2",
     "82b1154344c94ab5bfa08b1973bfa5534ef09961",
     "8d29bd33c6c77e77640b24bd4ffe0022d2f3792b",
@@ -16,12 +19,12 @@
   ],
   "commands": [
     {
-      "command": "git worktree add --detach <validated-disposable-path> 3fc8320bf2690805ebadbb59057ada76137c11c2",
+      "command": "git worktree add --detach <validated-disposable-path> 79f0908bccb271f10b464dd8816f4440347efd04",
       "exit_code": 0,
       "assertion": "The rehearsal began from the exact frozen implementation commit."
     },
     {
-      "command": "git revert --no-commit <six bounded commits newest-to-oldest>",
+      "command": "git revert --no-commit <nine bounded commits newest-to-oldest>",
       "exit_code": 0,
       "assertion": "The complete Phase 0 change set reverted without conflict in the disposable worktree."
     },
@@ -47,7 +50,7 @@
     }
   ],
   "result": "PASS",
-  "recovery_position": "Revert the six recorded Phase 0 commits newest-to-oldest as one bounded operation.",
+  "recovery_position": "Revert the nine recorded Phase 0 commits newest-to-oldest as one bounded operation.",
   "limitations": [
     "This rehearsal verifies deterministic source recovery and baseline repository health, not public release or real-world SEO outcomes.",
     "The revert was intentionally not committed or pushed because it was a disposable recovery rehearsal."

@@ -161,3 +161,9 @@ The rollback rehearsal produced a byte-identical baseline, passed repository val
 10 baseline improvement-loop tests, and removed the disposable worktree through Git. Phase 0
 remains `IN_PROGRESS` pending exact-commit certification of the frozen metadata and two new
 fresh-context independent approvals.
+
+The intermediate `baf4cd2` and `ce3df1b` Windows matrices exposed a platform-specific raw-byte
+digest defect: Git converted text line endings at checkout, so logically identical rollback
+evidence had different hashes. The final executable commit `79f0908bccb271f10b464dd8816f4440347efd04`
+canonicalizes CRLF to LF before hashing repository text and includes a direct equivalence
+regression. Neither failed run is accepted as evidence.

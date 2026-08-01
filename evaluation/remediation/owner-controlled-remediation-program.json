@@ -35,16 +35,16 @@
       "id": "P0",
       "title": "Program controls and current-state audit",
       "status": "IN_PROGRESS",
-      "verified_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
-      "frozen_package_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
-      "rollback_evidence_sha256": "f6260df26d141f8c55cb2d6754dde5c6981e73ba366f1acb9a5141a3450ae864",
+      "verified_commit": "79f0908bccb271f10b464dd8816f4440347efd04",
+      "frozen_package_commit": "79f0908bccb271f10b464dd8816f4440347efd04",
+      "rollback_evidence_sha256": "76c6972fe50456976e04803e29ec03059e2c88cc75c24f12080c1e8af7eabf26",
       "authority_evidence": [
         {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen at the verified commit."},
         {"class":"SOURCE","ref":"schemas/reviewer-verdict.schema.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c","environment":"CI","status":"PASS","assertion":"The canonical verdict schema is frozen at the verified commit."},
         {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
         {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
       ],
-      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":null,"environment":"CI","status":"PASS","assertion":"The frozen implementation commit passed every canonical workflow job.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","repository-certification"]}}],
+      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723905900","commit":"79f0908bccb271f10b464dd8816f4440347efd04","sha256":null,"environment":"CI","status":"PASS","assertion":"The frozen implementation commit passed every canonical workflow job.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"79f0908bccb271f10b464dd8816f4440347efd04","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","repository-certification"]}}],
       "owner": "Repository maintainer",
       "approver": "Repository maintainer",
       "verifier": "Independent reviewers",
@@ -471,7 +471,8 @@
     {"id": "FAIL-0006", "phase_id": "P0", "summary": "Round-two review proved the evidence hash omitted material program controls and could not survive closure state changes.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140","environment":"CI","status":"PASS","assertion":"Material hash mutations are preserved at the verified commit."}]},
     {"id": "FAIL-0007", "phase_id": "P0", "summary": "Round-two review proved unregistered reviewer identities and unvalidated learning evidence could authorize closure.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140","environment":"CI","status":"PASS","assertion":"Reviewer-authority attacks are preserved at the verified commit."}]},
     {"id": "FAIL-0008", "phase_id": "P0", "summary": "Round-three review proved mutable reviewer authority, generic gate evidence, and mutable failure references could authorize closure.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb","environment":"CI","status":"PASS","assertion":"Round-three authority and generic-gate attacks are immutable regressions."}]},
-    {"id": "FAIL-0009", "phase_id": "P0", "summary": "Round-three review proved the recorded rollback rehearsed only the baseline checkout rather than reverting the complete verified change set.", "status": "RESOLVED", "evidence_refs": [{"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745","environment":"CI","status":"PASS","assertion":"The closure validator now binds rollback evidence into the reviewed package."}]}
+    {"id": "FAIL-0009", "phase_id": "P0", "summary": "Round-three review proved the recorded rollback rehearsed only the baseline checkout rather than reverting the complete verified change set.", "status": "RESOLVED", "evidence_refs": [{"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745","environment":"CI","status":"PASS","assertion":"The closure validator now binds rollback evidence into the reviewed package."}]},
+    {"id": "FAIL-0010", "phase_id": "P0", "summary": "Windows CI rejected a raw-byte rollback digest because Git checkout line-ending conversion changed the artifact bytes.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"79f0908bccb271f10b464dd8816f4440347efd04","sha256":"bbbef43ff3f90750e812ede083b2f7b5ed20f652a356dc0957704f7ee8a35e6b","environment":"CI","status":"PASS","assertion":"The LF and CRLF digest-equivalence regression is frozen at the verified commit."}]}
   ],
   "learning_records": [
     {
@@ -592,6 +593,20 @@
       "residual_risk": "Future metadata-only commits after the rehearsal require a new bounded rehearsal if they alter executable controls.",
       "owner": "Repository maintainer", "due_phase": "P0",
       "apivr_next_action": "Freeze the transcript, rerun certification, then request two fresh independent reviews."
+    },
+    {
+      "id": "LEARN-0010", "phase_id": "P0", "failure_id": "FAIL-0010", "status": "CONFIRMED",
+      "affected_invariant": "Text evidence digests must be stable across supported Git checkout platforms.",
+      "expected_result": "The same committed rollback artifact has one canonical digest on Windows and Ubuntu.",
+      "observed_evidence": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"79f0908bccb271f10b464dd8816f4440347efd04","sha256":"bbbef43ff3f90750e812ede083b2f7b5ed20f652a356dc0957704f7ee8a35e6b","environment":"CI","status":"PASS","assertion":"A dedicated regression proves LF and CRLF inputs produce the same digest."}],
+      "learning": "Raw working-tree bytes are platform-specific when Git line-ending conversion is enabled.",
+      "recurrence_signature": "A text artifact digest passes locally but fails on one checkout platform with identical logical content.",
+      "guardrail": "Canonicalize CRLF to LF before hashing repository text and test both byte representations.",
+      "verification_evidence": {"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"79f0908bccb271f10b464dd8816f4440347efd04","sha256":"358f0adc18de310022d969fd351da06efe9bdb61052f0a293c74902da22ff6c4","environment":"CI","status":"PASS","assertion":"The production validator uses the cross-platform canonical text digest."},
+      "rollback_position": "Revert canonical digest logic and its regression only with an equivalent platform-stable replacement.",
+      "residual_risk": "Binary evidence requires a separate byte-exact digest policy rather than text normalization.",
+      "owner": "Quality owner", "due_phase": "P0",
+      "apivr_next_action": "Require the final Windows and Ubuntu matrix to pass before review freeze."
     }
   ]
 }
