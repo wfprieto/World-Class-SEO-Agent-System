@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 from scripts.validate_remediation_program import (
@@ -45,6 +46,10 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     reviewer_registry = tmp_path / "evaluation" / "reviewer-registry.json"
     reviewer_registry.parent.mkdir(parents=True, exist_ok=True)
     reviewer_registry.write_bytes((ROOT / "evaluation" / "reviewer-registry.json").read_bytes())
+    reviewer_dir = tmp_path / "evaluation" / "reviewers"
+    reviewer_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("senior-scrummaster-3.md", "vp-engineering.md"):
+        (reviewer_dir / name).write_bytes((ROOT / "evaluation" / "reviewers" / name).read_bytes())
     return tmp_path
 
 
@@ -52,6 +57,7 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     phase = payload["phases"][phase_index]
     phase["status"] = "COMPLETE"
     phase["verified_commit"] = payload["baseline"]["commit"]
+    phase["frozen_package_commit"] = phase["verified_commit"]
     schema_digest = hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest()
     for criterion in phase["acceptance_criteria"]:
         criterion["status"] = "PASS"
@@ -79,12 +85,13 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
             },
             {
                 "class": "CI",
-                "ref": "https://ci.example.invalid/runs/phase",
+                "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1",
                 "commit": phase["verified_commit"],
                 "sha256": None,
                 "environment": "CI",
                 "status": "PASS",
                 "assertion": "The exact verified commit passed certification.",
+                "provenance": _ci_provenance(phase["verified_commit"]),
             },
         ]
     )
@@ -110,18 +117,29 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
         "learning": "NO_MATERIAL_LEARNING",
         "unexpected_change_scan": "PASS",
     }
-    gate_record = {
-        "class": "CI",
-        "ref": "https://ci.example.invalid/runs/phase",
-        "commit": phase["verified_commit"],
-        "sha256": None,
-        "environment": "CI",
-        "status": "PASS",
-        "assertion": "The exact verified commit passed this completion gate.",
+    evidence_paths = {
+        "implementation_audit": ("SOURCE", "schemas/remediation-program.schema.json"),
+        "focused_tests": ("AUTOMATED", "schemas/remediation-program.schema.json"),
+        "full_certification": ("CI", "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1"),
+        "security_review": ("SOURCE", "schemas/remediation-program.schema.json"),
+        "documentation": ("SOURCE", "schemas/remediation-program.schema.json"),
+        "learning": ("AUTOMATED", "schemas/remediation-program.schema.json"),
+        "unexpected_change_scan": ("AUTOMATED", "schemas/remediation-program.schema.json"),
     }
-    phase["gate_evidence"] = {
-        gate: [copy.deepcopy(gate_record)] for gate in phase["gates"]
-    }
+    phase["gate_evidence"] = {}
+    for gate, (evidence_class, reference) in evidence_paths.items():
+        record = {
+            "class": evidence_class,
+            "ref": reference,
+            "commit": phase["verified_commit"],
+            "sha256": None if evidence_class == "CI" else schema_digest,
+            "environment": "CI" if evidence_class in {"CI", "AUTOMATED"} else "LOCAL",
+            "status": "PASS",
+            "assertion": f"[{gate}] The exact verified commit passed this completion gate.",
+        }
+        if evidence_class == "CI":
+            record["provenance"] = _ci_provenance(phase["verified_commit"])
+        phase["gate_evidence"][gate] = [record]
     phase["evidence_status"] = {
         "SOURCE": "PASS",
         "AUTOMATED": "PASS",
@@ -135,7 +153,57 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     for finding in payload["audit_findings"]:
         if finding["phase_id"] == phase["id"]:
             finding["status"] = "RESOLVED"
+    authority_paths = [
+        "evaluation/reviewer-registry.json",
+        "schemas/reviewer-verdict.schema.json",
+        "evaluation/reviewers/senior-scrummaster-3.md",
+        "evaluation/reviewers/vp-engineering.md",
+    ]
+    phase["authority_evidence"] = [
+        {
+            "class": "SOURCE",
+            "ref": reference,
+            "commit": phase["verified_commit"],
+            "sha256": hashlib.sha256((ROOT / reference).read_bytes()).hexdigest(),
+            "environment": "LOCAL",
+            "status": "PASS",
+            "assertion": "Reviewer authority is bound to immutable source content.",
+        }
+        for reference in authority_paths
+    ]
+    phase["package_certification"] = [{
+        "class": "CI",
+        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1",
+        "commit": phase["verified_commit"],
+        "sha256": None,
+        "environment": "CI",
+        "status": "PASS",
+        "assertion": "The frozen evidence package passed repository certification.",
+        "provenance": _ci_provenance(phase["verified_commit"]),
+    }]
     _refresh_review(payload, phase)
+
+
+def _ci_provenance(commit: str) -> dict:
+    return {
+        "repository": "wfprieto/World-Class-SEO-Agent-System",
+        "workflow": "Repository Validation",
+        "head_sha": commit,
+        "conclusion": "success",
+        "jobs": ["repository-certification"],
+    }
+
+
+def _schema_evidence(commit: str, *, assertion: str = "The immutable schema verifies this record.") -> dict:
+    return {
+        "class": "AUTOMATED",
+        "ref": "schemas/remediation-program.schema.json",
+        "commit": commit,
+        "sha256": hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest(),
+        "environment": "LOCAL",
+        "status": "PASS",
+        "assertion": assertion,
+    }
 
 
 def _verdict(phase_id: str, role: str, reviewer: str, package_hash: str) -> dict:
@@ -228,7 +296,7 @@ def test_resolved_failure_requires_confirmed_recurrence_guardrail(tmp_path: Path
             "phase_id": "P0",
             "summary": "The production-path validator initially accepted a skipped phase.",
             "status": "RESOLVED",
-            "evidence_refs": ["schemas/remediation-program.schema.json"],
+            "evidence_refs": [_schema_evidence(payload["baseline"]["commit"])],
         }
     ]
 
@@ -250,7 +318,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
             "phase_id": "P0",
             "summary": "The production-path validator initially accepted a skipped phase.",
             "status": "RESOLVED",
-            "evidence_refs": ["schemas/remediation-program.schema.json"],
+            "evidence_refs": [_schema_evidence(payload["baseline"]["commit"])],
         }
     ]
     payload["learning_records"] = [
@@ -275,7 +343,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
             "learning": "Phase ordering must be checked by the production validator.",
             "recurrence_signature": "A later phase starts while a predecessor is incomplete.",
             "guardrail": "Keep a child-fixture regression that skips P1.",
-            "verification_ref": "schemas/remediation-program.schema.json",
+            "verification_evidence": _schema_evidence(payload["baseline"]["commit"]),
             "rollback_position": "Revert the validator and its schema together.",
             "residual_risk": "Manual artifacts outside this program remain advisory.",
             "owner": "Quality owner",
@@ -288,11 +356,11 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
     assert validate(_write_fixture(tmp_path, payload)) == []
 
     payload["learning_records"][0]["observed_evidence"][0]["sha256"] = "0" * 64
-    payload["failures"][0]["evidence_refs"] = ["missing/failure-evidence.json"]
+    payload["failures"][0]["evidence_refs"][0]["ref"] = "missing/failure-evidence.json"
     _refresh_review(payload, payload["phases"][0])
     errors = validate(_write_fixture(tmp_path / "forged", payload))
     assert any("learning LEARN-0001 evidence digest is not immutable" in item for item in errors)
-    assert any("references missing evidence" in item for item in errors)
+    assert any("failure FAIL-0001 evidence does not exist" in item for item in errors)
 
 
 def test_reviewer_contexts_must_be_distinct(tmp_path: Path) -> None:
@@ -409,6 +477,44 @@ def test_unregistered_reviewer_identity_cannot_approve_phase(tmp_path: Path) -> 
     assert any("not the canonical registered identity" in item for item in errors)
 
 
+def test_reviewer_registry_is_hash_bound_and_worktree_mutation_cannot_reauthorize() -> None:
+    payload = _program()
+    _complete_phase(payload, 0)
+    phase = payload["phases"][0]
+    original = evidence_package_hash(payload, phase)
+    phase["authority_evidence"][0]["sha256"] = "0" * 64
+
+    assert evidence_package_hash(payload, phase) != original
+
+
+def test_generic_or_unauthenticated_gate_evidence_is_rejected(tmp_path: Path) -> None:
+    payload = _program()
+    payload["failures"] = []
+    payload["learning_records"] = []
+    _complete_phase(payload, 0)
+    payload["current_phase"] = "P1"
+    payload["phases"][1]["status"] = "IN_PROGRESS"
+    generic = {
+        "class": "CI",
+        "ref": "https://example.invalid/runs/forged",
+        "commit": payload["baseline"]["commit"],
+        "sha256": None,
+        "environment": "CI",
+        "status": "PASS",
+        "assertion": "A generic record allegedly passed every completion gate.",
+    }
+    payload["phases"][0]["gate_evidence"] = {
+        gate: [copy.deepcopy(generic)] for gate in payload["phases"][0]["gates"]
+    }
+    _refresh_review(payload, payload["phases"][0])
+
+    errors = validate(_write_fixture(tmp_path, payload))
+
+    assert any("not a canonical repository run" in item for item in errors)
+    assert any("lacks a gate-specific assertion" in item for item in errors)
+    assert any("rejects evidence class CI" in item for item in errors)
+
+
 def test_pytest_temp_root_must_be_outside_repository_boundary(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
@@ -417,10 +523,24 @@ def test_pytest_temp_root_must_be_outside_repository_boundary(tmp_path: Path) ->
     assert validate_temp_isolation(tmp_path / "isolated", repository_root=repository) == []
 
 
-def test_canonical_phase_zero_evidence_is_closable_at_verified_commit() -> None:
+def test_pytest_temp_root_must_be_outside_any_enclosing_git_worktree(tmp_path: Path) -> None:
+    enclosing = tmp_path / "enclosing"
+    enclosing.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(enclosing)], check=True)
+    unrelated_repository = tmp_path / "repository"
+    unrelated_repository.mkdir()
+
+    errors = validate_temp_isolation(enclosing / "pytest" / "case", repository_root=unrelated_repository)
+
+    assert any("enclosing Git worktree" in item for item in errors)
+
+
+def test_phase_zero_cannot_close_before_new_frozen_package() -> None:
     payload = _program()
     phase = payload["phases"][0]
     phase["status"] = "COMPLETE"
     _refresh_review(payload, phase)
 
-    assert _validate_complete_phase(phase, payload, ROOT) == []
+    errors = _validate_complete_phase(phase, payload, ROOT)
+
+    assert any("frozen_package_commit is missing" in item for item in errors)

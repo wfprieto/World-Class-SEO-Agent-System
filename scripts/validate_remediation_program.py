@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +35,18 @@ EXCLUDED_PHRASES = {
     "public packaging and release maturity",
     "real-world SEO effectiveness and external reproduction",
 }
+GATE_EVIDENCE_CLASSES: dict[str, set[str]] = {
+    "implementation_audit": {"SOURCE", "AUTOMATED"},
+    "focused_tests": {"AUTOMATED"},
+    "full_certification": {"CI"},
+    "security_review": {"SOURCE", "AUTOMATED", "CI"},
+    "documentation": {"SOURCE"},
+    "learning": {"SOURCE", "AUTOMATED"},
+    "unexpected_change_scan": {"AUTOMATED", "CI"},
+}
+CI_RUN_PATTERN = re.compile(
+    r"^https://github\.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/[1-9][0-9]*$"
+)
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -85,6 +98,9 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
         "evidence_classes": program.get("evidence_classes"),
         "phase_contracts": [phase_contract(item) for item in program.get("phases", [])],
         "phase_id": phase.get("id"),
+        "frozen_package_commit": phase.get("frozen_package_commit"),
+        "authority_evidence": phase.get("authority_evidence", []),
+        "package_certification": phase.get("package_certification", []),
         "audit_findings": program.get("audit_findings", []),
         "failures": [
             item
@@ -129,6 +145,23 @@ def _evidence_errors(
             errors.append(f"{label} evidence does not exist at verified_commit: {reference}")
         elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
             errors.append(f"{label} evidence digest is not immutable: {reference}")
+    if evidence_class == "CI":
+        provenance = evidence.get("provenance", {})
+        if not CI_RUN_PATTERN.fullmatch(reference):
+            errors.append(f"{label} CI evidence is not a canonical repository run: {reference}")
+        expected = {
+            "repository": "wfprieto/World-Class-SEO-Agent-System",
+            "workflow": "Repository Validation",
+            "conclusion": "success",
+        }
+        for key, value in expected.items():
+            if provenance.get(key) != value:
+                errors.append(f"{label} CI provenance {key} is not authenticated")
+        if provenance.get("head_sha") != verified_commit:
+            errors.append(f"{label} CI provenance head_sha is not verified_commit")
+        jobs = provenance.get("jobs", [])
+        if not isinstance(jobs, list) or not jobs or any(not str(job).strip() for job in jobs):
+            errors.append(f"{label} CI provenance has no successful job inventory")
     if evidence.get("status") not in {"OBSERVED", "PASS"}:
         errors.append(f"{label} evidence {reference} is not passing")
     return errors
@@ -172,6 +205,7 @@ def _validate_complete_phase(
     errors: list[str] = []
     phase_id = str(phase["id"])
     verified_commit = phase.get("verified_commit")
+    frozen_package_commit = phase.get("frozen_package_commit")
     if not verified_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is missing")
     elif (root / ".git").exists():
@@ -192,6 +226,28 @@ def _validate_complete_phase(
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
             errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is not an ancestor of HEAD")
+    if not frozen_package_commit:
+        errors.append(f"{phase_id} cannot be COMPLETE: frozen_package_commit is missing")
+    elif frozen_package_commit != verified_commit:
+        errors.append(f"{phase_id} cannot be COMPLETE: frozen package must equal verified_commit")
+
+    authority = phase.get("authority_evidence", [])
+    required_authority = {
+        "evaluation/reviewer-registry.json",
+        "schemas/reviewer-verdict.schema.json",
+        "evaluation/reviewers/senior-scrummaster-3.md",
+        "evaluation/reviewers/vp-engineering.md",
+    }
+    observed_authority = {str(item.get("ref", "")).split("::", 1)[0] for item in authority}
+    if observed_authority != required_authority:
+        errors.append(f"{phase_id} cannot be COMPLETE: reviewer authority package is incomplete")
+    for evidence in authority:
+        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} authority"))
+    package_certification = phase.get("package_certification", [])
+    if not package_certification:
+        errors.append(f"{phase_id} cannot be COMPLETE: package certification is missing")
+    for evidence in package_certification:
+        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} package certification"))
     for key, required in COMPLETION_GATES.items():
         actual = str(phase["gates"].get(key, ""))
         if not _gate_passes(actual, required):
@@ -216,11 +272,22 @@ def _validate_complete_phase(
             )
 
     gate_evidence = phase.get("gate_evidence", {})
+    gate_keys: set[tuple[str, str, str]] = set()
     for gate, result in phase.get("gates", {}).items():
         records = gate_evidence.get(gate, [])
         if result in {"PASS", "NO_MATERIAL_LEARNING"} and not records:
             errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} has no structured evidence")
         for evidence in records:
+            evidence_class = str(evidence.get("class", ""))
+            if evidence_class not in GATE_EVIDENCE_CLASSES.get(gate, set()):
+                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} rejects evidence class {evidence_class}")
+            assertion = str(evidence.get("assertion", ""))
+            if not assertion.startswith(f"[{gate}] "):
+                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} evidence lacks a gate-specific assertion")
+            identity = (gate, str(evidence.get("ref", "")), assertion)
+            if identity in gate_keys:
+                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} contains duplicate evidence")
+            gate_keys.add(identity)
             errors.extend(
                 _evidence_errors(
                     evidence,
@@ -278,7 +345,9 @@ def _validate_complete_phase(
     reviewer_ids = [item.get("reviewer_id") for item in verdicts]
     if len(set(contexts)) != 2 or len(set(reviewer_ids)) != 2:
         errors.append(f"{phase_id} requires distinct reviewer identities and contexts")
-    reviewer_registry = _load_object(root / "evaluation" / "reviewer-registry.json")
+    reviewer_registry = _load_object_at_commit(
+        root, "evaluation/reviewer-registry.json", str(verified_commit) if verified_commit else None
+    )
     registered = {
         item.get("role"): item.get("reviewer_id")
         for item in reviewer_registry.get("reviewers", [])
@@ -312,17 +381,14 @@ def _validate_complete_phase(
         elif not any(
             item.get("status") == "CONFIRMED"
             and item.get("guardrail")
-            and item.get("verification_ref")
+            and item.get("verification_evidence")
             for item in linked
         ):
             errors.append(
                 f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} lacks a confirmed guardrail"
             )
-        for reference in failure.get("evidence_refs", []):
-            if not _reference_exists(str(reference), root):
-                errors.append(
-                    f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} references missing evidence {reference}"
-                )
+        for evidence in failure.get("evidence_refs", []):
+            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}"))
         for record in linked:
             for evidence in record.get("observed_evidence", []):
                 errors.extend(
@@ -333,19 +399,20 @@ def _validate_complete_phase(
                         f"{phase_id} cannot be COMPLETE: learning {record.get('id')}",
                     )
                 )
-            verification_ref = str(record.get("verification_ref", ""))
-            if not _reference_exists(verification_ref, root):
-                errors.append(
-                    f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification reference is missing"
-                )
+            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification"))
     return errors
 
 
-def _reference_exists(reference: str, root: Path) -> bool:
-    if reference.startswith("https://"):
-        return True
-    source_path = reference.split("::", 1)[0]
-    return bool(source_path) and (root / source_path).exists()
+def _load_object_at_commit(root: Path, source_path: str, commit: str | None) -> dict[str, Any]:
+    if (root / ".git").exists() and commit:
+        content = subprocess.check_output(
+            ["git", "show", f"{commit}:{source_path}"], cwd=root, stderr=subprocess.DEVNULL, timeout=20
+        )
+        payload = json.loads(content.decode("utf-8-sig"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"{source_path} must contain a JSON object")
+        return payload
+    return _load_object(root / source_path)
 
 
 def _validate_program_rules(program: dict[str, Any], root: Path) -> list[str]:
