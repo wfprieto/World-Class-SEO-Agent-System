@@ -275,10 +275,9 @@ def test_release_workflow_fails_closed_before_publication():
 def test_validation_workflow_fetches_history_for_comparative_ancestry():
     root = Path(__file__).resolve().parents[1]
     workflow = yaml.safe_load((root / ".github/workflows/validate.yml").read_text(encoding="utf-8"))
-    checkout = next(
-        step
-        for step in workflow["jobs"]["validation_matrix"]["steps"]
-        if step.get("uses") == "actions/checkout@v7"
-    )
-
-    assert checkout["with"]["fetch-depth"] == 0
+    for job_name, job in workflow["jobs"].items():
+        checkouts = [
+            step for step in job.get("steps", []) if step.get("uses") == "actions/checkout@v7"
+        ]
+        for checkout in checkouts:
+            assert checkout["with"]["fetch-depth"] == 0, job_name
