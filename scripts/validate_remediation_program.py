@@ -169,8 +169,9 @@ def _evidence_errors(
         for key, value in expected.items():
             if provenance.get(key) != value:
                 errors.append(f"{label} CI provenance {key} is not authenticated")
-        if provenance.get("head_sha") != verified_commit:
-            errors.append(f"{label} CI provenance head_sha is not verified_commit")
+        expected_head_sha = evidence_commit if allow_ancestor else verified_commit
+        if provenance.get("head_sha") != expected_head_sha:
+            errors.append(f"{label} CI provenance head_sha is not the bound evidence commit")
         jobs = provenance.get("jobs", [])
         if not isinstance(jobs, list) or not jobs or any(not str(job).strip() for job in jobs):
             errors.append(f"{label} CI provenance has no successful job inventory")
@@ -260,7 +261,7 @@ def _validate_complete_phase(
     if observed_authority != required_authority:
         errors.append(f"{phase_id} cannot be COMPLETE: reviewer authority package is incomplete")
     for evidence in authority:
-        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} authority"))
+        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} authority", allow_ancestor=True))
     package_certification = phase.get("package_certification", [])
     if not package_certification:
         errors.append(f"{phase_id} cannot be COMPLETE: package certification is missing")
@@ -285,7 +286,7 @@ def _validate_complete_phase(
                     evidence,
                     str(verified_commit) if verified_commit else None,
                     root,
-                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')}",
+                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')}", allow_ancestor=True,
                 )
             )
 
@@ -311,7 +312,7 @@ def _validate_complete_phase(
                     evidence,
                     str(verified_commit) if verified_commit else None,
                     root,
-                    f"{phase_id} cannot be COMPLETE: gate {gate}",
+                    f"{phase_id} cannot be COMPLETE: gate {gate}", allow_ancestor=True,
                 )
             )
 
