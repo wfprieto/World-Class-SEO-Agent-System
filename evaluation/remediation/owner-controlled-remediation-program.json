@@ -35,10 +35,16 @@
       "id": "P0",
       "title": "Program controls and current-state audit",
       "status": "IN_PROGRESS",
-      "verified_commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5",
-      "frozen_package_commit": null,
-      "authority_evidence": [],
-      "package_certification": [],
+      "verified_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
+      "frozen_package_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
+      "rollback_evidence_sha256": "f6260df26d141f8c55cb2d6754dde5c6981e73ba366f1acb9a5141a3450ae864",
+      "authority_evidence": [
+        {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen at the verified commit."},
+        {"class":"SOURCE","ref":"schemas/reviewer-verdict.schema.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c","environment":"CI","status":"PASS","assertion":"The canonical verdict schema is frozen at the verified commit."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
+      ],
+      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":null,"environment":"CI","status":"PASS","assertion":"The frozen implementation commit passed every canonical workflow job.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","repository-certification"]}}],
       "owner": "Repository maintainer",
       "approver": "Repository maintainer",
       "verifier": "Independent reviewers",
@@ -53,9 +59,9 @@
           "horizon": "IMMEDIATE",
           "status": "PASS",
           "evidence_refs": [
-            {"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "4ddd8d03312c1d14ab64ae2da9775b355e75e4c63c7ed420b86a9e5fd9752dab", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The committed validator enforces ordered phase closure and canonical reviews."},
-            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140", "environment": "LOCAL", "status": "PASS", "assertion": "Mutation tests reject phase skipping, open findings, weak evidence, and reused contexts."},
-            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The exact commit passed Windows and Ubuntu validation on Python 3.11 through 3.13."}
+            {"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The committed validator enforces ordered closure and immutable authority."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb", "environment": "LOCAL", "status": "PASS", "assertion": "Mutation tests reject skipping, forged authority, generic gates, and enclosing Git temp roots."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The exact commit passed Windows and Ubuntu validation on Python 3.11 through 3.13.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate matrix (6)"]}}
           ]
         },
         {
@@ -64,9 +70,9 @@
           "horizon": "IMMEDIATE",
           "status": "PASS",
           "evidence_refs": [
-            {"class": "SOURCE", "ref": "schemas/remediation-program.schema.json", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "b2bb6c356d70ff386071f55d4a4f27f58dc30b8d84d7e905d4227bd1dd656597", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The committed schema requires structured failure-learning records."},
-            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140", "environment": "LOCAL", "status": "PASS", "assertion": "Resolved failures without confirmed guardrails are rejected."},
-            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Quality and aggregate repository certification passed on the exact commit."}
+            {"class": "SOURCE", "ref": "schemas/remediation-program.schema.json", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "2c4b2da7081bf353233c7b0bda0e113a7c23a4659a43243e139f4d0fc0e36228", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The schema requires structured immutable failure-learning evidence."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb", "environment": "LOCAL", "status": "PASS", "assertion": "Resolved failures without confirmed immutable guardrails are rejected."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Quality and aggregate repository certification passed on the exact commit.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["quality_security_release","repository-certification"]}}
           ]
         },
         {
@@ -75,9 +81,9 @@
           "horizon": "IMMEDIATE",
           "status": "PASS",
           "evidence_refs": [
-            {"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "5d7e2c6dd8cb92d0463805b15d9df1d8ef6b4f9d9d72f4036187012f32ec97a5", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The program preserves outcome exclusions and declares required evidence per phase."},
-            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140", "environment": "LOCAL", "status": "PASS", "assertion": "Tests reject unsupported passing evidence while preserving explicit exclusions."},
-            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The remediation and claim validators passed on the exact commit."}
+            {"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "2f69cdbf35b1bb13b530dfe90ff5d6f2b617368a96d865f5fbf1c7ccff31706f", "environment": "LOCAL", "status": "OBSERVED", "assertion": "The frozen program preserves outcome exclusions and phase evidence contracts."},
+            {"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb", "environment": "LOCAL", "status": "PASS", "assertion": "Tests reject unsupported passing evidence while preserving exclusions."},
+            {"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The remediation and claim validators passed on the exact commit.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate","quality_security_release"]}}
           ]
         }
       ],
@@ -85,13 +91,13 @@
       "evidence_status": {"SOURCE": "PASS", "AUTOMATED": "PASS", "CI": "PASS", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
       "gates": {"implementation_audit": "PASS", "focused_tests": "PASS", "full_certification": "PASS", "security_review": "PASS", "documentation": "PASS", "learning": "PASS", "unexpected_change_scan": "PASS"},
       "gate_evidence": {
-        "implementation_audit": [{"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "4ddd8d03312c1d14ab64ae2da9775b355e75e4c63c7ed420b86a9e5fd9752dab", "environment": "LOCAL", "status": "PASS", "assertion": "The implementation and unexpected-change audits found no unresolved Phase 0 defects."}],
-        "focused_tests": [{"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140", "environment": "CI", "status": "PASS", "assertion": "Focused governance, authority, mutation, and isolation tests passed."}],
-        "full_certification": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "All matrix, quality, clean-wheel, and repository-certification jobs passed."}],
-        "security_review": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "The quality-security job and governance mutation tests passed."}],
-        "documentation": [{"class": "SOURCE", "ref": "evaluation/remediation/phase0-rollback-evidence.json", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "63d6d7927e68b670fa81bdb22d290f03af83ac0e0fb43830027531218ed8e3d9", "environment": "LOCAL", "status": "PASS", "assertion": "The rollback commands, results, scope, and limitations are preserved durably."}],
-        "learning": [{"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "5d7e2c6dd8cb92d0463805b15d9df1d8ef6b4f9d9d72f4036187012f32ec97a5", "environment": "LOCAL", "status": "PASS", "assertion": "Every resolved delivery failure has a confirmed recurrence guardrail."}],
-        "unexpected_change_scan": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Diff, schema, legacy validation, and complete certification found no unexpected regression."}]
+        "implementation_audit": [{"class": "SOURCE", "ref": "scripts/validate_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745", "environment": "LOCAL", "status": "PASS", "assertion": "[implementation_audit] The implementation audit found no unresolved Phase 0 defect."}],
+        "focused_tests": [{"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb", "environment": "CI", "status": "PASS", "assertion": "[focused_tests] Thirty focused governance and adversarial tests passed."}],
+        "full_certification": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "[full_certification] All canonical workflow jobs passed.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","repository-certification"]}}],
+        "security_review": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "[security_review] The quality-security job and attack regressions passed.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["quality_security_release"]}}],
+        "documentation": [{"class": "SOURCE", "ref": "evaluation/remediation/phase0-rollback-evidence.json", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "63d6d7927e68b670fa81bdb22d290f03af83ac0e0fb43830027531218ed8e3d9", "environment": "LOCAL", "status": "PASS", "assertion": "[documentation] The bounded rollback procedure is preserved durably."}],
+        "learning": [{"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": "2f69cdbf35b1bb13b530dfe90ff5d6f2b617368a96d865f5fbf1c7ccff31706f", "environment": "LOCAL", "status": "PASS", "assertion": "[learning] Every resolved failure has an immutable recurrence guardrail."}],
+        "unexpected_change_scan": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30723349680", "commit": "3fc8320bf2690805ebadbb59057ada76137c11c2", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "[unexpected_change_scan] Diff, schema, and complete certification found no regression.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"3fc8320bf2690805ebadbb59057ada76137c11c2","conclusion":"success","jobs":["validate","repository-certification"]}}]
       },
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
@@ -101,6 +107,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Security owner",
@@ -126,6 +133,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Product authority",
@@ -151,6 +159,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Runtime architecture owner",
@@ -176,6 +185,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "SEO capability owner",
@@ -201,6 +211,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Agent architecture owner",
@@ -226,6 +237,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Security owner",
@@ -251,6 +263,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Documentation and knowledge owner",
@@ -276,6 +289,7 @@
       "status": "NOT_STARTED",
       "verified_commit": null,
       "frozen_package_commit": null,
+      "rollback_evidence_sha256": null,
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Community maintainer",
@@ -455,7 +469,9 @@
     {"id": "FAIL-0004", "phase_id": "P0", "summary": "Two local full-suite runs placed pytest fixtures inside a parent Git worktree and produced two harness-location failures.", "status": "RESOLVED", "evidence_refs": [{"class":"SOURCE","ref":"schemas/remediation-program.schema.json","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"b2bb6c356d70ff386071f55d4a4f27f58dc30b8d84d7e905d4227bd1dd656597","environment":"CI","status":"PASS","assertion":"The failure is recorded in the immutable Phase 0 learning contract."}]},
     {"id": "FAIL-0005", "phase_id": "P0", "summary": "Initial independent reviews rejected weak reviewer authority, evidence binding, and evidence-class semantics.", "status": "RESOLVED", "evidence_refs": [{"class":"SOURCE","ref":"schemas/remediation-program.schema.json","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"b2bb6c356d70ff386071f55d4a4f27f58dc30b8d84d7e905d4227bd1dd656597","environment":"CI","status":"PASS","assertion":"The canonical review contract is immutable at the verified commit."}]},
     {"id": "FAIL-0006", "phase_id": "P0", "summary": "Round-two review proved the evidence hash omitted material program controls and could not survive closure state changes.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140","environment":"CI","status":"PASS","assertion":"Material hash mutations are preserved at the verified commit."}]},
-    {"id": "FAIL-0007", "phase_id": "P0", "summary": "Round-two review proved unregistered reviewer identities and unvalidated learning evidence could authorize closure.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140","environment":"CI","status":"PASS","assertion":"Reviewer-authority attacks are preserved at the verified commit."}]}
+    {"id": "FAIL-0007", "phase_id": "P0", "summary": "Round-two review proved unregistered reviewer identities and unvalidated learning evidence could authorize closure.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"86bbba3ccd591e0ecc50ec58eaac40f2645f38b5","sha256":"586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140","environment":"CI","status":"PASS","assertion":"Reviewer-authority attacks are preserved at the verified commit."}]},
+    {"id": "FAIL-0008", "phase_id": "P0", "summary": "Round-three review proved mutable reviewer authority, generic gate evidence, and mutable failure references could authorize closure.", "status": "RESOLVED", "evidence_refs": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb","environment":"CI","status":"PASS","assertion":"Round-three authority and generic-gate attacks are immutable regressions."}]},
+    {"id": "FAIL-0009", "phase_id": "P0", "summary": "Round-three review proved the recorded rollback rehearsed only the baseline checkout rather than reverting the complete verified change set.", "status": "RESOLVED", "evidence_refs": [{"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745","environment":"CI","status":"PASS","assertion":"The closure validator now binds rollback evidence into the reviewed package."}]}
   ],
   "learning_records": [
     {
@@ -501,7 +517,7 @@
       "id": "LEARN-0004", "phase_id": "P0", "failure_id": "FAIL-0004", "status": "CONFIRMED",
       "affected_invariant": "Fixture repositories must be isolated from any parent Git index.",
       "expected_result": "Security and manifest fixtures enumerate only their temporary repository.",
-      "observed_evidence": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30722374045", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "Isolated GitHub runners passed all tests on six supported matrix cells."}],
+      "observed_evidence": [{"class": "AUTOMATED", "ref": "tests/test_remediation_program.py", "commit": "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5", "sha256": "586207f22fccc4859b5cdd2750bce63291e2dfee720d78cd478a27cdb0a4e140", "environment": "CI", "status": "PASS", "assertion": "The isolated temp-root regression passed at the immutable ancestor commit."}],
       "learning": "A pytest temp root nested inside another Git worktree is not an isolated repository fixture.",
       "recurrence_signature": "Git fixture helpers resolve a parent index and miss files created below the supplied root.",
       "guardrail": "CI and the production temp-isolation validator reject repository-nested pytest roots.",
@@ -548,6 +564,34 @@
       "rollback_position": "Revert registry enforcement, evidence checks, and adversarial tests atomically.",
       "residual_risk": "Reviewer identity remains a repository-controlled assertion rather than a cryptographic signature.", "owner": "Repository maintainer", "due_phase": "P0",
       "apivr_next_action": "Freeze a new evidence package and obtain two new isolated canonical verdicts."
+    },
+    {
+      "id": "LEARN-0008", "phase_id": "P0", "failure_id": "FAIL-0008", "status": "CONFIRMED",
+      "affected_invariant": "Reviewer authority and completion-gate evidence must be immutable and semantically specific.",
+      "expected_result": "Registry replacement, placeholder CI, and generic cross-gate evidence cannot authorize closure.",
+      "observed_evidence": [{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb","environment":"CI","status":"PASS","assertion":"The authority, CI provenance, gate semantics, and enclosing-Git attacks passed."}],
+      "learning": "Shape validation is not authority validation; every approving input needs immutable provenance and gate-specific meaning.",
+      "recurrence_signature": "A mutable registry, placeholder run, wrong evidence class, or generic assertion preserves an approving package.",
+      "guardrail": "Hash-bound authority files, exact-commit loading, CI provenance, gate class policies, and gate-tagged assertions are mandatory.",
+      "verification_evidence": {"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb","environment":"CI","status":"PASS","assertion":"Adversarial authority and generic-evidence mutations are rejected."},
+      "rollback_position": "Revert the schema, validator, mutation tests, and evidence metadata together.",
+      "residual_risk": "GitHub run authenticity is represented by observed API metadata rather than a cryptographic provider signature.",
+      "owner": "Quality owner", "due_phase": "P0",
+      "apivr_next_action": "Require fresh isolated reviewers to attack the newly frozen authority package."
+    },
+    {
+      "id": "LEARN-0009", "phase_id": "P0", "failure_id": "FAIL-0009", "status": "CONFIRMED",
+      "affected_invariant": "Rollback evidence must prove recovery from the complete exact implementation state.",
+      "expected_result": "All bounded Phase 0 commits revert cleanly to a byte-identical, certifiable baseline.",
+      "observed_evidence": [{"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a6c1baf86ae031ebf3a9fe4d965eb1809c6b5cdc66b78091bb261d0dd21c745","environment":"CI","status":"PASS","assertion":"The reviewed package requires a digest-bound durable rollback artifact."}],
+      "learning": "Checking out a baseline demonstrates baseline health but does not demonstrate reversibility of the candidate change set.",
+      "recurrence_signature": "Rollback evidence starts at baseline or omits one or more commits in the bounded phase range.",
+      "guardrail": "Rehearse newest-to-oldest no-commit reverts from the exact candidate, diff against baseline, certify, and bind the transcript digest.",
+      "verification_evidence": {"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"4a970ce0105e72fd8af233cfd8838381395d615a8660229d024a2bdb5c0c82eb","environment":"CI","status":"PASS","assertion":"Closure rejects missing or altered rollback evidence digests."},
+      "rollback_position": "Revert all six recorded Phase 0 commits newest-to-oldest.",
+      "residual_risk": "Future metadata-only commits after the rehearsal require a new bounded rehearsal if they alter executable controls.",
+      "owner": "Repository maintainer", "due_phase": "P0",
+      "apivr_next_action": "Freeze the transcript, rerun certification, then request two fresh independent reviews."
     }
   ]
 }

@@ -118,21 +118,33 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
 
 
 def _evidence_errors(
-    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str
+    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str, *, allow_ancestor: bool = False
 ) -> list[str]:
     errors: list[str] = []
     evidence_class = str(evidence.get("class", ""))
     reference = str(evidence.get("ref", ""))
-    if evidence.get("commit") != verified_commit:
-        errors.append(f"{label} evidence is not bound to verified_commit")
+    evidence_commit = str(evidence.get("commit", ""))
+    commit_is_valid = evidence_commit == verified_commit
+    if allow_ancestor and evidence_commit and verified_commit and (root / ".git").exists():
+        try:
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", evidence_commit, verified_commit],
+                cwd=root, check=True, capture_output=True, timeout=20,
+            )
+            commit_is_valid = True
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            commit_is_valid = False
+    if not commit_is_valid:
+        errors.append(f"{label} evidence is not bound to verified_commit or an immutable ancestor")
     source_path = reference.split("::", 1)[0]
     if evidence_class in {"SOURCE", "AUTOMATED"}:
         expected_digest = evidence.get("sha256")
         content: bytes | None = None
-        if (root / ".git").exists() and verified_commit:
+        content_commit = evidence_commit if allow_ancestor else verified_commit
+        if (root / ".git").exists() and content_commit:
             try:
                 content = subprocess.check_output(
-                    ["git", "show", f"{verified_commit}:{source_path}"],
+                    ["git", "show", f"{content_commit}:{source_path}"],
                     cwd=root,
                     stderr=subprocess.DEVNULL,
                     timeout=20,
@@ -230,6 +242,12 @@ def _validate_complete_phase(
         errors.append(f"{phase_id} cannot be COMPLETE: frozen_package_commit is missing")
     elif frozen_package_commit != verified_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: frozen package must equal verified_commit")
+    rollback_path = root / "evaluation" / "remediation" / f"phase{phase_id[1:]}-rollback-evidence.json"
+    expected_rollback_digest = phase.get("rollback_evidence_sha256")
+    if not rollback_path.is_file() or not expected_rollback_digest:
+        errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence is missing")
+    elif hashlib.sha256(rollback_path.read_bytes()).hexdigest() != expected_rollback_digest:
+        errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence digest does not match reviewed package")
 
     authority = phase.get("authority_evidence", [])
     required_authority = {
@@ -388,7 +406,7 @@ def _validate_complete_phase(
                 f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} lacks a confirmed guardrail"
             )
         for evidence in failure.get("evidence_refs", []):
-            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}"))
+            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}", allow_ancestor=True))
         for record in linked:
             for evidence in record.get("observed_evidence", []):
                 errors.extend(
@@ -396,10 +414,10 @@ def _validate_complete_phase(
                         evidence,
                         str(verified_commit) if verified_commit else None,
                         root,
-                        f"{phase_id} cannot be COMPLETE: learning {record.get('id')}",
+                        f"{phase_id} cannot be COMPLETE: learning {record.get('id')}", allow_ancestor=True,
                     )
                 )
-            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification"))
+            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification", allow_ancestor=True))
     return errors
 
 

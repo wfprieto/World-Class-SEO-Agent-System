@@ -1,37 +1,55 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "phase_id": "P0",
   "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
-  "candidate_commit": "349e9e66ee8c6937a371e3e78adbd79fb68d64a3",
-  "executed_at": "2026-08-01T22:42:00Z",
-  "environment": "Windows PowerShell with Python 3.13",
-  "worktree_path_class": "temporary detached worktree outside the candidate repository",
+  "candidate_commit": "3fc8320bf2690805ebadbb59057ada76137c11c2",
+  "executed_at": "2026-08-01T23:29:00Z",
+  "environment": "Windows PowerShell with Python 3.14",
+  "worktree_path_class": "validated disposable Git worktree under the task workspace",
+  "bounded_commits_reverted_newest_first": [
+    "3fc8320bf2690805ebadbb59057ada76137c11c2",
+    "82b1154344c94ab5bfa08b1973bfa5534ef09961",
+    "8d29bd33c6c77e77640b24bd4ffe0022d2f3792b",
+    "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5",
+    "cb90c797618450d42ecc1106c91416fc5147445b",
+    "349e9e66ee8c6937a371e3e78adbd79fb68d64a3"
+  ],
   "commands": [
     {
-      "command": "git worktree add --detach <temporary-path> e8c37abb5e939d4433e42ea8a02af63549ca0010",
+      "command": "git worktree add --detach <validated-disposable-path> 3fc8320bf2690805ebadbb59057ada76137c11c2",
       "exit_code": 0,
-      "assertion": "The rollback target resolved to the exact baseline commit."
+      "assertion": "The rehearsal began from the exact frozen implementation commit."
+    },
+    {
+      "command": "git revert --no-commit <six bounded commits newest-to-oldest>",
+      "exit_code": 0,
+      "assertion": "The complete Phase 0 change set reverted without conflict in the disposable worktree."
+    },
+    {
+      "command": "git diff --exit-code e8c37abb5e939d4433e42ea8a02af63549ca0010 -- .",
+      "exit_code": 0,
+      "assertion": "The post-revert source tree exactly matched the baseline commit."
     },
     {
       "command": "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1",
       "exit_code": 0,
-      "assertion": "The baseline repository validator passed after removing the complete Phase 0 change set."
+      "assertion": "Baseline repository certification passed after the actual bounded revert."
     },
     {
-      "command": "py -3.13 -m pytest -q tests/test_improvement_loop.py",
+      "command": "python -m pytest -q tests/test_improvement_loop.py --basetemp <isolated-path>",
       "exit_code": 0,
-      "assertion": "All 10 baseline improvement-loop tests passed in the rollback worktree."
+      "assertion": "All 10 baseline improvement-loop tests passed after the actual bounded revert."
     },
     {
-      "command": "git worktree remove <temporary-path>",
+      "command": "git worktree remove --force <validated-disposable-path>",
       "exit_code": 0,
-      "assertion": "The disposable rollback worktree was removed through Git."
+      "assertion": "Git removed the disposable dirty worktree after evidence capture."
     }
   ],
   "result": "PASS",
-  "recovery_position": "Revert the bounded Phase 0 commits together; baseline validation remains operational.",
+  "recovery_position": "Revert the six recorded Phase 0 commits newest-to-oldest as one bounded operation.",
   "limitations": [
-    "This rehearsal validates source rollback and baseline governance tests, not public release or real-world SEO outcomes.",
-    "GitHub's immutable baseline certification remains a separate CI evidence record."
+    "This rehearsal verifies deterministic source recovery and baseline repository health, not public release or real-world SEO outcomes.",
+    "The revert was intentionally not committed or pushed because it was a disposable recovery rehearsal."
   ]
 }

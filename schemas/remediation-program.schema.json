@@ -140,7 +140,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "id", "title", "status", "verified_commit", "frozen_package_commit", "authority_evidence", "package_certification", "owner", "approver", "verifier", "notify",
+        "id", "title", "status", "verified_commit", "frozen_package_commit", "rollback_evidence_sha256", "authority_evidence", "package_certification", "owner", "approver", "verifier", "notify",
         "scope", "non_goals", "rollback", "acceptance_criteria", "required_evidence_classes",
         "evidence_status", "gates", "gate_evidence", "review"
       ],
@@ -156,6 +156,7 @@
           "type": ["string", "null"],
           "pattern": "^[0-9a-f]{40}$"
         },
+        "rollback_evidence_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
         "authority_evidence": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/evidence"}},
         "package_certification": {"type": "array", "maxItems": 1, "items": {"$ref": "#/$defs/evidence"}},
         "owner": {"type": "string", "minLength": 3},

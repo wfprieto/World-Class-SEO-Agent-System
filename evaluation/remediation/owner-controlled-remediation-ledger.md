@@ -139,3 +139,25 @@ Both round-two reviewers returned `REWORK_GOOD`. Their counterexamples establish
 Those controls were implemented at `86bbba3ccd591e0ecc50ec58eaac40f2645f38b5` and passed
 exact-commit run `30722374045`, including all matrix, quality/security, clean-wheel, and aggregate
 certification jobs. The next review package binds that implementation commit and run.
+
+### Round-three review learning
+
+Both round-three reviewers returned `REWORK_GOOD`. Their adversarial probes demonstrated that
+the repository-controlled reviewer registry, generic gate records, mutable failure references,
+and a baseline-only rollback check could still overstate closure authority. The corrected control
+set now:
+
+- freezes the reviewer registry, verdict schema, and both reviewer instruction identities by
+  exact-commit digest and loads reviewer authority from the verified commit;
+- authenticates CI records against the canonical repository, workflow, head SHA, conclusion,
+  and successful job inventory, while rejecting placeholder URLs;
+- requires gate-specific evidence classes and tagged assertions;
+- validates failure and learning records at the verified commit or an immutable ancestor;
+- rejects pytest roots inside any enclosing Git worktree; and
+- binds a durable transcript of an actual newest-to-oldest revert of the complete six-commit
+  Phase 0 range from `3fc8320bf2690805ebadbb59057ada76137c11c2` to baseline.
+
+The rollback rehearsal produced a byte-identical baseline, passed repository validation and all
+10 baseline improvement-loop tests, and removed the disposable worktree through Git. Phase 0
+remains `IN_PROGRESS` pending exact-commit certification of the frozen metadata and two new
+fresh-context independent approvals.

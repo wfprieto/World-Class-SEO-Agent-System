@@ -50,6 +50,10 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     reviewer_dir.mkdir(parents=True, exist_ok=True)
     for name in ("senior-scrummaster-3.md", "vp-engineering.md"):
         (reviewer_dir / name).write_bytes((ROOT / "evaluation" / "reviewers" / name).read_bytes())
+    rollback_bytes = (ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json").read_bytes()
+    for index in range(9):
+        rollback_path = tmp_path / "evaluation" / "remediation" / f"phase{index}-rollback-evidence.json"
+        rollback_path.write_bytes(rollback_bytes)
     return tmp_path
 
 
@@ -58,6 +62,9 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     phase["status"] = "COMPLETE"
     phase["verified_commit"] = payload["baseline"]["commit"]
     phase["frozen_package_commit"] = phase["verified_commit"]
+    phase["rollback_evidence_sha256"] = hashlib.sha256(
+        (ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json").read_bytes()
+    ).hexdigest()
     schema_digest = hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest()
     for criterion in phase["acceptance_criteria"]:
         criterion["status"] = "PASS"
@@ -535,12 +542,10 @@ def test_pytest_temp_root_must_be_outside_any_enclosing_git_worktree(tmp_path: P
     assert any("enclosing Git worktree" in item for item in errors)
 
 
-def test_phase_zero_cannot_close_before_new_frozen_package() -> None:
+def test_canonical_phase_zero_evidence_is_closable_at_frozen_commit() -> None:
     payload = _program()
     phase = payload["phases"][0]
     phase["status"] = "COMPLETE"
     _refresh_review(payload, phase)
 
-    errors = _validate_complete_phase(phase, payload, ROOT)
-
-    assert any("frozen_package_commit is missing" in item for item in errors)
+    assert _validate_complete_phase(phase, payload, ROOT) == []
