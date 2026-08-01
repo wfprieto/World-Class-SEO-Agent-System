@@ -270,3 +270,15 @@ def test_release_workflow_fails_closed_before_publication():
     assert names.index("Build and verify distributions") < publish_index
     assert names.index("Attest build provenance") < publish_index
     assert names.index("Attest wheel SBOM") < publish_index
+
+
+def test_validation_workflow_fetches_history_for_comparative_ancestry():
+    root = Path(__file__).resolve().parents[1]
+    workflow = yaml.safe_load((root / ".github/workflows/validate.yml").read_text(encoding="utf-8"))
+    checkout = next(
+        step
+        for step in workflow["jobs"]["validation_matrix"]["steps"]
+        if step.get("uses") == "actions/checkout@v7"
+    )
+
+    assert checkout["with"]["fetch-depth"] == 0
