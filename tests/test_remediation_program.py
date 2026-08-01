@@ -187,7 +187,7 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
 def _ci_provenance(commit: str) -> dict:
     return {
         "repository": "wfprieto/World-Class-SEO-Agent-System",
-        "workflow": "Repository Validation",
+        "workflow": "Validate repository",
         "head_sha": commit,
         "conclusion": "success",
         "jobs": ["repository-certification"],

@@ -151,7 +151,7 @@ def _evidence_errors(
             errors.append(f"{label} CI evidence is not a canonical repository run: {reference}")
         expected = {
             "repository": "wfprieto/World-Class-SEO-Agent-System",
-            "workflow": "Repository Validation",
+            "workflow": "Validate repository",
             "conclusion": "success",
         }
         for key, value in expected.items():
