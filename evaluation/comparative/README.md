@@ -21,11 +21,11 @@ This directory is the canonical, machine-readable comparison between the World-C
 8. External facts must name their repository source and pinned commit.
 9. Documentation, mocks and fixtures cannot independently prove production readiness.
 10. The scoring schema may change only through a separately reviewed methodology migration with before-and-after results.
-11. Target baselines must identify a commit reachable from current `HEAD` and pin canonical hashes of the effective merged command and capability inventories; effective overlay drift fails validation, while JSON formatting and unrelated files do not.
+11. Target baselines must identify a commit reachable from current `HEAD` and pin canonical hashes of the effective merged command and capability inventories; every supported semantic overlay mutation fails validation, including schema-version and unknown-field changes, while JSON formatting, key order, and unrelated files do not.
 12. Code verification, authorized live verification, and external reproduction are independent evidence tiers.
 13. A rebaseline may correct stale capability facts without inventing a new numerical score; rescoring requires a separately reviewed evidence package.
 
-The command hash merges `seoctl/command-registry.json` with `seoctl/command-registry-overlay.json`. The capability hash merges `orchestration/capability-registry.json` with `orchestration/product-proof-capability-overlay.json` using additive runtime list semantics.
+The command hash merges `seoctl/command-registry.json` with `seoctl/command-registry-overlay.json`. The capability hash merges `orchestration/capability-registry.json` with `orchestration/product-proof-capability-overlay.json` using additive runtime list semantics. Both overlays require schema version `1.1.0` and reject unknown top-level fields so unmodeled semantic metadata cannot bypass freshness checks.
 
 Run locally:
 

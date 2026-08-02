@@ -66,6 +66,7 @@ def test_every_registered_command_rejects_invalid_arguments_with_one_json_envelo
             "error": {
                 "code": "INVALID_ARGUMENTS",
                 "message": "Invalid command arguments.",
+                "state": "INPUT_ERROR",
                 "type": "ArgumentError",
             },
             "status": "input_error",

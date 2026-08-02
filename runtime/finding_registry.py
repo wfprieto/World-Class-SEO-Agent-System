@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 _SEVERITY_ORDER = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
 EvidenceState = Literal["VALID", "MISSING", "STALE", "DUPLICATE", "CONTRADICTORY"]
+ActionPolarity = Literal["ENABLE", "DISABLE"]
 _EVIDENCE_STATE_ORDER: dict[EvidenceState, int] = {
     "VALID": 0,
     "DUPLICATE": 1,
@@ -65,10 +66,38 @@ def _evidence_inventory(output: dict[str, Any]) -> dict[str, list[str]]:
         if not isinstance(item, dict):
             continue
         evidence_status = str(item.get("state", "CURRENT")).upper()
-        for key in (item.get("id"), item.get("source")):
-            if isinstance(key, str) and key.strip():
-                inventory.setdefault(key, []).append(evidence_status)
+        # An id and source are aliases for one physical evidence item. If they are
+        # identical, indexing the item twice would fabricate a duplicate.
+        keys = {
+            key
+            for key in (item.get("id"), item.get("source"))
+            if isinstance(key, str) and key.strip()
+        }
+        for key in keys:
+            inventory.setdefault(key, []).append(evidence_status)
     return inventory
+
+
+def _action_polarity(
+    finding: dict[str, Any],
+) -> tuple[tuple[str, ActionPolarity] | None, str | None]:
+    """Return an exact structured action contract; malformed contracts fail closed."""
+    raw = finding.get("action_polarity")
+    if raw is None:
+        return None, None
+    if not isinstance(raw, dict):
+        return None, "action_polarity must be an object"
+    if set(raw) != {"target", "polarity"}:
+        return None, "action_polarity requires exactly target and polarity"
+    raw_target = raw.get("target")
+    raw_polarity = raw.get("polarity")
+    if not isinstance(raw_target, str) or not isinstance(raw_polarity, str):
+        return None, "action_polarity target and polarity must be strings"
+    target = _norm(raw_target)
+    if not target or raw_polarity not in {"ENABLE", "DISABLE"}:
+        return None, "action_polarity requires a non-empty target and ENABLE or DISABLE polarity"
+    typed_polarity: ActionPolarity = "ENABLE" if raw_polarity == "ENABLE" else "DISABLE"
+    return (target, typed_polarity), None
 
 
 def _reference_state(reference: str, observed: list[str]) -> tuple[EvidenceState, list[str]]:
@@ -120,6 +149,7 @@ class FindingRecord:
     state: str = "PROPOSED"
     evidence_state: EvidenceState = "VALID"
     evidence_issues: list[str] = field(default_factory=list)
+    review_issues: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         result = dict(self.finding)
@@ -128,8 +158,18 @@ class FindingRecord:
         result["state"] = self.state
         result["evidence_state"] = self.evidence_state
         result["evidence_issues"] = list(self.evidence_issues)
+        result["review_issues"] = list(self.review_issues)
         result["root_cause_key"] = "::".join(self.key)
         return result
+
+
+@dataclass(frozen=True)
+class _ActionRow:
+    agent: str
+    finding_id: str
+    contract: tuple[str, ActionPolarity] | None
+    contract_issue: str | None
+    statement: str
 
 
 class FindingRegistry:
@@ -143,6 +183,7 @@ class FindingRegistry:
                 continue
             key = _finding_key(finding)
             evidence_state, evidence_issues = _evidence_state(output, finding)
+            _, action_issue = _action_polarity(finding)
             finding_id = str(finding.get("id", ""))
             if key not in self._records:
                 self._records[key] = FindingRecord(
@@ -152,6 +193,7 @@ class FindingRegistry:
                     finding_ids=[finding_id] if finding_id else [],
                     evidence_state=evidence_state,
                     evidence_issues=evidence_issues,
+                    review_issues=[action_issue] if action_issue else [],
                 )
                 continue
             record = self._records[key]
@@ -168,6 +210,8 @@ class FindingRegistry:
                 record.finding_ids.append(finding_id)
             record.evidence_state = _worse(record.evidence_state, evidence_state)
             record.evidence_issues = sorted(set(record.evidence_issues).union(evidence_issues))
+            if action_issue:
+                record.review_issues = sorted(set(record.review_issues) | {action_issue})
             current = str(record.finding.get("severity", "Low"))
             incoming = str(finding.get("severity", "Low"))
             if _SEVERITY_ORDER.get(incoming, 0) > _SEVERITY_ORDER.get(current, 0):
@@ -185,44 +229,71 @@ class FindingRegistry:
                     | {"specialists supplied contradictory evidence or actions"}
                 )
 
+    def _mark_action_review(self, finding_ids: set[str], issue: str) -> None:
+        for record in self._records.values():
+            if finding_ids.intersection(record.finding_ids):
+                record.review_issues = sorted(set(record.review_issues) | {issue})
+
+    def _reconcile_action_pair(
+        self, scope: str, left: _ActionRow, right: _ActionRow
+    ) -> dict[str, Any] | None:
+        finding_ids = {left.finding_id, right.finding_id}
+        if left.contract_issue or right.contract_issue:
+            self._mark_action_review(
+                finding_ids,
+                "malformed structured action polarity requires specialist review",
+            )
+            return None
+        if left.contract is not None and right.contract is not None:
+            same_target = left.contract[0] == right.contract[0]
+            opposite_polarity = left.contract[1] != right.contract[1]
+            if not (same_target and opposite_polarity):
+                return None
+            self._mark_contradictory(finding_ids)
+            return {
+                "affected_scope": scope or "unspecified",
+                "agents": [left.agent, right.agent],
+                "finding_ids": [left.finding_id, right.finding_id],
+                "reason": (
+                    "Agents declared opposite action polarities for the same normalized target."
+                ),
+                "risk": "High",
+            }
+        if left.agent != right.agent and left.statement != right.statement:
+            self._mark_action_review(
+                finding_ids,
+                "specialist action compatibility is unproven without action_polarity",
+            )
+        return None
+
     def conflicts(self, outputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         conflicts: list[dict[str, Any]] = []
-        by_scope: dict[str, list[tuple[str, str, set[str]]]] = {}
+        by_scope: dict[str, list[_ActionRow]] = {}
         for output in outputs:
             agent = str(output.get("agent", "Unknown Agent"))
             for finding in output.get("findings", []):
                 if not isinstance(finding, dict):
                     continue
                 scope = _norm(finding.get("affected_scope", ""))
-                words = _tokens(finding.get("finding", ""))
-                by_scope.setdefault(scope, []).append((agent, str(finding.get("id", "")), words))
+                action, action_issue = _action_polarity(finding)
+                by_scope.setdefault(scope, []).append(
+                    _ActionRow(
+                        agent=agent,
+                        finding_id=str(finding.get("id", "")),
+                        contract=action,
+                        contract_issue=action_issue,
+                        statement=_norm(finding.get("finding", "")),
+                    )
+                )
 
-        opposing = [
-            ({"publish", "launch", "index"}, {"noindex", "block", "reject", "remove"}),
-            ({"grant", "allow"}, {"deny", "denied", "block"}),
-            ({"implement", "generate"}, {"unsupported", "invalid", "prohibited"}),
-        ]
         for scope, rows in by_scope.items():
             for index, left in enumerate(rows):
                 for right in rows[index + 1 :]:
-                    for positive, negative in opposing:
-                        left_positive = bool(left[2] & positive)
-                        left_negative = bool(left[2] & negative)
-                        right_positive = bool(right[2] & positive)
-                        right_negative = bool(right[2] & negative)
-                        if (left_positive and right_negative) or (left_negative and right_positive):
-                            conflicts.append(
-                                {
-                                    "conflict_id": f"conflict-{len(conflicts) + 1:03d}",
-                                    "affected_scope": scope or "unspecified",
-                                    "agents": [left[0], right[0]],
-                                    "finding_ids": [left[1], right[1]],
-                                    "reason": "Agents proposed materially incompatible states or actions.",
-                                    "risk": "High",
-                                }
-                            )
-                            self._mark_contradictory({left[1], right[1]})
-                            break
+                    conflict = self._reconcile_action_pair(scope, left, right)
+                    if conflict is not None:
+                        conflicts.append(
+                            {"conflict_id": f"conflict-{len(conflicts) + 1:03d}", **conflict}
+                        )
         return conflicts
 
     def accept_all_without_conflict(self, conflicts: list[dict[str, Any]]) -> None:
@@ -234,7 +305,11 @@ class FindingRegistry:
                 record.state = "CONFLICTED"
                 record.evidence_state = "CONTRADICTORY"
             else:
-                record.state = "ACCEPTED" if record.evidence_state == "VALID" else "EVIDENCE_REVIEW"
+                record.state = (
+                    "ACCEPTED"
+                    if record.evidence_state == "VALID" and not record.review_issues
+                    else "EVIDENCE_REVIEW"
+                )
 
 
 def build_decisions(

@@ -21,15 +21,72 @@
         {"type": "null"},
         {
           "type": "object",
-          "required": ["type", "message"],
+          "additionalProperties": false,
+          "required": ["code", "type", "state", "message"],
           "properties": {
             "code": {"type": "string", "minLength": 1},
             "type": {"type": "string", "minLength": 1},
-            "state": {"enum": ["INPUT_ERROR", "UNAVAILABLE", "BLOCKED", "FAILED"]},
+            "state": {
+              "enum": [
+                "INPUT_ERROR", "NOT_CONFIGURED", "UNAVAILABLE", "NOT_FOUND",
+                "RATE_LIMITED", "BLOCKED", "UNAUTHORIZED", "FAILED", "INVALID",
+                "INVALID_RESPONSE"
+              ]
+            },
             "message": {"type": "string"}
           }
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"enum": ["ok", "complete", "success", "needs-review", "partial", "empty"]}}},
+      "then": {"properties": {"error": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["input_error", "not_configured", "unavailable", "not_found", "rate_limited", "blocked", "unauthorized", "failed", "invalid", "invalid_response"]}}},
+      "then": {"properties": {"error": {"type": "object"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "input_error"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"enum": ["INPUT_ERROR", "INVALID_ARGUMENTS"]}, "state": {"const": "INPUT_ERROR"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "not_configured"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "NOT_CONFIGURED"}, "state": {"const": "NOT_CONFIGURED"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "unavailable"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "UNAVAILABLE"}, "state": {"const": "UNAVAILABLE"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "not_found"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "NOT_FOUND"}, "state": {"const": "NOT_FOUND"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "rate_limited"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "RATE_LIMITED"}, "state": {"const": "RATE_LIMITED"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "blocked"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "BLOCKED"}, "state": {"const": "BLOCKED"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "unauthorized"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "UNAUTHORIZED"}, "state": {"const": "UNAUTHORIZED"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "failed"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "FAILED"}, "state": {"const": "FAILED"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "invalid"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "INVALID"}, "state": {"const": "INVALID"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "invalid_response"}}},
+      "then": {"properties": {"error": {"properties": {"code": {"const": "INVALID_RESPONSE"}, "state": {"const": "INVALID_RESPONSE"}}}}}
+    }
+  ]
 }

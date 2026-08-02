@@ -11,11 +11,11 @@ from integrations.product_proof.intelligence import (
     PerformanceNarrativeAnalyzer,
     ReviewComplianceAnalyzer,
 )
-from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, envelope
+from seoctl.cli import EXIT_FAILED, EXIT_INPUT, envelope, exit_code_for_status
 
 
 def _wrap(command: str, result):
-    return envelope(command, result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _timeouts(args: argparse.Namespace):

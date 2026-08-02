@@ -15,19 +15,11 @@ from integrations.authority_media.services import (
     TranscriptService,
     YouTubeSearchService,
 )
-from seoctl.cli import EXIT_BLOCKED, EXIT_FAILED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, envelope
+from seoctl.cli import EXIT_FAILED, EXIT_INPUT, envelope, exit_code_for_status
 
 
 def _result(command: str, result):
-    if result.status in {"ok", "empty", "partial"}:
-        code = EXIT_OK
-    elif result.status in {"not_configured", "not_found", "unavailable"}:
-        code = EXIT_UNAVAILABLE
-    elif result.status == "blocked":
-        code = EXIT_BLOCKED
-    else:
-        code = EXIT_FAILED
-    return envelope(command, result.status, result.data, warnings=result.warnings), code
+    return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _links_commoncrawl(args: argparse.Namespace):

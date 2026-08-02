@@ -11,6 +11,7 @@ from typing import Any, Callable
 from adapters.base import AdapterNotConfigured
 from integrations.technical.browser import RenderedPageService
 from integrations.technical.inspection import TechnicalInspectionService
+from seoctl import cli as cli_contract
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, envelope
 
 
@@ -23,12 +24,7 @@ def _technical() -> TechnicalInspectionService:
 
 
 def _result(command: str, result):
-    code = EXIT_OK
-    if result.status in {"not_configured", "unavailable"}:
-        code = EXIT_UNAVAILABLE
-    elif result.status in {"failed", "invalid_response"}:
-        code = EXIT_FAILED
-    return envelope(command, result.status, result.data, warnings=result.warnings), code
+    return envelope(command, result.status, result.data, warnings=result.warnings), cli_contract.exit_code_for_status(result.status)
 
 
 def _render_health(args: argparse.Namespace):

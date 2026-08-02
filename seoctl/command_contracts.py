@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 
 from runtime.assets import resolve_asset_root
 from seoctl.registry import CommandSpec, command_specs
+from seoctl.result_contract import FAILURE_CONTRACT, FailureState
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[1])
 INPUT_SCHEMA = "schemas/seoctl-command-input.schema.json"
@@ -26,21 +27,6 @@ NETWORK_EVIDENCE_MODES: dict[str, EvidenceMode] = {
     "live_optional": "LIVE_CAPABLE",
     "live_required": "LIVE_CAPABLE",
 }
-
-
-@dataclass(frozen=True)
-class FailureState:
-    status: str
-    state: str
-    exit_code: int
-
-
-FAILURE_CONTRACT: tuple[FailureState, ...] = (
-    FailureState("input_error", "INPUT_ERROR", 2),
-    FailureState("unavailable", "UNAVAILABLE", 3),
-    FailureState("blocked", "BLOCKED", 4),
-    FailureState("failed", "FAILED", 5),
-)
 
 
 @dataclass(frozen=True)

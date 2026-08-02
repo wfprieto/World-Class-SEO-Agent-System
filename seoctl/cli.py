@@ -9,6 +9,9 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Callable, cast
 
+from seoctl.result_contract import exit_code_for_status as exit_code_for_status
+from seoctl.result_contract import normalize_error
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -57,7 +60,7 @@ def envelope(command: str, status: str, data: Any = None, *, warnings: list[str]
         "status": status,
         "data": _plain(data),
         "warnings": warnings or [],
-        "error": error,
+        "error": normalize_error(status, error),
     }
 
 

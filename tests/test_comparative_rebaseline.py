@@ -5,6 +5,8 @@ import json
 import shutil
 from pathlib import Path
 
+import pytest
+
 from scripts.inventory_comparator import (
     COMPARATIVE,
     _catalog_skill_ids,
@@ -163,6 +165,43 @@ def test_effective_inventory_hashes_bind_both_overlays(tmp_path: Path):
         "effective_capability_registry" in error
         for error in validate_inventory_freshness(parity, root)
     )
+
+
+@pytest.mark.parametrize(
+    ("relative_path", "mutation"),
+    [
+        ("seoctl/command-registry-overlay.json", "schema_version"),
+        ("seoctl/command-registry-overlay.json", "unknown_top_level"),
+        (
+            "orchestration/product-proof-capability-overlay.json",
+            "schema_version",
+        ),
+        (
+            "orchestration/product-proof-capability-overlay.json",
+            "unknown_top_level",
+        ),
+    ],
+)
+def test_effective_inventory_rejects_unsupported_overlay_contracts(
+    tmp_path: Path, relative_path: str, mutation: str
+):
+    root = _registry_fixture(tmp_path)
+    parity = load_json(COMPARATIVE / "capability-parity.json")
+    path = root / relative_path
+    overlay = load_json(path)
+    if mutation == "schema_version":
+        overlay["schema_version"] = "999.0.0"
+    else:
+        overlay["unrecognized_semantic_control"] = True
+    path.write_text(json.dumps(overlay), encoding="utf-8")
+
+    errors = validate_inventory_freshness(parity, root)
+
+    assert any("effective inventory could not be merged" in error for error in errors)
+    expected_detail = (
+        "schema_version must be" if mutation == "schema_version" else "unknown top-level fields"
+    )
+    assert any(expected_detail in error for error in errors)
 
 
 def test_effective_inventory_hash_ignores_json_formatting_and_unrelated_files(

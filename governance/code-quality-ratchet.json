@@ -131,32 +131,32 @@
       "removal_phase": "P7"
     },
     "seoctl/audit_cli.py": {
-      "max_lines": 194,
-      "max_complexity_total": 33,
+      "max_lines": 189,
+      "max_complexity_total": 31,
       "max_missing_annotations": 7,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
     "seoctl/authority_cli.py": {
-      "max_lines": 247,
-      "max_complexity_total": 33,
+      "max_lines": 239,
+      "max_complexity_total": 30,
       "max_missing_annotations": 15,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
     "seoctl/content_cli.py": {
-      "max_lines": 286,
-      "max_complexity_total": 30,
+      "max_lines": 276,
+      "max_complexity_total": 27,
       "max_missing_annotations": 10,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
     "seoctl/extensions_cli.py": {
-      "max_lines": 237,
-      "max_complexity_total": 39,
+      "max_lines": 227,
+      "max_complexity_total": 36,
       "max_missing_annotations": 10,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -179,8 +179,8 @@
       "removal_phase": "P7"
     },
     "seoctl/technical_cli.py": {
-      "max_lines": 291,
-      "max_complexity_total": 46,
+      "max_lines": 287,
+      "max_complexity_total": 44,
       "max_missing_annotations": 16,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -781,8 +781,8 @@
       "removal_phase": "P7"
     },
     "seoctl.audit_cli::_result": {
-      "max_span": 7,
-      "max_complexity": 3,
+      "max_span": 2,
+      "max_complexity": 1,
       "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -829,8 +829,8 @@
       "removal_phase": "P7"
     },
     "seoctl.authority_cli::_result": {
-      "max_span": 10,
-      "max_complexity": 4,
+      "max_span": 2,
+      "max_complexity": 1,
       "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -949,8 +949,8 @@
       "removal_phase": "P7"
     },
     "seoctl.content_cli::_result": {
-      "max_span": 15,
-      "max_complexity": 4,
+      "max_span": 7,
+      "max_complexity": 1,
       "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1029,8 +1029,8 @@
       "removal_phase": "P7"
     },
     "seoctl.extensions_cli::_result": {
-      "max_span": 11,
-      "max_complexity": 4,
+      "max_span": 2,
+      "max_complexity": 1,
       "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1237,8 +1237,8 @@
       "removal_phase": "P7"
     },
     "seoctl.technical_cli::_result": {
-      "max_span": 7,
-      "max_complexity": 3,
+      "max_span": 2,
+      "max_complexity": 1,
       "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",

@@ -17,9 +17,9 @@ from seoctl.cli import (
     EXIT_BLOCKED,
     EXIT_FAILED,
     EXIT_INPUT,
-    EXIT_OK,
     EXIT_UNAVAILABLE,
     envelope,
+    exit_code_for_status,
 )
 
 
@@ -35,7 +35,7 @@ def _gsc_query(args: argparse.Namespace):
         aggregation_type=args.aggregation_type,
         data_state=args.data_state,
     )
-    return envelope("google.gsc-query", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.gsc-query", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _gsc_aggregate(args: argparse.Namespace):
@@ -47,7 +47,7 @@ def _gsc_aggregate(args: argparse.Namespace):
         aggregation_type=args.aggregation_type,
         data_state=args.data_state,
     )
-    return envelope("google.gsc-aggregate", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.gsc-aggregate", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _url_inspection(args: argparse.Namespace):
@@ -56,7 +56,7 @@ def _url_inspection(args: argparse.Namespace):
         site_url=args.site_url,
         language_code=args.language_code,
     )
-    return envelope("google.url-inspection", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.url-inspection", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _sitemap_status(args: argparse.Namespace):
@@ -65,7 +65,7 @@ def _sitemap_status(args: argparse.Namespace):
         sitemap_url=args.sitemap_url,
         sitemap_index=args.sitemap_index,
     )
-    return envelope("google.sitemap-status", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.sitemap-status", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _ga4_report(args: argparse.Namespace):
@@ -79,7 +79,7 @@ def _ga4_report(args: argparse.Namespace):
         offset=args.offset,
         currency_code=args.currency_code,
     )
-    return envelope("google.ga4-report", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.ga4-report", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _pagespeed(args: argparse.Namespace):
@@ -88,7 +88,7 @@ def _pagespeed(args: argparse.Namespace):
         strategy=args.strategy,
         include_crux=not args.no_crux,
     )
-    return envelope("google.pagespeed", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.pagespeed", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _crux_current(args: argparse.Namespace):
@@ -98,7 +98,7 @@ def _crux_current(args: argparse.Namespace):
         form_factor=args.form_factor,
         metrics=args.metric or None,
     )
-    return envelope("google.crux-current", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.crux-current", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _crux_history(args: argparse.Namespace):
@@ -109,7 +109,7 @@ def _crux_history(args: argparse.Namespace):
         metrics=args.metric or None,
         collection_period_count=args.periods,
     )
-    return envelope("google.crux-history", result.status, result.data, warnings=result.warnings), EXIT_OK
+    return envelope("google.crux-history", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _lcp_subparts(args: argparse.Namespace):
@@ -147,7 +147,7 @@ def _lcp_subparts(args: argparse.Namespace):
             "request_metadata": result.data.get("request_metadata", {}),
             "limitations": result.data.get("limitations", []),
         }
-    return envelope("google.lcp-subparts", result.status, data, warnings=result.warnings), EXIT_OK
+    return envelope("google.lcp-subparts", result.status, data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 HANDLERS: dict[str, Callable[[argparse.Namespace], tuple[dict[str, Any], int]]] = {

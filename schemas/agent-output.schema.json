@@ -103,6 +103,24 @@
             "type": "array",
             "description": "References to evidence items by stable id or source label.",
             "items": {"type": "string"}
+          },
+          "action_polarity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target", "polarity"],
+            "description": "Optional bounded action contract. Use the same normalized target for recommendations that must be checked for incompatibility.",
+            "properties": {
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Concrete behavior or state being controlled, such as product-page crawling."
+              },
+              "polarity": {
+                "type": "string",
+                "enum": ["ENABLE", "DISABLE"],
+                "description": "Whether the finding recommends enabling or disabling the target."
+              }
+            }
           }
         }
       }

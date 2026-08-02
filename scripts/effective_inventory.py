@@ -8,6 +8,21 @@ import json
 from pathlib import Path
 from typing import Any
 
+COMMAND_OVERLAY_SCHEMA_VERSION = "1.1.0"
+CAPABILITY_OVERLAY_SCHEMA_VERSION = "1.1.0"
+COMMAND_OVERLAY_KEYS = {
+    "schema_version",
+    "version",
+    "commands",
+    "agent_commands",
+    "agent_execution_classes",
+}
+CAPABILITY_OVERLAY_KEYS = {
+    "schema_version",
+    "shared_knowledge_files",
+    "agent_overrides",
+}
+
 
 def _load(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -45,9 +60,28 @@ def _merge_unique(*groups: list[str]) -> list[str]:
     return merged
 
 
+def _validate_overlay_contract(
+    overlay: dict[str, Any], label: str, allowed_keys: set[str], schema_version: str
+) -> None:
+    unknown_keys = sorted(set(overlay) - allowed_keys)
+    if unknown_keys:
+        raise ValueError(f"{label} has unknown top-level fields: {unknown_keys}")
+    actual_schema_version = overlay.get("schema_version")
+    if actual_schema_version != schema_version:
+        raise ValueError(
+            f"{label} schema_version must be {schema_version!r}; found {actual_schema_version!r}"
+        )
+
+
 def effective_command_registry(root: Path) -> dict[str, Any]:
     active = copy.deepcopy(_load(root / "seoctl/command-registry.json"))
     overlay = _load(root / "seoctl/command-registry-overlay.json")
+    _validate_overlay_contract(
+        overlay,
+        "command overlay",
+        COMMAND_OVERLAY_KEYS,
+        COMMAND_OVERLAY_SCHEMA_VERSION,
+    )
     base_rows = _rows(active.get("commands"), "base command inventory")
     overlay_rows = _rows(overlay.get("commands"), "command overlay inventory")
     active["commands"] = [*base_rows, *copy.deepcopy(overlay_rows)]
@@ -74,6 +108,12 @@ def effective_command_registry(root: Path) -> dict[str, Any]:
 def effective_capability_registry(root: Path) -> dict[str, Any]:
     active = copy.deepcopy(_load(root / "orchestration/capability-registry.json"))
     overlay = _load(root / "orchestration/product-proof-capability-overlay.json")
+    _validate_overlay_contract(
+        overlay,
+        "capability overlay",
+        CAPABILITY_OVERLAY_KEYS,
+        CAPABILITY_OVERLAY_SCHEMA_VERSION,
+    )
     agents = _object(active.get("agents"), "capability registry agents")
     overrides = _object(overlay.get("agent_overrides"), "capability overlay overrides")
     shared = _strings(overlay.get("shared_knowledge_files"), "capability overlay shared knowledge")
