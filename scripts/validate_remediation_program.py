@@ -51,7 +51,12 @@ CI_RUN_PATTERN = re.compile(
     r"^https://github\.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/[1-9][0-9]*$"
 )
 REQUIRED_CI_JOBS: dict[str, set[str]] = {
-    "package certification": {"validate", "quality_security_release", "repository-certification", "phase0-rollback-certification"},
+    "package certification": {
+        "validate",
+        "quality_security_release",
+        "repository-certification",
+        "phase0-rollback-certification",
+    },
     "gate full_certification": {"validate", "quality_security_release", "repository-certification"},
     "gate security_review": {"quality_security_release"},
     "gate unexpected_change_scan": {"validate", "repository-certification"},
@@ -78,7 +83,9 @@ def _schema_errors(program: dict[str, Any], schema: dict[str, Any], root: Path) 
     validator = Draft202012Validator(schema, registry=registry)
     return [
         f"schema {'.'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
-        for error in sorted(validator.iter_errors(program), key=lambda item: list(item.absolute_path))
+        for error in sorted(
+            validator.iter_errors(program), key=lambda item: list(item.absolute_path)
+        )
     ]
 
 
@@ -93,12 +100,17 @@ def canonical_text_digest(content: bytes) -> str:
 
 def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str:
     """Hash the immutable phase evidence reviewed independently of verdict storage."""
+
     def phase_contract(item: dict[str, Any]) -> dict[str, Any]:
         return {
             key: value
             for key, value in item.items()
-            if key not in {
-                "status", "review", "review_snapshot_commit", "frozen_package_commit",
+            if key
+            not in {
+                "status",
+                "review",
+                "review_snapshot_commit",
+                "frozen_package_commit",
                 "package_certification",
             }
         }
@@ -118,9 +130,7 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
         "authority_evidence": phase.get("authority_evidence", []),
         "audit_findings": program.get("audit_findings", []),
         "failures": [
-            item
-            for item in program.get("failures", [])
-            if item.get("phase_id") == phase.get("id")
+            item for item in program.get("failures", []) if item.get("phase_id") == phase.get("id")
         ],
         "learning_records": [
             item
@@ -133,8 +143,14 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
 
 
 def _evidence_errors(
-    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str, *,
-    allow_ancestor: bool = False, require_unchanged: bool = True,
+    evidence: dict[str, Any],
+    verified_commit: str | None,
+    root: Path,
+    label: str,
+    *,
+    allow_ancestor: bool = False,
+    require_unchanged: bool = True,
+    authenticate_ci: bool = False,
 ) -> list[str]:
     errors: list[str] = []
     evidence_class = str(evidence.get("class", ""))
@@ -145,7 +161,10 @@ def _evidence_errors(
         try:
             subprocess.run(
                 ["git", "merge-base", "--is-ancestor", evidence_commit, verified_commit],
-                cwd=root, check=True, capture_output=True, timeout=20,
+                cwd=root,
+                check=True,
+                capture_output=True,
+                timeout=20,
             )
             commit_is_valid = True
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
@@ -173,16 +192,29 @@ def _evidence_errors(
             errors.append(f"{label} evidence does not exist at verified_commit: {reference}")
         elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
             errors.append(f"{label} evidence digest is not immutable: {reference}")
-        if allow_ancestor and require_unchanged and (root / ".git").exists() and verified_commit and expected_digest:
+        if (
+            allow_ancestor
+            and require_unchanged
+            and (root / ".git").exists()
+            and verified_commit
+            and expected_digest
+        ):
             try:
                 verified_content = subprocess.check_output(
-                    ["git", "show", f"{verified_commit}:{source_path}"], cwd=root,
-                    stderr=subprocess.DEVNULL, timeout=20,
+                    ["git", "show", f"{verified_commit}:{source_path}"],
+                    cwd=root,
+                    stderr=subprocess.DEVNULL,
+                    timeout=20,
                 )
             except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
                 verified_content = None
-            if verified_content is None or hashlib.sha256(verified_content).hexdigest() != expected_digest:
-                errors.append(f"{label} ancestor evidence changed before verified_commit: {reference}")
+            if (
+                verified_content is None
+                or hashlib.sha256(verified_content).hexdigest() != expected_digest
+            ):
+                errors.append(
+                    f"{label} ancestor evidence changed before verified_commit: {reference}"
+                )
     if evidence_class == "CI":
         provenance = evidence.get("provenance", {})
         if not CI_RUN_PATTERN.fullmatch(reference):
@@ -203,7 +235,7 @@ def _evidence_errors(
         jobs = provenance.get("jobs", [])
         if not isinstance(jobs, list) or not jobs or any(not str(job).strip() for job in jobs):
             errors.append(f"{label} CI provenance has no successful job inventory")
-        if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+        if authenticate_ci:
             errors.extend(_github_ci_errors(reference, provenance, label))
     if evidence.get("status") not in {"OBSERVED", "PASS"}:
         errors.append(f"{label} evidence {reference} is not passing")
@@ -249,9 +281,7 @@ def _github_ci_errors(reference: str, provenance: dict[str, Any], label: str) ->
         for item in jobs_payload.get("jobs", [])
         if item.get("conclusion") == "success"
     }
-    required = next(
-        (names for marker, names in REQUIRED_CI_JOBS.items() if marker in label), set()
-    )
+    required = next((names for marker, names in REQUIRED_CI_JOBS.items() if marker in label), set())
     for required_name in required:
         if required_name == "validate":
             if "validate" not in successful_jobs:
@@ -261,7 +291,9 @@ def _github_ci_errors(reference: str, provenance: dict[str, Any], label: str) ->
     return errors
 
 
-def _validate_sequence(program: dict[str, Any], root: Path) -> list[str]:
+def _validate_sequence(
+    program: dict[str, Any], root: Path, *, authenticate_ci: bool = False
+) -> list[str]:
     errors: list[str] = []
     phases = program.get("phases", [])
     ids = [phase.get("id") for phase in phases]
@@ -281,7 +313,9 @@ def _validate_sequence(program: dict[str, Any], root: Path) -> list[str]:
         current_status = phases[current_index].get("status")
         all_complete = all(phase.get("status") == "COMPLETE" for phase in phases)
         if not all_complete and current_status not in {"IN_PROGRESS", "BLOCKED"}:
-            errors.append("current_phase must be IN_PROGRESS or BLOCKED until the program completes")
+            errors.append(
+                "current_phase must be IN_PROGRESS or BLOCKED until the program completes"
+            )
     for index, phase in enumerate(phases):
         status = phase.get("status")
         if index < current_index and status != "COMPLETE":
@@ -289,12 +323,18 @@ def _validate_sequence(program: dict[str, Any], root: Path) -> list[str]:
         if index > current_index and status != "NOT_STARTED":
             errors.append(f"{phase['id']} follows current_phase and must be NOT_STARTED")
         if status == "COMPLETE":
-            errors.extend(_validate_complete_phase(phase, program, root))
+            errors.extend(
+                _validate_complete_phase(phase, program, root, authenticate_ci=authenticate_ci)
+            )
     return errors
 
 
 def _validate_complete_phase(
-    phase: dict[str, Any], program: dict[str, Any], root: Path
+    phase: dict[str, Any],
+    program: dict[str, Any],
+    root: Path,
+    *,
+    authenticate_ci: bool = False,
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase["id"])
@@ -320,21 +360,29 @@ def _validate_complete_phase(
                 timeout=20,
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is not an ancestor of HEAD")
+            errors.append(
+                f"{phase_id} cannot be COMPLETE: verified_commit is not an ancestor of HEAD"
+            )
     if not review_snapshot_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: review_snapshot_commit is missing")
     if not frozen_package_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: frozen_package_commit is missing")
     elif frozen_package_commit != review_snapshot_commit:
-        errors.append(f"{phase_id} cannot be COMPLETE: frozen package must equal review_snapshot_commit")
+        errors.append(
+            f"{phase_id} cannot be COMPLETE: frozen package must equal review_snapshot_commit"
+        )
     if review_snapshot_commit:
         errors.extend(_closure_delta_errors(program, phase, root, str(review_snapshot_commit)))
-    rollback_path = root / "evaluation" / "remediation" / f"phase{phase_id[1:]}-rollback-evidence.json"
+    rollback_path = (
+        root / "evaluation" / "remediation" / f"phase{phase_id[1:]}-rollback-evidence.json"
+    )
     expected_rollback_digest = phase.get("rollback_evidence_sha256")
     if not rollback_path.is_file() or not expected_rollback_digest:
         errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence is missing")
     elif canonical_text_digest(rollback_path.read_bytes()) != expected_rollback_digest:
-        errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence digest does not match reviewed package")
+        errors.append(
+            f"{phase_id} cannot be COMPLETE: rollback evidence digest does not match reviewed package"
+        )
 
     authority = phase.get("authority_evidence", [])
     required_authority = {
@@ -347,18 +395,31 @@ def _validate_complete_phase(
     if observed_authority != required_authority:
         errors.append(f"{phase_id} cannot be COMPLETE: reviewer authority package is incomplete")
     for evidence in authority:
-        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} authority", allow_ancestor=True))
+        errors.extend(
+            _evidence_errors(
+                evidence,
+                str(verified_commit) if verified_commit else None,
+                root,
+                f"{phase_id} authority",
+                allow_ancestor=True,
+                authenticate_ci=authenticate_ci,
+            )
+        )
         if verified_commit and (root / ".git").exists():
             source_path = str(evidence.get("ref", "")).split("::", 1)[0]
             expected_digest = evidence.get("sha256")
             for commit_label in (str(verified_commit), "HEAD"):
                 try:
                     content = subprocess.check_output(
-                        ["git", "show", f"{commit_label}:{source_path}"], cwd=root,
-                        stderr=subprocess.DEVNULL, timeout=20,
+                        ["git", "show", f"{commit_label}:{source_path}"],
+                        cwd=root,
+                        stderr=subprocess.DEVNULL,
+                        timeout=20,
                     )
                 except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-                    errors.append(f"{phase_id} authority {source_path} is missing at {commit_label}")
+                    errors.append(
+                        f"{phase_id} authority {source_path} is missing at {commit_label}"
+                    )
                     continue
                 if hashlib.sha256(content).hexdigest() != expected_digest:
                     errors.append(f"{phase_id} authority {source_path} changed by {commit_label}")
@@ -366,7 +427,15 @@ def _validate_complete_phase(
     if not package_certification:
         errors.append(f"{phase_id} cannot be COMPLETE: package certification is missing")
     for evidence in package_certification:
-        errors.extend(_evidence_errors(evidence, str(review_snapshot_commit) if review_snapshot_commit else None, root, f"{phase_id} package certification"))
+        errors.extend(
+            _evidence_errors(
+                evidence,
+                str(review_snapshot_commit) if review_snapshot_commit else None,
+                root,
+                f"{phase_id} package certification",
+                authenticate_ci=authenticate_ci,
+            )
+        )
     for key, required in COMPLETION_GATES.items():
         actual = str(phase["gates"].get(key, ""))
         if not _gate_passes(actual, required):
@@ -386,7 +455,9 @@ def _validate_complete_phase(
                     evidence,
                     str(verified_commit) if verified_commit else None,
                     root,
-                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')}", allow_ancestor=True,
+                    f"{phase_id} cannot be COMPLETE: {criterion.get('id')}",
+                    allow_ancestor=True,
+                    authenticate_ci=authenticate_ci,
                 )
             )
 
@@ -399,20 +470,28 @@ def _validate_complete_phase(
         for evidence in records:
             evidence_class = str(evidence.get("class", ""))
             if evidence_class not in GATE_EVIDENCE_CLASSES.get(gate, set()):
-                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} rejects evidence class {evidence_class}")
+                errors.append(
+                    f"{phase_id} cannot be COMPLETE: gate {gate} rejects evidence class {evidence_class}"
+                )
             assertion = str(evidence.get("assertion", ""))
             if not assertion.startswith(f"[{gate}] "):
-                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} evidence lacks a gate-specific assertion")
+                errors.append(
+                    f"{phase_id} cannot be COMPLETE: gate {gate} evidence lacks a gate-specific assertion"
+                )
             identity = (gate, str(evidence.get("ref", "")), assertion)
             if identity in gate_keys:
-                errors.append(f"{phase_id} cannot be COMPLETE: gate {gate} contains duplicate evidence")
+                errors.append(
+                    f"{phase_id} cannot be COMPLETE: gate {gate} contains duplicate evidence"
+                )
             gate_keys.add(identity)
             errors.extend(
                 _evidence_errors(
                     evidence,
                     str(verified_commit) if verified_commit else None,
                     root,
-                    f"{phase_id} cannot be COMPLETE: gate {gate}", allow_ancestor=True,
+                    f"{phase_id} cannot be COMPLETE: gate {gate}",
+                    allow_ancestor=True,
+                    authenticate_ci=authenticate_ci,
                 )
             )
 
@@ -456,16 +535,25 @@ def _validate_complete_phase(
         immutable_validator = Draft202012Validator(immutable_verdict_schema)
         for verdict in verdicts:
             for schema_error in immutable_validator.iter_errors(verdict):
-                errors.append(f"{phase_id} verdict violates immutable reviewer schema: {schema_error.message}")
+                errors.append(
+                    f"{phase_id} verdict violates immutable reviewer schema: {schema_error.message}"
+                )
     roles = {item.get("role") for item in verdicts}
     if len(verdicts) != 2 or roles != {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}:
-        errors.append(f"{phase_id} requires one canonical verdict from each independent reviewer role")
+        errors.append(
+            f"{phase_id} requires one canonical verdict from each independent reviewer role"
+        )
     if len(verdicts) != 2 or any(item.get("verdict") != "APPROVE_GREAT" for item in verdicts):
         errors.append(f"{phase_id} requires two APPROVE_GREAT verdicts")
     package_hash = review.get("evidence_package_hash")
     snapshot_program = (
-        _load_object_at_commit(root, str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/"), str(review_snapshot_commit))
-        if review_snapshot_commit else program
+        _load_object_at_commit(
+            root,
+            str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/"),
+            str(review_snapshot_commit),
+        )
+        if review_snapshot_commit
+        else program
     )
     snapshot_phase = next(
         (item for item in snapshot_program.get("phases", []) if item.get("id") == phase_id), phase
@@ -473,7 +561,9 @@ def _validate_complete_phase(
     expected_package_hash = evidence_package_hash(snapshot_program, snapshot_phase)
     if package_hash != expected_package_hash:
         errors.append(f"{phase_id} review hash does not match the canonical evidence package")
-    if not package_hash or any(item.get("evidence_package_hash") != package_hash for item in verdicts):
+    if not package_hash or any(
+        item.get("evidence_package_hash") != package_hash for item in verdicts
+    ):
         errors.append(f"{phase_id} reviewers must inspect the same immutable evidence package")
     contexts = [item.get("context_id") for item in verdicts]
     reviewer_ids = [item.get("reviewer_id") for item in verdicts]
@@ -483,8 +573,7 @@ def _validate_complete_phase(
         root, "evaluation/reviewer-registry.json", str(verified_commit) if verified_commit else None
     )
     registered = {
-        item.get("role"): item.get("reviewer_id")
-        for item in reviewer_registry.get("reviewers", [])
+        item.get("role"): item.get("reviewer_id") for item in reviewer_registry.get("reviewers", [])
     }
     for verdict in verdicts:
         if registered.get(verdict.get("role")) != verdict.get("reviewer_id"):
@@ -505,7 +594,9 @@ def _validate_complete_phase(
     learning = program.get("learning_records", [])
     for failure in failures:
         if failure.get("status") != "RESOLVED":
-            errors.append(f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} remains open")
+            errors.append(
+                f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} remains open"
+            )
             continue
         linked = [item for item in learning if item.get("failure_id") == failure.get("id")]
         if not linked:
@@ -522,7 +613,15 @@ def _validate_complete_phase(
                 f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} lacks a confirmed guardrail"
             )
         for evidence in failure.get("evidence_refs", []):
-            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}"))
+            errors.extend(
+                _evidence_errors(
+                    evidence,
+                    str(verified_commit) if verified_commit else None,
+                    root,
+                    f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}",
+                    authenticate_ci=authenticate_ci,
+                )
+            )
         for record in linked:
             for evidence in record.get("observed_evidence", []):
                 errors.extend(
@@ -531,10 +630,20 @@ def _validate_complete_phase(
                         str(verified_commit) if verified_commit else None,
                         root,
                         f"{phase_id} cannot be COMPLETE: learning {record.get('id')}",
-                        allow_ancestor=True, require_unchanged=False,
+                        allow_ancestor=True,
+                        require_unchanged=False,
+                        authenticate_ci=authenticate_ci,
                     )
                 )
-            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification"))
+            errors.extend(
+                _evidence_errors(
+                    record.get("verification_evidence", {}),
+                    str(verified_commit) if verified_commit else None,
+                    root,
+                    f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification",
+                    authenticate_ci=authenticate_ci,
+                )
+            )
     return errors
 
 
@@ -548,7 +657,9 @@ def _closure_delta_errors(
     try:
         changed = subprocess.check_output(
             ["git", "diff", "--name-only", f"{snapshot_commit}..HEAD"],
-            cwd=root, text=True, timeout=20,
+            cwd=root,
+            text=True,
+            timeout=20,
         ).splitlines()
         allowed_path = str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/")
         if set(changed) - {allowed_path}:
@@ -562,7 +673,13 @@ def _closure_delta_errors(
     phase_id = str(phase.get("id"))
     current_phase = next(item for item in current_copy["phases"] if item["id"] == phase_id)
     snapshot_phase = next(item for item in snapshot_copy["phases"] if item["id"] == phase_id)
-    for key in ("status", "review", "review_snapshot_commit", "frozen_package_commit", "package_certification"):
+    for key in (
+        "status",
+        "review",
+        "review_snapshot_commit",
+        "frozen_package_commit",
+        "package_certification",
+    ):
         current_phase[key] = snapshot_phase.get(key)
     current_copy["current_phase"] = snapshot_copy["current_phase"]
     phase_index = PHASE_IDS.index(phase_id)
@@ -579,7 +696,10 @@ def _closure_delta_errors(
 def _load_object_at_commit(root: Path, source_path: str, commit: str | None) -> dict[str, Any]:
     if (root / ".git").exists() and commit:
         content = subprocess.check_output(
-            ["git", "show", f"{commit}:{source_path}"], cwd=root, stderr=subprocess.DEVNULL, timeout=20
+            ["git", "show", f"{commit}:{source_path}"],
+            cwd=root,
+            stderr=subprocess.DEVNULL,
+            timeout=20,
         )
         payload = json.loads(content.decode("utf-8-sig"))
         if not isinstance(payload, dict):
@@ -588,8 +708,10 @@ def _load_object_at_commit(root: Path, source_path: str, commit: str | None) -> 
     return _load_object(root / source_path)
 
 
-def _validate_program_rules(program: dict[str, Any], root: Path) -> list[str]:
-    errors = _validate_sequence(program, root)
+def _validate_program_rules(
+    program: dict[str, Any], root: Path, *, authenticate_ci: bool = False
+) -> list[str]:
+    errors = _validate_sequence(program, root, authenticate_ci=authenticate_ci)
     exclusions = set(program.get("exclusions", []))
     missing = sorted(EXCLUDED_PHRASES - exclusions)
     if missing:
@@ -625,8 +747,7 @@ def _validate_program_rules(program: dict[str, Any], root: Path) -> list[str]:
         context
         for phase in program.get("phases", [])
         for context in (
-            item.get("context_id")
-            for item in phase.get("review", {}).get("verdicts", [])
+            item.get("context_id") for item in phase.get("review", {}).get("verdicts", [])
         )
         if context
     ]
@@ -636,11 +757,13 @@ def _validate_program_rules(program: dict[str, Any], root: Path) -> list[str]:
     for record in program.get("learning_records", []):
         failure_id = record.get("failure_id")
         if failure_id is not None and failure_id not in known_failures:
-            errors.append(f"learning record {record.get('id')} references unknown failure {failure_id}")
+            errors.append(
+                f"learning record {record.get('id')} references unknown failure {failure_id}"
+            )
     return errors
 
 
-def validate(root: Path = ROOT) -> list[str]:
+def validate(root: Path = ROOT, *, authenticate_ci: bool = False) -> list[str]:
     program_path = root / PROGRAM_PATH.relative_to(ROOT)
     schema_path = root / SCHEMA_PATH.relative_to(ROOT)
     try:
@@ -648,11 +771,14 @@ def validate(root: Path = ROOT) -> list[str]:
         schema = _load_object(schema_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return [str(exc)]
-    return [*_schema_errors(program, schema, root), *_validate_program_rules(program, root)]
+    return [
+        *_schema_errors(program, schema, root),
+        *_validate_program_rules(program, root, authenticate_ci=authenticate_ci),
+    ]
 
 
 def main() -> int:
-    errors = validate()
+    errors = validate(authenticate_ci=os.environ.get("GITHUB_ACTIONS", "").lower() == "true")
     payload = {
         "status": "PASS" if not errors else "FAIL",
         "program": str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/"),

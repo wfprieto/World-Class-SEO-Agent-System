@@ -13,6 +13,7 @@ from scripts.validate_remediation_program import (
     SCHEMA_PATH,
     evidence_package_hash,
     canonical_text_digest,
+    _closure_delta_errors,
     _evidence_errors,
     _validate_complete_phase,
     validate,
@@ -37,8 +38,8 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
                 verdict["evidence_package_hash"] = package_hash
     program_path = tmp_path / PROGRAM_PATH.relative_to(ROOT)
     schema_path = tmp_path / SCHEMA_PATH.relative_to(ROOT)
-    program_path.parent.mkdir(parents=True)
-    schema_path.parent.mkdir(parents=True)
+    program_path.parent.mkdir(parents=True, exist_ok=True)
+    schema_path.parent.mkdir(parents=True, exist_ok=True)
     program_path.write_text(json.dumps(fixture_payload, indent=2), encoding="utf-8")
     schema_path.write_bytes(SCHEMA_PATH.read_bytes())
     reviewer_path = tmp_path / "schemas" / "reviewer-verdict.schema.json"
@@ -53,11 +54,46 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     reviewer_dir.mkdir(parents=True, exist_ok=True)
     for name in ("senior-scrummaster-3.md", "vp-engineering.md"):
         (reviewer_dir / name).write_bytes((ROOT / "evaluation" / "reviewers" / name).read_bytes())
-    rollback_bytes = (ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json").read_bytes()
+    rollback_bytes = (
+        ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json"
+    ).read_bytes()
     for index in range(9):
-        rollback_path = tmp_path / "evaluation" / "remediation" / f"phase{index}-rollback-evidence.json"
+        rollback_path = (
+            tmp_path / "evaluation" / "remediation" / f"phase{index}-rollback-evidence.json"
+        )
         rollback_path.write_bytes(rollback_bytes)
     return tmp_path
+
+
+def _commit_fixture(root: Path, message: str) -> str:
+    if not (root / ".git").exists():
+        subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.email", "tests@example.invalid"],
+            cwd=root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Remediation tests"],
+            cwd=root,
+            check=True,
+        )
+    subprocess.run(["git", "add", "--all"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-m", message], cwd=root, check=True, capture_output=True)
+    return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+
+
+def _closure_payload(payload: dict, snapshot_commit: str) -> dict:
+    closed = copy.deepcopy(payload)
+    phase = closed["phases"][0]
+    phase["status"] = "COMPLETE"
+    phase["review_snapshot_commit"] = snapshot_commit
+    phase["frozen_package_commit"] = snapshot_commit
+    phase["package_certification"] = [{"closure-only": True}]
+    phase["review"] = {"evidence_package_hash": "frozen", "verdicts": []}
+    closed["current_phase"] = "P1"
+    closed["phases"][1]["status"] = "IN_PROGRESS"
+    return closed
 
 
 def _complete_phase(payload: dict, phase_index: int) -> None:
@@ -131,7 +167,10 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     evidence_paths = {
         "implementation_audit": ("SOURCE", "schemas/remediation-program.schema.json"),
         "focused_tests": ("AUTOMATED", "schemas/remediation-program.schema.json"),
-        "full_certification": ("CI", "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1"),
+        "full_certification": (
+            "CI",
+            "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1",
+        ),
         "security_review": ("SOURCE", "schemas/remediation-program.schema.json"),
         "documentation": ("SOURCE", "schemas/remediation-program.schema.json"),
         "learning": ("AUTOMATED", "schemas/remediation-program.schema.json"),
@@ -182,16 +221,18 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
         }
         for reference in authority_paths
     ]
-    phase["package_certification"] = [{
-        "class": "CI",
-        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1",
-        "commit": phase["verified_commit"],
-        "sha256": None,
-        "environment": "CI",
-        "status": "PASS",
-        "assertion": "The frozen evidence package passed repository certification.",
-        "provenance": _ci_provenance(phase["verified_commit"]),
-    }]
+    phase["package_certification"] = [
+        {
+            "class": "CI",
+            "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/1",
+            "commit": phase["verified_commit"],
+            "sha256": None,
+            "environment": "CI",
+            "status": "PASS",
+            "assertion": "The frozen evidence package passed repository certification.",
+            "provenance": _ci_provenance(phase["verified_commit"]),
+        }
+    ]
     _refresh_review(payload, phase)
 
 
@@ -205,7 +246,9 @@ def _ci_provenance(commit: str) -> dict:
     }
 
 
-def _schema_evidence(commit: str, *, assertion: str = "The immutable schema verifies this record.") -> dict:
+def _schema_evidence(
+    commit: str, *, assertion: str = "The immutable schema verifies this record."
+) -> dict:
     return {
         "class": "AUTOMATED",
         "ref": "schemas/remediation-program.schema.json",
@@ -220,7 +263,9 @@ def _schema_evidence(commit: str, *, assertion: str = "The immutable schema veri
 def _verdict(phase_id: str, role: str, reviewer: str, package_hash: str) -> dict:
     return {
         "review_id": f"review-{phase_id.lower()}-{reviewer}",
-        "reviewer_id": "senior-scrummaster-3" if role == "SENIOR_SCRUMMASTER_3" else "vp-engineering",
+        "reviewer_id": "senior-scrummaster-3"
+        if role == "SENIOR_SCRUMMASTER_3"
+        else "vp-engineering",
         "role": role,
         "context_id": f"context-{reviewer}-{phase_id.lower()}-fresh",
         "provider": "test-provider",
@@ -279,9 +324,7 @@ def test_phase_completion_requires_every_gate_evidence_and_independent_review(
         criterion["evidence_refs"] = []
     payload["phases"][0]["evidence_status"]["AUTOMATED"] = "NOT_RUN"
     payload["phases"][0]["evidence_status"]["CI"] = "NOT_RUN"
-    payload["phases"][0]["gates"] = {
-        key: "NOT_RUN" for key in payload["phases"][0]["gates"]
-    }
+    payload["phases"][0]["gates"] = {key: "NOT_RUN" for key in payload["phases"][0]["gates"]}
     payload["phases"][0]["review"] = {"evidence_package_hash": None, "verdicts": []}
     payload["current_phase"] = "P1"
     payload["phases"][1]["status"] = "IN_PROGRESS"
@@ -344,8 +387,8 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
                 {
                     "class": "AUTOMATED",
                     "ref": "schemas/remediation-program.schema.json",
-                        "commit": payload["baseline"]["commit"],
-                        "sha256": hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest(),
+                    "commit": payload["baseline"]["commit"],
+                    "sha256": hashlib.sha256(SCHEMA_PATH.read_bytes()).hexdigest(),
                     "environment": "LOCAL",
                     "status": "PASS",
                     "assertion": "The phase-skip regression is passing.",
@@ -377,9 +420,9 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
 def test_reviewer_contexts_must_be_distinct(tmp_path: Path) -> None:
     payload = _program()
     _complete_phase(payload, 0)
-    payload["phases"][0]["review"]["verdicts"][1]["context_id"] = payload["phases"][0][
-        "review"
-    ]["verdicts"][0]["context_id"]
+    payload["phases"][0]["review"]["verdicts"][1]["context_id"] = payload["phases"][0]["review"][
+        "verdicts"
+    ][0]["context_id"]
     payload["current_phase"] = "P1"
     payload["phases"][1]["status"] = "IN_PROGRESS"
 
@@ -408,7 +451,9 @@ def test_excluded_evidence_classes_cannot_be_promoted(tmp_path: Path) -> None:
 
     errors = validate(_write_fixture(tmp_path, payload))
 
-    assert any("passing evidence class PROVIDER has no structured record" in item for item in errors)
+    assert any(
+        "passing evidence class PROVIDER has no structured record" in item for item in errors
+    )
 
 
 def test_open_audit_finding_blocks_phase_completion(tmp_path: Path) -> None:
@@ -427,9 +472,9 @@ def test_reviewer_context_cannot_be_reused_across_phases(tmp_path: Path) -> None
     payload = _program()
     _complete_phase(payload, 0)
     _complete_phase(payload, 1)
-    payload["phases"][1]["review"]["verdicts"][1]["context_id"] = payload["phases"][0][
-        "review"
-    ]["verdicts"][0]["context_id"]
+    payload["phases"][1]["review"]["verdicts"][1]["context_id"] = payload["phases"][0]["review"][
+        "verdicts"
+    ][0]["context_id"]
     payload["current_phase"] = "P2"
     payload["phases"][2]["status"] = "IN_PROGRESS"
 
@@ -455,9 +500,7 @@ def test_evidence_hash_binds_material_program_controls_and_full_audit_inventory(
     changed_finding["audit_findings"][-1]["summary"] += " Mutated."
     mutations.append(changed_finding)
 
-    assert all(
-        evidence_package_hash(item, item["phases"][0]) != original for item in mutations
-    )
+    assert all(evidence_package_hash(item, item["phases"][0]) != original for item in mutations)
 
 
 def test_evidence_hash_survives_only_workflow_state_and_verdict_insertion() -> None:
@@ -489,14 +532,19 @@ def test_canonical_looking_nonexistent_ci_run_is_rejected_in_ci(monkeypatch) -> 
         "assertion": "A forged but canonical-looking run must fail authentication.",
         "provenance": _ci_provenance(commit),
     }
-    monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
     def fail_request(*args, **kwargs):
         raise urllib.error.URLError("not found")
 
     monkeypatch.setattr("urllib.request.urlopen", fail_request)
 
-    errors = _evidence_errors(evidence, commit, ROOT, "P0 package certification")
+    errors = _evidence_errors(
+        evidence,
+        commit,
+        ROOT,
+        "P0 package certification",
+        authenticate_ci=True,
+    )
 
     assert any("could not be authenticated" in item for item in errors)
 
@@ -527,6 +575,37 @@ def test_reviewer_registry_is_hash_bound_and_worktree_mutation_cannot_reauthoriz
 
 def test_rollback_digest_is_checkout_line_ending_independent() -> None:
     assert canonical_text_digest(b"one\ntwo\n") == canonical_text_digest(b"one\r\ntwo\r\n")
+
+
+def test_closure_delta_accepts_only_state_verdict_and_certification_fields(
+    tmp_path: Path,
+) -> None:
+    root = _write_fixture(tmp_path, _program())
+    snapshot_commit = _commit_fixture(root, "review snapshot")
+    closed = _closure_payload(_program(), snapshot_commit)
+    _write_fixture(root, closed)
+    _commit_fixture(root, "phase closure")
+    closed = json.loads((root / PROGRAM_PATH.relative_to(ROOT)).read_text(encoding="utf-8"))
+
+    assert _closure_delta_errors(closed, closed["phases"][0], root, snapshot_commit) == []
+
+
+def test_closure_delta_rejects_material_program_and_unrelated_file_changes(
+    tmp_path: Path,
+) -> None:
+    root = _write_fixture(tmp_path, _program())
+    snapshot_commit = _commit_fixture(root, "review snapshot")
+    closed = _closure_payload(_program(), snapshot_commit)
+    closed["objective"] = "A material objective change hidden in the closure commit."
+    _write_fixture(root, closed)
+    (root / "unrelated.txt").write_text("not closure metadata", encoding="utf-8")
+    _commit_fixture(root, "forged phase closure")
+    closed = json.loads((root / PROGRAM_PATH.relative_to(ROOT)).read_text(encoding="utf-8"))
+
+    errors = _closure_delta_errors(closed, closed["phases"][0], root, snapshot_commit)
+
+    assert "closure changes files outside the canonical remediation program" in errors
+    assert "closure delta contains fields outside the status-and-verdict allowlist" in errors
 
 
 def test_generic_or_unauthenticated_gate_evidence_is_rejected(tmp_path: Path) -> None:
@@ -572,7 +651,9 @@ def test_pytest_temp_root_must_be_outside_any_enclosing_git_worktree(tmp_path: P
     unrelated_repository = tmp_path / "repository"
     unrelated_repository.mkdir()
 
-    errors = validate_temp_isolation(enclosing / "pytest" / "case", repository_root=unrelated_repository)
+    errors = validate_temp_isolation(
+        enclosing / "pytest" / "case", repository_root=unrelated_repository
+    )
 
     assert any("enclosing Git worktree" in item for item in errors)
 
