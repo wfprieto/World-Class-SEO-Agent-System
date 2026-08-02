@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +50,12 @@ GATE_EVIDENCE_CLASSES: dict[str, set[str]] = {
 CI_RUN_PATTERN = re.compile(
     r"^https://github\.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/[1-9][0-9]*$"
 )
+REQUIRED_CI_JOBS: dict[str, set[str]] = {
+    "package certification": {"validate", "quality_security_release", "repository-certification", "phase0-rollback-certification"},
+    "gate full_certification": {"validate", "quality_security_release", "repository-certification"},
+    "gate security_review": {"quality_security_release"},
+    "gate unexpected_change_scan": {"validate", "repository-certification"},
+}
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -88,7 +97,10 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
         return {
             key: value
             for key, value in item.items()
-            if key not in {"status", "review"}
+            if key not in {
+                "status", "review", "review_snapshot_commit", "frozen_package_commit",
+                "package_certification",
+            }
         }
 
     payload = {
@@ -103,9 +115,7 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
         "evidence_classes": program.get("evidence_classes"),
         "phase_contracts": [phase_contract(item) for item in program.get("phases", [])],
         "phase_id": phase.get("id"),
-        "frozen_package_commit": phase.get("frozen_package_commit"),
         "authority_evidence": phase.get("authority_evidence", []),
-        "package_certification": phase.get("package_certification", []),
         "audit_findings": program.get("audit_findings", []),
         "failures": [
             item
@@ -162,6 +172,16 @@ def _evidence_errors(
             errors.append(f"{label} evidence does not exist at verified_commit: {reference}")
         elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
             errors.append(f"{label} evidence digest is not immutable: {reference}")
+        if allow_ancestor and (root / ".git").exists() and verified_commit and expected_digest:
+            try:
+                verified_content = subprocess.check_output(
+                    ["git", "show", f"{verified_commit}:{source_path}"], cwd=root,
+                    stderr=subprocess.DEVNULL, timeout=20,
+                )
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                verified_content = None
+            if verified_content is None or hashlib.sha256(verified_content).hexdigest() != expected_digest:
+                errors.append(f"{label} ancestor evidence changed before verified_commit: {reference}")
     if evidence_class == "CI":
         provenance = evidence.get("provenance", {})
         if not CI_RUN_PATTERN.fullmatch(reference):
@@ -177,11 +197,66 @@ def _evidence_errors(
         expected_head_sha = evidence_commit if allow_ancestor else verified_commit
         if provenance.get("head_sha") != expected_head_sha:
             errors.append(f"{label} CI provenance head_sha is not the bound evidence commit")
+        if allow_ancestor and evidence_commit != verified_commit:
+            errors.append(f"{label} CI evidence must certify the exact verified_commit")
         jobs = provenance.get("jobs", [])
         if not isinstance(jobs, list) or not jobs or any(not str(job).strip() for job in jobs):
             errors.append(f"{label} CI provenance has no successful job inventory")
+        if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+            errors.extend(_github_ci_errors(reference, provenance, label))
     if evidence.get("status") not in {"OBSERVED", "PASS"}:
         errors.append(f"{label} evidence {reference} is not passing")
+    return errors
+
+
+def _github_ci_errors(reference: str, provenance: dict[str, Any], label: str) -> list[str]:
+    """Authenticate a GitHub Actions receipt when running inside canonical CI."""
+    if not CI_RUN_PATTERN.fullmatch(reference):
+        return []
+    run_id = reference.rsplit("/", 1)[-1]
+    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        run_request = urllib.request.Request(
+            f"https://api.github.com/repos/wfprieto/World-Class-SEO-Agent-System/actions/runs/{run_id}",
+            headers=headers,
+        )
+        jobs_request = urllib.request.Request(
+            f"https://api.github.com/repos/wfprieto/World-Class-SEO-Agent-System/actions/runs/{run_id}/jobs?per_page=100",
+            headers=headers,
+        )
+        with urllib.request.urlopen(run_request, timeout=20) as response:
+            run = json.load(response)
+        with urllib.request.urlopen(jobs_request, timeout=20) as response:
+            jobs_payload = json.load(response)
+    except (OSError, urllib.error.URLError, json.JSONDecodeError) as exc:
+        return [f"{label} GitHub CI receipt could not be authenticated: {exc}"]
+    errors: list[str] = []
+    observed = {
+        "repository": run.get("repository", {}).get("full_name"),
+        "workflow": run.get("name"),
+        "head_sha": run.get("head_sha"),
+        "conclusion": run.get("conclusion"),
+    }
+    for key, expected in observed.items():
+        if provenance.get(key) != expected:
+            errors.append(f"{label} GitHub API disagrees with CI provenance {key}")
+    successful_jobs = {
+        str(item.get("name"))
+        for item in jobs_payload.get("jobs", [])
+        if item.get("conclusion") == "success"
+    }
+    required = next(
+        (names for marker, names in REQUIRED_CI_JOBS.items() if marker in label), set()
+    )
+    for required_name in required:
+        if required_name == "validate":
+            if "validate" not in successful_jobs:
+                errors.append(f"{label} GitHub run lacks successful validate aggregate job")
+        elif required_name not in successful_jobs:
+            errors.append(f"{label} GitHub run lacks successful job {required_name}")
     return errors
 
 
@@ -223,6 +298,7 @@ def _validate_complete_phase(
     errors: list[str] = []
     phase_id = str(phase["id"])
     verified_commit = phase.get("verified_commit")
+    review_snapshot_commit = phase.get("review_snapshot_commit")
     frozen_package_commit = phase.get("frozen_package_commit")
     if not verified_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is missing")
@@ -244,10 +320,14 @@ def _validate_complete_phase(
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
             errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is not an ancestor of HEAD")
+    if not review_snapshot_commit:
+        errors.append(f"{phase_id} cannot be COMPLETE: review_snapshot_commit is missing")
     if not frozen_package_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: frozen_package_commit is missing")
-    elif frozen_package_commit != verified_commit:
-        errors.append(f"{phase_id} cannot be COMPLETE: frozen package must equal verified_commit")
+    elif frozen_package_commit != review_snapshot_commit:
+        errors.append(f"{phase_id} cannot be COMPLETE: frozen package must equal review_snapshot_commit")
+    if review_snapshot_commit:
+        errors.extend(_closure_delta_errors(program, phase, root, str(review_snapshot_commit)))
     rollback_path = root / "evaluation" / "remediation" / f"phase{phase_id[1:]}-rollback-evidence.json"
     expected_rollback_digest = phase.get("rollback_evidence_sha256")
     if not rollback_path.is_file() or not expected_rollback_digest:
@@ -267,11 +347,25 @@ def _validate_complete_phase(
         errors.append(f"{phase_id} cannot be COMPLETE: reviewer authority package is incomplete")
     for evidence in authority:
         errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} authority", allow_ancestor=True))
+        if verified_commit and (root / ".git").exists():
+            source_path = str(evidence.get("ref", "")).split("::", 1)[0]
+            expected_digest = evidence.get("sha256")
+            for commit_label in (str(verified_commit), "HEAD"):
+                try:
+                    content = subprocess.check_output(
+                        ["git", "show", f"{commit_label}:{source_path}"], cwd=root,
+                        stderr=subprocess.DEVNULL, timeout=20,
+                    )
+                except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                    errors.append(f"{phase_id} authority {source_path} is missing at {commit_label}")
+                    continue
+                if hashlib.sha256(content).hexdigest() != expected_digest:
+                    errors.append(f"{phase_id} authority {source_path} changed by {commit_label}")
     package_certification = phase.get("package_certification", [])
     if not package_certification:
         errors.append(f"{phase_id} cannot be COMPLETE: package certification is missing")
     for evidence in package_certification:
-        errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} package certification"))
+        errors.extend(_evidence_errors(evidence, str(review_snapshot_commit) if review_snapshot_commit else None, root, f"{phase_id} package certification"))
     for key, required in COMPLETION_GATES.items():
         actual = str(phase["gates"].get(key, ""))
         if not _gate_passes(actual, required):
@@ -354,13 +448,28 @@ def _validate_complete_phase(
 
     review = phase.get("review", {})
     verdicts = review.get("verdicts", [])
+    if verified_commit:
+        immutable_verdict_schema = _load_object_at_commit(
+            root, "schemas/reviewer-verdict.schema.json", str(verified_commit)
+        )
+        immutable_validator = Draft202012Validator(immutable_verdict_schema)
+        for verdict in verdicts:
+            for schema_error in immutable_validator.iter_errors(verdict):
+                errors.append(f"{phase_id} verdict violates immutable reviewer schema: {schema_error.message}")
     roles = {item.get("role") for item in verdicts}
     if len(verdicts) != 2 or roles != {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}:
         errors.append(f"{phase_id} requires one canonical verdict from each independent reviewer role")
     if len(verdicts) != 2 or any(item.get("verdict") != "APPROVE_GREAT" for item in verdicts):
         errors.append(f"{phase_id} requires two APPROVE_GREAT verdicts")
     package_hash = review.get("evidence_package_hash")
-    expected_package_hash = evidence_package_hash(program, phase)
+    snapshot_program = (
+        _load_object_at_commit(root, str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/"), str(review_snapshot_commit))
+        if review_snapshot_commit else program
+    )
+    snapshot_phase = next(
+        (item for item in snapshot_program.get("phases", []) if item.get("id") == phase_id), phase
+    )
+    expected_package_hash = evidence_package_hash(snapshot_program, snapshot_phase)
     if package_hash != expected_package_hash:
         errors.append(f"{phase_id} review hash does not match the canonical evidence package")
     if not package_hash or any(item.get("evidence_package_hash") != package_hash for item in verdicts):
@@ -424,6 +533,44 @@ def _validate_complete_phase(
                     )
                 )
             errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification", allow_ancestor=True))
+    return errors
+
+
+def _closure_delta_errors(
+    program: dict[str, Any], phase: dict[str, Any], root: Path, snapshot_commit: str
+) -> list[str]:
+    """Require closure to change only verdict/state fields from the reviewed snapshot."""
+    errors: list[str] = []
+    if not (root / ".git").exists():
+        return errors
+    try:
+        changed = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{snapshot_commit}..HEAD"],
+            cwd=root, text=True, timeout=20,
+        ).splitlines()
+        allowed_path = str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/")
+        if set(changed) - {allowed_path}:
+            errors.append("closure changes files outside the canonical remediation program")
+        snapshot = _load_object_at_commit(root, allowed_path, snapshot_commit)
+    except (OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return ["closure cannot load the immutable review snapshot"]
+
+    current_copy = json.loads(json.dumps(program))
+    snapshot_copy = json.loads(json.dumps(snapshot))
+    phase_id = str(phase.get("id"))
+    current_phase = next(item for item in current_copy["phases"] if item["id"] == phase_id)
+    snapshot_phase = next(item for item in snapshot_copy["phases"] if item["id"] == phase_id)
+    for key in ("status", "review", "review_snapshot_commit", "frozen_package_commit", "package_certification"):
+        current_phase[key] = snapshot_phase.get(key)
+    current_copy["current_phase"] = snapshot_copy["current_phase"]
+    phase_index = PHASE_IDS.index(phase_id)
+    if phase_index + 1 < len(PHASE_IDS):
+        next_id = PHASE_IDS[phase_index + 1]
+        next_current = next(item for item in current_copy["phases"] if item["id"] == next_id)
+        next_snapshot = next(item for item in snapshot_copy["phases"] if item["id"] == next_id)
+        next_current["status"] = next_snapshot["status"]
+    if current_copy != snapshot_copy:
+        errors.append("closure delta contains fields outside the status-and-verdict allowlist")
     return errors
 
 

@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import subprocess
+import urllib.error
 from pathlib import Path
 
 from scripts.validate_remediation_program import (
@@ -12,6 +13,7 @@ from scripts.validate_remediation_program import (
     SCHEMA_PATH,
     evidence_package_hash,
     canonical_text_digest,
+    _evidence_errors,
     _validate_complete_phase,
     validate,
 )
@@ -62,6 +64,7 @@ def _complete_phase(payload: dict, phase_index: int) -> None:
     phase = payload["phases"][phase_index]
     phase["status"] = "COMPLETE"
     phase["verified_commit"] = payload["baseline"]["commit"]
+    phase["review_snapshot_commit"] = phase["verified_commit"]
     phase["frozen_package_commit"] = phase["verified_commit"]
     phase["rollback_evidence_sha256"] = canonical_text_digest(
         (ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json").read_bytes()
@@ -467,8 +470,35 @@ def test_evidence_hash_survives_only_workflow_state_and_verdict_insertion() -> N
         "evidence_package_hash": original,
         "verdicts": [],
     }
+    payload["phases"][0]["review_snapshot_commit"] = payload["baseline"]["commit"]
+    payload["phases"][0]["frozen_package_commit"] = payload["baseline"]["commit"]
+    payload["phases"][0]["package_certification"] = []
 
     assert evidence_package_hash(payload, payload["phases"][0]) == original
+
+
+def test_canonical_looking_nonexistent_ci_run_is_rejected_in_ci(monkeypatch) -> None:
+    commit = "1" * 40
+    evidence = {
+        "class": "CI",
+        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/999999999999",
+        "commit": commit,
+        "sha256": None,
+        "environment": "CI",
+        "status": "PASS",
+        "assertion": "A forged but canonical-looking run must fail authentication.",
+        "provenance": _ci_provenance(commit),
+    }
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    def fail_request(*args, **kwargs):
+        raise urllib.error.URLError("not found")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_request)
+
+    errors = _evidence_errors(evidence, commit, ROOT, "P0 package certification")
+
+    assert any("could not be authenticated" in item for item in errors)
 
 
 def test_unregistered_reviewer_identity_cannot_approve_phase(tmp_path: Path) -> None:
@@ -547,10 +577,12 @@ def test_pytest_temp_root_must_be_outside_any_enclosing_git_worktree(tmp_path: P
     assert any("enclosing Git worktree" in item for item in errors)
 
 
-def test_canonical_phase_zero_evidence_is_closable_at_frozen_commit() -> None:
+def test_phase_zero_requires_explicit_review_snapshot_before_closure() -> None:
     payload = _program()
     phase = payload["phases"][0]
     phase["status"] = "COMPLETE"
     _refresh_review(payload, phase)
 
-    assert _validate_complete_phase(phase, payload, ROOT) == []
+    errors = _validate_complete_phase(phase, payload, ROOT)
+
+    assert any("review_snapshot_commit is missing" in item for item in errors)

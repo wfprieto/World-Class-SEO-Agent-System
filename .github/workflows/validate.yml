@@ -46,6 +46,8 @@ jobs:
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
       - name: Validate owner-controlled remediation program
         run: python scripts/validate_remediation_program.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Validate pytest temporary-root isolation
         run: python scripts/validate_pytest_temp_isolation.py
       - name: Upload improvement governance result
@@ -188,9 +190,48 @@ jobs:
           if (-not $wheel) { throw "Built wheel artifact was not found" }
           python scripts/verify_clean_wheel.py $wheel
 
+  phase0_rollback_certification:
+    name: phase0-rollback-certification
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install baseline validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Rehearse exact-head Phase 0 rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=e8c37abb5e939d4433e42ea8a02af63549ca0010
+          candidate=$(git rev-parse HEAD)
+          mapfile -t commits < <(git rev-list "$baseline..$candidate")
+          test "${#commits[@]}" -gt 0
+          git config user.name "Phase 0 rollback verifier"
+          git config user.email "rollback-verifier@users.noreply.github.com"
+          git revert --no-commit "${commits[@]}"
+          baseline_tree=$(git rev-parse "$baseline^{tree}")
+          post_revert_tree=$(git write-tree)
+          test "$post_revert_tree" = "$baseline_tree"
+          pwsh -File scripts/validate-repository.ps1
+          pytest -q tests/test_improvement_loop.py
+          printf '{"candidate_commit":"%s","baseline_commit":"%s","commit_count":%s,"baseline_tree":"%s","post_revert_tree":"%s","result":"PASS"}\n' \
+            "$candidate" "$baseline" "${#commits[@]}" "$baseline_tree" "$post_revert_tree" > phase0-rollback-receipt.json
+      - name: Upload authenticated rollback receipt
+        uses: actions/upload-artifact@v7
+        with:
+          name: phase0-rollback-receipt
+          path: phase0-rollback-receipt.json
+          if-no-files-found: error
+
   certification_status:
     name: repository-certification
-    needs: [validation_matrix, validate, quality_security_release, clean_wheel_install]
+    needs: [validation_matrix, validate, quality_security_release, clean_wheel_install, phase0_rollback_certification]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -200,3 +241,4 @@ jobs:
           test "${{ needs.validate.result }}" = "success"
           test "${{ needs.quality_security_release.result }}" = "success"
           test "${{ needs.clean_wheel_install.result }}" = "success"
+          test "${{ needs.phase0_rollback_certification.result }}" = "success"
