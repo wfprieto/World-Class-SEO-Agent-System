@@ -180,7 +180,10 @@ def provider_state_errors(
         errors.append("provider snapshot must attest authenticated capture")
     if not isinstance(snapshot.get("authenticated_actor"), str):
         errors.append("provider snapshot must identify the authenticated actor")
-    if snapshot.get("capture_method") != "gh-api-live":
+    if snapshot.get("capture_method") not in {
+        "gh-api-live",
+        "gh-api-live-plus-fresh-owner-capture",
+    }:
         errors.append("provider snapshot must identify the live gh API capture method")
     return errors
 

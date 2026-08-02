@@ -53,7 +53,7 @@ jobs:
         run: python scripts/validate_repository_governance.py
       - name: Authenticate live GitHub governance controls
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: python scripts/capture_github_controls.py
+        run: python scripts/capture_github_controls.py --ci-observable
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Validate pytest temporary-root isolation

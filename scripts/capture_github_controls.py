@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,29 +29,54 @@ def _api(endpoint: str) -> Any:
     return json.loads(output) if output.strip() else None
 
 
-def capture() -> dict[str, Any]:
-    actor = _api("user")
+def capture(owner_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
+    actor = (
+        {"login": os.environ.get("GITHUB_ACTOR")}
+        if os.environ.get("GITHUB_ACTOR")
+        else _api("user")
+    )
     repository = _api(f"repos/{REPOSITORY}")
-    private_reporting = _api(f"repos/{REPOSITORY}/private-vulnerability-reporting")
-    _api(f"repos/{REPOSITORY}/vulnerability-alerts")
+    if owner_snapshot is None:
+        private_reporting = _api(f"repos/{REPOSITORY}/private-vulnerability-reporting")
+        _api(f"repos/{REPOSITORY}/vulnerability-alerts")
+    else:
+        private_reporting = {"enabled": owner_snapshot["private_vulnerability_reporting"]}
     ruleset = _api(f"repos/{REPOSITORY}/rulesets/{RULESET_ID}")
     rules = {item["type"]: item for item in ruleset["rules"]}
     pull_request = rules["pull_request"]["parameters"]
     status_checks = rules["required_status_checks"]["parameters"]
     analysis = repository.get("security_and_analysis", {})
+    if owner_snapshot is not None:
+        analysis = {
+            "dependabot_security_updates": {
+                "status": "enabled" if owner_snapshot["dependabot_security_updates"] else "disabled"
+            },
+            "secret_scanning": {
+                "status": "enabled" if owner_snapshot["secret_scanning"] else "disabled"
+            },
+            "secret_scanning_push_protection": {
+                "status": "enabled"
+                if owner_snapshot["secret_scanning_push_protection"]
+                else "disabled"
+            },
+        }
     return {
         "schema_version": "2.0.0",
         "repository": REPOSITORY,
         "authenticated": True,
         "authenticated_actor": actor["login"],
-        "capture_method": "gh-api-live",
+        "capture_method": (
+            "gh-api-live" if owner_snapshot is None else "gh-api-live-plus-fresh-owner-capture"
+        ),
         "captured_at": dt.datetime.now(dt.UTC).replace(microsecond=0).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         ),
         "default_branch": repository["default_branch"],
         "private_vulnerability_reporting": private_reporting["enabled"],
         "discussions": repository["has_discussions"],
-        "vulnerability_alerts": True,
+        "vulnerability_alerts": (
+            True if owner_snapshot is None else owner_snapshot["vulnerability_alerts"]
+        ),
         "dependabot_security_updates": analysis.get("dependabot_security_updates", {}).get(
             "status"
         )
@@ -86,22 +112,53 @@ def capture() -> dict[str, Any]:
             "block_non_fast_forward": "non_fast_forward" in rules,
             "bypass_actor_count": len(ruleset["bypass_actors"]),
         },
-        "source_endpoints": [
-            f"GET /repos/{REPOSITORY}",
-            f"GET /repos/{REPOSITORY}/private-vulnerability-reporting",
-            f"GET /repos/{REPOSITORY}/vulnerability-alerts",
-            f"GET /repos/{REPOSITORY}/rulesets/{RULESET_ID}",
-        ],
+        "source_endpoints": (
+            [
+                f"GET /repos/{REPOSITORY}",
+                f"GET /repos/{REPOSITORY}/private-vulnerability-reporting",
+                f"GET /repos/{REPOSITORY}/vulnerability-alerts",
+                f"GET /repos/{REPOSITORY}/rulesets/{RULESET_ID}",
+            ]
+            if owner_snapshot is None
+            else [
+                f"GET /repos/{REPOSITORY}",
+                f"GET /repos/{REPOSITORY}/rulesets/{RULESET_ID}",
+            ]
+        ),
+        "live_fields": ["default_branch", "discussions", "ruleset"],
+        "fresh_owner_capture_fields": (
+            []
+            if owner_snapshot is None
+            else [
+                "private_vulnerability_reporting",
+                "vulnerability_alerts",
+                "dependabot_security_updates",
+                "secret_scanning",
+                "secret_scanning_push_protection",
+            ]
+        ),
+        "owner_capture_at": None if owner_snapshot is None else owner_snapshot["captured_at"],
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--ci-observable", action="store_true")
     args = parser.parse_args()
-    snapshot = capture()
     contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
+    owner_snapshot = None
+    owner_errors: list[str] = []
+    if args.ci_observable:
+        owner_snapshot = json.loads(
+            (ROOT / "evaluation/remediation/phase1-provider-evidence.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        owner_errors = provider_state_errors(owner_snapshot, contract)
+    snapshot = capture(owner_snapshot)
     errors = provider_state_errors(snapshot, contract)
+    errors.extend(f"owner capture: {error}" for error in owner_errors)
     result = {**snapshot, "result": "PASS" if not errors else "FAIL", "errors": errors}
     if args.output:
         args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
