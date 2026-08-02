@@ -29,13 +29,28 @@ def _program() -> dict:
 
 def test_frozen_in_progress_package_runs_completion_preflight() -> None:
     payload = _program()
-    phase = next(item for item in payload["phases"] if item["id"] == "P1")
-    assert phase["status"] == "IN_PROGRESS"
+    phase = next(
+        item
+        for item in reversed(payload["phases"])
+        if item["review"]["evidence_package_hash"]
+    )
+    phase_id = phase["id"]
+    phase_index = next(
+        index for index, item in enumerate(payload["phases"]) if item["id"] == phase_id
+    )
+    payload["current_phase"] = phase_id
+    for later_phase in payload["phases"][phase_index + 1 :]:
+        later_phase["status"] = "NOT_STARTED"
+    phase["status"] = "IN_PROGRESS"
+    phase["review_snapshot_commit"] = None
+    phase["frozen_package_commit"] = None
+    phase["package_certification"] = []
+    phase["review"]["verdicts"] = []
     assert phase["review"]["evidence_package_hash"]
     assert _validate_candidate_complete_phase(phase, payload, ROOT) == []
 
     mutated = copy.deepcopy(payload)
-    mutated_phase = next(item for item in mutated["phases"] if item["id"] == "P1")
+    mutated_phase = next(item for item in mutated["phases"] if item["id"] == phase_id)
     for criterion in mutated_phase["acceptance_criteria"]:
         criterion["evidence_refs"] = [
             evidence
