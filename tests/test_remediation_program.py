@@ -58,7 +58,16 @@ def test_frozen_in_progress_package_runs_completion_preflight() -> None:
     phase = next(item for item in payload["phases"] if item["id"] == phase_id)
     assert phase["status"] == "IN_PROGRESS"
     assert phase["review"]["evidence_package_hash"]
-    assert evidence_package_hash(payload, phase) == phase["review"]["evidence_package_hash"]
+    expected_hash = str(phase["review"]["evidence_package_hash"])
+    immutable_payload = copy.deepcopy(payload)
+    immutable_phase = next(
+        item for item in immutable_payload["phases"] if item["id"] == phase_id
+    )
+    actual_hash = evidence_package_hash(immutable_payload, immutable_phase)
+    if actual_hash != expected_hash:
+        raise AssertionError(
+            f"immutable snapshot package hash mismatch: {actual_hash} != {expected_hash}"
+        )
     assert _validate_candidate_complete_phase(phase, payload, ROOT) == []
 
     mutated = copy.deepcopy(payload)
