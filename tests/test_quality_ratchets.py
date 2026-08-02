@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -26,6 +29,7 @@ from scripts.validate_quality_ratchets import (
     tightened_contract,
     validate,
 )
+from scripts.workflow_quality_contract import TRUSTED_PYTHON_COMMAND
 
 
 def _baseline(tmp_path: Path, sources: dict[str, str] | None = None) -> Path:
@@ -571,7 +575,7 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
         workflow.replace("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", 1),
         workflow.replace(" -I -E scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
         workflow.replace("${{ steps.trusted_python.outputs.path }}", "python", 1),
-        workflow.replace("(Get-Command python -CommandType Application).Source", "'C:\\\\attacker\\python.exe'", 1),
+        workflow.replace("Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source", "'C:\\\\attacker\\python.exe'", 1),
     )
     for mutated in mutations:
         assert _workflow_errors(mutated, 78.0)
@@ -581,6 +585,30 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
         1,
     )
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(action_without_proof, 78.0))
+
+
+def test_trusted_tool_capture_emits_one_executable_path_per_output(tmp_path: Path) -> None:
+    pwsh = shutil.which("pwsh") or shutil.which("powershell")
+    assert pwsh is not None
+    output = tmp_path / "github-output.txt"
+    completed = subprocess.run(
+        [pwsh, "-NoProfile", "-NonInteractive", "-Command", TRUSTED_PYTHON_COMMAND],
+        cwd=ROOT,
+        env={**os.environ, "GITHUB_OUTPUT": str(output)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    raw_output = output.read_bytes()
+    output_text = raw_output.decode("utf-16" if raw_output.startswith(b"\xff\xfe") else "utf-8")
+    entries = dict(line.split("=", 1) for line in output_text.splitlines())
+    assert set(entries) == {"path", "git_path"}
+    python_path, git_path = Path(entries["path"]), Path(entries["git_path"])
+    assert python_path.is_absolute() and python_path.is_file()
+    assert git_path.is_absolute() and git_path.is_file()
+    subprocess.run([str(python_path), "-I", "-E", "-c", "print('trusted')"], check=True)
+    subprocess.run([str(git_path), "--version"], check=True)
 
 
 def test_rollback_baseline_boundaries_each_require_fresh_baseline_proof() -> None:

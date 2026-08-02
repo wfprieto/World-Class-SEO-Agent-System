@@ -31,8 +31,8 @@ MATRIX_RUNNER = "${{ matrix.os }}"
 TRUSTED_PYTHON_OUTPUT = "${{ steps.trusted_python.outputs.path }}"
 SOURCE_GATE_PREFIX = f"$env:PATH = Split-Path -Parent '${{{{ steps.trusted_python.outputs.git_path }}}}'; & '{TRUSTED_PYTHON_OUTPUT}' -I -E scripts/validate_source_integrity.py --expected-sha "
 TRUSTED_PYTHON_COMMAND = (
-    "$resolved = (Get-Command python -CommandType Application).Source\n"
-    "$git = (Get-Command git -CommandType Application).Source\n"
+    "$resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source\n$git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source\n"
+    "if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }\nif (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }\n"
     '"path=$resolved" >> $env:GITHUB_OUTPUT\n"git_path=$git" >> $env:GITHUB_OUTPUT'
 )
 TRUSTED_PYTHON_STEP = {

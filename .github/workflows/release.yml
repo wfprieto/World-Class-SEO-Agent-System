@@ -30,8 +30,10 @@ jobs:
         id: trusted_python
         shell: pwsh
         run: |-
-          $resolved = (Get-Command python -CommandType Application).Source
-          $git = (Get-Command git -CommandType Application).Source
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
           "path=$resolved" >> $env:GITHUB_OUTPUT
           "git_path=$git" >> $env:GITHUB_OUTPUT
       - name: Prove exact source integrity
