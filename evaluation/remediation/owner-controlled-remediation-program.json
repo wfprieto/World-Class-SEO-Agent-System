@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P0",
+  "current_phase": "P1",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -34,10 +34,10 @@
     {
       "id": "P0",
       "title": "Program controls and current-state audit",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verified_commit": "dee4f9a141356b369d1e70014de87cd7b28ee25a",
-      "review_snapshot_commit": null,
-      "frozen_package_commit": null,
+      "review_snapshot_commit": "ef06069254d7e12d63039b3985bfe0c672f62882",
+      "frozen_package_commit": "ef06069254d7e12d63039b3985bfe0c672f62882",
       "rollback_evidence_sha256": "63c81e1b3c9a709044d29c6af3e9c26d97f19cab34b1fb6b742a06096c3aeca3",
       "authority_evidence": [
         {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen at the verified commit."},
@@ -45,7 +45,7 @@
         {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
         {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
       ],
-      "package_certification": [],
+      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726828200","commit":"ef06069254d7e12d63039b3985bfe0c672f62882","sha256":null,"environment":"CI","status":"PASS","assertion":"The immutable Phase 0 snapshot passed every canonical job, including dynamic exact-head rollback certification.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"ef06069254d7e12d63039b3985bfe0c672f62882","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","repository-certification"]}}],
       "owner": "Repository maintainer",
       "approver": "Repository maintainer",
       "verifier": "Independent reviewers",
@@ -100,12 +100,18 @@
         "learning": [{"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "dee4f9a141356b369d1e70014de87cd7b28ee25a", "sha256": "8848d7c704021f18145c259f1663886c4c6ad4cbab1b05f9d0efb98d73f71323", "environment": "LOCAL", "status": "PASS", "assertion": "[learning] Failure history and current recurrence verification are distinct."}],
         "unexpected_change_scan": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726646425", "commit": "dee4f9a141356b369d1e70014de87cd7b28ee25a", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "[unexpected_change_scan] Aggregate and exact-head rollback certification found no regression.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"dee4f9a141356b369d1e70014de87cd7b28ee25a","conclusion":"success","jobs":["validate","phase0-rollback-certification","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash": null, "verdicts": []}
+      "review": {
+        "evidence_package_hash": "52cf92aa1089998a4edbd485bb39a8398339dac1498f4b8604eae2bec048b817",
+        "verdicts": [
+          {"review_id":"p0-round7-scrummaster-review","reviewer_id":"senior-scrummaster-3","role":"SENIOR_SCRUMMASTER_3","context_id":"p0-r7-scrum-019fbe3c","provider":"OpenAI","model":"gpt-5.6-sol","evidence_package_hash":"52cf92aa1089998a4edbd485bb39a8398339dac1498f4b8604eae2bec048b817","verdict":"APPROVE_GREAT","strongest_objections":["The reviewed snapshot necessarily contains a null review_snapshot_commit, so candidate equality is not self-proven by that JSON alone. The closure contract resolves this by binding ef06069254d7e12d63039b3985bfe0c672f62882 as review_snapshot_commit, requiring package certification whose authenticated run head equals that commit, and accepting only the successful phase0-rollback-certification job from that exact-head run.","The durable recovery_position is an exact dynamic algorithm rather than a copy-paste operator script. It now removes the unsafe static candidate and nine-commit inventory, specifies the baseline-exclusive range and newest-first order, and is reproducible by a Git-capable operator, but novice execution still depends on understanding the documented Git primitives.","The rollback job installs validation dependencies before applying the reverts. That could weaken a future rehearsal if the candidate changed dependency declarations, although the reviewed baseline-to-snapshot diff changes neither requirements-dev.txt nor pyproject.toml, and the resulting tree exactly equals the baseline tree before baseline validation and ten regression tests pass.","The validator authenticates the exact-head successful rollback job through GitHub rather than parsing the uploaded receipt during closure. This is adequate for the reviewed immutable workflow because the inspected job generates the receipt only after full-range revert, tree equality, baseline validation, and tests succeed, but artifact retention remains a durability limitation.","The dynamic rollback artifact depends on the later allowlisted closure inserting review_snapshot_commit. Closure-delta tests, immutable snapshot loading, evidence-hash stability, and file allowlisting prevent that transition from changing the reviewed rollback procedure or executable controls."],"evidence_refs":["git:ef06069254d7e12d63039b3985bfe0c672f62882","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726828200","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726828200/job/91440179112","artifact:phase0-rollback-receipt:8826662181","evaluation/remediation/phase0-rollback-evidence.json@ef06069254d7e12d63039b3985bfe0c672f62882","scripts/validate_remediation_program.py@ef06069254d7e12d63039b3985bfe0c672f62882","tests/test_remediation_program.py@ef06069254d7e12d63039b3985bfe0c672f62882",".github/workflows/validate.yml@ef06069254d7e12d63039b3985bfe0c672f62882","rollback-receipt:candidate=ef06069254d7e12d63039b3985bfe0c672f62882;commit_count=19;baseline_tree=f998720c9d97180902eb6493f76265f55b3010b9;post_revert_tree=f998720c9d97180902eb6493f76265f55b3010b9;result=PASS"],"residual_risks":["The uploaded execution receipt is subject to GitHub artifact-retention policy, although the durable dynamic procedure remains reproducible.","The recovery instructions assume Git command-line proficiency and do not provide a separate cross-platform operator wrapper.","A future phase that changes dependency declarations must ensure rollback dependencies are resolved from the baseline rather than inherited from the candidate."],"required_changes":[],"submitted_at":"2026-08-01T21:27:25-04:00","saw_other_reviewer_verdict":false,"is_builder":false},
+          {"review_id":"vp-engineering-p0-round-7-ef060692","reviewer_id":"vp-engineering","role":"VP_ENGINEERING","context_id":"vp-phase0-r7-ef060692-independent","provider":"OpenAI","model":"GPT-5.6 Codex","evidence_package_hash":"52cf92aa1089998a4edbd485bb39a8398339dac1498f4b8604eae2bec048b817","verdict":"APPROVE_GREAT","strongest_objections":["The authenticated rollback receipt is retained as a GitHub Actions artifact, so its convenient availability is time-bounded even though the versioned dynamic procedure remains reproducible.","The operator recovery position specifies the correct dynamic boundary and newest-first range but leaves clean-worktree, backup, and conflict-handling precautions implicit rather than presenting a complete copy-and-run operator playbook.","The rollback rehearsal assumes a revertable linear commit range; the reviewed nineteen-commit range is linear and passed, but a future merge commit would require explicit mainline handling and should fail certification until supported.","Canonical closure authentication intentionally depends on GitHub API availability and therefore fails closed during a provider outage."],"evidence_refs":["ef06069254d7e12d63039b3985bfe0c672f62882:evaluation/remediation/owner-controlled-remediation-program.json","ef06069254d7e12d63039b3985bfe0c672f62882:evaluation/remediation/phase0-rollback-evidence.json","ef06069254d7e12d63039b3985bfe0c672f62882:scripts/validate_remediation_program.py","ef06069254d7e12d63039b3985bfe0c672f62882:tests/test_remediation_program.py","ef06069254d7e12d63039b3985bfe0c672f62882:.github/workflows/validate.yml","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726828200","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30726828200/job/91440179112","GitHub Actions artifact phase0-rollback-receipt, artifact ID 8826662181, head ef06069254d7e12d63039b3985bfe0c672f62882","computed evidence package hash 52cf92aa1089998a4edbd485bb39a8398339dac1498f4b8604eae2bec048b817"],"residual_risks":["Artifact retention may require reproducing the rollback receipt from the immutable snapshot and workflow.","Operators should execute recovery in a clean disposable checkout and preserve the pre-recovery reference.","GitHub API or Actions outages temporarily prevent closure certification by design."],"required_changes":[],"submitted_at":"2026-08-02T01:28:06.3051621Z","saw_other_reviewer_verdict":false,"is_builder":false}
+        ]
+      }
     },
     {
       "id": "P1",
       "title": "Immediate repository security and governance",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "verified_commit": null,
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
