@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wcseo.local/schemas/architecture-contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "layers", "allowed_layer_edges", "exceptions", "network_modules"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "layers": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+    },
+    "allowed_layer_edges": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "target"],
+        "properties": {"source": {"type": "string"}, "target": {"type": "string"}}
+      }
+    },
+    "exceptions": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "target", "owner", "rationale", "removal_phase"],
+        "properties": {
+          "source": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"},
+          "target": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"},
+          "owner": {"type": "string", "minLength": 3},
+          "rationale": {"type": "string", "minLength": 20},
+          "removal_phase": {"type": "string", "pattern": "^P[3-8]$"}
+        }
+      }
+    },
+    "network_modules": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^(runtime|adapters|integrations|seoctl)/[a-zA-Z0-9_/]+\\.py$"}
+    }
+  }
+}

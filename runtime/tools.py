@@ -4,22 +4,20 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Any
 
-from adapters.base import AdapterNotConfigured, AdapterResult
 from adapters.registry import default_adapters
+from runtime.adapter_contracts import (
+    AdapterNotConfigured,
+    RuntimeAdapter,
+    validate_adapter_result,
+)
 from runtime.telemetry import OperationTelemetry, redact
 
 
 class ToolDispatchError(RuntimeError):
     """Raised when a runtime tool cannot be dispatched."""
-
-
-@runtime_checkable
-class RuntimeAdapter(Protocol):
-    """Canonical runtime adapter contract."""
-
-    def fetch(self, **kwargs: Any) -> AdapterResult: ...
 
 
 @dataclass
@@ -48,7 +46,7 @@ class ToolDispatchResult:
 class ToolDispatcher:
     def __init__(
         self,
-        adapters: dict[str, Any] | None = None,
+        adapters: Mapping[str, RuntimeAdapter] | None = None,
         *,
         max_telemetry_events: int = 1_000,
         default_timeout_seconds: float = 60.0,
@@ -133,12 +131,11 @@ class ToolDispatcher:
             )
 
         try:
-            result = await asyncio.wait_for(
+            raw_result = await asyncio.wait_for(
                 asyncio.to_thread(adapter.fetch, **request.arguments),
                 timeout=timeout,
             )
-            if not isinstance(result, AdapterResult):
-                raise TypeError("adapter fetch() must return AdapterResult")
+            result = validate_adapter_result(raw_result)
         except AdapterNotConfigured as exc:
             return self._failure(
                 request,

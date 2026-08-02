@@ -59,12 +59,12 @@ target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E9", "F63", "F7", "F82"]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP", "C4", "SIM", "C90"]
 
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
-follow_imports = "skip"
+follow_imports = "normal"
 check_untyped_defs = true
 warn_unused_ignores = true
 show_error_codes = true
@@ -75,16 +75,23 @@ source = ["runtime", "seoctl", "integrations", "adapters"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
-fail_under = 65
+fail_under = 78
 show_missing = true
 skip_covered = false
 
-# These are regression floors for high-risk network and provider boundaries. The
-# repository-wide 65% gate remains independently enforced; no file is omitted.
+# These are non-regression floors, not claims of sufficient test depth. The
+# repository-wide 78% gate remains independently enforced; no file is omitted.
 [tool.wcseo.risk_coverage]
-"adapters/google_pagespeed_live.py" = 80
-"adapters/url_safety.py" = 80
-"integrations/authority_media/transport.py" = 65
-"integrations/technical/browser.py" = 42
-"integrations/technical/http.py" = 70
-"runtime/llm.py" = 60
+"adapters/evidence_store.py" = 67
+"adapters/google_pagespeed_live.py" = 83
+"adapters/url_safety.py" = 87
+"integrations/authority_media/transport.py" = 67
+"integrations/google/client.py" = 68
+"integrations/google/gsc.py" = 62
+"integrations/technical/browser.py" = 45
+"integrations/technical/http.py" = 72
+"runtime/executor.py" = 96
+"runtime/llm.py" = 64
+"runtime/structured_output.py" = 89
+"runtime/tools.py" = 83
+"runtime/workflow_runner.py" = 93

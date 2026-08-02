@@ -66,7 +66,7 @@ def cluster(serps: dict[str, list[str]], volumes: dict[str, float] | None = None
     connectivity = {
         k: sum(1 for e in edges if k in (e["a"], e["b"])) for k in keywords
     }
-    clusters = []
+    clusters: list[dict[str, Any]] = []
     for members in groups.values():
         members = sorted(members)
         # Hub: highest supplied volume, then connectivity, then name (stable ties).

@@ -26,8 +26,16 @@ Request
 - URL safety: `adapters/url_safety.py`
 - Optional providers: `adapters/mcp_extensions.py`
 - Comparative scoring: `evaluation/comparative/`
+- Dependency direction and direct-network boundaries: `governance/architecture-contract.json`
+- Complexity, annotation, lint, and coverage ceilings: `governance/code-quality-ratchet.json`
 
 No integration may bypass `ToolDispatcher`, evidence validation, run budgets, or approval gates. Optional provider packs are adapters, not forks of the core.
+
+## Dependency direction
+
+`seoctl` is the outer composition layer and may assemble runtime, adapter, and integration components. All other cross-layer imports fail unless the architecture contract names the exact source module, exact target module, accountable owner, rationale, and removal phase. The validator also rejects internal module cycles, stale exceptions, missing packages, and any new module that directly imports a network client without explicit registration.
+
+`runtime.adapter_contracts` owns the one generic `AdapterResult` class and runtime-checkable adapter protocol. `adapters.base` is a temporary compatibility re-export, so integrations and callers cannot create competing result identities. `ToolDispatcher` validates source, status, warning types, secret safety, and finite JSON serializability before evidence crosses the runtime boundary.
 
 ## Flagship boundary
 

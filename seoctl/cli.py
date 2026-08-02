@@ -201,7 +201,8 @@ def _benchmark_compare(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
 
 def _benchmark_tracer(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
-    result = evaluate_tracer(Path(args.fixtures) if args.fixtures else None) if args.fixtures else evaluate_tracer()
+    fixtures = args.fixtures
+    result = evaluate_tracer(Path(str(fixtures))) if fixtures else evaluate_tracer()
     return envelope("benchmark.tracer", "ok" if result["verdict"] == "GO" else "failed", result), (
         EXIT_OK if result["verdict"] == "GO" else EXIT_FAILED
     )

@@ -240,6 +240,27 @@ def test_risk_coverage_validator_fails_missing_and_undercovered_files(tmp_path: 
     assert any("missing from coverage" in error for error in errors)
 
 
+def test_risk_coverage_exact_floor_passes_and_one_hundredth_under_fails(tmp_path: Path):
+    config = tmp_path / "pyproject.toml"
+    config.write_text(
+        '[tool.wcseo.risk_coverage]\n"runtime/tools.py" = 83\n', encoding="utf-8"
+    )
+    coverage = tmp_path / "coverage.json"
+    coverage.write_text(
+        json.dumps({"files": {"runtime\\tools.py": {"summary": {"percent_covered": 83}}}}),
+        encoding="utf-8",
+    )
+    assert validate(coverage, config) == []
+
+    coverage.write_text(
+        json.dumps({"files": {"runtime/tools.py": {"summary": {"percent_covered": 82.99}}}}),
+        encoding="utf-8",
+    )
+    assert validate(coverage, config) == [
+        "runtime/tools.py: 82.99% is below required 83.00%"
+    ]
+
+
 def test_dependency_lock_rejects_direct_pin_outside_canonical_constraint(tmp_path: Path):
     inputs = tmp_path / "requirements-dev.in"
     lock = tmp_path / "requirements-dev.txt"
