@@ -236,7 +236,7 @@
         "learning":[{"class":"AUTOMATED","ref":"tests/test_quality_ratchets.py","commit":"22deb49f377e7e4ab868f2ced7ea64cf4a6a2884","sha256":"e6df2346971220dc3b0cdb657803e83bebda311b01a6e52001a483a6d6d28951","environment":"CI","status":"PASS","assertion":"[learning] CI configuration cannot remove architecture validation, weaken Ruff, or lower coverage, and explicit package bases prevent duplicate script identities."}],
         "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30739086916","commit":"22deb49f377e7e4ab868f2ced7ea64cf4a6a2884","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] Exact CI passed 498 tests, generated authorities, legacy 20-pass validation, security, release, rollback, and clean-install boundaries.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"22deb49f377e7e4ab868f2ced7ea64cf4a6a2884","conclusion":"success","jobs":["provider-authentication","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash": null, "verdicts": []}
+      "review": {"evidence_package_hash": "e9420d96b07d840c2b697fb0aabee05a7c39e98e11a4f590cdfab66268920acb", "verdicts": []}
     },
     {
       "id": "P4",
