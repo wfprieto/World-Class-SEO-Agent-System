@@ -280,6 +280,18 @@ def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
     assert _workflow_errors(quoted_zero, 78.0) == []
     expression = workflow.replace("fetch-depth: 0", "fetch-depth: ${{ github.event.depth }}", 1)
     assert any("fetch-depth: 0" in error for error in _workflow_errors(expression, 78.0))
+    case_variant = workflow.replace("actions/checkout@", "Actions/Checkout@", 1).replace(
+        "fetch-depth: 0", "fetch-depth: 1", 1
+    )
+    assert any("fetch-depth: 0" in error for error in _workflow_errors(case_variant, 78.0))
+    credentials = workflow.replace("persist-credentials: false", "persist-credentials: true", 1)
+    assert any("persist-credentials" in error for error in _workflow_errors(credentials, 78.0))
+    uppercase_unpinned = workflow.replace("actions/checkout@", "ACTIONS/CHECKOUT@", 1).replace(
+        "3d3c42e5aac5ba805825da76410c181273ba90b1", "v7", 1
+    )
+    errors = _workflow_errors(uppercase_unpinned, 78.0)
+    assert any("canonical lowercase" in error for error in errors)
+    assert any("immutable 40-character SHA" in error for error in errors)
 
 
 def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:
@@ -326,6 +338,27 @@ def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
         1,
     )
     assert any("quality job" in error for error in _workflow_errors(conditional_job, 78.0))
+    for defaults in (
+        "defaults:\n  run:\n    shell: bash -c 'exit 0' {0}\n\n",
+        "defaults:\n  run:\n    working-directory: unrelated\n\n",
+    ):
+        assert _workflow_errors(defaults + workflow, 78.0)
+    for setting in (
+        "shell: bash -c 'exit 0' {0}",
+        "working-directory: unrelated",
+    ):
+        job_default = workflow.replace(
+            "  quality_security_release:\n    needs: validate",
+            f"  quality_security_release:\n    defaults:\n      run:\n        {setting}\n    needs: validate",
+            1,
+        )
+        assert _workflow_errors(job_default, 78.0)
+    unrelated_default = workflow.replace(
+        "  provider_authentication:\n",
+        "  provider_authentication:\n    defaults:\n      run:\n        shell: bash\n",
+        1,
+    )
+    assert _workflow_errors(unrelated_default, 78.0) == []
     coverage_block = next(
         block for block in workflow.split("      - ") if block.startswith("name: Run coverage gate")
     ).rstrip()

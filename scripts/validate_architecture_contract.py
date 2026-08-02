@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
 import json
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -150,40 +152,95 @@ def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
     return f"{resolved_head}{separator}{tail}"
 
 
-def _literal_process_command(node: ast.AST) -> str | None:
-    if isinstance(node, ast.Constant) and isinstance(node.value, str):
-        return node.value.strip().split(maxsplit=1)[0] if node.value.strip() else None
-    if isinstance(node, (ast.List, ast.Tuple)) and node.elts:
-        first = node.elts[0]
-        if isinstance(first, ast.Constant) and isinstance(first.value, str):
-            return first.value
+def _literal_text(node: ast.AST) -> str | None:
+    if not isinstance(node, ast.Constant):
+        return None
+    if isinstance(node.value, str):
+        return node.value
+    if isinstance(node.value, bytes):
+        try:
+            return node.value.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
     return None
 
 
+def _literal_process_tokens(node: ast.AST) -> list[str] | None:
+    text = _literal_text(node)
+    if text is not None:
+        try:
+            return shlex.split(text, posix=False)
+        except ValueError:
+            return None
+    if isinstance(node, (ast.List, ast.Tuple)):
+        values = [_literal_text(item) for item in node.elts]
+        return [item for item in values if item is not None] if all(item is not None for item in values) else None
+    return None
 def _call_argument(node: ast.Call, position: int | None, keyword: str) -> ast.AST | None:
     if position is not None and len(node.args) > position:
         return node.args[position]
     return next((item.value for item in node.keywords if item.arg == keyword), None)
-
-
 def _literal_dynamic_imports(tree: ast.AST) -> set[str]:
     aliases = _import_aliases(tree)
     imported: set[str] = set()
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call) or _resolved_call_name(node.func, aliases) not in {
-            "__import__",
-            "importlib.import_module",
-        }:
-            continue
-        argument = _call_argument(node, 0, "name")
-        if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
-            imported.add(argument.value)
+        if isinstance(node, ast.Call) and (target := _literal_dynamic_target(node, aliases)):
+            imported.add(target)
     return imported
-
-
+def _literal_dynamic_target(node: ast.Call, aliases: dict[str, str]) -> str | None:
+    call_name = _resolved_call_name(node.func, aliases)
+    if call_name not in {"__import__", "builtins.__import__", "importlib.import_module"}:
+        return None
+    argument = _call_argument(node, 0, "name")
+    name = _literal_text(argument) if argument is not None else None
+    if not name or not name.startswith("."):
+        return name
+    package_node = _call_argument(node, 1, "package")
+    package = _literal_text(package_node) if package_node is not None else None
+    if call_name != "importlib.import_module" or not package:
+        return None
+    try:
+        return importlib.util.resolve_name(name, package)
+    except ImportError:
+        return None
+def _unresolved_dynamic_errors(module_trees: dict[str, ast.AST]) -> list[str]:
+    errors: list[str] = []
+    for source, tree in module_trees.items():
+        aliases = _import_aliases(tree)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            call_name = _resolved_call_name(node.func, aliases)
+            argument = _call_argument(node, 0, "name")
+            name = _literal_text(argument) if argument is not None else None
+            if (
+                call_name == "importlib.import_module"
+                and name is not None
+                and name.startswith(".")
+                and _literal_dynamic_target(node, aliases) is None
+            ):
+                errors.append(f"unresolved literal relative import: {source} -> {name}")
+    return errors
 def _normalized_process_command(command: str) -> str:
-    name = command.replace("\\", "/").rsplit("/", 1)[-1].casefold()
+    stripped = command.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in {'"', "'"}:
+        stripped = stripped[1:-1]
+    name = stripped.replace("\\", "/").rsplit("/", 1)[-1].casefold()
     return name[:-4] if name.endswith(".exe") else name
+def _effective_process_command(tokens: list[str], depth: int = 0) -> str | None:
+    if not tokens or depth > 3:
+        return None
+    command = _normalized_process_command(tokens[0])
+    if command in {"bash", "sh"} and len(tokens) >= 3 and tokens[1] == "-c":
+        try:
+            nested = shlex.split(tokens[2], posix=True)
+        except ValueError:
+            return None
+        return _effective_process_command(nested, depth + 1)
+    if command == "env":
+        remaining = [item for item in tokens[1:] if not item.startswith("-") and "=" not in item]
+        return _effective_process_command(remaining, depth + 1)
+    return command
 
 
 def _is_network_import(name: str) -> bool:
@@ -205,20 +262,16 @@ def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
     if not isinstance(node, ast.Call):
         return False
     call_name = _resolved_call_name(node.func, aliases)
-    if call_name in {"__import__", "importlib.import_module"}:
-        imported = _call_argument(node, 0, "name")
-        return (
-            isinstance(imported, ast.Constant)
-            and isinstance(imported.value, str)
-            and _is_network_import(imported.value)
-        )
+    if call_name in {"__import__", "builtins.__import__", "importlib.import_module"}:
+        imported = _literal_dynamic_target(node, aliases)
+        return bool(imported and _is_network_import(imported))
     if call_name in {*SUBPROCESS_CALLS, "os.system"}:
         argument = _call_argument(node, 0, "args" if call_name != "os.system" else "command")
-        command = _literal_process_command(argument) if argument is not None else None
+        command = _effective_process_command(_literal_process_tokens(argument) or []) if argument is not None else None
         executable = _call_argument(node, None, "executable")
-        executable_name = _literal_process_command(executable) if executable is not None else None
+        executable_name = _effective_process_command(_literal_process_tokens(executable) or []) if executable is not None else None
         return any(
-            value is not None and _normalized_process_command(value) in NETWORK_PROCESS_COMMANDS
+            value is not None and value in NETWORK_PROCESS_COMMANDS
             for value in (command, executable_name)
         )
     return False
@@ -271,7 +324,6 @@ def validate(
     ]
     if errors:
         return sorted(errors)
-
     layers = {str(name): str(package) for name, package in contract["layers"].items()}
     package_layers = {package: name for name, package in layers.items()}
     allowed = {(item["source"], item["target"]) for item in contract["allowed_layer_edges"]}
@@ -299,6 +351,7 @@ def validate(
             if _has_network_import(tree):
                 network_paths.add(path.relative_to(root).as_posix())
     module_imports = _resolved_imports(module_paths, module_trees)
+    errors.extend(_unresolved_dynamic_errors(module_trees))
     observed_cross_edges: set[tuple[str, str]] = set()
     graph: dict[str, set[str]] = {name: set() for name in module_paths}
     for source, imports in module_imports.items():

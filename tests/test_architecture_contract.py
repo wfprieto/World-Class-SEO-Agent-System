@@ -237,6 +237,14 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
         ("import subprocess", "subprocess.run(['/usr/bin/curl', 'https://example.test'])"),
         ("import subprocess", "subprocess.run(['CURL.EXE', 'https://example.test'])"),
         ("import subprocess", "subprocess.run(['powershell.exe', 'Invoke-WebRequest'])"),
+        ("from builtins import __import__ as load", "load('httpx')"),
+        (
+            "import subprocess",
+            "subprocess.run('\\\"C:\\\\Program Files\\\\curl.exe\\\" https://example.test')",
+        ),
+        ("import subprocess", "subprocess.run(['/bin/bash', '-c', 'curl https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/usr/bin/env', 'curl', 'https://example.test'])"),
+        ("import subprocess", "subprocess.run([b'curl', b'https://example.test'])"),
     ],
 )
 def test_equivalent_literal_egress_spellings_fail_until_owned(
@@ -292,6 +300,67 @@ def test_literal_dynamic_import_participates_in_cycles(tmp_path: Path) -> None:
     )
 
 
+def test_relative_literal_dynamic_import_obeys_edges_and_cycles(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/a.py": (
+                "import importlib\n"
+                "importlib.import_module('.google.client', package='integrations')\n"
+                "importlib.import_module('.b', package='runtime')\n"
+            ),
+            "runtime/b.py": "import runtime.a\n",
+            "integrations/google/client.py": "VALUE = 1\n",
+        },
+    )
+    errors = validate(tmp_path, contract_path, schema_path)
+    assert "forbidden dependency edge: runtime.a -> integrations.google.client" in errors
+    assert any(error.startswith("internal import cycle: runtime.a -> runtime.b") for error in errors)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "importlib.import_module('.b')",
+        "importlib.import_module('.b', package=PACKAGE)",
+        "importlib.import_module('..b', package='runtime')",
+    ],
+)
+def test_unresolved_literal_relative_import_fails_closed(tmp_path: Path, call: str) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/a.py": f"import importlib\nPACKAGE = 'runtime'\n{call}\n"},
+    )
+    assert any(
+        error.startswith("unresolved literal relative import: runtime.a")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from builtins import __import__ as load\nload('integrations.google.client')\n",
+        "import builtins as bi\nbi.__import__('integrations.google.client')\n",
+    ],
+)
+def test_builtin_literal_import_obeys_dependency_direction(tmp_path: Path, source: str) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/dynamic_dependency.py": source,
+            "integrations/google/client.py": "VALUE = 1\n",
+        },
+    )
+    assert (
+        "forbidden dependency edge: runtime.dynamic_dependency -> integrations.google.client"
+        in validate(tmp_path, contract_path, schema_path)
+    )
+
+
 def test_approved_literal_dynamic_import_remains_valid(tmp_path: Path) -> None:
     contract_path, schema_path = _fixture(
         tmp_path,
@@ -316,6 +385,25 @@ def test_approved_literal_dynamic_import_remains_valid(tmp_path: Path) -> None:
 def test_non_network_process_names_do_not_create_false_egress(
     tmp_path: Path, call: str
 ) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/process_client.py": f"import subprocess\n{call}\n"},
+    )
+    assert validate(tmp_path, contract_path, schema_path) == []
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "subprocess.run(['/bin/bash', '-c', 'git status'])",
+        "subprocess.run(['/bin/bash', '-c', 'echo curl'])",
+        "subprocess.run(['/usr/bin/env', 'git', 'status'])",
+        "subprocess.run(['/usr/bin/env', 'NAME=curl', 'git', 'status'])",
+        "subprocess.run([r'\"C:\\Program Files\\curl-helper.exe\"', 'value'])",
+    ],
+)
+def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str) -> None:
     contract_path, schema_path = _fixture(
         tmp_path,
         _contract(),
