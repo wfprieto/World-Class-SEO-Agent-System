@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import asdict, dataclass
 from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from typing import Any
 
 from adapters.registry import default_adapters
 from runtime.adapter_contracts import (
-    AdapterNotConfigured,
     BLOCKING_ADAPTER_STATUSES,
     INVALID_ADAPTER_STATUSES,
     MISSING_ADAPTER_STATUSES,
     PARTIAL_ADAPTER_STATUSES,
-    RuntimeAdapter,
     SUCCESS_ADAPTER_STATUSES,
+    AdapterNotConfigured,
+    RuntimeAdapter,
     validate_adapter_result,
 )
 from runtime.telemetry import OperationTelemetry, redact
@@ -65,6 +65,13 @@ def _adapter_evidence_state(status: str, *, required: bool) -> str:
     if status in BLOCKING_ADAPTER_STATUSES:
         return "INVALID"
     return "PARTIAL"
+
+
+def _indeterminate_timeout_message(tool: str, timeout: float) -> str:
+    return (
+        f"Tool {tool} exceeded its {timeout:g}-second response deadline; "
+        "thread-backed work may still be running, so side-effect outcome is unknown."
+    )
 
 
 class ToolDispatcher:
@@ -173,9 +180,9 @@ class ToolDispatcher:
             return self._failure(
                 request,
                 trace,
-                status="TIMEOUT",
-                error_type="ToolTimeout",
-                message=f"Tool {request.tool} exceeded its {timeout:g}-second execution limit.",
+                status="DEADLINE_EXCEEDED_INDETERMINATE",
+                error_type="ToolDeadlineExceededWorkMayContinue",
+                message=_indeterminate_timeout_message(request.tool, timeout),
                 evidence_state="BLOCKED" if request.required else "INVALID",
             )
         except asyncio.CancelledError:

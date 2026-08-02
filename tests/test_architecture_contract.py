@@ -25,6 +25,7 @@ def _contract() -> dict:
         ],
         "exceptions": [],
         "network_modules": [],
+        "network_transports": {},
     }
 
 
@@ -196,6 +197,20 @@ def test_new_direct_network_module_fails_until_explicitly_owned(tmp_path: Path) 
     )
     errors = validate(tmp_path, contract_path, schema_path)
     assert "unapproved network-capable module: integrations/new_transport.py" in errors
+
+
+def test_registered_network_sink_requires_canonical_transport_mapping(tmp_path: Path) -> None:
+    contract = _contract()
+    contract["network_modules"] = ["integrations/new_transport.py"]
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        contract,
+        {"integrations/new_transport.py": "import urllib.request\n"},
+    )
+    assert (
+        "network sink missing canonical transport mapping: integrations/new_transport.py"
+        in validate(tmp_path, contract_path, schema_path)
+    )
 
 
 def test_new_playwright_browser_module_fails_until_explicitly_owned(tmp_path: Path) -> None:

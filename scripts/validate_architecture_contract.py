@@ -14,6 +14,11 @@ from typing import Any, cast
 
 from jsonschema import Draft202012Validator
 
+if __package__:
+    from scripts import architecture_network_inventory as network_inventory
+else:
+    import architecture_network_inventory as network_inventory  # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "architecture-contract.json"
 SCHEMA_PATH = ROOT / "schemas" / "architecture-contract.schema.json"
@@ -340,25 +345,13 @@ def validate(root: Path = ROOT, contract_path: Path | None = None,
     if len(exceptions) != len(contract["exceptions"]):
         errors.append("dependency exceptions must have unique source-target pairs")
 
-    module_paths: dict[str, Path] = {}
-    module_trees: dict[str, ast.AST] = {}
-    network_paths: set[str] = set()
-    for package in sorted(package_layers):
-        package_root = root / package
-        if not package_root.is_dir():
-            errors.append(f"declared package directory is missing: {package}")
-            continue
-        for path in sorted(package_root.rglob("*.py")):
-            try:
-                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            except (OSError, SyntaxError, UnicodeError) as exc:
-                errors.append(f"cannot parse {path.relative_to(root).as_posix()}: {exc}")
-                continue
-            source = _module_name(path, root)
-            module_paths[source] = path
-            module_trees[source] = tree
-            if _has_network_import(tree):
-                network_paths.add(path.relative_to(root).as_posix())
+    module_paths, module_trees, network_paths, scan_errors = network_inventory.scan_modules(
+        root,
+        sorted(package_layers),
+        module_name=_module_name,
+        has_network_import=_has_network_import,
+    )
+    errors.extend(scan_errors)
 
     module_imports = _resolved_imports(module_paths, module_trees)
     errors.extend(_unresolved_dynamic_errors(module_trees))
@@ -383,14 +376,9 @@ def validate(root: Path = ROOT, contract_path: Path | None = None,
                 errors.append(f"forbidden dependency edge: {source} -> {target}")
     for edge in sorted(exceptions - observed_cross_edges):
         errors.append(f"stale or unknown dependency exception: {edge[0]} -> {edge[1]}")
-    for cycle in _cycles(graph):
-        errors.append(f"internal import cycle: {' -> '.join(cycle)}")
+    errors.extend(f"internal import cycle: {' -> '.join(cycle)}" for cycle in _cycles(graph))
 
-    expected_network = set(contract["network_modules"])
-    for relative_path in sorted(network_paths - expected_network):
-        errors.append(f"unapproved network-capable module: {relative_path}")
-    for relative_path in sorted(expected_network - network_paths):
-        errors.append(f"stale or missing network-module entry: {relative_path}")
+    errors.extend(network_inventory.validate_network_inventory(contract, network_paths))
     return sorted(errors)
 def main() -> int:
     errors = validate()

@@ -19,7 +19,7 @@
   },
   "file_exceptions": {
     "adapters/evidence_store.py": {
-      "max_lines": 656,
+      "max_lines": 654,
       "max_complexity_total": 115,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
@@ -30,14 +30,6 @@
       "max_lines": 248,
       "max_complexity_total": 56,
       "max_missing_annotations": 1,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "adapters/rendered_page.py": {
-      "max_lines": 220,
-      "max_complexity_total": 35,
-      "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
@@ -320,14 +312,6 @@
       "max_span": 40,
       "max_complexity": 23,
       "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "adapters.rendered_page::playwright_render.guard": {
-      "max_span": 7,
-      "max_complexity": 4,
-      "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
@@ -1461,8 +1445,8 @@
       "removal_phase": "P7"
     },
     "scripts.validate_architecture_contract::validate": {
-      "max_span": 74,
-      "max_complexity": 29,
+      "max_span": 57,
+      "max_complexity": 22,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1645,10 +1629,7 @@
     "violation_counts": {
       "adapters/ai_citation_monitor.py|SIM115|Use a context manager for opening files": 1,
       "adapters/backlinks.py|SIM115|Use a context manager for opening files": 1,
-      "adapters/evidence_store.py|I001|Import block is un-sorted or un-formatted": 1,
       "adapters/evidence_store.py|SIM105|Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`": 2,
-      "adapters/evidence_store.py|UP035|Import from `collections.abc` instead: `Iterator`, `Mapping`": 1,
-      "adapters/evidence_store.py|UP037|Remove quotes from type annotation": 1,
       "adapters/ga4.py|SIM115|Use a context manager for opening files": 1,
       "adapters/google_pagespeed_live.py|UP017|Use `datetime.UTC` alias": 1,
       "adapters/gsc.py|SIM115|Use a context manager for opening files": 1,
@@ -1660,7 +1641,6 @@
       "adapters/rank_tracking.py|SIM115|Use a context manager for opening files": 1,
       "adapters/redirect_chain.py|SIM115|Use a context manager for opening files": 1,
       "adapters/registry.py|I001|Import block is un-sorted or un-formatted": 1,
-      "adapters/rendered_page.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "adapters/url_safety.py|C901|`validate_public_url` is too complex (16 > 10)": 1,
       "integrations/authority_media/services.py|C901|`history` is too complex (11 > 10)": 1,
       "integrations/authority_media/services.py|C901|`inspect` is too complex (12 > 10)": 1,
@@ -1710,16 +1690,11 @@
       "runtime/evidence_binding.py|C901|`validate_evidence_binding` is too complex (18 > 10)": 1,
       "runtime/executor.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/executor.py|UP035|Import from `collections.abc` instead: `AsyncIterator`": 1,
-      "runtime/llm.py|I001|Import block is un-sorted or un-formatted": 1,
-      "runtime/llm.py|UP035|Import from `collections.abc` instead: `AsyncIterator`": 1,
-      "runtime/memory.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/memory.py|SIM105|Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`": 2,
       "runtime/routing.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/state.py|UP017|Use `datetime.UTC` alias": 3,
       "runtime/state.py|UP037|Remove quotes from type annotation": 1,
       "runtime/structured_output.py|B904|Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling": 1,
-      "runtime/telemetry.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
-      "runtime/tools.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/capture_github_controls.py|I001|Import block is un-sorted or un-formatted": 1,
@@ -1741,7 +1716,6 @@
       "scripts/scan_secrets.py|C901|`scan` is too complex (11 > 10)": 1,
       "scripts/scan_secrets.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/seo_pdf_report.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
-      "scripts/validate_architecture_contract.py|C901|`validate` is too complex (18 > 10)": 1,
       "scripts/validate_canonical_skill_consistency.py|E401|Multiple imports on one line": 1,
       "scripts/validate_canonical_skill_consistency.py|E701|Multiple statements on one line (colon)": 6,
       "scripts/validate_canonical_skill_consistency.py|E702|Multiple statements on one line (semicolon)": 11,

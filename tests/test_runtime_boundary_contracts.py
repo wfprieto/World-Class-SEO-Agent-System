@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from typing import Any
 
 import pytest
@@ -20,6 +21,19 @@ class _ReturningAdapter:
 
     def fetch(self, **kwargs: Any) -> Any:
         return self.value
+
+
+class _ThreadBackedSideEffectAdapter:
+    def __init__(self) -> None:
+        self.started = threading.Event()
+        self.release = threading.Event()
+        self.completed = threading.Event()
+
+    def fetch(self, **kwargs: Any) -> AdapterResult:
+        self.started.set()
+        self.release.wait(timeout=2)
+        self.completed.set()
+        return AdapterResult("fixture", "ok", {"side_effect": "complete"}, [])
 
 
 def test_adapter_result_has_one_canonical_runtime_identity() -> None:
@@ -59,6 +73,22 @@ def test_dispatcher_isolates_malformed_boundary_result() -> None:
     assert result.evidence_state == "BLOCKED"
 
 
+@pytest.mark.asyncio
+async def test_thread_timeout_reports_indeterminate_side_effect_outcome() -> None:
+    adapter = _ThreadBackedSideEffectAdapter()
+    dispatcher = ToolDispatcher({"side-effect": adapter})
+    result = await dispatcher.dispatch(
+        ToolRequest("side-effect", {}, required=True, timeout_seconds=0.1)
+    )
+    assert adapter.started.is_set()
+    assert not adapter.completed.is_set()
+    assert result.error_type == "ToolDeadlineExceededWorkMayContinue"
+    assert result.evidence_state == "BLOCKED"
+    assert "may still be running" in (result.sanitized_error or "")
+    adapter.release.set()
+    assert await asyncio.to_thread(adapter.completed.wait, 1)
+
+
 def test_canonical_status_vocabulary_covers_success_partial_and_failure_states() -> None:
     expected = {
         "ok",
@@ -76,7 +106,7 @@ def test_canonical_status_vocabulary_covers_success_partial_and_failure_states()
         "unauthorized",
         "rate_limited",
     }
-    assert CANONICAL_ADAPTER_STATUSES == expected
+    assert expected == CANONICAL_ADAPTER_STATUSES
 
 
 def test_required_unknown_status_is_blocked_before_workflow() -> None:

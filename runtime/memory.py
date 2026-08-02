@@ -4,44 +4,11 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import threading
 from pathlib import Path
 from typing import Any, Protocol
 
-
-_SENSITIVE_KEYS = {
-    "api_key", "apikey", "access_token", "refresh_token", "token", "secret",
-    "password", "passwd", "authorization", "cookie", "set-cookie", "client_secret",
-    "tc_string", "consent_string", "user_id", "client_id", "gclid",
-}
-_SECRET_PATTERNS = (
-    re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
-    re.compile(r"\bgh[pousr]_[A-Za-z0-9]{12,}\b"),
-    re.compile(r"\bAKIA[A-Z0-9]{12,}\b"),
-    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]+=*"),
-)
-
-
-def redact(value: Any, *, key: str = "") -> Any:
-    """Recursively remove secrets and identifiers before memory persistence."""
-    normalized_key = key.lower().replace("-", "_")
-    if normalized_key in _SENSITIVE_KEYS or any(
-        marker in normalized_key for marker in ("password", "secret", "private_key")
-    ):
-        return "[REDACTED]"
-    if isinstance(value, dict):
-        return {str(item_key): redact(item_value, key=str(item_key)) for item_key, item_value in value.items()}
-    if isinstance(value, list):
-        return [redact(item) for item in value]
-    if isinstance(value, tuple):
-        return [redact(item) for item in value]
-    if isinstance(value, str):
-        result = value
-        for pattern in _SECRET_PATTERNS:
-            result = pattern.sub("[REDACTED]", result)
-        return result
-    return value
+from sensitive_data import redact
 
 
 class MemoryStore(Protocol):

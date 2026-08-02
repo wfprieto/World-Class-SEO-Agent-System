@@ -7,6 +7,7 @@ renders, or sends to a provider.
 from __future__ import annotations
 
 import ipaddress
+import re
 import socket
 import urllib.parse
 from collections.abc import Callable
@@ -21,6 +22,15 @@ SENSITIVE_QUERY_KEYS = frozenset(
     }
 )
 Resolver = Callable[..., list[tuple]]
+_EVIDENCE_HEADER_ALLOWLIST = frozenset(
+    {"cache-control", "content-length", "content-type", "etag", "last-modified", "vary"}
+)
+_URL_IN_TEXT = re.compile(r"https?://[^\s\"'<>]+", re.IGNORECASE)
+_SECRET_IN_TEXT = re.compile(
+    r"(?i)\b(authorization|cookie|set-cookie|token|api[_-]?key|secret|password)"
+    r"\s*[:=]\s*[^,;\s]+"
+)
+_BEARER_IN_TEXT = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]+=*")
 
 
 def _address_is_public(value: str) -> bool:
@@ -107,3 +117,36 @@ def host_is_public(host: str, *, resolver: Resolver = socket.getaddrinfo) -> boo
     except socket.gaierror:
         return False
     return bool(infos) and all(_address_is_public(str(info[4][0])) for info in infos)
+
+
+def sanitize_url_for_evidence(url: str) -> str:
+    """Return a display-only URL with credentials, query, and fragment removed."""
+    try:
+        parsed = urllib.parse.urlsplit(str(url))
+        host = parsed.hostname or ""
+        port = parsed.port
+    except (TypeError, ValueError):
+        return "[REDACTED_URL]"
+    if not parsed.scheme or not host:
+        return "[REDACTED_URL]"
+    display_host = f"[{host}]" if ":" in host else host
+    netloc = display_host if port is None else f"{display_host}:{port}"
+    return urllib.parse.urlunsplit((parsed.scheme.lower(), netloc, parsed.path or "/", "", ""))
+
+
+def sanitize_headers_for_evidence(headers: dict) -> dict[str, str]:
+    """Expose only non-secret response metadata headers."""
+    return {
+        str(key).lower(): str(value)
+        for key, value in headers.items()
+        if str(key).lower() in _EVIDENCE_HEADER_ALLOWLIST
+    }
+
+
+def sanitize_text_for_evidence(value: object) -> str:
+    """Redact credential-like text and strip URL queries from exported messages."""
+    text = str(value)
+    text = _URL_IN_TEXT.sub(lambda match: sanitize_url_for_evidence(match.group(0)), text)
+    text = _BEARER_IN_TEXT.sub("Bearer [REDACTED]", text)
+    text = _SECRET_IN_TEXT.sub(lambda match: f"{match.group(1)}=[REDACTED]", text)
+    return text

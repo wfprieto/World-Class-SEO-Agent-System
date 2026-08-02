@@ -3,7 +3,7 @@
   "$id": "https://wcseo.local/schemas/architecture-contract.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "layers", "allowed_layer_edges", "exceptions", "network_modules"],
+  "required": ["schema_version", "layers", "allowed_layer_edges", "exceptions", "network_modules", "network_transports"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "layers": {
@@ -37,6 +37,31 @@
     "network_modules": {
       "type": "array", "uniqueItems": true,
       "items": {"type": "string", "pattern": "^(runtime|adapters|integrations|seoctl)/[a-zA-Z0-9_/]+\\.py$"}
+    },
+    "network_transports": {
+      "type": "object",
+      "propertyNames": {"pattern": "^(runtime|adapters|integrations|seoctl)/[a-zA-Z0-9_/]+\\.py$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["policy", "delegates_to"],
+        "properties": {
+          "policy": {
+            "enum": [
+              "APPROVED_HOST_BOUNDED_HTTP",
+              "CONFIGURED_LLM_ENDPOINT_BOUNDED_HTTP",
+              "GOOGLE_API_BOUNDED_HTTP",
+              "LEGACY_GSC_EXAMPLE",
+              "NO_REDIRECT_PUBLIC_MUTATION",
+              "PUBLIC_BROWSER_REQUEST_GUARD",
+              "PUBLIC_RENDERED_PAGE",
+              "PUBLIC_URL_SAFETY",
+              "PUBLIC_WEB_EVERY_HOP"
+            ]
+          },
+          "delegates_to": {"type": "string", "minLength": 3}
+        }
+      }
     }
   }
 }

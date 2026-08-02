@@ -13,8 +13,10 @@
   ],
   "exceptions": [
     {"source":"adapters.base","target":"runtime.adapter_contracts","owner":"Runtime architecture owner","rationale":"Compatibility re-export keeps one canonical adapter class during migration.","removal_phase":"P5"},
+    {"source":"adapters.gsc_live_example","target":"integrations.google.client","owner":"Security owner","rationale":"The GSC example delegates OAuth and API traffic to the canonical bounded Google transport.","removal_phase":"P8"},
     {"source":"runtime.tools","target":"adapters.registry","owner":"Runtime architecture owner","rationale":"Legacy default composition remains available while explicit injection is supported.","removal_phase":"P5"},
     {"source":"adapters.google_pagespeed_live","target":"integrations.google.client","owner":"Runtime architecture owner","rationale":"Legacy PageSpeed adapter delegates to the shared authenticated Google transport.","removal_phase":"P5"},
+    {"source":"adapters.rendered_page","target":"integrations.technical.http","owner":"Security owner","rationale":"Rendered raw fetch delegates to the canonical bounded every-hop public-web transport.","removal_phase":"P8"},
     {"source":"adapters.registry","target":"integrations.authority_media.adapters","owner":"Runtime architecture owner","rationale":"The legacy registry is the temporary default concrete-adapter composition root.","removal_phase":"P5"},
     {"source":"adapters.registry","target":"integrations.content_intelligence.adapters","owner":"Runtime architecture owner","rationale":"The legacy registry is the temporary default concrete-adapter composition root.","removal_phase":"P5"},
     {"source":"adapters.registry","target":"integrations.extensions","owner":"Runtime architecture owner","rationale":"The legacy registry is the temporary default concrete-adapter composition root.","removal_phase":"P5"},
@@ -57,7 +59,6 @@
     {"source":"integrations.technical.inspection","target":"adapters.url_safety","owner":"Security owner","rationale":"Technical inspection reuses the single fail-closed URL safety boundary.","removal_phase":"P8"}
   ],
   "network_modules": [
-    "adapters/gsc_live_example.py",
     "adapters/rendered_page.py",
     "adapters/url_safety.py",
     "integrations/authority_media/transport.py",
@@ -66,5 +67,15 @@
     "integrations/technical/browser.py",
     "integrations/technical/http.py",
     "runtime/llm.py"
-  ]
+  ],
+  "network_transports": {
+    "adapters/rendered_page.py": {"policy":"PUBLIC_RENDERED_PAGE","delegates_to":"integrations.technical.http.BoundedHttpClient + adapters.url_safety.validate_public_url"},
+    "adapters/url_safety.py": {"policy":"PUBLIC_URL_SAFETY","delegates_to":"adapters.url_safety.validate_public_url"},
+    "integrations/authority_media/transport.py": {"policy":"APPROVED_HOST_BOUNDED_HTTP","delegates_to":"integrations.authority_media.transport.BoundedTransport"},
+    "integrations/extensions/indexnow.py": {"policy":"NO_REDIRECT_PUBLIC_MUTATION","delegates_to":"integrations.extensions.indexnow.NoRedirect"},
+    "integrations/google/client.py": {"policy":"GOOGLE_API_BOUNDED_HTTP","delegates_to":"integrations.google.client"},
+    "integrations/technical/browser.py": {"policy":"PUBLIC_BROWSER_REQUEST_GUARD","delegates_to":"integrations.technical.browser"},
+    "integrations/technical/http.py": {"policy":"PUBLIC_WEB_EVERY_HOP","delegates_to":"integrations.technical.http.BoundedHttpClient"},
+    "runtime/llm.py": {"policy":"CONFIGURED_LLM_ENDPOINT_BOUNDED_HTTP","delegates_to":"runtime.llm"}
+  }
 }
