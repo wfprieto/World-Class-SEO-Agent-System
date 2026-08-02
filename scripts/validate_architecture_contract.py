@@ -1,10 +1,10 @@
 """Fail-closed validation of package dependencies and direct network boundaries."""
-
 from __future__ import annotations
 
 import ast
 import importlib.util
 import json
+import re
 import shlex
 import sys
 from pathlib import Path
@@ -16,61 +16,38 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "architecture-contract.json"
 SCHEMA_PATH = ROOT / "schemas" / "architecture-contract.schema.json"
 NETWORK_IMPORTS = {
-    "aiohttp",
-    "http.client",
-    "httpx",
-    "playwright",
-    "requests",
-    "selenium",
-    "socket",
-    "urllib.request",
-    "urllib3",
-    "websockets",
-}
+    "aiohttp", "http.client", "httpx", "playwright", "requests", "selenium", "socket",
+    "urllib.request", "urllib3", "websockets"}
+NETWORK_IMPORT_PREFIXES = tuple(f"{item}." for item in NETWORK_IMPORTS)
 NETWORK_PROCESS_COMMANDS = {
-    "curl",
-    "ftp",
-    "invoke-restmethod",
-    "invoke-webrequest",
-    "powershell",
-    "pwsh",
-    "wget",
-}
+    "curl", "ftp", "invoke-restmethod", "invoke-webrequest", "powershell", "pwsh", "wget"}
+SHELL_LONG_OPTIONS = {"--login", "--noprofile", "--norc", "--posix", "--restricted", "--verbose"}
+SHELL_SHORT_OPTIONS = frozenset("abefhklmnptuvxBCEHPTc")
+ENV_FLAG_OPTIONS = {"-0", "-i", "--debug", "--ignore-environment", "--null"}
+ENV_VALUE_OPTIONS = {"-C", "-u", "--chdir", "--unset"}
+SHELL_OPERATORS = {"&", "&&", ";", "|", "||"}
 SUBPROCESS_CALLS = {
-    "subprocess.call",
-    "subprocess.check_call",
-    "subprocess.check_output",
-    "subprocess.Popen",
-    "subprocess.run",
-}
-
-
+    "subprocess.call", "subprocess.check_call", "subprocess.check_output", "subprocess.Popen",
+    "subprocess.run"}
 def _load(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return payload
-
-
 def _module_name(path: Path, root: Path) -> str:
     relative = path.relative_to(root).with_suffix("")
     parts = list(relative.parts)
     if parts[-1] == "__init__":
         parts.pop()
     return ".".join(parts)
-
-
 def _relative_import_base(source: str, *, is_package: bool, level: int) -> str | None:
     package_parts = source.split(".") if is_package else source.split(".")[:-1]
     keep = len(package_parts) - (level - 1)
     if keep <= 0:
         return None
     return ".".join(package_parts[:keep])
-
-
-def _imports(
-    tree: ast.AST, *, source: str, is_package: bool, known_modules: set[str]
-) -> set[str]:
+def _imports(tree: ast.AST, *, source: str, is_package: bool,
+             known_modules: set[str]) -> set[str]:
     imported: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -104,11 +81,8 @@ def _imports(
                 )
     imported.update(_literal_dynamic_imports(tree))
     return imported
-
-
-def _resolved_imports(
-    module_paths: dict[str, Path], module_trees: dict[str, ast.AST]
-) -> dict[str, set[str]]:
+def _resolved_imports(module_paths: dict[str, Path],
+                      module_trees: dict[str, ast.AST]) -> dict[str, set[str]]:
     known_modules = set(module_paths)
     return {
         source: _imports(
@@ -119,8 +93,6 @@ def _resolved_imports(
         )
         for source, tree in module_trees.items()
     }
-
-
 def _call_name(node: ast.AST) -> str | None:
     if isinstance(node, ast.Name):
         return node.id
@@ -128,8 +100,6 @@ def _call_name(node: ast.AST) -> str | None:
         parent = _call_name(node.value)
         return f"{parent}.{node.attr}" if parent else node.attr
     return None
-
-
 def _import_aliases(tree: ast.AST) -> dict[str, str]:
     aliases: dict[str, str] = {}
     for node in ast.walk(tree):
@@ -141,8 +111,6 @@ def _import_aliases(tree: ast.AST) -> dict[str, str]:
             for alias in node.names:
                 aliases[alias.asname or alias.name] = f"{node.module}.{alias.name}"
     return aliases
-
-
 def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
     call_name = _call_name(node)
     if call_name is None:
@@ -150,9 +118,7 @@ def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
     head, separator, tail = call_name.partition(".")
     resolved_head = aliases.get(head, head)
     return f"{resolved_head}{separator}{tail}"
-
-
-def _literal_text(node: ast.AST) -> str | None:
+def _literal_text(node: ast.AST | None) -> str | None:
     if not isinstance(node, ast.Constant):
         return None
     if isinstance(node.value, str):
@@ -163,8 +129,6 @@ def _literal_text(node: ast.AST) -> str | None:
         except UnicodeDecodeError:
             return None
     return None
-
-
 def _literal_process_tokens(node: ast.AST) -> list[str] | None:
     text = _literal_text(node)
     if text is not None:
@@ -222,33 +186,81 @@ def _unresolved_dynamic_errors(module_trees: dict[str, ast.AST]) -> list[str]:
                 errors.append(f"unresolved literal relative import: {source} -> {name}")
     return errors
 def _normalized_process_command(command: str) -> str:
-    stripped = command.strip()
-    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in {'"', "'"}:
-        stripped = stripped[1:-1]
+    stripped = command.strip().strip('"\'')
     name = stripped.replace("\\", "/").rsplit("/", 1)[-1].casefold()
-    return name[:-4] if name.endswith(".exe") else name
-def _effective_process_command(tokens: list[str], depth: int = 0) -> str | None:
-    if not tokens or depth > 3:
-        return None
-    command = _normalized_process_command(tokens[0])
-    if command in {"bash", "sh"} and len(tokens) >= 3 and tokens[1] == "-c":
+    return name.removesuffix(".exe")
+def _is_shell_assignment(token: str) -> bool:
+    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", token) is not None
+def _shell_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bool]:
+    index = 1
+    while index < len(tokens):
+        option = tokens[index]
+        if option in SHELL_LONG_OPTIONS:
+            index += 1
+            continue
+        flags = option[1:] if option.startswith("-") and not option.startswith("--") else ""
+        if not flags or not set(flags) <= SHELL_SHORT_OPTIONS:
+            return None, True
+        index += 1
+        if "c" not in flags:
+            continue
+        if index >= len(tokens):
+            return None, True
         try:
-            nested = shlex.split(tokens[2], posix=True)
+            nested = shlex.split(tokens[index], posix=True)
         except ValueError:
-            return None
-        return _effective_process_command(nested, depth + 1)
-    if command == "env":
-        remaining = [item for item in tokens[1:] if not item.startswith("-") and "=" not in item]
-        return _effective_process_command(remaining, depth + 1)
-    return command
-
-
+            return None, True
+        return _effective_process_command(nested, depth + 1, shell_words=True)
+    return _normalized_process_command(tokens[0]), False
+def _env_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bool]:
+    index = 1
+    while index < len(tokens):
+        option = tokens[index]
+        if option == "--":
+            index += 1
+            break
+        if option in ENV_FLAG_OPTIONS or option.startswith(("--unset=", "--chdir=")):
+            index += 1
+        elif option in ENV_VALUE_OPTIONS:
+            index += 2
+            if index > len(tokens):
+                return None, True
+        elif option.startswith("-"):
+            return None, True
+        elif _is_shell_assignment(option):
+            index += 1
+        else:
+            break
+    if index >= len(tokens):
+        return "env", False
+    return _effective_process_command(tokens[index:], depth + 1)
+def _effective_process_command(
+    tokens: list[str], depth: int = 0, *, shell_words: bool = False
+) -> tuple[str | None, bool]:
+    """Return the effective executable and whether bounded wrapper parsing was unsafe."""
+    if depth > 3:
+        return None, True
+    if shell_words:
+        while tokens and _is_shell_assignment(tokens[0]):
+            tokens = tokens[1:]
+        if tokens[:1] == ["exec"]:
+            tokens = tokens[1:]
+        if not SHELL_OPERATORS.isdisjoint(tokens):
+            return None, True
+    if not tokens:
+        return None, False
+    command = _normalized_process_command(tokens[0])
+    wrapper = {"bash": _shell_wrapper_result, "sh": _shell_wrapper_result,
+               "env": _env_wrapper_result}.get(command)
+    return wrapper(tokens, depth) if wrapper else (command, False)
+def _process_argument_result(node: ast.AST, *, shell_words: bool = False) -> tuple[str | None, bool]:
+    tokens = _literal_process_tokens(node)
+    if tokens is not None:
+        return _effective_process_command(tokens, shell_words=shell_words)
+    head = _literal_text(next(iter(getattr(node, "elts", ())), None))
+    return None, _normalized_process_command(head or "") in {"bash", "sh", "env"}
 def _is_network_import(name: str) -> bool:
-    return name in NETWORK_IMPORTS or any(
-        name.startswith(f"{item}.") for item in NETWORK_IMPORTS
-    )
-
-
+    return name in NETWORK_IMPORTS or name.startswith(NETWORK_IMPORT_PREFIXES)
 def _import_has_network_egress(node: ast.AST) -> bool:
     if isinstance(node, ast.Import):
         return any(_is_network_import(alias.name) for alias in node.names)
@@ -256,8 +268,6 @@ def _import_has_network_egress(node: ast.AST) -> bool:
         full_names = {node.module, *(f"{node.module}.{alias.name}" for alias in node.names)}
         return any(_is_network_import(name) for name in full_names)
     return False
-
-
 def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
     if not isinstance(node, ast.Call):
         return False
@@ -266,30 +276,27 @@ def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
         imported = _literal_dynamic_target(node, aliases)
         return bool(imported and _is_network_import(imported))
     if call_name in {*SUBPROCESS_CALLS, "os.system"}:
-        argument = _call_argument(node, 0, "args" if call_name != "os.system" else "command")
-        command = _effective_process_command(_literal_process_tokens(argument) or []) if argument is not None else None
+        keyword = {"os.system": "command"}.get(call_name, "args")
+        argument = _call_argument(node, 0, keyword)
+        shell_node = _call_argument(node, None, "shell")
+        shell = call_name == "os.system" or getattr(shell_node, "value", False) is True
+        command, unsafe = _process_argument_result(argument, shell_words=shell) if argument else (None, False)
         executable = _call_argument(node, None, "executable")
-        executable_name = _effective_process_command(_literal_process_tokens(executable) or []) if executable is not None else None
-        return any(
-            value is not None and value in NETWORK_PROCESS_COMMANDS
-            for value in (command, executable_name)
+        executable_name, executable_unsafe = (
+            _process_argument_result(executable) if executable is not None else (None, False)
         )
+        return any((unsafe, executable_unsafe, command in NETWORK_PROCESS_COMMANDS,
+                    executable_name in NETWORK_PROCESS_COMMANDS))
     return False
-
-
 def _has_network_import(tree: ast.AST) -> bool:
     aliases = _import_aliases(tree)
     return any(
         _import_has_network_egress(node) or _call_has_network_egress(node, aliases)
-        for node in ast.walk(tree)
-    )
-
-
+        for node in ast.walk(tree))
 def _cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     found: set[tuple[str, ...]] = set()
     active: list[str] = []
     visited: set[str] = set()
-
     def visit(node: str) -> None:
         if node in active:
             cycle = active[active.index(node) :] + [node]
@@ -303,27 +310,24 @@ def _cycles(graph: dict[str, set[str]]) -> list[list[str]]:
             visit(target)
         active.pop()
         visited.add(node)
-
     for module in sorted(graph):
         visit(module)
     return [list(item) for item in sorted(found)]
-
-
-def validate(
-    root: Path = ROOT,
-    contract_path: Path | None = None,
-    schema_path: Path | None = None,
-) -> list[str]:
+def validate(root: Path = ROOT, contract_path: Path | None = None,
+             schema_path: Path | None = None) -> list[str]:
     contract_path = contract_path or root / CONTRACT_PATH.relative_to(ROOT)
     schema_path = schema_path or root / SCHEMA_PATH.relative_to(ROOT)
+
     contract = _load(contract_path)
     schema = _load(schema_path)
+
     errors = [
         f"schema {'.'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
         for error in Draft202012Validator(schema).iter_errors(contract)
     ]
     if errors:
         return sorted(errors)
+
     layers = {str(name): str(package) for name, package in contract["layers"].items()}
     package_layers = {package: name for name, package in layers.items()}
     allowed = {(item["source"], item["target"]) for item in contract["allowed_layer_edges"]}
@@ -350,6 +354,7 @@ def validate(
             module_trees[source] = tree
             if _has_network_import(tree):
                 network_paths.add(path.relative_to(root).as_posix())
+
     module_imports = _resolved_imports(module_paths, module_trees)
     errors.extend(_unresolved_dynamic_errors(module_trees))
     observed_cross_edges: set[tuple[str, str]] = set()
@@ -371,7 +376,6 @@ def validate(
             observed_cross_edges.add(edge)
             if (source_layer, target_layer) not in allowed and edge not in exceptions:
                 errors.append(f"forbidden dependency edge: {source} -> {target}")
-
     for edge in sorted(exceptions - observed_cross_edges):
         errors.append(f"stale or unknown dependency exception: {edge[0]} -> {edge[1]}")
     for cycle in _cycles(graph):
@@ -383,13 +387,9 @@ def validate(
     for relative_path in sorted(expected_network - network_paths):
         errors.append(f"stale or missing network-module entry: {relative_path}")
     return sorted(errors)
-
-
 def main() -> int:
     errors = validate()
     print(json.dumps({"status": "PASS" if not errors else "FAIL", "errors": errors}, indent=2))
     return 1 if errors else 0
-
-
 if __name__ == "__main__":
     sys.exit(main())

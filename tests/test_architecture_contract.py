@@ -245,6 +245,28 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
         ("import subprocess", "subprocess.run(['/bin/bash', '-c', 'curl https://example.test'])"),
         ("import subprocess", "subprocess.run(['/usr/bin/env', 'curl', 'https://example.test'])"),
         ("import subprocess", "subprocess.run([b'curl', b'https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/bin/bash', '-lc', 'curl https://example.test'])"),
+        (
+            "import subprocess",
+            "subprocess.run(['/bin/bash', '--noprofile', '-c', 'wget https://example.test'])",
+        ),
+        (
+            "import subprocess",
+            "subprocess.run(['/usr/bin/env', '-u', 'HTTP_PROXY', 'curl', 'https://example.test'])",
+        ),
+        (
+            "import subprocess",
+            "subprocess.run(['/usr/bin/env', '-C', '/tmp', 'wget', 'https://example.test'])",
+        ),
+        (
+            "import subprocess",
+            "subprocess.run(['/bin/sh', '-c', 'HTTP_PROXY=local exec curl https://example.test'])",
+        ),
+        (
+            "import subprocess",
+            "subprocess.run('HTTP_PROXY=local exec wget https://example.test', shell=True)",
+        ),
+        ("import os", "os.system('HTTP_PROXY=local exec curl https://example.test')"),
     ],
 )
 def test_equivalent_literal_egress_spellings_fail_until_owned(
@@ -401,6 +423,12 @@ def test_non_network_process_names_do_not_create_false_egress(
         "subprocess.run(['/usr/bin/env', 'git', 'status'])",
         "subprocess.run(['/usr/bin/env', 'NAME=curl', 'git', 'status'])",
         "subprocess.run([r'\"C:\\Program Files\\curl-helper.exe\"', 'value'])",
+        "subprocess.run(['/bin/bash', '-lc', 'echo curl'])",
+        "subprocess.run(['/bin/bash', '--noprofile', '-c', 'printf curl'])",
+        "subprocess.run(['/usr/bin/env', '-u', 'HTTP_PROXY', 'git', 'status'])",
+        "subprocess.run(['/usr/bin/env', '-C', '/tmp', 'git', 'status'])",
+        "subprocess.run(['/usr/bin/env', '--unset=HTTP_PROXY', '--chdir=/tmp', 'git'])",
+        "subprocess.run('HTTP_PROXY=local exec echo curl', shell=True)",
     ],
 )
 def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str) -> None:
@@ -410,6 +438,28 @@ def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str
         {"runtime/process_client.py": f"import subprocess\n{call}\n"},
     )
     assert validate(tmp_path, contract_path, schema_path) == []
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "subprocess.run(['/bin/bash', '--unknown', '-c', 'git status'])",
+        "subprocess.run(['/usr/bin/env', '--unknown', 'git', 'status'])",
+        "subprocess.run(['/bin/sh', OPTION, 'git status'])",
+        "subprocess.run(['/usr/bin/env', OPTION, 'git', 'status'])",
+    ],
+)
+def test_unrecognized_or_dynamic_wrapper_grammar_fails_closed(
+    tmp_path: Path, call: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/process_client.py": f"import subprocess\nOPTION = '-c'\n{call}\n"},
+    )
+    assert "unapproved network-capable module: runtime/process_client.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
 
 
 @pytest.mark.parametrize(
