@@ -256,12 +256,15 @@ def test_canonical_validation_fails_closed_without_prior_git_history(
 def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     assert _workflow_errors(workflow, 78.0) == []
-    no_checkout = "\n".join(
-        line for line in workflow.splitlines() if "uses: actions/checkout@" not in line
+    checkout = (
+        "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\n"
+        "        with:\n"
+        "          fetch-depth: 0\n"
+        "          persist-credentials: false\n"
+        "          ref: ${{ github.event.pull_request.head.sha || github.sha }}\n"
     )
-    assert "CI requires at least one pinned actions/checkout step" in _workflow_errors(
-        no_checkout, 78.0
-    )
+    no_checkout = workflow.replace(checkout, "", 1)
+    assert any("exactly one checkout" in error for error in _workflow_errors(no_checkout, 78.0))
     unpinned = workflow.replace(
         "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
         "actions/checkout@v7",
@@ -340,10 +343,14 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
         assert _workflow_errors(workflow, 78.0, mutated)
     gate = (
         "      - name: Prove exact source integrity\n"
-        "        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}\n"
+        "        shell: pwsh\n"
+        "        run: >-\n"
+        "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
+        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
+        "scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}\n"
     )
     assert any(
-        "immediately follow" in error
+        "fresh adjacent source proof" in error
         for error in _workflow_errors(workflow, 78.0, release.replace(gate, "", 1))
     )
     poisoned = release.replace(
@@ -368,9 +375,15 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
     )
     self_hosted = release.replace("runs-on: ubuntu-latest", "runs-on: self-hosted", 1)
     assert any(
-        "approved GitHub-hosted runner" in error
+        "release must use ubuntu-latest" in error
         for error in _workflow_errors(workflow, 78.0, self_hosted)
     )
+    release_path_env = release.replace(
+        "        env:\n          GH_TOKEN: ${{ github.token }}",
+        "        env:\n          GH_TOKEN: ${{ github.token }}\n          pAtH: /attacker/bin",
+        1,
+    )
+    assert any("pAtH" in error for error in _workflow_errors(workflow, 78.0, release_path_env))
 
 
 def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
@@ -400,7 +413,11 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
 
     gate = (
         "      - name: Prove exact source integrity\n"
-        "        run: python scripts/validate_source_integrity.py --expected-sha "
+        "        shell: pwsh\n"
+        "        run: >-\n"
+        "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
+        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
+        "scripts/validate_source_integrity.py --expected-sha "
         "${{ github.event.pull_request.head.sha || github.sha }}\n"
     )
     poisoned_command = gate + (
@@ -415,7 +432,7 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
         "        run: echo '# drift' >> scripts/validate_architecture_contract.py\n"
     )
     mutated = workflow.replace(gate, source_edit, 1)
-    assert any("immediately follow" in error for error in _workflow_errors(mutated, 78.0))
+    assert any("fresh adjacent source proof" in error for error in _workflow_errors(mutated, 78.0))
 
     quality_container = workflow.replace(
         "  quality_security_release:\n    needs: validate",
@@ -437,7 +454,7 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
         1,
     )
     assert any(
-        "approved GitHub-hosted runner" in error
+        "quality_security_release must use ubuntu-latest" in error
         for error in _workflow_errors(self_hosted, 78.0)
     )
     unbounded_matrix = workflow.replace(
@@ -446,7 +463,7 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
         1,
     )
     assert any(
-        "approved GitHub-hosted runner" in error
+        "matrix must equal the approved expansion" in error
         for error in _workflow_errors(unbounded_matrix, 78.0)
     )
     harmless_metadata = workflow.replace(
@@ -461,18 +478,122 @@ def test_every_repository_command_requires_fresh_adjacent_source_proof() -> None
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     gate = (
         "      - name: Prove exact source integrity\n"
-        "        run: python scripts/validate_source_integrity.py --expected-sha "
+        "        shell: pwsh\n"
+        "        run: >-\n"
+        "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
+        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
+        "scripts/validate_source_integrity.py --expected-sha "
         "${{ github.event.pull_request.head.sha || github.sha }}\n"
     )
     removed = workflow.replace(gate, "", 1)
-    assert any("immediately follow" in error for error in _workflow_errors(removed, 78.0))
+    assert any("fresh adjacent source proof" in error for error in _workflow_errors(removed, 78.0))
     stale = workflow.replace(
         gate,
         gate
         + "      - uses: actions/setup-node@8f4b1789f2552f8ff68f0f4206a5fc1f92b3f514\n",
         1,
     )
-    assert any("immediately follow" in error for error in _workflow_errors(stale, 78.0))
+    assert any("fresh adjacent source proof" in error for error in _workflow_errors(stale, 78.0))
+
+
+def test_every_named_certification_job_is_mandatory_and_profiled() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    names = (
+        "validation_matrix", "provider_authentication", "validate",
+        "quality_security_release", "clean_wheel_install",
+        "phase0_rollback_certification", "phase_rollback_certification",
+        "certification_status",
+    )
+    for name in names:
+        renamed = workflow.replace(f"  {name}:\n", f"  removed_{name}:\n", 1)
+        assert any(
+            f"missing: {name}" in error for error in _workflow_errors(renamed, 78.0)
+        )
+    checkout_free_hijack = workflow.replace(
+        "  validate:\n    name: validate\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: ubuntu-latest",
+        "  validate:\n    name: validate\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: self-hosted",
+        1,
+    )
+    assert any("validate must use ubuntu-latest" in error for error in _workflow_errors(checkout_free_hijack, 78.0))
+
+
+def test_complete_matrix_expansion_must_be_exact() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    mutations = (
+        workflow.replace("        os: [windows-latest, ubuntu-latest]", "        os: [windows-latest, ubuntu-latest]\n        include: [{os: self-hosted, python-version: '3.13'}]", 1),
+        workflow.replace("        os: [windows-latest, ubuntu-latest]", "        os: [windows-latest, ubuntu-latest]\n        exclude: [{os: windows-latest}]", 1),
+        workflow.replace("        python-version: [\"3.11\", \"3.12\", \"3.13\"]", "        python-version: [\"3.11\", \"3.12\", \"3.13\"]\n        architecture: [x64, arm64]", 1),
+        workflow.replace("os: [windows-latest, ubuntu-latest]", "os: ${{ fromJSON(inputs.runners) }}", 1),
+        workflow.replace('python-version: ["3.11", "3.12", "3.13"]', 'python-version: ["3.11", "3.12", "3.13", "3.14"]', 1),
+        workflow.replace("      fail-fast: false", "      fail-fast: false\n      max-parallel: 1", 1),
+    )
+    for mutated in mutations:
+        assert any("matrix must equal" in error for error in _workflow_errors(mutated, 78.0))
+
+
+def test_step_environment_and_constructed_file_commands_fail_closed() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    step_env = workflow.replace(
+        "      - name: Validate generated dependency lock\n        run:",
+        "      - name: Validate generated dependency lock\n        env:\n          pyThOnPaTh: attacker\n        run:",
+        1,
+    )
+    assert any("pyThOnPaTh" in error for error in _workflow_errors(step_env, 78.0))
+    gate = next(
+        block for block in workflow.split("      - ")
+        if block.startswith("name: Prove exact source integrity")
+    )
+    marker = "      - " + gate
+    constructed = (
+        marker
+        + "      - name: Construct persisted poison\n"
+        + "        run: echo bad >> $GITHUB_'ENV'\n"
+    )
+    assert any("must not poison" in error for error in _workflow_errors(workflow.replace(marker, constructed, 1), 78.0))
+    powershell = (
+        marker
+        + "      - name: Construct persisted PATH poison\n"
+        + "        run: $channel = 'GITHUB_' + 'PATH'; Add-Content $channel 'C:\\\\attacker'\n"
+    )
+    assert any("must not poison" in error for error in _workflow_errors(workflow.replace(marker, powershell, 1), 78.0))
+    formatted = (
+        marker
+        + "      - name: Format persisted poison name\n"
+        + "        run: $channel = 'GITHUB_%s' -f 'ENV'; Add-Content $channel bad\n"
+    )
+    assert any("must not poison" in error for error in _workflow_errors(workflow.replace(marker, formatted, 1), 78.0))
+
+
+def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    mutations = (
+        workflow.replace("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "actions/upload-artifact@v7", 1),
+        workflow.replace("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", 1),
+        workflow.replace(" -I -E scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
+        workflow.replace("${{ steps.trusted_python.outputs.path }}", "python", 1),
+        workflow.replace("(Get-Command python -CommandType Application).Source", "'C:\\\\attacker\\python.exe'", 1),
+    )
+    for mutated in mutations:
+        assert _workflow_errors(mutated, 78.0)
+    action_without_proof = workflow.replace(
+        "      - name: Prove exact source integrity\n        shell: pwsh\n",
+        "      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a\n        with:\n          name: premature\n          path: README.md\n      - name: Prove exact source integrity\n        shell: pwsh\n",
+        1,
+    )
+    assert any("fresh adjacent source proof" in error for error in _workflow_errors(action_without_proof, 78.0))
+
+
+def test_rollback_baseline_boundaries_each_require_fresh_baseline_proof() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    proof_start = "      - name: Prove exact restored baseline\n"
+    positions = [index for index in range(len(workflow)) if workflow.startswith(proof_start, index)]
+    assert len(positions) == 10
+    for position in positions:
+        end = workflow.find("\n      - ", position + len(proof_start))
+        removed = workflow[:position] + workflow[end + 1 :]
+        assert any("fresh adjacent source proof" in error for error in _workflow_errors(removed, 78.0))
+    weakened_transition = workflow.replace("git revert --no-commit", "git checkout main", 1)
+    assert any("fresh adjacent source proof" in error for error in _workflow_errors(weakened_transition, 78.0))
 
 
 def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:

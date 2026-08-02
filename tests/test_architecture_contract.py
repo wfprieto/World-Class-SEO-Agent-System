@@ -281,6 +281,10 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
         ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'command curl https://example.test'])"),
         ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'command -- /usr/bin/wget https://example.test'])"),
         ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'exec env -u HTTP_PROXY command -p curl'])"),
+        ("import subprocess", "subprocess.run(['placeholder', '-c', 'curl https://example.test'], executable='/bin/bash')"),
+        ("import subprocess", "subprocess.run(args=['placeholder', '-lc', 'wget https://example.test'], executable='BASH.EXE')"),
+        ("import subprocess", "subprocess.run(['placeholder', '--noprofile', '-c', 'env -u HTTP_PROXY command -- /usr/bin/curl'], executable='/bin/sh')"),
+        ("import subprocess", "subprocess.run(['placeholder', '-c', 'HTTP_PROXY=local exec env -C /tmp command -p wget'], executable=r'C:\\tools\\bash.exe')"),
     ],
 )
 def test_equivalent_literal_egress_spellings_fail_until_owned(
@@ -454,6 +458,10 @@ def test_non_network_process_names_do_not_create_false_egress(
         "subprocess.run(['/bin/bash', '-c', 'command git status'])",
         "subprocess.run(['git', 'status;curl&&wget|ftp>/tmp/value'])",
         "subprocess.run(['echo', 'https://example.test/?a=1&b=2;curl'])",
+        "subprocess.run(['placeholder', '-c', \"echo 'curl;wget|ftp'\"], executable='/bin/bash')",
+        "subprocess.run(['placeholder', '-c', 'command -v curl'], executable='/bin/sh')",
+        "subprocess.run(['placeholder', '-c', 'curl https://example.test'], executable='/usr/bin/git')",
+        "subprocess.run(['placeholder', 'curl;wget&&ftp'], executable='/bin/echo')",
     ],
 )
 def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str) -> None:
@@ -474,6 +482,9 @@ def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str
         "subprocess.run(['/usr/bin/env', OPTION, 'git', 'status'])",
         "subprocess.run(['command', OPTION, 'git'])",
         "subprocess.run(COMMAND, shell=True)",
+        "subprocess.run(ARGS, executable='/bin/bash')",
+        "subprocess.run(['placeholder', '-c', COMMAND], executable='/bin/sh')",
+        "subprocess.run(['placeholder', '--unknown', 'git'], executable='bash.exe')",
     ],
 )
 def test_unrecognized_or_dynamic_wrapper_grammar_fails_closed(
@@ -545,6 +556,46 @@ def test_imported_dynamic_egress_fails_until_owned(
     assert "unapproved network-capable module: runtime/dynamic_client.py" in validate(
         tmp_path, contract_path, schema_path
     )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import importlib\nload = importlib.import_module\nload('httpx')\n",
+        "import importlib\nholder.load = importlib.import_module\nholder.load('requests')\n",
+        "import importlib\napi = importlib\nload = api.import_module\nload('urllib.request')\n",
+        "import importlib\nload: object = importlib.import_module\nload('httpx')\n",
+        "load = __import__\nload('httpx')\n",
+        "import builtins\nholder.load = builtins.__import__\nholder.load('requests')\n",
+        "import importlib\nload = importlib.import_module\nload = choose_at_runtime\nload('httpx')\n",
+    ],
+)
+def test_bounded_assignment_aliases_cannot_hide_literal_network_imports(
+    tmp_path: Path, source: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path, _contract(), {"runtime/dynamic_client.py": source}
+    )
+    assert "unapproved network-capable module: runtime/dynamic_client.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "load = helper\nload('httpx')\n",
+        "import importlib\nload = importlib.import_module\nload('runtime.optional')\n",
+        "import importlib\nholder.load = helper\nholder.load('httpx')\n",
+    ],
+)
+def test_non_reflective_assignments_and_safe_targets_remain_negative_controls(
+    tmp_path: Path, source: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path, _contract(), {"runtime/dynamic_client.py": source}
+    )
+    assert validate(tmp_path, contract_path, schema_path) == []
 
 
 def test_network_allowlist_cannot_hide_missing_module(tmp_path: Path) -> None:

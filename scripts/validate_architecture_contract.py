@@ -8,6 +8,7 @@ import re
 import shlex
 import sys
 from itertools import dropwhile
+from operator import attrgetter
 from pathlib import Path
 from typing import Any, cast
 
@@ -25,6 +26,7 @@ ENV_FLAG_OPTIONS = {"-0", "-i", "--debug", "--ignore-environment", "--null"}
 ENV_VALUE_OPTIONS = {"-C", "-u", "--chdir", "--unset"}
 SHELL_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*").fullmatch
 SUBPROCESS_CALLS = {"subprocess.call", "subprocess.check_call", "subprocess.check_output", "subprocess.Popen", "subprocess.run"}
+REFLECTIVE_ALIAS_TARGETS = {"__import__", "builtins", "builtins.__import__", "importlib", "importlib.import_module"}
 def _load(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
@@ -42,8 +44,7 @@ def _relative_import_base(source: str, *, is_package: bool, level: int) -> str |
     if keep <= 0:
         return None
     return ".".join(package_parts[:keep])
-def _imports(tree: ast.AST, *, source: str, is_package: bool,
-             known_modules: set[str]) -> set[str]:
+def _imports(tree: ast.AST, *, source: str, is_package: bool, known_modules: set[str]) -> set[str]:
     imported: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -52,11 +53,8 @@ def _imports(tree: ast.AST, *, source: str, is_package: bool,
             if node.level == 0:
                 if node.module:
                     imported.add(node.module)
-                    imported.update(
-                        candidate
-                        for alias in node.names
-                        if (candidate := f"{node.module}.{alias.name}") in known_modules
-                    )
+                    imported.update(candidate for alias in node.names
+                                    if (candidate := f"{node.module}.{alias.name}") in known_modules)
                 continue
             base = _relative_import_base(source, is_package=is_package, level=node.level)
             if base is None:
@@ -64,32 +62,20 @@ def _imports(tree: ast.AST, *, source: str, is_package: bool,
             if node.module:
                 target = f"{base}.{node.module}"
                 imported.add(target)
-                imported.update(
-                    candidate
-                    for alias in node.names
-                    if (candidate := f"{target}.{alias.name}") in known_modules
-                )
+                imported.update(candidate for alias in node.names
+                                if (candidate := f"{target}.{alias.name}") in known_modules)
             else:
-                imported.update(
-                    candidate
-                    for alias in node.names
-                    if (candidate := f"{base}.{alias.name}") in known_modules
-                )
+                imported.update(candidate for alias in node.names
+                                if (candidate := f"{base}.{alias.name}") in known_modules)
     imported.update(_literal_dynamic_imports(tree))
     return imported
-def _resolved_imports(module_paths: dict[str, Path],
-                      module_trees: dict[str, ast.AST]) -> dict[str, set[str]]:
+def _resolved_imports(module_paths: dict[str, Path], module_trees: dict[str, ast.AST]) -> dict[str, set[str]]:
     known_modules = set(module_paths)
-    return {
-        source: _imports(
-            tree,
-            source=source,
-            is_package=module_paths[source].name == "__init__.py",
-            known_modules=known_modules,
-        )
-        for source, tree in module_trees.items()
-    }
-def _call_name(node: ast.AST) -> str | None:
+    return {source: _imports(tree, source=source,
+                             is_package=module_paths[source].name == "__init__.py",
+                             known_modules=known_modules)
+            for source, tree in module_trees.items()}
+def _call_name(node: ast.AST | None) -> str | None:
     if isinstance(node, ast.Name):
         return node.id
     if isinstance(node, ast.Attribute):
@@ -106,11 +92,18 @@ def _import_aliases(tree: ast.AST) -> dict[str, str]:
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             for alias in node.names:
                 aliases[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            value_name = _resolved_call_name(node.value, aliases)
+            if value_name in REFLECTIVE_ALIAS_TARGETS:
+                for target in targets:
+                    aliases[cast(str, _call_name(target))] = value_name
     return aliases
-def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
+def _resolved_call_name(node: ast.AST | None, aliases: dict[str, str]) -> str | None:
     call_name = _call_name(node)
     if call_name is None:
         return None
+    call_name = aliases.get(call_name, call_name)
     head, separator, tail = call_name.partition(".")
     resolved_head = aliases.get(head, head)
     return f"{resolved_head}{separator}{tail}"
@@ -122,7 +115,7 @@ def _literal_text(node: ast.AST | None) -> str | None:
         return value.decode("utf-8") if isinstance(value, bytes) else None
     except UnicodeDecodeError:
         return None
-def _literal_process_tokens(node: ast.AST) -> list[str] | None:
+def _literal_process_tokens(node: ast.AST | None) -> list[str] | None:
     text = _literal_text(node)
     if text is not None:
         try:
@@ -252,8 +245,8 @@ def _effective_process_command(tokens: list[str], depth: int = 0, *, shell_words
     if not tokens:
         return None, False
     command = _normalized_process_command(tokens[0])
-    wrapper = {"bash": _shell_wrapper_result, "sh": _shell_wrapper_result, "env": _env_wrapper_result, "command": _command_wrapper_result}.get(command)
-    return wrapper(tokens, depth) if wrapper else (command, False)
+    wrapper = {"bash": _shell_wrapper_result, "sh": _shell_wrapper_result, "env": _env_wrapper_result, "command": _command_wrapper_result}.get(command, lambda _tokens, _depth: (command, False))
+    return wrapper(tokens, depth)
 def _process_argument_result(node: ast.AST, *, shell_words: bool = False) -> tuple[str | None, bool]:
     text = _literal_text(node)
     if shell_words:
@@ -264,15 +257,23 @@ def _process_argument_result(node: ast.AST, *, shell_words: bool = False) -> tup
         return _effective_process_command(literal_tokens, shell_words=shell_words)
     head = _literal_text(next(iter(getattr(node, "elts", ())), None))
     return None, _normalized_process_command(head or "") in {"bash", "sh", "env", "command"}
+def _selected_executable_result(argument: ast.AST | None, executable: ast.AST) -> tuple[str | None, bool]:
+    executable_name, unsafe = _process_argument_result(executable)
+    if executable_name not in {"bash", "sh"}:
+        return executable_name, unsafe
+    tokens = _literal_process_tokens(argument)
+    if tokens is None:
+        return None, True
+    return _effective_process_command([executable_name, *tokens[1:]])
 def _is_network_import(name: str) -> bool:
-    return name in NETWORK_IMPORTS or name.startswith(NETWORK_IMPORT_PREFIXES)
+    return any((name in NETWORK_IMPORTS, name.startswith(NETWORK_IMPORT_PREFIXES)))
 def _import_has_network_egress(node: ast.AST) -> bool:
-    if isinstance(node, ast.Import):
-        return any(_is_network_import(alias.name) for alias in node.names)
-    if isinstance(node, ast.ImportFrom) and node.module:
-        full_names = {node.module, *(f"{node.module}.{alias.name}" for alias in node.names)}
-        return any(_is_network_import(name) for name in full_names)
-    return False
+    if not isinstance(node, (ast.Import, ast.ImportFrom)):
+        return False
+    module = getattr(node, "module", None)
+    names = list(map(attrgetter("name"), node.names))
+    candidates = names if module is None else [module, *map(f"{module}.{{}}".format, names)]
+    return any(map(_is_network_import, candidates))
 def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
     if not isinstance(node, ast.Call):
         return False
@@ -287,9 +288,8 @@ def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
         shell = call_name == "os.system" or getattr(shell_node, "value", False) is True
         command, unsafe = _process_argument_result(argument, shell_words=shell) if argument else (None, False)
         executable = _call_argument(node, None, "executable")
-        executable_name, executable_unsafe = (
-            _process_argument_result(executable) if executable is not None else (None, False)
-        )
+        executable_name, executable_unsafe = (_selected_executable_result(argument, executable)
+                                               if executable is not None and not shell else (None, False))
         return any((unsafe, executable_unsafe, command in NETWORK_PROCESS_COMMANDS,
                     executable_name in NETWORK_PROCESS_COMMANDS))
     return False
