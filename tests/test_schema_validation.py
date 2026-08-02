@@ -40,6 +40,25 @@ def test_agent_output_schema_rejects_implicit_evidence_contract_fields():
         assert any(field in error.message for error in validator.iter_errors(mutated))
 
 
+def test_current_material_claim_schema_requires_explicit_bound_fields():
+    schema = load_json("schemas/agent-output.schema.json")
+    payload = {
+        "contract_version": "2.0.0",
+        "material_claims": [{
+            "claim_id": "claim-1",
+            "claim_type": "numeric",
+            "statement": "Clicks declined 32%.",
+            "evidence_refs": ["gsc-1"],
+            "evidence_state": "AVAILABLE",
+            "inference": False,
+        }],
+    }
+
+    errors = list(Draft202012Validator(schema).iter_errors(payload))
+
+    assert any("bound_fields" in error.message for error in errors)
+
+
 def test_explicit_legacy_normalization_produces_schema_valid_partial_output():
     schema = load_json("schemas/agent-output.schema.json")
     payload = load_json("examples/full-audit-example/agent-output.json")

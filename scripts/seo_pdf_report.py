@@ -18,6 +18,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from runtime.evidence_binding import validate_evidence_binding
+from runtime.schema_registry import SchemaRegistry
+
 SEVERITY_COLOR = {
     "Critical": "#b00020",
     "High": "#d9534f",
@@ -28,6 +31,7 @@ _REQUIRED = ("agent", "summary", "findings")
 _MAX_HEADING = 600
 _MAX_BODY = 4000
 DEFAULT_OUT = "outputs/seo-report.pdf"
+ROOT = Path(__file__).resolve().parents[1]
 DEPENDENCY_MISSING = "dependency_missing"
 RENDER_FAILED = "render_failed"
 
@@ -229,6 +233,16 @@ h3 {{ font-size:11pt; margin:4px 0; word-break:break-word; }} img {{ max-width:1
 </body></html>"""
 
 
+def _validate_canonical(data: dict) -> None:
+    if data.get("contract_version") != "2.0.0":
+        return
+    errors = SchemaRegistry(ROOT).errors("agent-output", data)
+    errors.extend(validate_evidence_binding(data))
+    if errors:
+        detail = "; ".join(sorted(set(errors))[:20])
+        raise ValueError(f"canonical agent output validation failed: {detail}")
+
+
 def build_html(data: dict, brand: str = "#0b5fff") -> str:
     if not isinstance(data, dict):
         raise TypeError("agent output must be a dict")
@@ -238,6 +252,8 @@ def build_html(data: dict, brand: str = "#0b5fff") -> str:
     findings = data.get("findings")
     if findings is not None and not isinstance(findings, list):
         raise ValueError("findings must be a list")
+
+    _validate_canonical(data)
 
     scores = _validated_scores(data.get("scores"))
     chart = _score_chart(scores, brand)

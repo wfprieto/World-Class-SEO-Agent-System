@@ -21,14 +21,14 @@
           "claim": "Claude SEO documents 18 specialist agents and parallel execution.",
           "state": "VERIFIED",
           "id": "category-1-evidence-1",
-          "sha256": "8f03a6c19027ecf373986906ef73a816d753f04b8d435b5198cd46b203543f87"
+          "sha256": "7f3a8dd19f98461e6d811162d9994242af88492d931b85c7a2b09a59a07fa469"
         },
         {
-          "source": "Repository architecture",
+          "source": "docs/ARCHITECTURE.md",
           "claim": "Agents are strongly command-oriented but lack the target system's structured governance and evidence contracts.",
           "state": "VERIFIED",
           "id": "category-1-evidence-2",
-          "sha256": "81c85cf45c1cc80ad64e7f49262528bd484cfa2c0bad5679e0a66b94f3a02d0a"
+          "sha256": "9448b2cc1eddb56b7e4f6d17e4e090b0923a98e2431ca829ffc2a852269c9762"
         }
       ],
       "open_gaps": [
@@ -47,14 +47,14 @@
           "claim": "Claude SEO documents 25 invocable commands and self-contained skill packages.",
           "state": "VERIFIED",
           "id": "category-2-evidence-1",
-          "sha256": "72620667026596f16cef6c3a7c92ba06765d88493105260266697241647bf182"
+          "sha256": "872fcc57a09b28a4283d7f3762ea2e9f2caf14a5d20327efd4e299cdc99387e3"
         },
         {
-          "source": "skills/",
+          "source": "skills",
           "claim": "Reference material is tightly coupled to operational skills.",
           "state": "VERIFIED",
           "id": "category-2-evidence-2",
-          "sha256": "6ebcaa8586bd24392ca8c7d8b8d47e402c06472050028fc8249ce6b47a3f2f9c"
+          "sha256": "8fb03f0ecfbe4b146bdbd04da23dae6fa7dfe6eb37711beb19103d31e7c8b0ff"
         }
       ],
       "open_gaps": []
@@ -67,18 +67,18 @@
       "evidence_maturity": "BEST_IN_CLASS",
       "evidence": [
         {
-          "source": "CHANGELOG.md v2.2.0",
+          "source": "CHANGELOG.md",
           "claim": "The project documents a 50-script execution inventory with production fixes and cross-platform hardening.",
           "state": "VERIFIED",
           "id": "category-3-evidence-1",
-          "sha256": "52baefad135ffa22f8ec661680197972d02b79fd286c723acac075285edc14f1"
+          "sha256": "b663616a2d02984f7600e7258a0d1ed0932369601b93587379b7ff538d1676a0"
         },
         {
-          "source": "README command table",
+          "source": "docs/COMMANDS.md",
           "claim": "Users receive an immediately callable command surface across technical, content, schema, local, commerce, links and drift.",
           "state": "VERIFIED",
           "id": "category-3-evidence-2",
-          "sha256": "8cc45fec757b90cbb9123809731c66e36af2ae35bebbf6cb2e578f0b53c22a7a"
+          "sha256": "9f67c3f374057db9e99e578ba075baf52284c91065dda1ce5eaeb2ffc00a1089"
         }
       ],
       "open_gaps": []
@@ -91,11 +91,11 @@
       "evidence_maturity": "STUB",
       "evidence": [
         {
-          "source": "Repository architecture",
+          "source": "docs/ARCHITECTURE.md",
           "claim": "Parallel agents and shared cache exist without the target's schema-bound DAG, budget and decision-record system.",
           "state": "VERIFIED",
           "id": "category-4-evidence-1",
-          "sha256": "70bdbfd1ed2986fb750a8d24a8d420feaf9d730bcb792b2d3748f3d6d61776ab"
+          "sha256": "cc6bc66565d44fcf1b969fa5786d38bf26c3f3f81d680091ff4ea9c4f517e2f2"
         }
       ],
       "open_gaps": [
@@ -112,18 +112,18 @@
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
         {
-          "source": "README extensions",
+          "source": "docs/MCP-INTEGRATION.md",
           "claim": "Eight optional extensions and multiple live Google, Bing, marketplace and crawling integrations are documented and installable.",
           "state": "VERIFIED",
           "id": "category-5-evidence-1",
-          "sha256": "c7e8f022c587cedd6dd3b5b3dc1efa9729e57cd019ccc358368e7c5c5da077f8"
+          "sha256": "77a50cc19e8cea45573019655ec325d628d761bf46fd64429b1c1e05e1bbc49e"
         },
         {
-          "source": "CHANGELOG.md v2.2.0",
+          "source": "CHANGELOG.md",
           "claim": "Integration installers have security, portability, credential and package-version fixes.",
           "state": "VERIFIED",
           "id": "category-5-evidence-2",
-          "sha256": "ceecd1019eeb951bf2c66fdd1c2eb8176d3a0e9e3c1b86b73e4d74c07cdf2325"
+          "sha256": "8c3d123961a946459808e8f2cb64dbf1fd02b0dbe537ff93b5e6375df2e0eced"
         }
       ],
       "open_gaps": [
@@ -138,11 +138,11 @@
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
         {
-          "source": "skills/*/references",
+          "source": "skills",
           "claim": "The comparator maintains a large skill-coupled reference library with current Google, schema, privacy, content and AI-search guidance.",
           "state": "VERIFIED",
           "id": "category-6-evidence-1",
-          "sha256": "83901eb011d6cf41e3a26ecb5c4e5860f1746aea5c3ef606ed3c91dbecee22e3"
+          "sha256": "32443585b3dcea927311002d23649e94f82a83f4efbba5ef578142bbd2d812e9"
         }
       ],
       "open_gaps": []
@@ -155,18 +155,18 @@
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
         {
-          "source": "README badges",
+          "source": ".github/workflows/ci.yml",
           "claim": "The public README advertises 326 passing tests and CI status.",
           "state": "VERIFIED",
           "id": "category-7-evidence-1",
-          "sha256": "4323e231f157dfb5f3a124fc174b461ff0e469f2549cfb0b30195230e0ebacc0"
+          "sha256": "c647b0b591d88a6f30489f532757664f5b9036852d05f91c2707a17af696e033"
         },
         {
-          "source": "CHANGELOG.md v2.2.0",
+          "source": "CHANGELOG.md",
           "claim": "The suite includes security regression, installer, cross-platform and manifest checks.",
           "state": "VERIFIED",
           "id": "category-7-evidence-2",
-          "sha256": "15fa8b25803ca242583c10910af804c4ecbdfbf74c16da17b16416b007bbd601"
+          "sha256": "565e30838ea170e0a8d82a9ec5d363af0f29d2832afc6058d0e559e362416fc0"
         }
       ],
       "open_gaps": [
@@ -181,11 +181,11 @@
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
         {
-          "source": "FLOW prompt library",
+          "source": "skills/seo-flow/SKILL.md",
           "claim": "Claude SEO exposes granular content, humanization, verification and media-oriented execution paths.",
           "state": "VERIFIED",
           "id": "category-8-evidence-1",
-          "sha256": "ff2e76812190a13f3df2c52a84f17823ee19b3ea4c5f3c4887d1024e25034d96"
+          "sha256": "3ecf6d11687f5cf56eff9aa964af2cdf6c717159ce10f45580417f82006f4372"
         }
       ],
       "open_gaps": []
@@ -202,7 +202,7 @@
           "claim": "Installation, Quick Start, commands, extensions, limitations and ecosystem paths are public and immediately actionable.",
           "state": "VERIFIED",
           "id": "category-9-evidence-1",
-          "sha256": "2b775a7dbba17c521f7df2b92454e141479ab9a000f12cc4132f5ee2d20692cc"
+          "sha256": "2a18dbbdec158ffedb3fcfe7145ab07af811755e2f4b0dabb6ba67f723b5aedf"
         }
       ],
       "open_gaps": []
@@ -215,11 +215,11 @@
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
         {
-          "source": "README badges and releases",
+          "source": "CHANGELOG.md",
           "claim": "The project has releases, marketplace distribution, contributors, security reporting and public ecosystem signals.",
           "state": "VERIFIED",
           "id": "category-10-evidence-1",
-          "sha256": "926046a2e2102fad68b7db9d114eae493b08a6b75d50bc0081ffc24a0946e6ac"
+          "sha256": "dff22bd3227e7e5fb696f70e71406aff4fecde0365c161632837afac1be950cf"
         }
       ],
       "open_gaps": []

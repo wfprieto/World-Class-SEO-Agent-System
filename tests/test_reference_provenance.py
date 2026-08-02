@@ -49,9 +49,28 @@ def test_pack_content_drift_and_missing_provenance_fail_closed(tmp_path: Path) -
 
     errors = validate(as_of=date(2026, 7, 12), root=tmp_path)
     assert "technical-search has invalid verified_at" in errors
-    # Missing dates must not suppress independent ownership and digest failures.
-    pack["verified_at"] = "2026-07-12"
-    _write(path, payload)
-    errors = validate(as_of=date(2026, 7, 12), root=tmp_path)
     assert "technical-search requires an owner" in errors
     assert "technical-search content digest does not match its pack" in errors
+
+
+def test_pack_validation_accumulates_independent_provenance_defects(
+    tmp_path: Path,
+) -> None:
+    path, payload = _fixture(tmp_path)
+    pack = payload["packs"]["technical-search"]
+    pack["freshness_class"] = "unknown"
+    pack.pop("verified_at")
+    pack["owner"] = ""
+    pack["content_sha256"] = "0" * 64
+    pack["primary_sources"] = []
+    _write(path, payload)
+
+    errors = validate(as_of=date(2026, 7, 12), root=tmp_path)
+
+    assert {
+        "technical-search has invalid freshness_class",
+        "technical-search has invalid verified_at",
+        "technical-search requires an owner",
+        "technical-search content digest does not match its pack",
+        "technical-search requires primary_sources",
+    }.issubset(errors)

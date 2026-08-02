@@ -45,6 +45,12 @@ def _output() -> dict:
                 "claim_id": "claim-1",
                 "claim_type": "numeric",
                 "statement": "Clicks declined 32% on https://example.test/page.",
+                "bound_fields": [
+                    "summary",
+                    "impact",
+                    "findings[0].finding",
+                    "findings[0].affected_scope",
+                ],
                 "evidence_refs": ["gsc-1"],
                 "evidence_state": "AVAILABLE",
                 "inference": False,
@@ -123,9 +129,34 @@ def test_every_rendered_material_field_is_scanned(
     output = _output()
     output[field] = value
     assert any(
-        token in error and "not bound" in error
+        token in error and field in error and "not explicitly bound" in error
         for error in validate_evidence_binding(output)
     )
+
+
+def test_token_coincidence_does_not_replace_explicit_field_binding() -> None:
+    output = _output()
+    output["material_claims"][0]["bound_fields"] = ["summary"]
+
+    errors = validate_evidence_binding(output)
+
+    assert any("impact" in error and "https://example.test/page" in error for error in errors)
+    assert any(
+        "findings[0].affected_scope" in error and "https://example.test/page" in error
+        for error in errors
+    )
+
+
+def test_current_claims_reject_missing_duplicate_or_unknown_bound_fields() -> None:
+    output = _output()
+    output["material_claims"][0]["bound_fields"] = []
+    assert any("bound_fields is required" in error for error in validate_evidence_binding(output))
+
+    output = _output()
+    output["material_claims"][0]["bound_fields"] = ["summary", "summary", "scores.fake"]
+    errors = validate_evidence_binding(output)
+    assert any("repeats bound field" in error for error in errors)
+    assert any("unknown material field: scores.fake" in error for error in errors)
 
 
 def test_legacy_compatibility_requires_explicit_partial_unverified_normalization() -> None:

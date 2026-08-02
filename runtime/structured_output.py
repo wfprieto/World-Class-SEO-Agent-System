@@ -132,6 +132,24 @@ def _echo_handoff_acknowledgements(
     ]
 
 
+def _canonical_instruction(agent_name: str, schema: dict[str, Any]) -> LLMMessage:
+    guidance = (
+        f"You are {agent_name!r}. Return only one JSON object whose agent field is exactly "
+        f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
+        "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
+        "provider results. Every factual numeric or URL claim must also appear in "
+        "material_claims with valid evidence_refs and bound_fields naming every exact "
+        "originating output path, such as summary or findings[0].affected_scope. Set "
+        "contract_version to 2.0.0 and explicitly provide execution_state and material_claims. "
+        "Give every evidence item a unique stable id and declared state; evidence_refs must use "
+        "only those ids. Downstream findings must explicitly reference or challenge the "
+        "supplied dependency evidence.\n\n"
+    )
+    return LLMMessage(
+        role="system", content=guidance + json.dumps(schema, separators=(",", ":"))
+    )
+
+
 class StructuredOutputService:
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root
@@ -207,21 +225,7 @@ class StructuredOutputService:
             )
 
         schema = self.schemas.load("agent-output")
-        instruction = LLMMessage(
-            role="system",
-            content=(
-                f"You are {agent_name!r}. Return only one JSON object whose agent field is exactly "
-                f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
-                "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
-                "provider results. Every factual numeric or URL claim must also appear in "
-                "material_claims with valid evidence_refs. Set contract_version to 2.0.0 and "
-                "explicitly provide execution_state and material_claims. Give every evidence "
-                "item a unique stable id and declared state; evidence_refs must use only those "
-                "ids. Downstream findings must explicitly reference or challenge the supplied "
-                "dependency evidence.\n\n"
-                + json.dumps(schema, separators=(",", ":"))
-            ),
-        )
+        instruction = _canonical_instruction(agent_name, schema)
         active_messages = [*messages, instruction]
         attempts = 0
         last_response: LLMResponse | None = None

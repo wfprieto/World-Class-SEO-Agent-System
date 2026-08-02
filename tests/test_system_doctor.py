@@ -5,6 +5,8 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from seoctl.cli import run
 from seoctl.doctor import diagnose
 
@@ -36,6 +38,63 @@ def test_system_doctor_fails_closed_for_unsupported_python() -> None:
         "status": "FAIL",
         "detail": "unsupported Python 3.14",
     }
+
+
+def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path) -> None:
+    result = diagnose(tmp_path, as_of=date(2026, 8, 2), python_version=(3, 13))
+    checks = {item["id"]: item for item in result["checks"]}
+
+    assert result["status"] == "FAIL"
+    assert set(checks) == {
+        "python.supported",
+        "assets.required",
+        "commands.registry",
+        "architecture.static",
+        "knowledge.provenance",
+        "dependencies.lock",
+    }
+    assert checks["python.supported"]["status"] == "PASS"
+    assert all(
+        checks[identifier]["status"] == "FAIL"
+        for identifier in set(checks) - {"python.supported"}
+    )
+
+
+@pytest.mark.parametrize(
+    ("target", "check_id", "failure"),
+    [
+        ("seoctl.doctor.load_registry", "commands.registry", OSError("registry unreadable")),
+        (
+            "seoctl.doctor.validate_architecture",
+            "architecture.static",
+            ValueError("architecture corrupt"),
+        ),
+        (
+            "seoctl.doctor.validate_references",
+            "knowledge.provenance",
+            KeyError("packs"),
+        ),
+        (
+            "seoctl.doctor.validate_dependency_lock",
+            "dependencies.lock",
+            TypeError("lock malformed"),
+        ),
+    ],
+)
+def test_system_doctor_converts_validator_exceptions_to_structured_failures(
+    monkeypatch, target: str, check_id: str, failure: Exception
+) -> None:
+    def fail(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr(target, fail)
+    result = diagnose(ROOT, as_of=date(2026, 8, 2), python_version=(3, 13))
+    checks = {item["id"]: item for item in result["checks"]}
+
+    assert result["status"] == "FAIL"
+    assert checks[check_id]["status"] == "FAIL"
+    assert type(failure).__name__ in checks[check_id]["detail"]
+    assert len(checks) == 6
 
 
 def test_system_doctor_cli_uses_canonical_json_envelope(monkeypatch) -> None:

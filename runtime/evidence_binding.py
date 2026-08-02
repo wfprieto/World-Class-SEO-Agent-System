@@ -34,28 +34,30 @@ _CLAIM_STATE_STRENGTH = {
 }
 
 
-def _material_texts(output: dict[str, Any]) -> list[str]:
-    values = [
-        str(output.get("summary", "")),
-        str(output.get("impact", "")),
-        str(output.get("follow_up", "")),
-    ]
-    values.extend(
-        str(item)
-        for field in ("risks", "dependencies", "acceptance_criteria", "verification")
-        for item in output.get(field, [])
-    )
-    values.extend(
-        " ".join((str(item.get("finding", "")), str(item.get("affected_scope", ""))))
-        for item in output.get("findings", [])
-        if isinstance(item, dict)
-    )
-    values.extend(
-        " ".join((str(item.get("action", "")), str(item.get("success_metric", ""))))
-        for item in output.get("recommended_actions", [])
-        if isinstance(item, dict)
-    )
-    return values
+def _material_fields(output: dict[str, Any]) -> dict[str, str]:
+    fields = {
+        name: str(output.get(name, ""))
+        for name in ("summary", "impact", "follow_up")
+    }
+    for name in ("risks", "dependencies", "acceptance_criteria", "verification"):
+        values = output.get(name, [])
+        if isinstance(values, list):
+            fields.update(
+                {f"{name}[{index}]": str(value) for index, value in enumerate(values)}
+            )
+    for collection, names in (
+        ("findings", ("finding", "affected_scope")),
+        ("recommended_actions", ("action", "success_metric")),
+    ):
+        rows = output.get(collection, [])
+        if not isinstance(rows, list):
+            continue
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            for name in names:
+                fields[f"{collection}[{index}].{name}"] = str(row.get(name, ""))
+    return fields
 
 
 def _rewrite_refs(rows: Any, aliases: dict[str, str]) -> None:
@@ -223,14 +225,35 @@ def _claim_state_error(
     return None
 
 
+def _bound_field_errors(
+    prefix: str, value: object, material_paths: set[str], *, legacy: bool
+) -> tuple[list[str], set[str]]:
+    bound_fields = [str(item) for item in value] if isinstance(value, list) else []
+    errors = []
+    if not legacy and not bound_fields:
+        errors.append(f"{prefix}.bound_fields is required for current output")
+    if len(bound_fields) != len(set(bound_fields)):
+        errors.append(f"{prefix} repeats bound field")
+    errors.extend(
+        f"{prefix} references unknown material field: {path}"
+        for path in sorted(set(bound_fields) - material_paths)
+    )
+    return errors, set(bound_fields)
+
+
 def _claim_errors(
-    output: dict[str, Any], inventory: dict[str, str], identity_ids: set[str]
-) -> tuple[list[str], str]:
+    output: dict[str, Any],
+    inventory: dict[str, str],
+    identity_ids: set[str],
+    material_paths: set[str],
+    *,
+    legacy: bool,
+) -> tuple[list[str], list[tuple[str, set[str]]]]:
     errors: list[str] = []
-    statements: list[str] = []
+    bindings: list[tuple[str, set[str]]] = []
     claims = output.get("material_claims", [])
     if not isinstance(claims, list):
-        return ["material_claims must be a list"], ""
+        return ["material_claims must be a list"], []
     seen: set[str] = set()
     for index, claim in enumerate(claims):
         prefix = f"material_claims[{index}]"
@@ -240,7 +263,15 @@ def _claim_errors(
         claim_id = str(claim.get("claim_id", "")).strip()
         errors.extend(_claim_identity_errors(prefix, claim_id, seen, identity_ids))
         seen.add(claim_id)
-        statements.append(str(claim.get("statement", "")))
+        statement = str(claim.get("statement", ""))
+        bound_errors, bound_fields = _bound_field_errors(
+            prefix,
+            claim.get("bound_fields", []),
+            material_paths,
+            legacy=legacy,
+        )
+        errors.extend(bound_errors)
+        bindings.append((statement, bound_fields))
         refs_value = claim.get("evidence_refs", [])
         refs = [str(ref) for ref in refs_value] if isinstance(refs_value, list) else []
         errors.extend(_claim_reference_errors(prefix, refs, set(inventory)))
@@ -256,7 +287,7 @@ def _claim_errors(
             "BLOCKED",
         }:
             errors.append(f"{prefix} presents unavailable evidence state {state} as fact")
-    return errors, "\n".join(statements)
+    return errors, bindings
 
 
 def _claim_identity_errors(
@@ -284,16 +315,22 @@ def _claim_reference_errors(
     return errors
 
 
-def _unbound_material_errors(output: dict[str, Any], claim_text: str) -> list[str]:
-    tokens: set[str] = set()
-    for text in _material_texts(output):
-        tokens.update(_URL.findall(text))
-        tokens.update(_NUMBER.findall(text))
-    return [
-        f"material value or URL is not bound to a material_claim: {token}"
-        for token in sorted(tokens)
-        if token not in claim_text
-    ]
+def _unbound_material_errors(
+    material_fields: dict[str, str], bindings: list[tuple[str, set[str]]]
+) -> list[str]:
+    errors: list[str] = []
+    for path, text in material_fields.items():
+        tokens = set(_URL.findall(text)) | set(_NUMBER.findall(text))
+        for token in sorted(tokens):
+            if not any(
+                path in bound_fields and token in statement
+                for statement, bound_fields in bindings
+            ):
+                errors.append(
+                    f"material value or URL in {path} is not explicitly bound "
+                    f"to a material_claim: {token}"
+                )
+    return errors
 
 
 def validate_evidence_binding(output: dict[str, Any]) -> list[str]:
@@ -308,10 +345,15 @@ def validate_evidence_binding(output: dict[str, Any]) -> list[str]:
         f"evidence and finding identities collide: {identity}"
         for identity in sorted(collisions)
     )
-    claim_errors, claim_text = _claim_errors(
-        output, inventory, set(inventory) | finding_ids
+    material_fields = _material_fields(output)
+    claim_errors, claim_bindings = _claim_errors(
+        output,
+        inventory,
+        set(inventory) | finding_ids,
+        set(material_fields),
+        legacy=legacy,
     )
     errors.extend(claim_errors)
     if not legacy and output.get("execution_state") in {"COMPLETE", "PARTIAL"}:
-        errors.extend(_unbound_material_errors(output, claim_text))
+        errors.extend(_unbound_material_errors(material_fields, claim_bindings))
     return sorted(set(errors))

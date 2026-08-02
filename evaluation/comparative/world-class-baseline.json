@@ -26,14 +26,14 @@
           "claim": "Twenty-five agents are mapped to canonical skills, knowledge, templates and evidence requirements.",
           "state": "VERIFIED",
           "id": "category-1-evidence-1",
-          "sha256": "fd2c71fa0be52da35680e75a50299abf3af6389e22dc48e0a840077a2cb455ea"
+          "sha256": "7d9c1f14888d9f6a72edea2aa24cb4c666ed5cba7c95dea847bacb2f6d2a16d4"
         },
         {
           "source": "runtime/workflow_runner.py",
           "claim": "Support agents execute as dependency-ordered workflow nodes rather than remaining routing metadata.",
           "state": "VERIFIED",
           "id": "category-1-evidence-2",
-          "sha256": "deab1b289aa0f3d2bd02627fa4fe84ea8db096ae6e9d64ad20a54532fda4afc6"
+          "sha256": "504c7da2dd88089b8fcdbe62506f95c454a1f341e10b4381064efef25f9a615b"
         }
       ],
       "open_gaps": [
@@ -52,14 +52,14 @@
           "claim": "The current index contains a broad skill catalogue with enforced deep-procedure coverage.",
           "state": "VERIFIED",
           "id": "category-2-evidence-1",
-          "sha256": "6adf5e288431dc71263acc91c4d74f6d857c5c6deb04ded5fe19afbe3ac6d1df"
+          "sha256": "16e774cc051ce49c9d0a73334f5f7fdd8fddf9cc73340487d99f7b9cbaa8fe07"
         },
         {
           "source": "skills/deep-skill-procedures.md",
           "claim": "Canonical procedure headings are validated, but many skills remain grouped rather than independently packaged.",
           "state": "VERIFIED",
           "id": "category-2-evidence-2",
-          "sha256": "44e08fb7e9beda711f7f7c657f0f36bc10956ae69449f1e51e4d7a804ff5e64e"
+          "sha256": "8fbd38ed8a2b288cca54b2f2a9cdfc11c71e05131af3f0a52bb4277827cd900c"
         }
       ],
       "open_gaps": [
@@ -79,14 +79,14 @@
           "claim": "The canonical registry exposes 67 governed operator commands across system, content, Google, rendering, technical, schema, authority, media, drift and integration families.",
           "state": "VERIFIED",
           "id": "category-3-evidence-1",
-          "sha256": "5ea625a2a8b2738ce948223b6f2a4b8c7dcc6e480c6942ab410a7aa53fd5621b"
+          "sha256": "df333a1ee0a58a7854006b38283d566b41e71fbd5c3b3501806fce90adc06ba4"
         },
         {
           "source": "seoctl/entrypoint.py",
           "claim": "Root help and family dispatch derive all 21 operator families from canonical command metadata while family parsers retain argument ownership.",
           "state": "VERIFIED",
           "id": "category-3-evidence-2",
-          "sha256": "a7fc556d40d3ccb6a29782f11091047160dd9b6267fa1a5cb9b86de7c6213bfb"
+          "sha256": "2fe02cd2de8e9bea75d440b7e340cac5fbea2b3e07b9b27dd3cae9bca1292a69"
         }
       ],
       "open_gaps": [
@@ -105,21 +105,21 @@
           "claim": "The runtime uses a bounded multi-agent DAG with explicit dependency ordering.",
           "state": "VERIFIED",
           "id": "category-4-evidence-1",
-          "sha256": "c3792cc1c1f13a3a88dc1b4e6490f00d2bce2473aa9f2a5f15ed58b9dac4aede"
+          "sha256": "88caf9b9d375f50dd6ba36b3ebfdda5018e491de1b6d554d8111452f6b539a94"
         },
         {
           "source": "runtime/structured_output.py",
           "claim": "Agent outputs are schema validated and arbitrary prose is not wrapped as success.",
           "state": "VERIFIED",
           "id": "category-4-evidence-2",
-          "sha256": "4d23d49e3231dadd29af2db0e6b7a4f5b40e00a3df322fbb73a0f5c5746b586e"
+          "sha256": "43cd9931528129d17a8030a7bdc4ff42d67251205f36f1d5ca1eb22793159cd8"
         },
         {
           "source": "runtime/run_budget.py",
           "claim": "Nodes, LLM calls, corrections, runtime and optional cost are bounded before execution.",
           "state": "VERIFIED",
           "id": "category-4-evidence-3",
-          "sha256": "b4d806cd1e83fd110273377a6dcff4a0cd196238d7610f0325e6664631432dfd"
+          "sha256": "25de080c34021b4e555b8f172e3d0a9101f4bca03dd9effe6d9202023eb0321a"
         }
       ],
       "open_gaps": []
@@ -136,14 +136,14 @@
           "claim": "GSC, GA4, URL Inspection, Sitemap, CrUX and PageSpeed code contracts are implemented and fixture tested.",
           "state": "VERIFIED",
           "id": "category-5-evidence-1",
-          "sha256": "e894af0e0a310612084cbd83845f8a556f0339975237c039850eab5eac4eb0da"
+          "sha256": "b9178664d60690987ee9a4142727e821f40060cb4f106064769d793802815eed"
         },
         {
           "source": "integrations/authority_media/",
           "claim": "Authority and media provider paths are implemented with bounded transports and explicit evidence limitations.",
           "state": "VERIFIED",
           "id": "category-5-evidence-2",
-          "sha256": "be54f9950c9219e9936ec93c4da6baff01fbde12edc00740ac2ee5ef6ab68168"
+          "sha256": "dbc7ba984a73edd8721dd00d8efa6a07cfe884c137f3d5498fd160e7b51fe4af"
         }
       ],
       "open_gaps": [
@@ -163,14 +163,14 @@
           "claim": "Several canonical rubrics and policy references are high quality and evidence labeled.",
           "state": "VERIFIED",
           "id": "category-6-evidence-1",
-          "sha256": "0517d65bfec5cb8d4abcbe3e1ff7d1fa01a1dcfe0e2c43aa138e8a7a96bc98f1"
+          "sha256": "c4b2feb035cfaedb1349c69805cf130e54da7453536f09855da7b05fec5a49ba"
         },
         {
           "source": "knowledge/knowledge-sources.md",
           "claim": "The source hierarchy is strong, but coverage is not yet comprehensive across every executable capability.",
           "state": "VERIFIED",
           "id": "category-6-evidence-2",
-          "sha256": "a626a144411effd1b9aec13abbb07817e0d98f772865458206d8937000fdceec"
+          "sha256": "3d11f5b55650e3907ff6f4bb297bc68b8d0ef84fff017ea12d5b32713ed57a94"
         }
       ],
       "open_gaps": [
@@ -190,14 +190,14 @@
           "claim": "CI runs on Windows and Ubuntu with Python 3.11 and 3.13 and enforces repository, schema, tracer and pytest gates.",
           "state": "VERIFIED",
           "id": "category-7-evidence-1",
-          "sha256": "dd4c76ef282f76387f479449516be4e6d26fb7edbad6c91ab683198b47cb6757"
+          "sha256": "cebd9e5bf1502e10b32a755237e7857ecb188ddd9e899cbb28f03d95e24f94ee"
         },
         {
           "source": "docs/20-PASS-WORLD-CLASS-RUNTIME-REVIEW.md",
           "claim": "The post-remediation suite exceeded two hundred tests with cross-platform verification.",
           "state": "VERIFIED",
           "id": "category-7-evidence-2",
-          "sha256": "737e3e0671d9e9033806a5121cbdef964fd06803f56ac616e030d05d91e7c875"
+          "sha256": "48691ece2e1c412bb0ebe4d22dac4a3583a46b31fbcf83be7f39a3b47e7c458f"
         }
       ],
       "open_gaps": [
@@ -217,14 +217,14 @@
           "claim": "The FLOW layer is evidence grounded and integrated.",
           "state": "VERIFIED",
           "id": "category-8-evidence-1",
-          "sha256": "b6b7880b49902f2f3dd9921a2668cbc0dc7e0d329c6afcbbb93b7fbc237d35bd"
+          "sha256": "38687f598c60eba3c449d8057c758a9776891e5d1e32fe6187b475d36c1d34d3"
         },
         {
           "source": "integrations/content_intelligence/service.py",
           "claim": "Deterministic quality, verification, entity, brief, decay, comparison and clarity functions are callable through seoctl.",
           "state": "VERIFIED",
           "id": "category-8-evidence-2",
-          "sha256": "bb4f96333193d2b35e8f201882992531d5e8a29c1663b10271ac54df48bb77a0"
+          "sha256": "498add4cc5e72650dafdb39b6348d5dd84cb8387b5667db899e789ce4a3e481a"
         }
       ],
       "open_gaps": [
@@ -245,14 +245,14 @@
           "claim": "The repository now includes Start Here guidance and executable CLI examples.",
           "state": "VERIFIED",
           "id": "category-9-evidence-1",
-          "sha256": "452a9eaa31c98bb9d68c9a777d069bd5dca2b9b181465aacdbb0b41d6512e0be"
+          "sha256": "dd380dec37830cb791d627a29e72e9cef95d4d665c8c6dca536b924fb576de11"
         },
         {
           "source": "docs/QUICKSTART.md",
           "claim": "Install, quick-start, generated command, architecture, integration and troubleshooting documentation are present and validation-gated.",
           "state": "VERIFIED",
           "id": "category-9-evidence-2",
-          "sha256": "9080dcc05b8f98e7b0b2ddab63e9aedae0057364ce24c0314e24c38c45b1f6bb"
+          "sha256": "3fef3e5626d6ec86790321fba1ac8e267c9a96b17c14b48589e4622660c09694"
         }
       ],
       "open_gaps": [
@@ -271,14 +271,14 @@
           "claim": "The repository now has substantive version history and an Unreleased section.",
           "state": "VERIFIED",
           "id": "category-10-evidence-1",
-          "sha256": "5f22001dd2bf34ba1cfccc17f6f17d76362788a347907dc7df27763ef508b815"
+          "sha256": "fae5bb3c14724338d7392a1ce116b822f92cac846f0d7a9de3bef20af66b2562"
         },
         {
           "source": ".github/",
           "claim": "Issue templates, pull-request governance and CODEOWNERS are present; CONTRIBUTORS and CITATION metadata are versioned.",
           "state": "VERIFIED",
           "id": "category-10-evidence-2",
-          "sha256": "844dfdec206853e4d068af5c866df2ea05de5b063b098586b56aa5474c200d48"
+          "sha256": "8990146f42b4814ab1c9bab9594f11398a82a91dfa9d601d73d5c2fa32902cb5"
         }
       ],
       "open_gaps": [

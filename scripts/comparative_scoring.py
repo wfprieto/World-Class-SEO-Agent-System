@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from pathlib import Path
 from typing import Any
 
 MATURITY_MAX_SCORE = {
@@ -30,12 +31,7 @@ EXPECTED_CATEGORIES = (
     (9, "Documentation & Onboarding", 10.0),
     (10, "Community, Maturity & Ecosystem", 5.0),
 )
-REVIEWED_SCORE_PROFILES = {
-    "wfprieto/World-Class-SEO-Agent-System":
-        (8.9, 7.0, 6.0, 10.0, 4.0, 6.0, 8.5, 6.0, 6.5, 4.0),
-    "AgriciDaniel/claude-seo":
-        (7.0, 9.0, 10.0, 4.0, 9.0, 9.0, 7.5, 8.0, 9.0, 9.0),
-}
+AUTHORITY_SCHEMA_VERSION = "comparative-source-authority-v1"
 
 
 def weighted_score(scorecard: dict[str, Any]) -> float:
@@ -48,13 +44,37 @@ def weighted_score(scorecard: dict[str, Any]) -> float:
     )
 
 
-def _evidence_digest(row: dict[str, Any]) -> str:
-    material = {key: row[key] for key in ("source", "claim", "state")}
-    encoded = json.dumps(material, sort_keys=True, separators=(",", ":")).encode()
+def _canonical_digest(value: object) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _evidence_errors(category_id: object, evidence: object) -> tuple[list[str], list[str]]:
+def _evidence_digest(
+    row: dict[str, Any], *, repository: str, authority: dict[str, Any]
+) -> str:
+    source = str(row.get("source", ""))
+    source_record = authority.get("sources", {}).get(repository, {}).get(source, {})
+    material: dict[str, Any] = {
+        key: row[key] for key in ("source", "claim", "state") if key in row
+    }
+    material.update(
+        {
+            "source_repository": repository,
+            "source_commit": source_record.get("commit"),
+            "source_content_sha256": source_record.get("content_sha256"),
+        }
+    )
+    return _canonical_digest(material)
+
+
+def _evidence_errors(
+    category_id: object,
+    evidence: object,
+    *,
+    repository: str,
+    commit: str,
+    authority: dict[str, Any],
+) -> tuple[list[str], list[str]]:
     if not isinstance(evidence, list) or not evidence:
         return [f"category {category_id} has no evidence"], []
     errors: list[str] = []
@@ -67,12 +87,36 @@ def _evidence_errors(category_id: object, evidence: object) -> tuple[list[str], 
         identifiers.append(evidence_id)
         if not evidence_id:
             errors.append(f"category {category_id} evidence has no id")
-        if item.get("sha256") != _evidence_digest(item):
+        source = str(item.get("source", ""))
+        source_record = authority.get("sources", {}).get(repository, {}).get(source)
+        if not isinstance(source_record, dict):
+            errors.append(
+                f"category {category_id} evidence source is not in the reviewed authority: {source}"
+            )
+        elif source_record.get("commit") != commit:
+            errors.append(
+                f"category {category_id} evidence source commit mismatch: {evidence_id}"
+            )
+        elif not isinstance(source_record.get("content_sha256"), str) or len(
+            source_record["content_sha256"]
+        ) != 64:
+            errors.append(
+                f"category {category_id} evidence source digest is invalid: {evidence_id}"
+            )
+        if item.get("sha256") != _evidence_digest(
+            item, repository=repository, authority=authority
+        ):
             errors.append(f"category {category_id} evidence digest mismatch: {evidence_id}")
     return errors, identifiers
 
 
-def _category_errors(row: object) -> tuple[list[str], list[str]]:
+def _category_errors(
+    row: object,
+    *,
+    repository: str,
+    commit: str,
+    authority: dict[str, Any],
+) -> tuple[list[str], list[str]]:
     if not isinstance(row, dict):
         return ["every category must be an object"], []
     errors: list[str] = []
@@ -92,7 +136,13 @@ def _category_errors(row: object) -> tuple[list[str], list[str]]:
         "LIVE_CAPABLE", "PRODUCTION_READY", "BEST_IN_CLASS"
     }:
         errors.append(f"category {category_id} cannot score 8+ without live-capable evidence")
-    evidence_errors, evidence_ids = _evidence_errors(category_id, row.get("evidence"))
+    evidence_errors, evidence_ids = _evidence_errors(
+        category_id,
+        row.get("evidence"),
+        repository=repository,
+        commit=commit,
+        authority=authority,
+    )
     return [*errors, *evidence_errors], evidence_ids
 
 
@@ -130,23 +180,45 @@ def _summary_errors(
         errors.append(f"overall_score is {claimed}, but the formula produces {calculated}")
     if len(evidence_ids) != len(set(evidence_ids)):
         errors.append("evidence ids must be non-empty and unique")
-    repository = str(scorecard.get("target_repository", "")).split("@", 1)[0]
-    actual_scores = tuple(
-        float(row.get("score", -1)) for row in categories if isinstance(row, dict)
-    )
-    if REVIEWED_SCORE_PROFILES.get(repository) != actual_scores:
-        errors.append("category scores differ from the reviewed score profile")
     return errors
 
 
-def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
+def validate_scorecard(
+    scorecard: dict[str, Any], authority: dict[str, Any] | None = None
+) -> list[str]:
     categories = scorecard.get("categories")
     if not isinstance(categories, list) or len(categories) != 10:
         return ["scorecard must contain exactly ten categories"]
+    if authority is None:
+        return ["reviewed source authority is required"]
     errors = _contract_errors(scorecard, categories)
+    if authority.get("schema_version") != AUTHORITY_SCHEMA_VERSION:
+        errors.append("reviewed source authority schema is invalid")
+    target = str(scorecard.get("target_repository", ""))
+    repository, separator, commit = target.partition("@")
+    if not separator or len(commit) != 40:
+        errors.append("target_repository must include a 40-character commit")
     evidence_ids: list[str] = []
     for row in categories:
-        row_errors, row_evidence_ids = _category_errors(row)
+        row_errors, row_evidence_ids = _category_errors(
+            row, repository=repository, commit=commit, authority=authority
+        )
         errors.extend(row_errors)
         evidence_ids.extend(row_evidence_ids)
     return [*errors, *_summary_errors(scorecard, categories, evidence_ids)]
+
+
+def validate_reviewed_scorecard(
+    scorecard: dict[str, Any], scorecard_name: str, authority: dict[str, Any]
+) -> list[str]:
+    """Validate one scorecard and its immutable reviewed package identity."""
+    errors = validate_scorecard(scorecard, authority)
+    expected = authority.get("scorecards", {}).get(scorecard_name)
+    actual = _canonical_digest(scorecard)
+    if expected != actual:
+        errors.append(f"{scorecard_name} differs from the reviewed scorecard package")
+    return errors
+
+
+def load_authority(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))

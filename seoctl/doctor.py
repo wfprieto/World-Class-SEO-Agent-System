@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
@@ -38,6 +39,19 @@ def _check(identifier: str, errors: list[str], success: str) -> DoctorCheck:
     )
 
 
+def _validation_errors(
+    label: str, operation: Callable[[], list[str]]
+) -> list[str]:
+    """Turn expected local validation failures into deterministic diagnostics."""
+    try:
+        errors = operation()
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        return [f"{label} unavailable: {type(exc).__name__}: {exc}"]
+    if not isinstance(errors, list):
+        return [f"{label} returned an invalid result"]
+    return [str(error) for error in errors]
+
+
 def diagnose(
     root: Path,
     *,
@@ -58,18 +72,21 @@ def diagnose(
     missing = [relative for relative in REQUIRED_ASSETS if not (root / relative).is_file()]
     checks.append(_check("assets.required", missing, "required local assets are present"))
 
-    try:
-        registry_errors = validate_registry(load_registry(root / "seoctl/command-registry.json"))
-    except (OSError, TypeError, ValueError) as exc:
-        registry_errors = [f"registry unavailable: {exc}"]
+    registry_errors = _validation_errors(
+        "command registry",
+        lambda: validate_registry(load_registry(root / "seoctl/command-registry.json")),
+    )
     checks.append(_check("commands.registry", registry_errors, "command registry is coherent"))
     checks.append(
         _check(
             "architecture.static",
-            validate_architecture(
-                root,
-                root / "governance/architecture-contract.json",
-                root / "schemas/architecture-contract.schema.json",
+            _validation_errors(
+                "architecture validation",
+                lambda: validate_architecture(
+                    root,
+                    root / "governance/architecture-contract.json",
+                    root / "schemas/architecture-contract.schema.json",
+                ),
             ),
             "bounded static architecture contract passes",
         )
@@ -77,15 +94,21 @@ def diagnose(
     checks.append(
         _check(
             "knowledge.provenance",
-            validate_references(as_of=as_of, root=root),
+            _validation_errors(
+                "knowledge provenance validation",
+                lambda: validate_references(as_of=as_of, root=root),
+            ),
             "per-pack knowledge provenance and freshness pass",
         )
     )
     checks.append(
         _check(
             "dependencies.lock",
-            validate_dependency_lock(
-                root / "requirements-dev.in", root / "requirements-dev.txt"
+            _validation_errors(
+                "dependency lock validation",
+                lambda: validate_dependency_lock(
+                    root / "requirements-dev.in", root / "requirements-dev.txt"
+                ),
             ),
             "dependency inputs and hash lock agree",
         )

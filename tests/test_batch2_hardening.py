@@ -500,6 +500,60 @@ def test_report_labels_unversioned_compatibility_input_as_unverified():
     assert "Legacy unverified input" in markup
 
 
+def _canonical_report_output() -> dict:
+    return {
+        "contract_version": "2.0.0",
+        "agent": "SEO Full Audit/Analyst Agent",
+        "summary": "Clicks declined 32%.",
+        "evidence": [{
+            "id": "gsc-1", "source": "gsc.csv", "type": "first_party_data",
+            "date_checked": "2026-08-01", "notes": "Supplied export.", "state": "CURRENT",
+        }],
+        "confidence": "High",
+        "findings": [{
+            "id": "finding-1", "severity": "High", "finding": "Clicks declined 32%.",
+            "affected_scope": "Search performance", "evidence_refs": ["gsc-1"],
+        }],
+        "recommended_actions": [{
+            "action": "Review affected queries.", "priority": "P1", "owner": "SEO Analyst",
+            "success_metric": "Cause is documented.",
+        }],
+        "impact": "Search visibility requires investigation.",
+        "effort": "Medium", "risks": [], "owner": "SEO Analyst", "dependencies": [],
+        "acceptance_criteria": [], "verification": [], "follow_up": "After investigation.",
+        "material_claims": [{
+            "claim_id": "claim-1", "claim_type": "numeric",
+            "statement": "Clicks declined 32%.",
+            "bound_fields": ["summary", "findings[0].finding"],
+            "evidence_refs": ["gsc-1"], "evidence_state": "AVAILABLE", "inference": False,
+        }],
+        "execution_state": "COMPLETE",
+    }
+
+
+def test_report_canonical_label_requires_schema_and_evidence_validation():
+    markup = seo_pdf_report.build_html(_canonical_report_output())
+    assert 'data-report-state="CANONICAL_VALIDATED"' in markup
+
+    malformed = {
+        "contract_version": "2.0.0",
+        "agent": "Unvalidated",
+        "summary": "Revenue rose 999% at https://fake.test.",
+        "findings": [],
+    }
+    with pytest.raises(ValueError, match="canonical agent output validation failed"):
+        seo_pdf_report.build_html(malformed)
+
+
+def test_report_rejects_versioned_token_claim_bound_to_wrong_field():
+    payload = _canonical_report_output()
+    payload["impact"] = "Revenue exposure is $500."
+    payload["material_claims"][0]["statement"] += " Revenue exposure is $500."
+
+    with pytest.raises(ValueError, match=r"impact.*not explicitly bound"):
+        seo_pdf_report.build_html(payload)
+
+
 def test_report_rejects_invalid_output_location():
     with pytest.raises(ValueError, match="not writable"):
         seo_pdf_report.write_report(_agent_output(), "\x00bad/report.pdf")

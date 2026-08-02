@@ -237,7 +237,7 @@
   },
   "function_exceptions": {
     "runtime.structured_output::StructuredOutputService.complete_agent_output": {
-      "max_span": 99,
+      "max_span": 85,
       "max_complexity": 9,
       "max_missing_annotations": 0,
       "owner": "Quality owner",

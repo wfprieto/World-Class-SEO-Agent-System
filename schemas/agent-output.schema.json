@@ -224,6 +224,13 @@
             "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
           },
           "statement": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+          "bound_fields": {
+            "type": "array",
+            "description": "Exact material output field paths whose values this claim supports.",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
+          },
           "normalized_value": {},
           "unit": {"type": "string"},
           "evidence_refs": {
@@ -282,6 +289,9 @@
       "then": {
         "required": ["execution_state", "material_claims"],
         "properties": {
+          "material_claims": {
+            "items": {"required": ["bound_fields"]}
+          },
           "evidence": {
             "items": {"required": ["id", "source", "type", "date_checked", "notes", "state"]}
           }

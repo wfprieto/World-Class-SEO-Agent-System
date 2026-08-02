@@ -32,17 +32,21 @@ def _source_errors(pack_id: str, sources: object) -> list[str]:
 def _pack_errors(pack_id: str, pack: dict, *, today: date, root: Path) -> list[str]:
     failures: list[str] = []
     freshness_class = str(pack.get("freshness_class", ""))
-    if freshness_class not in WINDOWS:
-        return [f"{pack_id} has invalid freshness_class"]
+    freshness_window = WINDOWS.get(freshness_class)
+    if freshness_window is None:
+        failures.append(f"{pack_id} has invalid freshness_class")
+    verified: date | None = None
     try:
         verified = date.fromisoformat(str(pack["verified_at"]))
     except (KeyError, ValueError):
-        return [f"{pack_id} has invalid verified_at"]
-    if verified > today:
-        return [f"{pack_id} verified_at is in the future"]
-    age = (today - verified).days
-    if age > WINDOWS[freshness_class]:
-        failures.append(f"{pack_id} is stale by freshness policy ({age} days)")
+        failures.append(f"{pack_id} has invalid verified_at")
+    if verified is not None:
+        if verified > today:
+            failures.append(f"{pack_id} verified_at is in the future")
+        elif freshness_window is not None:
+            age = (today - verified).days
+            if age > freshness_window:
+                failures.append(f"{pack_id} is stale by freshness policy ({age} days)")
     if not str(pack.get("owner", "")).strip():
         failures.append(f"{pack_id} requires an owner")
     path = root / str(pack.get("path", ""))
@@ -53,6 +57,42 @@ def _pack_errors(pack_id: str, pack: dict, *, today: date, root: Path) -> list[s
         if len(expected_digest) != 64 or _content_sha256(path) != expected_digest:
             failures.append(f"{pack_id} content digest does not match its pack")
     failures.extend(_source_errors(pack_id, pack.get("primary_sources", [])))
+    return failures
+
+
+def _entry_errors(
+    entries: object,
+    *,
+    packs: dict,
+    known_skills: set[str],
+    root: Path,
+) -> list[str]:
+    if not isinstance(entries, list):
+        return ["reference entries must be a list"]
+    failures: list[str] = []
+    ids = [str(row.get("id", "")) for row in entries if isinstance(row, dict)]
+    if len(ids) != len(set(ids)):
+        failures.append("reference ids must be unique")
+    for row in entries:
+        if not isinstance(row, dict):
+            failures.append("reference entry must be an object")
+            continue
+        ref_id = str(row.get("id", ""))
+        pack_id = str(row.get("pack", ""))
+        if pack_id not in packs:
+            failures.append(f"{ref_id} references unknown pack {pack_id}")
+            continue
+        pack = packs[pack_id]
+        if not isinstance(pack, dict):
+            failures.append(f"{ref_id} references invalid pack {pack_id}")
+            continue
+        path = root / str(pack.get("path", ""))
+        anchor = str(row.get("anchor", ""))
+        if path.is_file() and f'id="{anchor}"' not in path.read_text(encoding="utf-8"):
+            failures.append(f"{ref_id} anchor is missing")
+        unknown = sorted(set(map(str, row.get("affected_skills", []))) - known_skills)
+        if unknown:
+            failures.append(f"{ref_id} references unknown skills {unknown}")
     return failures
 
 
@@ -69,29 +109,22 @@ def validate(*, as_of: date | None = None, root: Path = ROOT) -> list[str]:
         for skill in category.get("skills", [])
     }
     packs = payload.get("packs", {})
+    if not isinstance(packs, dict):
+        return ["reference packs must be an object"]
     for pack_id, pack in packs.items():
+        if not isinstance(pack, dict):
+            failures.append(f"{pack_id} pack must be an object")
+            continue
         failures.extend(_pack_errors(str(pack_id), pack, today=today, root=root))
 
-    entries = payload.get("entries", [])
-    ids = [str(row.get("id", "")) for row in entries if isinstance(row, dict)]
-    if len(ids) != len(set(ids)):
-        failures.append("reference ids must be unique")
-    for row in entries:
-        if not isinstance(row, dict):
-            failures.append("reference entry must be an object")
-            continue
-        ref_id = str(row.get("id", ""))
-        pack_id = str(row.get("pack", ""))
-        if pack_id not in packs:
-            failures.append(f"{ref_id} references unknown pack {pack_id}")
-            continue
-        path = root / str(packs[pack_id]["path"])
-        anchor = str(row.get("anchor", ""))
-        if path.is_file() and f'id="{anchor}"' not in path.read_text(encoding="utf-8"):
-            failures.append(f"{ref_id} anchor is missing")
-        unknown = sorted(set(map(str, row.get("affected_skills", []))) - known_skills)
-        if unknown:
-            failures.append(f"{ref_id} references unknown skills {unknown}")
+    failures.extend(
+        _entry_errors(
+            payload.get("entries", []),
+            packs=packs,
+            known_skills=known_skills,
+            root=root,
+        )
+    )
     return failures
 
 

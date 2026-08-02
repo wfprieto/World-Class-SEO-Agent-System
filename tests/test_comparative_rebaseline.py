@@ -20,11 +20,13 @@ from scripts.inventory_comparator import (
     validate_current_target_commits,
     validate_inventory_freshness,
     validate_parity_ledger,
+    validate_reviewed_scorecard,
     validate_scorecard,
     weighted_score,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+AUTHORITY = load_json(ROOT / "evaluation/comparative/reviewed-source-authority.json")
 
 
 def _registry_fixture(tmp_path: Path) -> Path:
@@ -94,7 +96,7 @@ def test_scorecard_formula_cannot_be_changed_or_miscalculated():
     assert weighted_score(scorecard) == 69.9
     broken = copy.deepcopy(scorecard)
     broken["overall_score"] = 73.0
-    errors = validate_scorecard(broken)
+    errors = validate_scorecard(broken, AUTHORITY)
     assert any("formula produces 69.9" in error for error in errors)
 
 
@@ -104,8 +106,11 @@ def test_score_change_cannot_pass_by_recomputing_arithmetic() -> None:
     broken["categories"][0]["score"] = 8.8
     broken["overall_score"] = weighted_score(broken)
 
-    assert "category scores differ from the reviewed score profile" in validate_scorecard(
-        broken
+    assert any(
+        "reviewed scorecard package" in error
+        for error in validate_reviewed_scorecard(
+            broken, "world-class-baseline.json", AUTHORITY
+        )
     )
 
 
@@ -113,18 +118,26 @@ def test_scorecard_evidence_ids_and_digests_are_bound() -> None:
     scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
     altered = copy.deepcopy(scorecard)
     altered["categories"][0]["evidence"][0]["claim"] = "Substituted claim"
-    assert any("evidence digest mismatch" in error for error in validate_scorecard(altered))
+    assert any(
+        "evidence digest mismatch" in error
+        for error in validate_scorecard(altered, AUTHORITY)
+    )
 
     duplicate = copy.deepcopy(scorecard)
     first = duplicate["categories"][0]["evidence"][0]["id"]
     duplicate["categories"][1]["evidence"][0]["id"] = first
-    assert "evidence ids must be non-empty and unique" in validate_scorecard(duplicate)
+    assert "evidence ids must be non-empty and unique" in validate_scorecard(
+        duplicate, AUTHORITY
+    )
 
 
 def test_scorecard_rejects_non_finite_scores() -> None:
     scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
     scorecard["categories"][0]["score"] = float("nan")
-    assert any("score must be finite" in error for error in validate_scorecard(scorecard))
+    assert any(
+        "score must be finite" in error
+        for error in validate_scorecard(scorecard, AUTHORITY)
+    )
 
 
 def test_documentation_or_stub_maturity_cannot_claim_world_class_score():
@@ -132,8 +145,27 @@ def test_documentation_or_stub_maturity_cannot_claim_world_class_score():
     broken = copy.deepcopy(scorecard)
     broken["categories"][4]["score"] = 9.0
     broken["overall_score"] = weighted_score(broken)
-    errors = validate_scorecard(broken)
+    errors = validate_scorecard(broken, AUTHORITY)
     assert any("exceeds maturity ceiling" in error for error in errors)
+
+
+def test_nonexistent_source_cannot_pass_with_recomputed_row_digest() -> None:
+    scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
+    broken = copy.deepcopy(scorecard)
+    evidence = broken["categories"][0]["evidence"][0]
+    evidence["source"] = "does/not/exist.md"
+    # A caller cannot authorize a fabricated source by hashing row prose alone.
+    evidence["sha256"] = "0" * 64
+
+    assert any(
+        "not in the reviewed authority" in error
+        for error in validate_scorecard(broken, AUTHORITY)
+    )
+
+
+def test_scorecard_validation_requires_reviewed_source_authority() -> None:
+    scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
+    assert validate_scorecard(scorecard) == ["reviewed source authority is required"]
 
 
 def test_every_open_capability_has_owner_pr_and_acceptance_criteria():

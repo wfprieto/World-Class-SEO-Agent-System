@@ -26,6 +26,7 @@ scoring = importlib.import_module(
     "scripts.comparative_scoring" if __package__ else "comparative_scoring"
 )
 validate_scorecard = scoring.validate_scorecard
+validate_reviewed_scorecard = scoring.validate_reviewed_scorecard
 weighted_score = scoring.weighted_score
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -266,11 +267,22 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
     comparative = root / "evaluation" / "comparative"
     world = load_json(comparative / "world-class-baseline.json")
     claude = load_json(comparative / "claude-seo-baseline.json")
+    authority = load_json(comparative / "reviewed-source-authority.json")
     parity = load_json(comparative / "capability-parity.json")
     readiness = load_json(comparative / "final-release-readiness.json")
     errors = [
-        *[f"world-class: {item}" for item in validate_scorecard(world)],
-        *[f"claude-seo: {item}" for item in validate_scorecard(claude)],
+        *[
+            f"world-class: {item}"
+            for item in validate_reviewed_scorecard(
+                world, "world-class-baseline.json", authority
+            )
+        ],
+        *[
+            f"claude-seo: {item}"
+            for item in validate_reviewed_scorecard(
+                claude, "claude-seo-baseline.json", authority
+            )
+        ],
         *[f"parity: {item}" for item in validate_parity_ledger(parity)],
         *[
             f"freshness: {item}"
