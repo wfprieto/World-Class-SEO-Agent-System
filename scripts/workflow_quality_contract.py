@@ -14,6 +14,8 @@ DANGEROUS_ENV_EXACT = {
     "BASH_ENV",
     "COMSPEC",
     "ENV",
+    "GITHUB_ENV",
+    "GITHUB_PATH",
     "IFS",
     "LD_PRELOAD",
     "NODE_OPTIONS",
@@ -24,6 +26,9 @@ DANGEROUS_ENV_EXACT = {
     "VIRTUAL_ENV",
 }
 DANGEROUS_ENV_PREFIXES = ("COVERAGE_", "DYLD_", "PIP_", "PYTEST_", "PYTHON")
+APPROVED_RUNNERS = {"ubuntu-latest", "windows-latest"}
+MATRIX_RUNNER = "${{ matrix.os }}"
+SOURCE_GATE_PREFIX = "python scripts/validate_source_integrity.py --expected-sha "
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -81,6 +86,99 @@ def _dangerous_env_keys(owner: dict[str, Any]) -> list[str]:
         ):
             dangerous.append(str(key))
     return sorted(dangerous, key=str.casefold)
+
+
+def _dangerous_container_env_keys(job: dict[str, Any]) -> list[str]:
+    container = job.get("container", {})
+    return _dangerous_env_keys(container) if isinstance(container, dict) else []
+
+
+def _source_gate_command(expected_ref: str) -> str:
+    return SOURCE_GATE_PREFIX + expected_ref
+
+
+def _is_source_gate(step: dict[str, Any], expected_ref: str) -> bool:
+    return set(step) <= {"name", "run"} and step.get("run") == _source_gate_command(
+        expected_ref
+    )
+
+
+def _approved_runner(job: dict[str, Any]) -> bool:
+    runner = job.get("runs-on")
+    if isinstance(runner, str) and runner in APPROVED_RUNNERS:
+        return True
+    if runner != MATRIX_RUNNER:
+        return False
+    strategy = job.get("strategy", {})
+    matrix = strategy.get("matrix", {}) if isinstance(strategy, dict) else {}
+    operating_systems = matrix.get("os") if isinstance(matrix, dict) else None
+    return operating_systems == ["windows-latest", "ubuntu-latest"]
+
+
+def _job_source_profile_errors(job: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not _approved_runner(job):
+        errors.append("checkout jobs must use an approved GitHub-hosted runner")
+    if "container" in job or "services" in job:
+        errors.append("checkout jobs must not use containers or services")
+    dangerous_env = _dangerous_env_keys(job) + _dangerous_container_env_keys(job)
+    if dangerous_env:
+        errors.append(
+            "checkout jobs must not inherit execution-altering environment variables: "
+            + ", ".join(dangerous_env)
+        )
+    return errors
+
+
+def _is_evidence_boundary(step: dict[str, Any]) -> bool:
+    action = step.get("uses")
+    return isinstance(step.get("run"), str) or (
+        isinstance(action, str) and action.casefold().startswith("actions/attest@")
+    )
+
+
+def _poisons_command_channel(step: dict[str, Any]) -> bool:
+    command = step.get("run")
+    normalized = command.casefold() if isinstance(command, str) else ""
+    return "github_env" in normalized or "github_path" in normalized
+
+
+def _replaces_candidate_source(step: dict[str, Any]) -> bool:
+    command = step.get("run")
+    normalized = command.casefold() if isinstance(command, str) else ""
+    return "git revert --no-commit" in normalized or "scripts/rehearse_phase_rollback.py" in normalized
+
+
+def _ordered_source_errors(steps: list[dict[str, Any]], expected_ref: str) -> list[str]:
+    errors: list[str] = []
+    source_replaced = False
+    for index, step in enumerate(steps):
+        if _poisons_command_channel(step):
+            errors.append("workflow commands must not poison GITHUB_ENV or GITHUB_PATH")
+        previous_is_gate = index > 0 and _is_source_gate(steps[index - 1], expected_ref)
+        gate = _is_source_gate(step, expected_ref)
+        if _is_evidence_boundary(step) and not gate and not source_replaced and not previous_is_gate:
+            errors.append(
+                "every repository command must immediately follow the exact source-integrity gate"
+            )
+        source_replaced = source_replaced or _replaces_candidate_source(step)
+    return errors
+
+
+def _source_integrity_errors(jobs: list[dict[str, Any]], expected_ref: str) -> list[str]:
+    errors: list[str] = []
+    for job in jobs:
+        steps = _steps(job)
+        if not any(_is_checkout(step) for step in steps):
+            continue
+        errors += _job_source_profile_errors(job)
+        errors += _ordered_source_errors(steps, expected_ref)
+    return errors
+
+
+def _is_checkout(step: dict[str, Any]) -> bool:
+    action = step.get("uses")
+    return isinstance(action, str) and action.casefold().startswith("actions/checkout@")
 
 
 def _checkout_step_errors(step: dict[str, Any], expected_ref: str) -> list[str]:
@@ -166,12 +264,15 @@ def _quality_step_errors(
     if coverage_at and _has_run_defaults(jobs[coverage_at[0][0]]):
         errors.append("CI quality job must not inherit shell or working-directory defaults")
     if coverage_at:
-        dangerous_env = _dangerous_env_keys(jobs[coverage_at[0][0]])
+        quality_job = jobs[coverage_at[0][0]]
+        dangerous_env = _dangerous_env_keys(quality_job)
         if dangerous_env:
             errors.append(
                 "CI quality job must not inherit execution-altering environment variables: "
                 + ", ".join(dangerous_env)
             )
+        if "container" in quality_job:
+            errors.append("CI quality job must not use a container")
     return errors
 
 
@@ -189,9 +290,11 @@ def workflow_errors(
     risk = "python scripts/validate_risk_coverage.py outputs/coverage.json"
     jobs, errors = _jobs(workflow)
     errors += _checkout_errors(jobs, CANDIDATE_REF)
+    errors += _source_integrity_errors(jobs, CANDIDATE_REF)
     errors += _quality_step_errors(jobs, coverage, risk)
     if release_workflow is not None:
         release_jobs, release_errors = _jobs(release_workflow)
         errors += release_errors
         errors += _checkout_errors(release_jobs, RELEASE_REF)
+        errors += _source_integrity_errors(release_jobs, RELEASE_REF)
     return errors

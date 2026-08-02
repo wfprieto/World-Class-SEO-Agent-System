@@ -27,33 +27,57 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install validation dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate generated dependency lock
         run: python scripts/validate_dependency_lock.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Compile Python sources
         run: python -m compileall -q .
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate canonical skill convergence
         run: python scripts/validate_canonical_skill_consistency.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate release-version consistency
         run: python scripts/validate_release_version.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate comparative rebaseline and capability ledger
         run: python scripts/inventory_comparator.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate controlled improvement governance
         id: improvement_governance
         continue-on-error: true
         shell: bash
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate owner-controlled remediation program
         run: python scripts/validate_remediation_program.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate architecture and quality ratchets
         run: |
           python scripts/validate_architecture_contract.py
           python scripts/validate_quality_ratchets.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate repository governance contract
         run: python scripts/validate_repository_governance.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate pytest temporary-root isolation
         run: python scripts/validate_pytest_temp_isolation.py
       - name: Upload improvement governance result
@@ -63,9 +87,13 @@ jobs:
           name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
           path: improvement-governance.json
           if-no-files-found: error
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Enforce controlled improvement governance
         if: steps.improvement_governance.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate generated operator references
         run: |
           seoctl --registry-check
@@ -77,6 +105,8 @@ jobs:
           python scripts/validate_seo_claims.py
           python scripts/validate_product_claims.py
           python scripts/validate_product_proof_program.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run deterministic product-proof fixture
         shell: bash
         run: |
@@ -84,13 +114,21 @@ jobs:
           seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/product-proof-fixture --max-urls 20
           test -s outputs/product-proof-fixture/run-manifest.json
           test -s outputs/product-proof-fixture/executive-summary.md
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate legacy repository contracts
         shell: pwsh
         run: ./scripts/validate-repository.ps1
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate example outputs against schemas
         run: python scripts/validate_schema_examples.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run semantic and runtime test suite
         id: pytest
         continue-on-error: true
@@ -102,6 +140,8 @@ jobs:
           name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
           path: pytest-results.xml
           if-no-files-found: error
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Enforce pytest result
         if: steps.pytest.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
@@ -118,13 +158,19 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install provider-validation dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Authenticate remediation CI receipts
         run: python scripts/validate_remediation_program.py
         env:
           GITHUB_TOKEN: ${{ github.token }}
           WCSEO_AUTHENTICATE_CI_RECEIPTS: "true"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Authenticate live GitHub governance controls
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: python scripts/capture_github_controls.py --ci-observable
@@ -156,19 +202,33 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install quality dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate architecture boundaries
         run: python scripts/validate_architecture_contract.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate quality debt ratchets
         run: python scripts/validate_quality_ratchets.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Lint canonical P3 profile
         run: ruff check runtime adapters integrations seoctl scripts
         continue-on-error: true # Exact legacy fingerprints are enforced by the ratchet above.
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run complete static type gate
         run: mypy runtime seoctl integrations adapters
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Type-check security and release scripts
         run: >-
           mypy scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py
@@ -181,26 +241,42 @@ jobs:
           scripts/validate_pytest_temp_isolation.py
           scripts/generate_capability_evidence_registry.py scripts/validate_product_contract.py
           scripts/validate_architecture_contract.py scripts/validate_quality_ratchets.py
-          scripts/workflow_quality_contract.py
+          scripts/workflow_quality_contract.py scripts/validate_source_integrity.py
           --ignore-missing-imports --check-untyped-defs
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run security mutation probes
         run: python scripts/run_security_mutation_checks.py
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Prepare quality outputs
         run: mkdir -p outputs
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run coverage gate
         run: pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Validate critical coverage
         run: python scripts/validate_risk_coverage.py outputs/coverage.json
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Audit declared Python dependencies
         run: pip-audit -r requirements-dev.txt --desc off
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Generate and validate release evidence
         run: |
           python scripts/generate_sbom.py --out outputs/sbom.cdx.json
           python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
           python scripts/validate_release_artifacts.py --manifest outputs/release-manifest.json --sbom outputs/sbom.cdx.json
           python scripts/run_performance_benchmarks.py --iterations 20 --out outputs/performance.json
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Build distributions
         run: python -m build
       - name: Upload quality and release evidence
@@ -233,6 +309,8 @@ jobs:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: quality-security-release
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Verify isolated wheel and packaged product assets
         shell: pwsh
         run: |
@@ -253,8 +331,12 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install baseline validation dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Rehearse exact-head Phase 0 rollback
         shell: bash
         run: |
@@ -293,6 +375,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Prove exact source integrity
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Rehearse exact-head current-phase rollback
         run: python scripts/rehearse_phase_rollback.py --receipt phase-rollback-receipt.json
       - name: Install baseline validation dependencies

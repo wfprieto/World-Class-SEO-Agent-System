@@ -338,6 +338,39 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
     )
     for mutated in mutations:
         assert _workflow_errors(workflow, 78.0, mutated)
+    gate = (
+        "      - name: Prove exact source integrity\n"
+        "        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}\n"
+    )
+    assert any(
+        "immediately follow" in error
+        for error in _workflow_errors(workflow, 78.0, release.replace(gate, "", 1))
+    )
+    poisoned = release.replace(
+        gate,
+        gate
+        + "      - name: Poison release PATH\n"
+        + "        run: echo '/attacker/bin' >> $env:GITHUB_PATH\n",
+        1,
+    )
+    assert any(
+        "must not poison" in error
+        for error in _workflow_errors(workflow, 78.0, poisoned)
+    )
+    containerized = release.replace(
+        "  release:\n    runs-on: ubuntu-latest",
+        "  release:\n    container: python:3.13\n    runs-on: ubuntu-latest",
+        1,
+    )
+    assert any(
+        "containers or services" in error
+        for error in _workflow_errors(workflow, 78.0, containerized)
+    )
+    self_hosted = release.replace("runs-on: ubuntu-latest", "runs-on: self-hosted", 1)
+    assert any(
+        "approved GitHub-hosted runner" in error
+        for error in _workflow_errors(workflow, 78.0, self_hosted)
+    )
 
 
 def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
@@ -357,6 +390,89 @@ def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
         1,
     )
     assert _workflow_errors(unrelated_job_env, 78.0) == []
+
+
+def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    for key in ("github_env", "GitHub_Path", "Path"):
+        poisoned = f"env:\n  {key}: attacker-controlled\n\n" + workflow
+        assert _workflow_errors(poisoned, 78.0)
+
+    gate = (
+        "      - name: Prove exact source integrity\n"
+        "        run: python scripts/validate_source_integrity.py --expected-sha "
+        "${{ github.event.pull_request.head.sha || github.sha }}\n"
+    )
+    poisoned_command = gate + (
+        "      - name: Poison later commands\n"
+        "        run: echo 'PYTEST_ADDOPTS=--ignore=tests/test_architecture_contract.py' >> $github_env\n"
+    )
+    mutated = workflow.replace(gate, poisoned_command, 1)
+    assert any("must not poison" in error for error in _workflow_errors(mutated, 78.0))
+
+    source_edit = gate + (
+        "      - name: Alter tracked source\n"
+        "        run: echo '# drift' >> scripts/validate_architecture_contract.py\n"
+    )
+    mutated = workflow.replace(gate, source_edit, 1)
+    assert any("immediately follow" in error for error in _workflow_errors(mutated, 78.0))
+
+    quality_container = workflow.replace(
+        "  quality_security_release:\n    needs: validate",
+        "  quality_security_release:\n    container:\n      image: python:3.13\n      env:\n        PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n    needs: validate",
+        1,
+    )
+    errors = _workflow_errors(quality_container, 78.0)
+    assert any("containers or services" in error for error in errors)
+    assert any("PYTEST_ADDOPTS" in error for error in errors)
+    services = workflow.replace(
+        "  quality_security_release:\n    needs: validate",
+        "  quality_security_release:\n    services:\n      helper:\n        image: attacker/image\n    needs: validate",
+        1,
+    )
+    assert any("containers or services" in error for error in _workflow_errors(services, 78.0))
+    self_hosted = workflow.replace(
+        "  quality_security_release:\n    needs: validate\n    runs-on: ubuntu-latest",
+        "  quality_security_release:\n    needs: validate\n    runs-on: [self-hosted, linux]",
+        1,
+    )
+    assert any(
+        "approved GitHub-hosted runner" in error
+        for error in _workflow_errors(self_hosted, 78.0)
+    )
+    unbounded_matrix = workflow.replace(
+        "os: [windows-latest, ubuntu-latest]",
+        "os: [windows-latest, ubuntu-latest, self-hosted]",
+        1,
+    )
+    assert any(
+        "approved GitHub-hosted runner" in error
+        for error in _workflow_errors(unbounded_matrix, 78.0)
+    )
+    harmless_metadata = workflow.replace(
+        "  provider_authentication:\n",
+        "  provider_authentication:\n    timeout-minutes: 15\n",
+        1,
+    )
+    assert _workflow_errors(harmless_metadata, 78.0) == []
+
+
+def test_every_repository_command_requires_fresh_adjacent_source_proof() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    gate = (
+        "      - name: Prove exact source integrity\n"
+        "        run: python scripts/validate_source_integrity.py --expected-sha "
+        "${{ github.event.pull_request.head.sha || github.sha }}\n"
+    )
+    removed = workflow.replace(gate, "", 1)
+    assert any("immediately follow" in error for error in _workflow_errors(removed, 78.0))
+    stale = workflow.replace(
+        gate,
+        gate
+        + "      - uses: actions/setup-node@8f4b1789f2552f8ff68f0f4206a5fc1f92b3f514\n",
+        1,
+    )
+    assert any("immediately follow" in error for error in _workflow_errors(stale, 78.0))
 
 
 def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:
