@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+import json
+import subprocess
+from pathlib import Path
+
+from scripts.rehearse_phase_rollback import rehearse
+
+
+def _git(root: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
+
+
+def test_rehearsal_preserves_candidate_and_restores_clean_baseline(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    (root / "baseline.txt").write_text("trusted baseline\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(["git", "commit", "--quiet", "-m", "baseline"], cwd=root, check=True)
+    baseline = _git(root, "rev-parse", "HEAD")
+    baseline_tree = _git(root, "rev-parse", f"{baseline}^{{tree}}")
+
+    evidence = root / "evaluation/remediation"
+    evidence.mkdir(parents=True)
+    program = {
+        "phases": [
+            {
+                "id": "P1",
+                "status": "IN_PROGRESS",
+                "rollback_baseline_commit": baseline,
+            }
+        ]
+    }
+    rollback = {
+        "baseline_commit": baseline,
+        "expected_baseline_tree": baseline_tree,
+    }
+    (evidence / "owner-controlled-remediation-program.json").write_text(
+        json.dumps(program), encoding="utf-8"
+    )
+    (evidence / "phase1-rollback-evidence.json").write_text(
+        json.dumps(rollback), encoding="utf-8"
+    )
+    (root / "later-phase.txt").write_text("must be reverted\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(["git", "commit", "--quiet", "-m", "candidate"], cwd=root, check=True)
+    candidate = _git(root, "rev-parse", "HEAD")
+
+    receipt_path = root / "rollback-receipt.json"
+    receipt = rehearse(root, receipt_path)
+
+    assert receipt["candidate_commit"] == candidate
+    assert receipt["baseline_commit"] == baseline
+    assert receipt["post_revert_tree"] == baseline_tree
+    assert _git(root, "rev-parse", "HEAD") == baseline
+    assert _git(root, "write-tree") == baseline_tree
+    assert subprocess.run(["git", "diff", "--quiet"], cwd=root).returncode == 0
+    assert subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root).returncode == 0
+    assert not (root / "later-phase.txt").exists()
