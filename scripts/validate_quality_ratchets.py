@@ -199,7 +199,11 @@ def _repository_setting_errors(root: Path, contract: dict[str, Any]) -> list[str
     if configured_rules != RUFF_RULES:
         errors.append("pyproject Ruff profile must equal the canonical P3 rule profile")
     mypy = pyproject.get("tool", {}).get("mypy", {})
-    if mypy.get("follow_imports") != "normal" or mypy.get("check_untyped_defs") is not True:
+    if (
+        mypy.get("follow_imports") != "normal"
+        or mypy.get("explicit_package_bases") is not True
+        or mypy.get("check_untyped_defs") is not True
+    ):
         errors.append("mypy must analyze imported bodies and untyped function bodies")
     coverage = contract["coverage"]
     total_floor = float(pyproject["tool"]["coverage"]["report"]["fail_under"])

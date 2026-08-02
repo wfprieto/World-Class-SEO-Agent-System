@@ -9,6 +9,7 @@ import re
 import tomllib
 import uuid
 from pathlib import Path
+from typing import Any
 
 from packaging.requirements import Requirement
 
@@ -54,7 +55,7 @@ def build_sbom(root: Path = ROOT) -> dict:
         version = pins.get(_normalized(name))
         if optional_group is None and version is None:
             raise ValueError(f"required dependency is not resolved in requirements-dev.txt: {name}")
-        component = {
+        component: dict[str, Any] = {
             "type": "library",
             "name": name,
             "purl": f"pkg:pypi/{name.lower()}" + (f"@{version}" if version else ""),
