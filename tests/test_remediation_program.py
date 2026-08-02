@@ -16,6 +16,7 @@ from scripts.validate_remediation_program import (
     _closure_delta_errors,
     _evidence_errors,
     _rollback_evidence_errors,
+    _validate_candidate_complete_phase,
     _validate_complete_phase,
     validate,
 )
@@ -24,6 +25,25 @@ from scripts.validate_pytest_temp_isolation import validate as validate_temp_iso
 
 def _program() -> dict:
     return json.loads(PROGRAM_PATH.read_text(encoding="utf-8"))
+
+
+def test_frozen_in_progress_package_runs_completion_preflight() -> None:
+    payload = _program()
+    phase = next(item for item in payload["phases"] if item["id"] == "P1")
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["review"]["evidence_package_hash"]
+    assert _validate_candidate_complete_phase(phase, payload, ROOT) == []
+
+    mutated = copy.deepcopy(payload)
+    mutated_phase = next(item for item in mutated["phases"] if item["id"] == "P1")
+    for criterion in mutated_phase["acceptance_criteria"]:
+        criterion["evidence_refs"] = [
+            evidence
+            for evidence in criterion["evidence_refs"]
+            if evidence["class"] != "AUTOMATED"
+        ]
+    errors = _validate_candidate_complete_phase(mutated_phase, mutated, ROOT)
+    assert any("evidence class AUTOMATED has no structured record" in error for error in errors)
 
 
 def _write_fixture(tmp_path: Path, payload: dict) -> Path:

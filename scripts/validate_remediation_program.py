@@ -7,6 +7,7 @@ learning guardrail. It never edits source, advances a phase, or merges work.
 
 from __future__ import annotations
 
+import copy
 import json
 import hashlib
 import os
@@ -737,6 +738,37 @@ def _validate_complete_phase(
     return errors
 
 
+def _validate_candidate_complete_phase(
+    phase: dict[str, Any],
+    program: dict[str, Any],
+    root: Path,
+    *,
+    authenticate_ci: bool = False,
+) -> list[str]:
+    """Run every non-closure COMPLETE invariant before a package is reviewed."""
+    phase_id = str(phase["id"])
+    candidate = copy.deepcopy(phase)
+    expected_lifecycle_errors = {
+        f"{phase_id} cannot be COMPLETE: review_snapshot_commit is missing",
+        f"{phase_id} cannot be COMPLETE: frozen_package_commit is missing",
+        f"{phase_id} cannot be COMPLETE: package certification is missing",
+        f"{phase_id} requires one canonical verdict from each independent reviewer role",
+        f"{phase_id} requires two APPROVE_GREAT verdicts",
+        f"{phase_id} requires distinct reviewer identities and contexts",
+    }
+    errors = _validate_complete_phase(
+        candidate,
+        program,
+        root,
+        authenticate_ci=authenticate_ci,
+    )
+    return [
+        f"{phase_id} candidate-complete preflight: {error}"
+        for error in errors
+        if error not in expected_lifecycle_errors
+    ]
+
+
 def _closure_delta_errors(
     program: dict[str, Any], phase: dict[str, Any], root: Path, snapshot_commit: str
 ) -> list[str]:
@@ -877,8 +909,37 @@ def validate(root: Path = ROOT, *, authenticate_ci: bool = False) -> list[str]:
     ]
 
 
+def validate_current_candidate_complete(
+    root: Path = ROOT, *, authenticate_ci: bool = False
+) -> list[str]:
+    """Preflight the canonical frozen current phase without requiring closure metadata."""
+    try:
+        program = _load_object(root / PROGRAM_PATH.relative_to(ROOT))
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return [str(exc)]
+    current_phase = str(program.get("current_phase", ""))
+    phase = next(
+        (item for item in program.get("phases", []) if item.get("id") == current_phase),
+        None,
+    )
+    if not phase or phase.get("status") != "IN_PROGRESS":
+        return []
+    if not phase.get("review", {}).get("evidence_package_hash"):
+        return []
+    return _validate_candidate_complete_phase(
+        phase,
+        program,
+        root,
+        authenticate_ci=authenticate_ci,
+    )
+
+
 def main() -> int:
-    errors = validate(authenticate_ci=os.environ.get("GITHUB_ACTIONS", "").lower() == "true")
+    authenticate_ci = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    errors = [
+        *validate(authenticate_ci=authenticate_ci),
+        *validate_current_candidate_complete(authenticate_ci=authenticate_ci),
+    ]
     payload = {
         "status": "PASS" if not errors else "FAIL",
         "program": str(PROGRAM_PATH.relative_to(ROOT)).replace("\\", "/"),
