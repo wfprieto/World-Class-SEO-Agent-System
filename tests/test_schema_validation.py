@@ -36,6 +36,22 @@ def test_agent_output_schema_rejects_unknown_fields():
     assert any("Additional properties" in error.message for error in errors)
 
 
+def test_agent_output_schema_rejects_empty_or_missing_finding_ids():
+    schema = load_json("schemas/agent-output.schema.json")
+    payload = load_json("examples/full-audit-example/agent-output.json")
+    validator = Draft202012Validator(schema)
+
+    for invalid_id in ("", "   "):
+        mutated = json.loads(json.dumps(payload))
+        mutated["findings"][0]["id"] = invalid_id
+        assert list(validator.iter_errors(mutated))
+
+    missing = json.loads(json.dumps(payload))
+    missing["findings"][0].pop("id")
+    errors = list(validator.iter_errors(missing))
+    assert any("id" in error.message for error in errors)
+
+
 def test_session_state_schema_example_conforms():
     schema = load_json("orchestration/session-state.schema.json")
     example = schema["examples"][0]

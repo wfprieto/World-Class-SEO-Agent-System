@@ -84,6 +84,8 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
             "description": "Stable finding identifier."
           },
           "severity": {

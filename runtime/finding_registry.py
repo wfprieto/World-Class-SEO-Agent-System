@@ -56,6 +56,19 @@ def _finding_key(finding: dict[str, Any]) -> tuple[str, str]:
     return scope, identity
 
 
+def _record_key_text(key: tuple[str, str]) -> str:
+    """Return the stable, unambiguous identity used for registry state joins."""
+    return "::".join(key)
+
+
+def _finding_id(finding: dict[str, Any]) -> tuple[str, str | None]:
+    """Normalize a display identifier while failing closed on missing/blank IDs."""
+    value = finding.get("id")
+    if not isinstance(value, str) or not value.strip():
+        return "", "finding id must be a non-empty string"
+    return value, None
+
+
 def _worse(left: EvidenceState, right: EvidenceState) -> EvidenceState:
     return left if _EVIDENCE_STATE_ORDER[left] >= _EVIDENCE_STATE_ORDER[right] else right
 
@@ -159,7 +172,7 @@ class FindingRecord:
         result["evidence_state"] = self.evidence_state
         result["evidence_issues"] = list(self.evidence_issues)
         result["review_issues"] = list(self.review_issues)
-        result["root_cause_key"] = "::".join(self.key)
+        result["root_cause_key"] = _record_key_text(self.key)
         return result
 
 
@@ -167,6 +180,7 @@ class FindingRecord:
 class _ActionRow:
     agent: str
     finding_id: str
+    record_key: tuple[str, str]
     contract: tuple[str, ActionPolarity] | None
     contract_issue: str | None
     statement: str
@@ -184,7 +198,10 @@ class FindingRegistry:
             key = _finding_key(finding)
             evidence_state, evidence_issues = _evidence_state(output, finding)
             _, action_issue = _action_polarity(finding)
-            finding_id = str(finding.get("id", ""))
+            finding_id, finding_id_issue = _finding_id(finding)
+            review_issues = [
+                issue for issue in (action_issue, finding_id_issue) if issue is not None
+            ]
             if key not in self._records:
                 self._records[key] = FindingRecord(
                     key=key,
@@ -193,7 +210,7 @@ class FindingRegistry:
                     finding_ids=[finding_id] if finding_id else [],
                     evidence_state=evidence_state,
                     evidence_issues=evidence_issues,
-                    review_issues=[action_issue] if action_issue else [],
+                    review_issues=review_issues,
                 )
                 continue
             record = self._records[key]
@@ -212,6 +229,8 @@ class FindingRegistry:
             record.evidence_issues = sorted(set(record.evidence_issues).union(evidence_issues))
             if action_issue:
                 record.review_issues = sorted(set(record.review_issues) | {action_issue})
+            if finding_id_issue:
+                record.review_issues = sorted(set(record.review_issues) | {finding_id_issue})
             current = str(record.finding.get("severity", "Low"))
             incoming = str(finding.get("severity", "Low"))
             if _SEVERITY_ORDER.get(incoming, 0) > _SEVERITY_ORDER.get(current, 0):
@@ -220,27 +239,27 @@ class FindingRegistry:
     def records(self) -> list[dict[str, Any]]:
         return [self._records[key].to_dict() for key in sorted(self._records)]
 
-    def _mark_contradictory(self, finding_ids: set[str]) -> None:
-        for record in self._records.values():
-            if finding_ids.intersection(record.finding_ids):
+    def _mark_contradictory(self, record_keys: set[tuple[str, str]]) -> None:
+        for key, record in self._records.items():
+            if key in record_keys:
                 record.evidence_state = "CONTRADICTORY"
                 record.evidence_issues = sorted(
                     set(record.evidence_issues)
                     | {"specialists supplied contradictory evidence or actions"}
                 )
 
-    def _mark_action_review(self, finding_ids: set[str], issue: str) -> None:
-        for record in self._records.values():
-            if finding_ids.intersection(record.finding_ids):
+    def _mark_action_review(self, record_keys: set[tuple[str, str]], issue: str) -> None:
+        for key, record in self._records.items():
+            if key in record_keys:
                 record.review_issues = sorted(set(record.review_issues) | {issue})
 
     def _reconcile_action_pair(
         self, scope: str, left: _ActionRow, right: _ActionRow
     ) -> dict[str, Any] | None:
-        finding_ids = {left.finding_id, right.finding_id}
+        record_keys = {left.record_key, right.record_key}
         if left.contract_issue or right.contract_issue:
             self._mark_action_review(
-                finding_ids,
+                record_keys,
                 "malformed structured action polarity requires specialist review",
             )
             return None
@@ -249,11 +268,14 @@ class FindingRegistry:
             opposite_polarity = left.contract[1] != right.contract[1]
             if not (same_target and opposite_polarity):
                 return None
-            self._mark_contradictory(finding_ids)
+            self._mark_contradictory(record_keys)
             return {
                 "affected_scope": scope or "unspecified",
                 "agents": [left.agent, right.agent],
                 "finding_ids": [left.finding_id, right.finding_id],
+                "record_keys": [
+                    _record_key_text(key) for key in sorted(record_keys)
+                ],
                 "reason": (
                     "Agents declared opposite action polarities for the same normalized target."
                 ),
@@ -261,7 +283,7 @@ class FindingRegistry:
             }
         if left.agent != right.agent and left.statement != right.statement:
             self._mark_action_review(
-                finding_ids,
+                record_keys,
                 "specialist action compatibility is unproven without action_polarity",
             )
         return None
@@ -276,12 +298,14 @@ class FindingRegistry:
                     continue
                 scope = _norm(finding.get("affected_scope", ""))
                 action, action_issue = _action_polarity(finding)
+                finding_id, finding_id_issue = _finding_id(finding)
                 by_scope.setdefault(scope, []).append(
                     _ActionRow(
                         agent=agent,
-                        finding_id=str(finding.get("id", "")),
+                        finding_id=finding_id,
+                        record_key=_finding_key(finding),
                         contract=action,
-                        contract_issue=action_issue,
+                        contract_issue=action_issue or finding_id_issue,
                         statement=_norm(finding.get("finding", "")),
                     )
                 )
@@ -297,11 +321,11 @@ class FindingRegistry:
         return conflicts
 
     def accept_all_without_conflict(self, conflicts: list[dict[str, Any]]) -> None:
-        conflicted_ids = {
-            finding_id for conflict in conflicts for finding_id in conflict.get("finding_ids", [])
+        conflicted_record_keys = {
+            record_key for conflict in conflicts for record_key in conflict.get("record_keys", [])
         }
-        for record in self._records.values():
-            if set(record.finding_ids).intersection(conflicted_ids):
+        for key, record in self._records.items():
+            if _record_key_text(key) in conflicted_record_keys:
                 record.state = "CONFLICTED"
                 record.evidence_state = "CONTRADICTORY"
             else:

@@ -395,6 +395,96 @@ def test_finding_registry_marks_contradictory_specialist_evidence() -> None:
     assert all(item["state"] == "CONFLICTED" for item in records)
 
 
+def test_finding_registry_fails_closed_on_empty_or_missing_finding_ids() -> None:
+    for invalid_id in (None, "", "   "):
+        registry = FindingRegistry()
+        output = _finding_output(
+            evidence=[{"id": "crawl-1", "source": "crawl.json", "state": "CURRENT"}],
+            refs=["crawl-1"],
+        )
+        if invalid_id is None:
+            output["findings"][0].pop("id")  # type: ignore[index]
+        else:
+            output["findings"][0]["id"] = invalid_id  # type: ignore[index]
+        registry.add_output(output)
+        registry.accept_all_without_conflict([])
+        record = registry.records()[0]
+        assert record["state"] == "EVIDENCE_REVIEW"
+        assert "finding id must be a non-empty string" in record["review_issues"]
+
+
+def test_finding_registry_uses_record_identity_when_agents_reuse_finding_id() -> None:
+    registry = FindingRegistry()
+    allow = _finding_output(
+        evidence=[{"id": "allow", "source": "allow.json", "state": "CURRENT"}],
+        refs=["allow"],
+        finding="Enable crawling for product pages.",
+    )
+    allow["findings"][0]["id"] = "reused-1"  # type: ignore[index]
+    allow["findings"][0]["action_polarity"] = {  # type: ignore[index]
+        "target": "product page crawling",
+        "polarity": "ENABLE",
+    }
+    block = _finding_output(
+        evidence=[{"id": "block", "source": "block.json", "state": "CURRENT"}],
+        refs=["block"],
+        finding="Disable crawling for product pages.",
+    )
+    block["agent"] = "SEO Compliance & Legal Agent"
+    block["findings"][0]["id"] = "reused-1"  # type: ignore[index]
+    block["findings"][0]["action_polarity"] = {  # type: ignore[index]
+        "target": "product-page crawling",
+        "polarity": "DISABLE",
+    }
+
+    registry.add_output(allow)
+    registry.add_output(block)
+    conflicts = registry.conflicts([allow, block])
+    registry.accept_all_without_conflict(conflicts)
+
+    assert len(conflicts) == 1
+    assert len(conflicts[0]["record_keys"]) == 2
+    assert all(record["state"] == "CONFLICTED" for record in registry.records())
+
+
+def test_reused_finding_id_does_not_contaminate_unrelated_scope() -> None:
+    registry = FindingRegistry()
+    allow = _finding_output(
+        evidence=[{"id": "allow", "source": "allow.json", "state": "CURRENT"}],
+        refs=["allow"],
+        finding="Enable crawling for product pages.",
+    )
+    allow["findings"][0]["id"] = "reused-1"  # type: ignore[index]
+    allow["findings"][0]["action_polarity"] = {  # type: ignore[index]
+        "target": "product page crawling",
+        "polarity": "ENABLE",
+    }
+    block = copy.deepcopy(allow)
+    block["agent"] = "SEO Compliance & Legal Agent"
+    block["findings"][0]["finding"] = "Disable crawling for product pages."  # type: ignore[index]
+    block["findings"][0]["action_polarity"]["polarity"] = "DISABLE"  # type: ignore[index]
+    unrelated = _finding_output(
+        evidence=[{"id": "schema", "source": "schema.json", "state": "CURRENT"}],
+        refs=["schema"],
+        finding="Schema omits the product identifier.",
+    )
+    unrelated["agent"] = "SEO Structured Data Agent"
+    unrelated["findings"][0]["id"] = "reused-1"  # type: ignore[index]
+    unrelated["findings"][0]["affected_scope"] = "article template"  # type: ignore[index]
+
+    for output in (allow, block, unrelated):
+        registry.add_output(output)
+    conflicts = registry.conflicts([allow, block, unrelated])
+    registry.accept_all_without_conflict(conflicts)
+
+    records = registry.records()
+    unrelated_record = next(
+        record for record in records if record["affected_scope"] == "article template"
+    )
+    assert unrelated_record["state"] == "ACCEPTED"
+    assert sum(record["state"] == "CONFLICTED" for record in records) == 2
+
+
 def test_finding_registry_structured_polarity_catches_crawling_action_variants() -> None:
     for positive, negative in (("Enable", "Disable"), ("Permit", "Prevent")):
         registry = FindingRegistry()
