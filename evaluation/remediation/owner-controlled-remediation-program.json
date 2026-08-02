@@ -845,12 +845,17 @@
       "id": "P7",
       "title": "Reports documentation onboarding and knowledge",
       "status": "IN_PROGRESS",
-      "rollback_baseline_commit": null,
-      "verified_commit": null,
+      "rollback_baseline_commit": "a5b486e12cfd169bc94ba3cc73c007f24e3d9d26",
+      "verified_commit": "b404e2f4ca0dc97ee271819c29fd84517537fa9e",
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
-      "rollback_evidence_sha256": null,
-      "authority_evidence": [],
+      "rollback_evidence_sha256": "3a19ab6ba3d2d2de1c4962cc5e18d696ef8922caa1739ecc426bfd832772031e",
+      "authority_evidence": [
+        {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"Reviewer identities, roles, and independence constraints are bound to immutable source."},
+        {"class":"SOURCE","ref":"schemas/reviewer-verdict.schema.json","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c","environment":"CI","status":"PASS","assertion":"Reviewer verdict structure and evidence-hash binding are immutable."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"Senior ScrumMaster review authority is bound to immutable source."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"VP Engineering review authority is bound to immutable source."}
+      ],
       "package_certification": [],
       "owner": "Documentation and knowledge owner",
       "approver": "Repository maintainer",
@@ -876,15 +881,28 @@
                   "id": "P7-AC-01",
                   "description": "Material report values and scores are reproducible and evidence-bound.",
                   "horizon": "IMMEDIATE",
-                  "status": "NOT_RUN",
-                  "evidence_refs": []
+                  "status": "PASS",
+                  "evidence_refs": [
+                    {"class":"SOURCE","ref":"runtime/evidence_binding.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"4bcc75ab475639d2e188ab5e5ab2aa916ff3df2b3dea5c22b31169e56b27d9b4","environment":"CI","status":"PASS","assertion":"Current structured outputs require explicit execution state, material claims, unique evidence identity, known references, and evidence-state consistency."},
+                    {"class":"SOURCE","ref":"scripts/comparative_scoring.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"00ac0d332ea04ed5cf19fdeb528858d0eba1c2d6feb82fa7e8fabb8ba968c48b","environment":"CI","status":"PASS","assertion":"The versioned score model binds category identity, weights, reviewed scores, maturity ceilings, and evidence digests."},
+                    {"class":"SOURCE","ref":"integrations/product_proof/service.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"57c8b2d2f688cd22cfe6e78c336cd9cb05318e13294d8a1261e0f272f8be447c","environment":"CI","status":"PASS","assertion":"Deterministic rule attribution is explicitly separated from agent execution and reports expose FIXTURE or LIVE_BOUNDED evidence mode."},
+                    {"class":"AUTOMATED","ref":"tests/test_evidence_binding_hardening.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"cb9e251eb8a7d45e1a5eb59570dcb6b59872213fd9daeb2b647e59a8e77b8a2c","environment":"CI","status":"PASS","assertion":"Fixed mutations reject missing contracts, duplicate or unknown evidence, state inflation, and unbound rendered claims."},
+                    {"class":"AUTOMATED","ref":"tests/test_product_proof_technical_audit.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"8b14be4cda76027b64a04944cea32423fa85a55f8d290d753ff2c81da3cd7fa6","environment":"CI","status":"PASS","assertion":"Fixed counterexamples require zero claimed agent executions without execution evidence and visible fixture evidence mode in both reports."},
+                    {"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30771948710","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":null,"environment":"CI","status":"PASS","assertion":"The exact corrected Phase 7 implementation passed the canonical repository workflow.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}
+                  ]
             },
             {
                   "id": "P7-AC-02",
                   "description": "Onboarding, support, counts, commands, matrices, and knowledge freshness are validator-backed.",
                   "horizon": "IMMEDIATE",
-                  "status": "NOT_RUN",
-                  "evidence_refs": []
+                  "status": "PASS",
+                  "evidence_refs": [
+                    {"class":"SOURCE","ref":"seoctl/doctor.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"41cd07334178426d7712b736e589dd518cdfc485f59271fff1fd4c419e55bf73","environment":"CI","status":"PASS","assertion":"The deterministic read-only doctor checks supported Python, required assets, command registry, architecture, per-pack provenance, and dependency lock without network or provider authentication."},
+                    {"class":"SOURCE","ref":"knowledge/reference-registry.json","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"55fb984de8aed0f7ad87a14e89d3ab856e96f0fc374d3199fca2ed836bb5c9d4","environment":"CI","status":"PASS","assertion":"Every reference pack independently binds owner, verified date, primary sources, and canonical content digest."},
+                    {"class":"AUTOMATED","ref":"tests/test_reference_provenance.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"c4f623cd53160e25f36c1270994a0577c1156810fe725442fff4570e89b64398","environment":"CI","status":"PASS","assertion":"A global date cannot refresh a stale pack and missing owner, date, or content integrity fails closed."},
+                    {"class":"AUTOMATED","ref":"tests/test_system_doctor.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"d3902d90287185d95345b152693e7153699fe5d18cd80f91d24c92359fd90a08","environment":"CI","status":"PASS","assertion":"The doctor is deterministic, static, read-only, network-free, and rejects unsupported Python."},
+                    {"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30771948710","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":null,"environment":"CI","status":"PASS","assertion":"Generated references, command contracts, schema examples, full tests, and cross-platform certification passed at the exact corrected head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}
+                  ]
             }
       ],
       "required_evidence_classes": [
@@ -893,33 +911,33 @@
             "CI"
       ],
       "evidence_status": {
-            "SOURCE": "NOT_RUN",
-            "AUTOMATED": "NOT_RUN",
-            "CI": "NOT_RUN",
+            "SOURCE": "PASS",
+            "AUTOMATED": "PASS",
+            "CI": "PASS",
             "PROVIDER": "OUT_OF_SCOPE",
             "DEPLOYED": "OUT_OF_SCOPE",
             "OPERATIONAL": "OUT_OF_SCOPE"
       },
       "gates": {
-            "implementation_audit": "NOT_RUN",
-            "focused_tests": "NOT_RUN",
-            "full_certification": "NOT_RUN",
+            "implementation_audit": "PASS",
+            "focused_tests": "PASS",
+            "full_certification": "PASS",
             "security_review": "NOT_APPLICABLE",
-            "documentation": "NOT_RUN",
-            "learning": "NOT_RUN",
-            "unexpected_change_scan": "NOT_RUN"
+            "documentation": "PASS",
+            "learning": "PASS",
+            "unexpected_change_scan": "PASS"
       },
       "gate_evidence": {
-            "implementation_audit": [],
-            "focused_tests": [],
-            "full_certification": [],
+            "implementation_audit": [{"class":"SOURCE","ref":"runtime/evidence_binding.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"4bcc75ab475639d2e188ab5e5ab2aa916ff3df2b3dea5c22b31169e56b27d9b4","environment":"CI","status":"PASS","assertion":"[implementation_audit] Current output, score, report, attribution, doctor, and knowledge contracts fail closed at their static boundaries."}],
+            "focused_tests": [{"class":"AUTOMATED","ref":"tests/test_evidence_binding_hardening.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"cb9e251eb8a7d45e1a5eb59570dcb6b59872213fd9daeb2b647e59a8e77b8a2c","environment":"CI","status":"PASS","assertion":"[focused_tests] Fixed evidence-binding mutations passed."},{"class":"AUTOMATED","ref":"tests/test_product_proof_technical_audit.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"8b14be4cda76027b64a04944cea32423fa85a55f8d290d753ff2c81da3cd7fa6","environment":"CI","status":"PASS","assertion":"[focused_tests] Rule attribution cannot claim agent execution and evidence mode is visible."}],
+            "full_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30771948710","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":null,"environment":"CI","status":"PASS","assertion":"[full_certification] Exact-head matrix, provider, quality, rollback, wheel, and aggregate certification passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}],
             "security_review": [],
-            "documentation": [],
-            "learning": [],
-            "unexpected_change_scan": []
+            "documentation": [{"class":"SOURCE","ref":"README.md","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"ae590f7fc51d61a7edbbbcc8fff2d6bbacca044ffacdfc6df65312d89a86a23d","environment":"CI","status":"PASS","assertion":"[documentation] Onboarding identifies the bounded doctor, flagship artifacts, fixture limitations, and supported Python versions."},{"class":"SOURCE","ref":"docs/COMMANDS.md","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"a1eca9ad933fb38e45801752f557b950bcf2a950426720e0b7ee3d70bfb9ee65","environment":"CI","status":"PASS","assertion":"[documentation] Generated command facts include the doctor and exact effective registry."}],
+            "learning": [{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":"3d912b7376e897735261a55f3f7430a02208198f1e25aaf0222470b69099b2ac","environment":"CI","status":"PASS","assertion":"[learning] Fixed score, digest, category, overlay, and non-finite mutations prevent recurrence."}],
+            "unexpected_change_scan": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30771948710","commit":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] Exact source integrity, full cross-platform tests, quality/security, rollback, wheels, and aggregate certification passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"b404e2f4ca0dc97ee271819c29fd84517537fa9e","conclusion":"success","jobs":["validate","quality_security_release","phase-rollback-certification","repository-certification"]}}]
       },
       "review": {
-            "evidence_package_hash": null,
+            "evidence_package_hash": "a70f1e911374714f2b2268b462ad416eb97e36334b00687a087ce0485c48a440",
             "verdicts": []
       }
 },
@@ -1078,8 +1096,8 @@
       "phase_id": "P7",
       "severity": "HIGH",
       "summary": "Deterministic rule contributions are mislabeled as executed agents and reports obscure fixture evidence mode.",
-      "status": "OPEN",
-      "source_refs": ["integrations/product_proof/service.py", "integrations/product_proof/rules.py", "integrations/product_proof/report.py"],
+      "status": "RESOLVED",
+      "source_refs": ["integrations/product_proof/service.py", "integrations/product_proof/models.py", "integrations/product_proof/report.py", "tests/test_product_proof_technical_audit.py"],
       "remediation": "Version contribution semantics and render evidence mode, ownership, verification, and missing evidence prominently.",
       "acceptance": "No artifact claims agent execution without executor evidence and every report labels FIXTURE or LIVE_BOUNDED."
     },
@@ -1088,8 +1106,8 @@
       "phase_id": "P7",
       "severity": "MEDIUM",
       "summary": "Documentation certification, artifact counts, command authority, and source freshness exceed observed evidence.",
-      "status": "OPEN",
-      "source_refs": ["docs/INSTALL.md", "docs/COMMANDS.md", "README.md", "scripts/validate_reference_freshness.py"],
+      "status": "RESOLVED",
+      "source_refs": ["docs/INSTALL.md", "docs/COMMANDS.md", "README.md", "scripts/validate_reference_freshness.py", "seoctl/doctor.py", "tests/test_reference_provenance.py"],
       "remediation": "Derive claims from immutable evidence and distinguish static metadata validation from live source review.",
       "acceptance": "Docs, artifact inventory, command arguments, and per-source freshness are generated or validator-backed."
     },
