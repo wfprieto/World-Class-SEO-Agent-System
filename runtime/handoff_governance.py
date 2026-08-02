@@ -120,6 +120,7 @@ def reconcile_required_handoffs(
         graph.declared_control_handoffs, by_id, outputs_by_node
     )
     issues.extend(control_issues)
+    issues.extend(_terminal_semantic_invariant_issues(records))
     issues.extend(
         _unexpected_handoffs(records, session_id, expected_ids | declared_ids)
     )
@@ -241,6 +242,23 @@ def _unexpected_handoffs(
         for handoff in records
         if handoff.handoff_id.startswith(f"{session_id}-")
         and handoff.handoff_id not in allowed_ids
+    ]
+
+
+def _terminal_semantic_invariant_issues(
+    records: list[Handoff],
+) -> list[dict[str, str]]:
+    """Reject receipt-valid terminal states that violate resolver semantics."""
+    return [
+        _issue(
+            "EVIDENCE_FREE_ACCEPTANCE",
+            handoff.handoff_id,
+            "ACCEPTED terminal handoffs require at least one evidence reference",
+        )
+        for handoff in records
+        if handoff.status == "CONSUMED"
+        and handoff.resolution == "ACCEPTED"
+        and not handoff.evidence_refs
     ]
 
 

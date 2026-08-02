@@ -8,7 +8,7 @@ from runtime.handoff_governance import (
     reconcile_required_handoffs,
     resolve_handoff_acknowledgements,
 )
-from runtime.handoff_receipts import terminal_receipt_is_valid
+from runtime.handoff_receipts import seal_terminal_handoff, terminal_receipt_is_valid
 from runtime.routing import RouteResult
 from runtime.state import Handoff, SessionState
 from runtime.workflow_graph import WorkflowGraph, WorkflowNode, build_workflow_graph
@@ -427,3 +427,43 @@ def test_declared_control_does_not_exempt_an_extra_current_session_handoff() -> 
         handoffs=[handoff, forged],
     )
     assert "UNEXPECTED_HANDOFF" in _codes(report)
+
+
+def test_resealed_declared_zero_evidence_acceptance_fails_reconciliation() -> None:
+    session = SessionState.create("risk", "Audit", "https://example.com", "generic")
+    session.open_risks.append("Risk")
+    graph = WorkflowGraph(
+        id="declared-risk-resealed",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        "Source Agent", ["SEO Scrummaster Agent"], "workflows/request-routing.md",
+        [], "Review risk.", "Low"
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    assert handoff.evidence_refs == []
+    handoff.consume("scrum-output", "scrum", "ACCEPTED")
+    seal_terminal_handoff(handoff)
+    assert terminal_receipt_is_valid(handoff)
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={"scrum": {"output_id": "scrum-output", "agent": "SEO Scrummaster Agent"}},
+        handoffs=[handoff],
+    )
+    assert report["status"] == "FAIL"
+    assert "EVIDENCE_FREE_ACCEPTANCE" in _codes(report)
+
+
+def test_resealed_dependency_zero_evidence_acceptance_fails_reconciliation() -> None:
+    handoff = _handoff()
+    handoff.evidence_refs = []
+    handoff.consume("receiver-output", "receiver", "ACCEPTED")
+    seal_terminal_handoff(handoff)
+    assert terminal_receipt_is_valid(handoff)
+    report = _audit([handoff])
+    assert report["status"] == "FAIL"
+    assert "EVIDENCE_FREE_ACCEPTANCE" in _codes(report)
