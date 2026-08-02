@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P2",
+  "current_phase": "P3",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -156,11 +156,11 @@
     {
       "id": "P2",
       "title": "Canonical product and capability contract",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "rollback_baseline_commit": "3c262741732bec284819995fb7b59dd65a3aa424",
       "verified_commit": "286276cc91ba118597f89afe64de3a89b20aa16e",
-      "review_snapshot_commit": null,
-      "frozen_package_commit": null,
+      "review_snapshot_commit": "4899b26828a20215bc370f240e69452afef2be26",
+      "frozen_package_commit": "4899b26828a20215bc370f240e69452afef2be26",
       "rollback_evidence_sha256": "41b9556720865408c7531121cedc64f0ddb833980d090e3145e6b4bcd9ee7832",
       "authority_evidence": [
         {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen for Phase 2 review."},
@@ -168,7 +168,7 @@
         {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
         {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
       ],
-      "package_certification": [],
+      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737539883","commit":"4899b26828a20215bc370f240e69452afef2be26","sha256":null,"environment":"CI","status":"PASS","assertion":"The corrected immutable Phase 2 review snapshot passed provider authentication, all six Windows/Linux runtime matrices, 476 tests, quality and security gates, clean wheels, both rollback certifications, and aggregate repository certification.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"4899b26828a20215bc370f240e69452afef2be26","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}],
       "owner": "Product authority",
       "approver": "Repository maintainer",
       "verifier": "Quality owner",
@@ -192,12 +192,15 @@
         "learning":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"[learning] Generated-reference annotations cannot silently collapse the canonical skill inventory."},{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"286276cc91ba118597f89afe64de3a89b20aa16e","sha256":"94e861f46ab13150320c54aac83fc6d51bfd1c086eb7ae9e4408a6a795d4e5b0","environment":"CI","status":"PASS","assertion":"[learning] Historical program blobs use the centralized strict UTF-8 loader, with an em-dash counterexample that rejects Windows legacy-code-page corruption."}],
         "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737167612","commit":"286276cc91ba118597f89afe64de3a89b20aa16e","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] All 476 tests, generated-reference checks, provider checks, quality/security gates, clean installs, exact rollback boundaries, and cross-platform UTF-8 handling passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"286276cc91ba118597f89afe64de3a89b20aa16e","conclusion":"success","jobs":["provider-authentication","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash": "a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f", "verdicts": []}
+      "review": {"evidence_package_hash": "a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f", "verdicts": [
+        {"review_id":"p2-utf8-scrummaster-4899b26","reviewer_id":"senior-scrummaster-3","role":"SENIOR_SCRUMMASTER_3","context_id":"p2-utf8-scrum-independent-20260802","provider":"OpenAI","model":"GPT-5.6 Codex","evidence_package_hash":"a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f","verdict":"APPROVE_GREAT","strongest_objections":["Most individual capabilities remain bounded to registry, fixture, or documented proof; aggregate CI must not be presented as per-capability live verification.","The authority manifest is explicit rather than automatically discovered, so new product surfaces require coordinated registration.","The explanatory product-contract Markdown is validated but not generated from the JSON authority.","Command-owner and participating-skill mismatches are truthfully exposed but remain architecture debt for later phases.","Real-provider latency, worker recovery, deployed SHA, operational telemetry, release maturity, and real-world effectiveness remain unproven and out of P2 scope.","The UTF-8 guardrail protects centralized historical-program loading; future direct Git-blob consumers could reintroduce locale-sensitive decoding."],"evidence_refs":["git:4899b26828a20215bc370f240e69452afef2be26","git:286276cc91ba118597f89afe64de3a89b20aa16e","computed-evidence-package-hash:a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f","candidate-complete-preflight:zero-errors","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737539883","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737167612","local-focused-review:57-passed","FAIL/LEARN-0024..0027@4899b26828a20215bc370f240e69452afef2be26"],"residual_risks":["Capability-level live verification remains absent.","Authority registration and explanatory-document alignment require continued discipline.","Recorded skill-alignment gaps remain for P4/P5.","Future direct Git subprocess consumers could bypass the centralized UTF-8 loader.","GitHub Actions artifacts are retention-limited."],"required_changes":[],"submitted_at":"2026-08-02T07:30:01Z","saw_other_reviewer_verdict":false,"is_builder":false},
+        {"review_id":"p2-vp-utf8-4899b268-20260802","reviewer_id":"vp-engineering","role":"VP_ENGINEERING","context_id":"vp-p2-independent-utf8-4899b268-a81f","provider":"OpenAI","model":"GPT-5","evidence_package_hash":"a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f","verdict":"APPROVE_GREAT","strongest_objections":["The immutable snapshot cannot contain its own snapshot identity, package certification, or verdicts; closure is valid only if the next commit inserts exactly those allowlisted fields.","The capability registry proves registry, source, fixture, or live-capable status—not real-world effectiveness—and no capability is LIVE_VERIFIED.","Rollback is proven for the current linear range but depends on Git history and does not support merge commits.","The centralized loader fixes the demonstrated Windows failure, but future direct subprocess consumers could reintroduce locale-dependent decoding.","claim_language_policy.brand_name_only is descriptive rather than mechanically enforced.","Historical review documents retain dated scores and visible mojibake and must remain bounded historical records."],"evidence_refs":["git:4899b26828a20215bc370f240e69452afef2be26","git:286276cc91ba118597f89afe64de3a89b20aa16e","computed-strict-utf8-sha256:a0f35e04ad0e969934572fbe7b4cbc583b778982d12689975b6f2107ff07e43f","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737539883","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30737167612","artifact:phase-rollback-receipt:8830158387","rollback-receipt:candidate=4899b26828a20215bc370f240e69452afef2be26;commit_count=16;result=PASS","local-focused-regression:57-passed","FAIL/LEARN-0024..0027@4899b26828a20215bc370f240e69452afef2be26"],"residual_risks":["GitHub Actions artifacts are retention-limited.","Closure validation depends on Git history and GitHub authentication and fails closed during provider outages.","Future authoritative surfaces must update the explicit inventory.","Brand-only wording and historical-document presentation are not completely machine-policed.","No deployed, operational, release-maturity, or real-world-effectiveness proof is established."],"required_changes":[],"submitted_at":"2026-08-02T07:30:00Z","saw_other_reviewer_verdict":false,"is_builder":false}
+      ]}
     },
     {
       "id": "P3",
       "title": "Architecture and verification foundation",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "rollback_baseline_commit": null,
       "verified_commit": null,
       "review_snapshot_commit": null,
