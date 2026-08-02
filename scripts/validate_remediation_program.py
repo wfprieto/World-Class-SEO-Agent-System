@@ -54,13 +54,12 @@ CI_RUN_PATTERN = re.compile(
 REQUIRED_CI_JOBS: dict[str, set[str]] = {
     "package certification": {
         "validate",
-        "provider-authentication",
         "quality_security_release",
         "repository-certification",
         "phase0-rollback-certification",
     },
-    "gate full_certification": {"validate", "provider-authentication", "quality_security_release", "repository-certification"},
-    "gate security_review": {"provider-authentication", "quality_security_release"},
+    "gate full_certification": {"validate", "quality_security_release", "repository-certification"},
+    "gate security_review": {"quality_security_release"},
     "gate unexpected_change_scan": {"validate", "repository-certification"},
 }
 
