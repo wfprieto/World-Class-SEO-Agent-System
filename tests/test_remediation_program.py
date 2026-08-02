@@ -27,6 +27,16 @@ def _program() -> dict:
     return json.loads(PROGRAM_PATH.read_text(encoding="utf-8"))
 
 
+def _set_current_phase(payload: dict, phase_id: str) -> None:
+    phase_index = next(
+        index for index, phase in enumerate(payload["phases"]) if phase["id"] == phase_id
+    )
+    payload["current_phase"] = phase_id
+    payload["phases"][phase_index]["status"] = "IN_PROGRESS"
+    for later_phase in payload["phases"][phase_index + 1 :]:
+        later_phase["status"] = "NOT_STARTED"
+
+
 def test_frozen_in_progress_package_runs_completion_preflight() -> None:
     payload = _program()
     phase = next(
@@ -127,8 +137,7 @@ def _closure_payload(payload: dict, snapshot_commit: str) -> dict:
     phase["frozen_package_commit"] = snapshot_commit
     phase["package_certification"] = [{"closure-only": True}]
     phase["review"] = {"evidence_package_hash": "frozen", "verdicts": []}
-    closed["current_phase"] = "P1"
-    closed["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(closed, "P1")
     return closed
 
 
@@ -339,9 +348,9 @@ def test_current_remediation_program_is_valid() -> None:
 
 def test_phase_skipping_is_rejected(tmp_path: Path) -> None:
     payload = _program()
-    payload["current_phase"] = "P2"
+    _set_current_phase(payload, "P2")
     payload["phases"][0]["status"] = "NOT_STARTED"
-    payload["phases"][2]["status"] = "IN_PROGRESS"
+    payload["phases"][1]["status"] = "NOT_STARTED"
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -362,8 +371,7 @@ def test_phase_completion_requires_every_gate_evidence_and_independent_review(
     payload["phases"][0]["evidence_status"]["CI"] = "NOT_RUN"
     payload["phases"][0]["gates"] = {key: "NOT_RUN" for key in payload["phases"][0]["gates"]}
     payload["phases"][0]["review"] = {"evidence_package_hash": None, "verdicts": []}
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -378,8 +386,7 @@ def test_resolved_failure_requires_confirmed_recurrence_guardrail(tmp_path: Path
     payload["failures"] = []
     payload["learning_records"] = []
     _complete_phase(payload, 0)
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
     payload["failures"] = [
         {
             "id": "FAIL-0001",
@@ -400,8 +407,7 @@ def test_confirmed_learning_allows_resolved_failure_to_close(tmp_path: Path) -> 
     payload["failures"] = []
     payload["learning_records"] = []
     _complete_phase(payload, 0)
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
     payload["failures"] = [
         {
             "id": "FAIL-0001",
@@ -459,8 +465,7 @@ def test_reviewer_contexts_must_be_distinct(tmp_path: Path) -> None:
     payload["phases"][0]["review"]["verdicts"][1]["context_id"] = payload["phases"][0]["review"][
         "verdicts"
     ][0]["context_id"]
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -482,8 +487,7 @@ def test_excluded_evidence_classes_cannot_be_promoted(tmp_path: Path) -> None:
     payload = _program()
     _complete_phase(payload, 0)
     payload["phases"][0]["evidence_status"]["PROVIDER"] = "PASS"
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -496,8 +500,7 @@ def test_open_audit_finding_blocks_phase_completion(tmp_path: Path) -> None:
     payload = _program()
     _complete_phase(payload, 0)
     payload["audit_findings"][0]["status"] = "OPEN"
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -511,8 +514,7 @@ def test_reviewer_context_cannot_be_reused_across_phases(tmp_path: Path) -> None
     payload["phases"][1]["review"]["verdicts"][1]["context_id"] = payload["phases"][0]["review"][
         "verdicts"
     ][0]["context_id"]
-    payload["current_phase"] = "P2"
-    payload["phases"][2]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P2")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -542,9 +544,8 @@ def test_evidence_hash_binds_material_program_controls_and_full_audit_inventory(
 def test_evidence_hash_survives_only_workflow_state_and_verdict_insertion() -> None:
     payload = _program()
     original = evidence_package_hash(payload, payload["phases"][0])
-    payload["current_phase"] = "P1"
+    _set_current_phase(payload, "P1")
     payload["phases"][0]["status"] = "COMPLETE"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
     payload["phases"][0]["review"] = {
         "evidence_package_hash": original,
         "verdicts": [],
@@ -591,8 +592,7 @@ def test_unregistered_reviewer_identity_cannot_approve_phase(tmp_path: Path) -> 
     payload["learning_records"] = []
     _complete_phase(payload, 0)
     payload["phases"][0]["review"]["verdicts"][0]["reviewer_id"] = "schema-valid-impostor"
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
 
     errors = validate(_write_fixture(tmp_path, payload))
 
@@ -681,8 +681,7 @@ def test_generic_or_unauthenticated_gate_evidence_is_rejected(tmp_path: Path) ->
     payload["failures"] = []
     payload["learning_records"] = []
     _complete_phase(payload, 0)
-    payload["current_phase"] = "P1"
-    payload["phases"][1]["status"] = "IN_PROGRESS"
+    _set_current_phase(payload, "P1")
     generic = {
         "class": "CI",
         "ref": "https://example.invalid/runs/forged",
