@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-# The script directory is first on sys.path when this file is executed directly.
-# Establish a base-interpreter-only import path before importing shadowable stdlib
-# modules, then restore the caller's path after the trusted imports are loaded.
+# Restrict imports to the base interpreter before loading shadowable standard-library modules.
 import sys as _sys
 
 
@@ -16,10 +14,7 @@ def _is_trusted_bootstrap_entry(value: str, prefixes: tuple[str, ...]) -> bool:
         return False
     if "/site-packages" in normalized or "/dist-packages" in normalized:
         return False
-    return any(
-        normalized == prefix or normalized.startswith(f"{prefix}/")
-        for prefix in prefixes
-    )
+    return any(normalized == prefix or normalized.startswith(f"{prefix}/") for prefix in prefixes)
 
 
 _ORIGINAL_SYS_PATH = list(_sys.path)
@@ -31,9 +26,7 @@ _BOOTSTRAP_PREFIXES = tuple(
     )
 )
 _TRUSTED_SYS_PATH = [
-    value
-    for value in _ORIGINAL_SYS_PATH
-    if _is_trusted_bootstrap_entry(value, _BOOTSTRAP_PREFIXES)
+    value for value in _ORIGINAL_SYS_PATH if _is_trusted_bootstrap_entry(value, _BOOTSTRAP_PREFIXES)
 ]
 _BOOTSTRAP_MODULE_NAMES = (
     "argparse",
@@ -61,9 +54,7 @@ for _bootstrap_name in _BOOTSTRAP_MODULE_NAMES:
         f"untrusted preloaded bootstrap module origin: {_bootstrap_name}"
     )
     for _loaded_name in tuple(_sys.modules):
-        if _loaded_name == _bootstrap_name or _loaded_name.startswith(
-            f"{_bootstrap_name}."
-        ):
+        if _loaded_name == _bootstrap_name or _loaded_name.startswith(f"{_bootstrap_name}."):
             _sys.modules.pop(_loaded_name, None)
 _sys.path[:] = _TRUSTED_SYS_PATH
 try:
@@ -80,7 +71,6 @@ finally:
     _sys.path[:] = _ORIGINAL_SYS_PATH
 
 Path = _pathlib.Path
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -117,9 +107,7 @@ def _module_origin_is_trusted(module: object) -> bool:
     origin = getattr(spec, "origin", None)
     if origin in {"built-in", "frozen"}:
         return True
-    return origin is not None and _is_trusted_bootstrap_entry(
-        str(origin), _BOOTSTRAP_PREFIXES
-    )
+    return origin is not None and _is_trusted_bootstrap_entry(str(origin), _BOOTSTRAP_PREFIXES)
 
 
 _BOOTSTRAP_ERRORS = list(_PRELOADED_BOOTSTRAP_ERRORS)
@@ -158,23 +146,28 @@ def _git_executable(root: Path) -> str:
     return str(git_path)
 
 
-def _git(root: Path, *arguments: str, input_text: str | None = None) -> str:
-    result = subprocess.run(
-        [_git_executable(root), *arguments],
-        cwd=root,
-        check=False,
-        capture_output=True,
-        text=True,
-        input=input_text,
-    )
+def _git(
+    root: Path, *arguments: str, input_text: str | None = None, strip_output: bool = True
+) -> str:
+    try:
+        result = subprocess.run(
+            [_git_executable(root), *arguments],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+            input=input_text,
+        )
+    except OSError as exc:
+        raise RuntimeError("Git source-integrity query could not execute") from exc
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "Git source-integrity query failed")
-    return result.stdout.strip()
+    return result.stdout.strip() if strip_output else result.stdout
 
 
 def _head_entries(root: Path) -> dict[str, tuple[str, str]]:
     entries: dict[str, tuple[str, str]] = {}
-    for record in _git(root, "ls-tree", "-r", "-z", "HEAD").split("\0"):
+    for record in _git(root, "ls-tree", "-r", "-z", "HEAD", strip_output=False).split("\0"):
         if not record:
             continue
         metadata, path = record.split("\t", 1)
@@ -186,7 +179,7 @@ def _head_entries(root: Path) -> dict[str, tuple[str, str]]:
 
 def _index_entries(root: Path) -> dict[str, tuple[str, str, str]]:
     entries: dict[str, tuple[str, str, str]] = {}
-    for record in _git(root, "ls-files", "--stage", "-z").split("\0"):
+    for record in _git(root, "ls-files", "--stage", "-z", strip_output=False).split("\0"):
         if not record:
             continue
         metadata, path = record.split("\t", 1)
@@ -195,15 +188,28 @@ def _index_entries(root: Path) -> dict[str, tuple[str, str, str]]:
     return entries
 
 
+def _tracked_index_flag_errors(root: Path) -> list[str]:
+    errors: list[str] = []
+    for record in _git(root, "ls-files", "-v", "-z", strip_output=False).split("\0"):
+        if not record:
+            continue
+        if len(record) < 3 or record[1] != " ":
+            errors.append("tracked index flag inventory is malformed")
+            continue
+        flag, path = record[0], record[2:]
+        if flag != "H":
+            errors.append(f"tracked index has noncanonical flag {flag!r}: {path}")
+    return errors
+
+
 def _tracked_content_errors(root: Path) -> list[str]:
     expected = _head_entries(root)
     index = _index_entries(root)
     errors: list[str] = []
-    expected_index = {
-        path: (mode, object_id, "0") for path, (mode, object_id) in expected.items()
-    }
+    expected_index = {path: (mode, object_id, "0") for path, (mode, object_id) in expected.items()}
     if index != expected_index:
         errors.append("tracked index does not equal the immutable HEAD tree")
+    errors.extend(_tracked_index_flag_errors(root))
     paths = sorted(expected)
     if any("\n" in path or "\r" in path for path in paths):
         return [*errors, "tracked paths containing line breaks cannot be certified"]
@@ -236,8 +242,10 @@ def _is_executable_launcher(candidate: Path, suffix: str) -> bool:
     if suffix in WINDOWS_LAUNCHER_SUFFIXES:
         return True
     try:
-        return os.name != "nt" and candidate.is_file() and bool(
-            candidate.stat().st_mode & stat.S_IXUSR
+        return (
+            os.name != "nt"
+            and candidate.is_file()
+            and bool(candidate.stat().st_mode & stat.S_IXUSR)
         )
     except OSError:
         return True
@@ -252,26 +260,76 @@ def _is_top_level_package_artifact(parts: list[str], normalized: str) -> bool:
     )
 
 
-def _untracked_shadow_errors(root: Path) -> list[str]:
-    visible = _git(root, "ls-files", "--others", "--exclude-standard", "-z")
-    ignored = _git(root, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+def _untracked_paths(root: Path) -> list[str]:
+    visible = _git(root, "ls-files", "--others", "--exclude-standard", "-z", strip_output=False)
+    ignored = _git(
+        root, "ls-files", "--others", "--ignored", "--exclude-standard", "-z", strip_output=False
+    )
+    return sorted(set(filter(None, f"{visible}\0{ignored}".split("\0"))))
+
+
+def _untracked_shadow_error(root: Path, path: str) -> str | None:
+    normalized = path.replace("\\", "/")
+    parts = normalized.split("/")
+    suffix = Path(normalized).suffix.casefold()
+    protected_root = parts[0].casefold() in PROTECTED_IMPORT_ROOTS
+    root_file = len(parts) == 1
+    package_artifact = _is_top_level_package_artifact(parts, normalized)
+    ordinary_cache = "__pycache__" in parts
+    python_shadow = _has_python_shadow_suffix(normalized) and not ordinary_cache
+    launcher = (protected_root or root_file) and _is_executable_launcher(
+        root / Path(*parts), suffix
+    )
+    if (protected_root or root_file or package_artifact) and (
+        python_shadow or launcher or package_artifact
+    ):
+        return f"untracked import-shadowing or executable file is forbidden: {normalized}"
+    return None
+
+
+def _allowlist_errors(allowed: tuple[str, ...]) -> list[str]:
     errors: list[str] = []
-    for path in sorted(set(filter(None, f"{visible}\0{ignored}".split("\0")))):
-        normalized = path.replace("\\", "/")
-        parts = normalized.split("/")
-        suffix = Path(normalized).suffix.casefold()
-        protected_root = parts[0].casefold() in PROTECTED_IMPORT_ROOTS
-        root_file = len(parts) == 1
-        package_artifact = _is_top_level_package_artifact(parts, normalized)
-        ordinary_cache = "__pycache__" in parts
-        python_shadow = _has_python_shadow_suffix(normalized) and not ordinary_cache
-        launcher = (protected_root or root_file) and _is_executable_launcher(
-            root / Path(*parts), suffix
-        )
-        if (protected_root or root_file or package_artifact) and (
-            python_shadow or launcher or package_artifact
+    if len(set(allowed)) != len(allowed):
+        errors.append("allowed untracked paths must be unique")
+    for path in allowed:
+        parts = path.split("/")
+        if (
+            not path
+            or "\\" in path
+            or path.startswith("/")
+            or re.match(r"^[A-Za-z]:", path)
+            or any(character in path for character in "*?[]")
+            or any(part in {"", ".", ".."} for part in parts)
         ):
-            errors.append(f"untracked import-shadowing file is forbidden: {normalized}")
+            errors.append(
+                f"allowed untracked path must be one canonical repository-relative path: {path!r}"
+            )
+    return errors
+
+
+def _untracked_errors(
+    root: Path,
+    *,
+    proof_mode: str,
+    allowed_untracked: tuple[str, ...],
+) -> list[str]:
+    paths = _untracked_paths(root)
+    errors = _allowlist_errors(allowed_untracked)
+    if proof_mode == "candidate" and allowed_untracked:
+        errors.append("untracked allowlist is valid only in restored-baseline mode")
+    allowed = set(allowed_untracked) if not errors else set()
+    for path in paths:
+        normalized = path.replace("\\", "/")
+        shadow_error = _untracked_shadow_error(root, path)
+        if shadow_error is not None:
+            errors.append(shadow_error)
+        elif proof_mode == "restored-baseline" and (
+            "__pycache__" not in normalized.split("/") and normalized not in allowed
+        ):
+            errors.append(f"restored baseline has unapproved untracked path: {normalized}")
+    if proof_mode == "restored-baseline":
+        for path in sorted(allowed - set(paths)):
+            errors.append(f"allowed untracked path is not present: {path}")
     return errors
 
 
@@ -280,6 +338,7 @@ def validate(
     root: Path = ROOT,
     *,
     proof_mode: str = "candidate",
+    allowed_untracked: tuple[str, ...] = (),
 ) -> list[str]:
     """Prove that HEAD, the index, and every tracked worktree file are immutable."""
     if _BOOTSTRAP_ERRORS:
@@ -291,32 +350,47 @@ def validate(
     try:
         head = _git(root, "rev-parse", "HEAD")
         content_errors = _tracked_content_errors(root)
-        shadow_errors = _untracked_shadow_errors(root)
+        untracked_errors = _untracked_errors(
+            root,
+            proof_mode=proof_mode,
+            allowed_untracked=allowed_untracked,
+        )
     except RuntimeError as exc:
         return [str(exc)]
     errors: list[str] = []
     if head.casefold() != expected_sha.casefold():
         errors.append(f"checked-out HEAD does not equal the expected {proof_mode} SHA")
     errors.extend(content_errors)
-    errors.extend(shadow_errors)
-    return errors
+    errors.extend(untracked_errors)
+    return sorted(set(errors))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--expected-sha", required=True)
     parser.add_argument("--proof-mode", choices=sorted(PROOF_MODES), default="candidate")
+    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--allow-untracked", action="append", default=[])
     args = parser.parse_args()
-    errors = validate(args.expected_sha, proof_mode=args.proof_mode)
+    allowed_untracked = tuple(args.allow_untracked)
+    errors = validate(
+        args.expected_sha,
+        args.root,
+        proof_mode=args.proof_mode,
+        allowed_untracked=allowed_untracked,
+    )
     print(
         json.dumps(
             {
+                "schema_version": 1,
                 "status": "PASS" if not errors else "FAIL",
                 "proof_mode": args.proof_mode,
                 "expected_sha": args.expected_sha.casefold(),
+                "allowed_untracked": sorted(allowed_untracked),
                 "errors": errors,
             },
             indent=2,
+            sort_keys=True,
         )
     )
     return int(bool(errors))

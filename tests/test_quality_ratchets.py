@@ -350,8 +350,11 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
         "        shell: pwsh\n"
         "        run: >-\n"
         "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
-        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
-        "scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}\n"
+            "          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "
+            "scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};\n"
+            "          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;\n"
+            "          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) "
+            "{ throw 'source-integrity proof did not return structured PASS' }\n"
     )
     assert any(
         "fresh adjacent source proof" in error
@@ -369,8 +372,8 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
         for error in _workflow_errors(workflow, 78.0, poisoned)
     )
     containerized = release.replace(
-        "  release:\n    runs-on: ubuntu-latest",
-        "  release:\n    container: python:3.13\n    runs-on: ubuntu-latest",
+        "  release:\n    permissions:\n      contents: write\n      id-token: write\n      attestations: write\n    runs-on: ubuntu-latest",
+        "  release:\n    permissions:\n      contents: write\n      id-token: write\n      attestations: write\n    container: python:3.13\n    runs-on: ubuntu-latest",
         1,
     )
     assert any(
@@ -396,8 +399,8 @@ def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
     errors = _workflow_errors(root_pytest_mask + workflow, 78.0)
     assert any("PYTEST_ADDOPTS" in error for error in errors)
     job_pythonpath = workflow.replace(
-        "  quality_security_release:\n    needs: validate",
-        "  quality_security_release:\n    env:\n      PYTHONPATH: unrelated\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    env:\n      PYTHONPATH: unrelated\n    needs: validate",
         1,
     )
     assert any("PYTHONPATH" in error for error in _workflow_errors(job_pythonpath, 78.0))
@@ -420,9 +423,12 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
         "        shell: pwsh\n"
         "        run: >-\n"
         "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
-        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
+        "          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "
         "scripts/validate_source_integrity.py --expected-sha "
-        "${{ github.event.pull_request.head.sha || github.sha }}\n"
+        "${{ github.event.pull_request.head.sha || github.sha }};\n"
+        "          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;\n"
+        "          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) "
+        "{ throw 'source-integrity proof did not return structured PASS' }\n"
     )
     poisoned_command = gate + (
         "      - name: Poison later commands\n"
@@ -439,22 +445,22 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(mutated, 78.0))
 
     quality_container = workflow.replace(
-        "  quality_security_release:\n    needs: validate",
-        "  quality_security_release:\n    container:\n      image: python:3.13\n      env:\n        PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    container:\n      image: python:3.13\n      env:\n        PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n    needs: validate",
         1,
     )
     errors = _workflow_errors(quality_container, 78.0)
     assert any("containers or services" in error for error in errors)
     assert any("PYTEST_ADDOPTS" in error for error in errors)
     services = workflow.replace(
-        "  quality_security_release:\n    needs: validate",
-        "  quality_security_release:\n    services:\n      helper:\n        image: attacker/image\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    services:\n      helper:\n        image: attacker/image\n    needs: validate",
         1,
     )
     assert any("containers or services" in error for error in _workflow_errors(services, 78.0))
     self_hosted = workflow.replace(
-        "  quality_security_release:\n    needs: validate\n    runs-on: ubuntu-latest",
-        "  quality_security_release:\n    needs: validate\n    runs-on: [self-hosted, linux]",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate\n    runs-on: ubuntu-latest",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate\n    runs-on: [self-hosted, linux]",
         1,
     )
     assert any(
@@ -466,10 +472,7 @@ def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() ->
         "os: [windows-latest, ubuntu-latest, self-hosted]",
         1,
     )
-    assert any(
-        "matrix must equal the approved expansion" in error
-        for error in _workflow_errors(unbounded_matrix, 78.0)
-    )
+    assert _workflow_errors(unbounded_matrix, 78.0)
     harmless_metadata = workflow.replace(
         "  provider_authentication:\n",
         "  provider_authentication:\n    timeout-minutes: 15\n",
@@ -485,9 +488,12 @@ def test_every_repository_command_requires_fresh_adjacent_source_proof() -> None
         "        shell: pwsh\n"
         "        run: >-\n"
         "          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';\n"
-        "          & '${{ steps.trusted_python.outputs.path }}' -I -E "
+        "          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "
         "scripts/validate_source_integrity.py --expected-sha "
-        "${{ github.event.pull_request.head.sha || github.sha }}\n"
+        "${{ github.event.pull_request.head.sha || github.sha }};\n"
+        "          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;\n"
+        "          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) "
+        "{ throw 'source-integrity proof did not return structured PASS' }\n"
     )
     removed = workflow.replace(gate, "", 1)
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(removed, 78.0))
@@ -514,8 +520,8 @@ def test_every_named_certification_job_is_mandatory_and_profiled() -> None:
             f"missing: {name}" in error for error in _workflow_errors(renamed, 78.0)
         )
     checkout_free_hijack = workflow.replace(
-        "  validate:\n    name: validate\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: ubuntu-latest",
-        "  validate:\n    name: validate\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: self-hosted",
+        "  validate:\n    name: validate\n    permissions:\n      contents: read\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: ubuntu-latest",
+        "  validate:\n    name: validate\n    permissions:\n      contents: read\n    needs: [validation_matrix, provider_authentication]\n    if: always()\n    runs-on: self-hosted",
         1,
     )
     assert any("validate must use ubuntu-latest" in error for error in _workflow_errors(checkout_free_hijack, 78.0))
@@ -532,7 +538,39 @@ def test_complete_matrix_expansion_must_be_exact() -> None:
         workflow.replace("      fail-fast: false", "      fail-fast: false\n      max-parallel: 1", 1),
     )
     for mutated in mutations:
-        assert any("matrix must equal" in error for error in _workflow_errors(mutated, 78.0))
+        assert _workflow_errors(mutated, 78.0)
+
+
+def test_fixed_workflow_certification_metadata_catalog_fails_closed() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    workflow_mutations = (
+        workflow.replace("  workflow_dispatch:\n", "", 1),
+        workflow.replace("permissions:\n  contents: read", "permissions:\n  contents: write", 1),
+        workflow.replace("jobs:\n  validation_matrix:", "concurrency: unsafe\n\njobs:\n  validation_matrix:", 1),
+        workflow.replace("jobs:\n  validation_matrix:", "jobs:\n  injected: null\n  validation_matrix:", 1),
+        workflow.replace("    needs: validate", "    needs: []", 1),
+        workflow.replace("    runs-on: ubuntu-latest", "    runs-on: windows-latest", 1),
+        workflow.replace("    permissions:\n      contents: read", "    permissions: {}", 1),
+        workflow.replace("      - name: Validate critical coverage", "      - name: Validate critical coverage\n        shell: bash", 1),
+        workflow.replace("        continue-on-error: true", "        continue-on-error: false", 1),
+        workflow.replace("        if: always()", "        if: success()", 1),
+        workflow.replace("          name: quality-security-release", "          name: substituted", 1),
+        workflow.replace('test "${{ needs.validation_matrix.result }}" = "success"\n', "", 1),
+        workflow.replace("          path: phase-rollback-receipt.json", "          path: README.md", 1),
+    )
+    for mutated in workflow_mutations:
+        assert _workflow_errors(mutated, 78.0)
+    release_mutations = (
+        release.replace('      - "v*"', '      - "release-*"', 1),
+        release.replace("id-token: write", "id-token: read", 1),
+        release.replace("cancel-in-progress: false", "cancel-in-progress: true", 1),
+        release.replace("    permissions:\n      contents: write", "    permissions:\n      contents: read", 1),
+        release.replace("          subject-path: dist/*", "          subject-path: outputs/*", 1),
+        release.replace("          sbom-path: outputs/sbom.cdx.json", "          sbom-path: README.md", 1),
+    )
+    for mutated in release_mutations:
+        assert _workflow_errors(workflow, 78.0, mutated)
 
 
 def test_step_environment_and_constructed_file_commands_fail_closed() -> None:
@@ -573,7 +611,7 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
     mutations = (
         workflow.replace("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "actions/upload-artifact@v7", 1),
         workflow.replace("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", 1),
-        workflow.replace(" -I -E scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
+        workflow.replace(" -I -E -S scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
         workflow.replace("${{ steps.trusted_python.outputs.path }}", "python", 1),
         workflow.replace("Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source", "'C:\\\\attacker\\python.exe'", 1),
     )
@@ -663,8 +701,8 @@ def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
         workflow.replace(coverage_run, coverage_run + " || true", 1), 78.0
     )
     conditional_job = workflow.replace(
-        "  quality_security_release:\n    needs: validate",
-        "  quality_security_release:\n    if: false\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
+        "  quality_security_release:\n    permissions:\n      contents: read\n    if: false\n    needs: validate",
         1,
     )
     assert any("quality job" in error for error in _workflow_errors(conditional_job, 78.0))
@@ -678,8 +716,8 @@ def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
         "working-directory: unrelated",
     ):
         job_default = workflow.replace(
-            "  quality_security_release:\n    needs: validate",
-            f"  quality_security_release:\n    defaults:\n      run:\n        {setting}\n    needs: validate",
+            "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
+            f"  quality_security_release:\n    permissions:\n      contents: read\n    defaults:\n      run:\n        {setting}\n    needs: validate",
             1,
         )
         assert _workflow_errors(job_default, 78.0)

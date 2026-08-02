@@ -259,7 +259,7 @@ def _process_argument_result(node: ast.AST, *, shell_words: bool = False) -> tup
     return None, _normalized_process_command(head or "") in {"bash", "sh", "env", "command"}
 def _selected_executable_result(argument: ast.AST | None, executable: ast.AST) -> tuple[str | None, bool]:
     executable_name, unsafe = _process_argument_result(executable)
-    if executable_name not in {"bash", "sh"}:
+    if executable_name not in {"bash", "sh", "env"}:
         return executable_name, unsafe
     tokens = _literal_process_tokens(argument)
     if tokens is None:

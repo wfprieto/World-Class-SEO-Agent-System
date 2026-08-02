@@ -73,6 +73,28 @@ def test_source_integrity_ignores_assume_unchanged_and_rejects_shadow_modules(
     assert any("import-shadowing" in error for error in validate(expected, shadowed))
 
 
+def test_source_integrity_rejects_every_noncanonical_tracked_index_flag(
+    tmp_path: Path,
+) -> None:
+    for option, expected_flag in (
+        ("--assume-unchanged", "h"),
+        ("--skip-worktree", "S"),
+    ):
+        root = tmp_path / option.removeprefix("--")
+        expected = _repository(root)
+        _git(root, "update-index", option, "tracked.txt")
+        errors = validate(expected, root)
+        assert any(
+            f"noncanonical flag '{expected_flag}'" in error for error in errors
+        )
+
+        baseline_errors = validate(expected, root, proof_mode="restored-baseline")
+        assert any(
+            f"noncanonical flag '{expected_flag}'" in error
+            for error in baseline_errors
+        )
+
+
 def test_source_integrity_rejects_non_sha_expectation(tmp_path: Path) -> None:
     assert validate("main", tmp_path) == [
         "expected candidate SHA must be exactly 40 hexadecimal characters"
@@ -114,6 +136,135 @@ def test_source_integrity_supports_candidate_and_restored_baseline_modes(
     errors = validate(expected, root, proof_mode="restored-baseline")
     assert any("content differs" in error for error in errors)
     assert (root / "tracked.txt").read_text(encoding="utf-8") == "drift\n"
+
+
+def test_restored_baseline_requires_exact_safe_untracked_allowlist(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "restored-inventory"
+    expected = _repository(root)
+    receipt = root / "phase-rollback-receipt.json"
+    receipt.write_text('{"result":"TREE_MATCH"}\n', encoding="utf-8")
+
+    assert any(
+        "unapproved untracked path" in error
+        for error in validate(expected, root, proof_mode="restored-baseline")
+    )
+    assert validate(
+        expected,
+        root,
+        proof_mode="restored-baseline",
+        allowed_untracked=("phase-rollback-receipt.json",),
+    ) == []
+
+    ordinary_cache = root / "tests" / "__pycache__" / "cache.pyc"
+    ordinary_cache.parent.mkdir(parents=True)
+    ordinary_cache.write_bytes(b"cache")
+    assert validate(
+        expected,
+        root,
+        proof_mode="restored-baseline",
+        allowed_untracked=("phase-rollback-receipt.json",),
+    ) == []
+
+
+def test_untracked_allowlist_cannot_weaken_candidate_or_shadow_controls(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "allowlist-negative"
+    expected = _repository(root)
+    (root / "receipt.json").write_text("{}\n", encoding="utf-8")
+    assert any(
+        "only in restored-baseline" in error
+        for error in validate(
+            expected,
+            root,
+            allowed_untracked=("receipt.json",),
+        )
+    )
+
+    invalid = ("../receipt.json", "/receipt.json", "*.json", "missing.json")
+    for path in invalid:
+        errors = validate(
+            expected,
+            root,
+            proof_mode="restored-baseline",
+            allowed_untracked=(path,),
+        )
+        assert errors
+        if path == "*.json":
+            assert any("canonical repository-relative" in error for error in errors)
+
+    shadow = root / "runtime" / "shadow.py"
+    shadow.parent.mkdir()
+    shadow.write_text("VALUE = 1\n", encoding="utf-8")
+    errors = validate(
+        expected,
+        root,
+        proof_mode="restored-baseline",
+        allowed_untracked=("receipt.json", "runtime/shadow.py"),
+    )
+    assert any("runtime/shadow.py" in error and "forbidden" in error for error in errors)
+
+    for relative in (
+        "runtime/native.abi3.so",
+        "shadow_package/__init__.py",
+        "scripts/launcher.cmd",
+    ):
+        dangerous = root / relative
+        dangerous.parent.mkdir(parents=True, exist_ok=True)
+        dangerous.write_bytes(b"dangerous")
+        errors = validate(
+            expected,
+            root,
+            proof_mode="restored-baseline",
+            allowed_untracked=("receipt.json", relative),
+        )
+        assert any(relative in error and "forbidden" in error for error in errors)
+        dangerous.unlink()
+
+
+def test_cli_emits_deterministic_structured_proof_for_external_validator_copy(
+    tmp_path: Path,
+) -> None:
+    source = Path(__file__).parents[1] / "scripts" / "validate_source_integrity.py"
+    external = tmp_path / "trusted-validator.py"
+    external.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    root = tmp_path / "external-root"
+    expected = _repository(root)
+    (root / "phase-rollback-receipt.json").write_text("{}\n", encoding="utf-8")
+    command = [
+        sys.executable,
+        str(external),
+        "--root",
+        str(root),
+        "--expected-sha",
+        expected,
+        "--proof-mode",
+        "restored-baseline",
+        "--allow-untracked",
+        "phase-rollback-receipt.json",
+    ]
+    first = subprocess.run(command, check=False, capture_output=True, text=True)
+    second = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert first.returncode == 0
+    assert first.stdout == second.stdout
+    assert json.loads(first.stdout) == {
+        "allowed_untracked": ["phase-rollback-receipt.json"],
+        "errors": [],
+        "expected_sha": expected,
+        "proof_mode": "restored-baseline",
+        "schema_version": 1,
+        "status": "PASS",
+    }
+
+    (root / "tracked.txt").write_text("drift\n", encoding="utf-8")
+    failed = subprocess.run(command, check=False, capture_output=True, text=True)
+    failure = json.loads(failed.stdout)
+    assert failed.returncode == 1
+    assert failure["status"] == "FAIL"
+    assert failure["schema_version"] == 1
+    assert failure["errors"] == sorted(failure["errors"])
 
 
 def test_source_integrity_rejects_cross_platform_native_module_shadows(

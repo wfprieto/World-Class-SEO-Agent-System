@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from typing import Any
 
@@ -12,66 +13,46 @@ COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters")
 CANDIDATE_REF = "${{ github.event.pull_request.head.sha || github.sha }}"
 RELEASE_REF = "${{ github.sha }}"
 DANGEROUS_ENV_EXACT = {
-    "BASH_ENV",
-    "COMSPEC",
-    "ENV",
-    "GITHUB_ENV", "GITHUB_PATH", "GITHUB_WORKSPACE", "HOME",
-    "IFS",
-    "LD_PRELOAD",
-    "NODE_OPTIONS",
-    "PATH",
-    "PATHEXT", "PSMODULEPATH", "RUNNER_TEMP", "RUNNER_TOOL_CACHE",
-    "SHELL",
-    "SHELLOPTS",
-    "VIRTUAL_ENV", "USERPROFILE",
+    "BASH_ENV", "COMSPEC", "ENV", "GITHUB_ENV", "GITHUB_PATH", "GITHUB_WORKSPACE",
+    "HOME", "IFS", "LD_PRELOAD", "NODE_OPTIONS", "PATH", "PATHEXT", "PSMODULEPATH",
+    "RUNNER_TEMP", "RUNNER_TOOL_CACHE", "SHELL", "SHELLOPTS", "VIRTUAL_ENV", "USERPROFILE",
 }
 DANGEROUS_ENV_PREFIXES = ("COVERAGE_", "DYLD_", "GIT_", "PIP_", "PYTEST_", "PYTHON")
-APPROVED_RUNNERS = {"ubuntu-latest", "windows-latest"}
-MATRIX_RUNNER = "${{ matrix.os }}"
 TRUSTED_PYTHON_OUTPUT = "${{ steps.trusted_python.outputs.path }}"
-SOURCE_GATE_PREFIX = f"$env:PATH = Split-Path -Parent '${{{{ steps.trusted_python.outputs.git_path }}}}'; & '{TRUSTED_PYTHON_OUTPUT}' -I -E scripts/validate_source_integrity.py --expected-sha "
+SOURCE_GATE_PREFIX = (f"$env:PATH = Split-Path -Parent '${{{{ steps.trusted_python.outputs.git_path }}}}'; "
+                      f"$raw = & '{TRUSTED_PYTHON_OUTPUT}' -I -E -S scripts/validate_source_integrity.py --expected-sha ")
+SOURCE_GATE_SUFFIX = (
+    "; $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json; "
+    "if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) "
+    "{ throw 'source-integrity proof did not return structured PASS' }"
+)
 TRUSTED_PYTHON_COMMAND = (
     "$resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source\n$git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source\n"
     "if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }\nif (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }\n"
     '"path=$resolved" >> $env:GITHUB_OUTPUT\n"git_path=$git" >> $env:GITHUB_OUTPUT'
 )
-TRUSTED_PYTHON_STEP = {
-    "name": "Capture trusted Python interpreter",
-    "id": "trusted_python",
-    "shell": "pwsh",
-    "run": TRUSTED_PYTHON_COMMAND,
-}
-VALIDATE_JOBS = (
-    "validation_matrix", "provider_authentication", "validate", "quality_security_release",
-    "clean_wheel_install", "phase0_rollback_certification",
-    "phase_rollback_certification", "certification_status",
-)
+TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trusted_python",
+                       "shell": "pwsh", "run": TRUSTED_PYTHON_COMMAND}
+VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
+                 "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-ACTION_SHAS = {
-    "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
-    "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
-    "actions/upload-artifact": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
-    "actions/download-artifact": "37930b1c2abaa49bbe596cd826c3c89aef350131",
-    "actions/attest": "508db95dd578ae2727ebd6217d5ba78e4fbda05d",
+WORKFLOW_CONTRACT_SHA = "eaaddae775661817e3947f68170e84d13a732828c26da0b6c85ece7a9b17e0fc"
+RELEASE_CONTRACT_SHA = "d80134087c20294c3c39464880f4d03b7a85cb5eb96afa19c830e93a0946d5a3"
+CONTRACT_RUN_STEPS = {
+    "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
+    "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
+    "Seal successful receipt", "Preserve trusted source-integrity validator", "Prove exact restored baseline",
 }
 PHASE0_BASELINE = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
-PHASE0_ROLLBACK_SHA = "4f92ea1fba3e6d97dc1239a2e8cd984eea097a66ba04c6ffa1cfd37d263415ca"
-BASELINE_PROOF_PREFIX = (
-    "$expectedCommit = ",
-    "$expectedTree = (& /usr/bin/git rev-parse \"$expectedCommit`^{tree}\")",
-    "$actualTree = (& /usr/bin/git write-tree)",
-    "if ($actualTree -ne $expectedTree) { throw 'restored index tree mismatch' }",
-    "& /usr/bin/git diff --quiet --no-ext-diff --exit-code",
-    "if ($LASTEXITCODE) { throw 'restored worktree drift' }",
-    "$flags = @(& /usr/bin/git ls-files -v | Where-Object { $_ -cnotmatch '^H ' })",
-    "if ($flags.Count) { throw 'tracked index flags can conceal restored-tree drift' }",
+PHASE0_ROLLBACK_SHA = "544c0b03bb3c369a39ac95a4e9d318136b4d1c25976ff747fc913aaf8b064d64"
+BASELINE_PROOF_SUFFIX = (
+    "$raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S \"$env:RUNNER_TEMP/validate_source_integrity.py\" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked ",
+    "$exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json",
+    "if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }",
 )
-PHASE0_BASELINE_PROOF = "\n".join((f"$expectedCommit = '{PHASE0_BASELINE}'", *BASELINE_PROOF_PREFIX[1:]))
-PHASE_BASELINE_PROOF = "\n".join((
-    "$expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -c "
-    "\"import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])\")",
-    *BASELINE_PROOF_PREFIX[1:],
-))
+PHASE0_BASELINE_PROOF = "\n".join((f"$expectedCommit = '{PHASE0_BASELINE}'", BASELINE_PROOF_SUFFIX[0] + "phase0-rollback-receipt.json", *BASELINE_PROOF_SUFFIX[1:]))
+PHASE_BASELINE_PROOF = "\n".join(("$expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c \"import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])\")",
+                                    BASELINE_PROOF_SUFFIX[0] + "phase-rollback-receipt.json", *BASELINE_PROOF_SUFFIX[1:]))
 class UniqueKeyLoader(yaml.SafeLoader):
     """Safe YAML loader that rejects ambiguous duplicate mapping keys."""
 
@@ -105,6 +86,9 @@ def _jobs(workflow: str) -> tuple[dict[str, dict[str, Any]], list[str]]:
             "CI workflow must not inherit execution-altering environment variables: "
             + ", ".join(dangerous_env)
         )
+    invalid = [str(name) for name, job in payload["jobs"].items() if not isinstance(job, dict)]
+    if invalid:
+        errors.append("every CI job must be a mapping: " + ", ".join(invalid))
     jobs = {str(name): job for name, job in payload["jobs"].items() if isinstance(job, dict)}
     return jobs, errors
 
@@ -130,7 +114,7 @@ def _dangerous_container_env_keys(job: dict[str, Any]) -> list[str]:
     return _dangerous_env_keys(container) if isinstance(container, dict) else []
 
 def _source_gate_command(expected_ref: str) -> str:
-    return SOURCE_GATE_PREFIX + expected_ref
+    return SOURCE_GATE_PREFIX + expected_ref + SOURCE_GATE_SUFFIX
 
 def _is_source_gate(step: dict[str, Any], expected_ref: str) -> bool:
     return step == {
@@ -138,27 +122,8 @@ def _is_source_gate(step: dict[str, Any], expected_ref: str) -> bool:
         "run": _source_gate_command(expected_ref),
     }
 
-def _matrix_errors(name: str, job: dict[str, Any]) -> list[str]:
-    expected = {
-        "validation_matrix": {"fail-fast": False, "matrix": {
-            "os": ["windows-latest", "ubuntu-latest"],
-            "python-version": ["3.11", "3.12", "3.13"],
-        }},
-        "clean_wheel_install": {"fail-fast": False, "matrix": {
-            "os": ["windows-latest", "ubuntu-latest"],
-        }},
-    }
-    wanted = expected.get(name)
-    if wanted is None:
-        return [f"canonical job {name} must not define a strategy"] if "strategy" in job else []
-    errors = [] if job.get("strategy") == wanted else [f"canonical job {name} matrix must equal the approved expansion"]
-    if job.get("runs-on") != MATRIX_RUNNER:
-        errors.append(f"canonical job {name} must use only its exact matrix runner")
-    return errors
-
 def _job_source_profile_errors(name: str, job: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    errors += _matrix_errors(name, job)
     if name not in {"validation_matrix", "clean_wheel_install"} and job.get("runs-on") != "ubuntu-latest":
         errors.append(f"canonical job {name} must use ubuntu-latest")
     if "container" in job or "services" in job:
@@ -258,32 +223,6 @@ def _is_setup_python(step: dict[str, Any]) -> bool:
     action = step.get("uses")
     return isinstance(action, str) and action.casefold().startswith("actions/setup-python@")
 
-def _action_errors(jobs: dict[str, dict[str, Any]], names: tuple[str, ...]) -> list[str]:
-    errors: list[str] = []
-    expected = {
-        "validation_matrix": ["actions/checkout", "actions/setup-python", "actions/upload-artifact", "actions/upload-artifact"],
-        "provider_authentication": ["actions/checkout", "actions/setup-python"],
-        "quality_security_release": ["actions/checkout", "actions/setup-python", "actions/upload-artifact"],
-        "clean_wheel_install": ["actions/checkout", "actions/setup-python", "actions/download-artifact"],
-        "phase0_rollback_certification": ["actions/checkout", "actions/setup-python", "actions/upload-artifact"],
-        "phase_rollback_certification": ["actions/checkout", "actions/setup-python", "actions/upload-artifact"],
-        "validate": [], "certification_status": [],
-        "release": ["actions/checkout", "actions/setup-python", "actions/attest", "actions/attest"],
-    }
-    for name in names:
-        identities: list[str] = []
-        for step in _steps(jobs.get(name, {})):
-            action = step.get("uses")
-            if not isinstance(action, str):
-                continue
-            identity, separator, reference = action.partition("@")
-            identities.append(identity)
-            if not separator or ACTION_SHAS.get(identity) != reference:
-                errors.append(f"canonical job {name} uses an unapproved or mutable action")
-        if identities != expected[name]:
-            errors.append(f"canonical job {name} action sequence must remain exact")
-    return errors
-
 def _checkout_step_errors(step: dict[str, Any], expected_ref: str) -> list[str]:
     errors: list[str] = []
     reference = str(step["uses"]).split("@", 1)[1]
@@ -372,6 +311,50 @@ def _quality_step_errors(
             errors.append("CI quality job must not use a container")
     return errors
 
+def _project_contract_step(step: Any, fields: tuple[str, ...]) -> dict[str, Any]:
+    if not isinstance(step, dict):
+        return {"invalid_type": type(step).__name__}
+    projected: dict[str, Any] = {key: step.get(key) for key in fields}
+    if "uses" in step:
+        inputs = step.get("with")
+        if _is_checkout(step) and isinstance(inputs, dict) and inputs.get("fetch-depth") == "0":
+            inputs = {**inputs, "fetch-depth": 0}
+        projected["with"] = inputs
+    if step.get("name") in CONTRACT_RUN_STEPS:
+        projected["run"] = step.get("run")
+    return projected
+
+def _workflow_contract_errors(workflow: str, expected_sha: str) -> list[str]:
+    """Bind the finite workflow surface that carries certification semantics."""
+    try:
+        payload = yaml.load(workflow, Loader=UniqueKeyLoader)
+    except yaml.YAMLError:
+        return []  # The primary loader reports the stable parse error.
+    if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), dict):
+        return []
+    job_fields = ("name", "needs", "if", "continue-on-error", "strategy", "runs-on", "permissions")
+    step_fields = ("name", "uses", "if", "continue-on-error", "shell")
+    jobs: dict[str, Any] = {}
+    for name, job in payload["jobs"].items():
+        if not isinstance(job, dict):
+            jobs[str(name)] = {"invalid_type": type(job).__name__}
+            continue
+        steps = [_project_contract_step(step, step_fields) for step in job.get("steps", [])]
+        jobs[str(name)] = {
+            "profile": {key: job.get(key) for key in job_fields}, "steps": steps
+        }
+    projection = {
+        "trigger": payload.get("on", payload.get(True)),
+        "permissions": payload.get("permissions"),
+        "concurrency": payload.get("concurrency"),
+        "jobs": jobs,
+    }
+    serialized = json.dumps(projection, sort_keys=True, separators=(",", ":"))
+    actual = hashlib.sha256(serialized.encode()).hexdigest()
+    return [] if actual == expected_sha else [
+        "workflow certification metadata must equal its approved finite contract"
+    ]
+
 def workflow_errors(
     workflow: str, coverage_floor: float, release_workflow: str | None = None
 ) -> list[str]:
@@ -385,16 +368,16 @@ def workflow_errors(
     )
     risk = "python scripts/validate_risk_coverage.py outputs/coverage.json"
     job_map, errors = _jobs(workflow)
+    errors += _workflow_contract_errors(workflow, WORKFLOW_CONTRACT_SHA)
     errors += _canonical_job_errors(job_map, VALIDATE_JOBS)
-    errors += _action_errors(job_map, VALIDATE_JOBS)
     errors += _checkout_errors(job_map, CANDIDATE_REF, CHECKOUT_JOBS)
     errors += _source_integrity_errors(job_map, CANDIDATE_REF, CHECKOUT_JOBS)
     errors += _quality_step_errors(list(job_map.values()), coverage, risk)
     if release_workflow is not None:
         release_jobs, release_errors = _jobs(release_workflow)
         errors += release_errors
+        errors += _workflow_contract_errors(release_workflow, RELEASE_CONTRACT_SHA)
         errors += _canonical_job_errors(release_jobs, ("release",))
-        errors += _action_errors(release_jobs, ("release",))
         errors += _checkout_errors(release_jobs, RELEASE_REF, {"release"})
         errors += _source_integrity_errors(release_jobs, RELEASE_REF, {"release"})
     return errors

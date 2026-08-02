@@ -285,6 +285,10 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
         ("import subprocess", "subprocess.run(args=['placeholder', '-lc', 'wget https://example.test'], executable='BASH.EXE')"),
         ("import subprocess", "subprocess.run(['placeholder', '--noprofile', '-c', 'env -u HTTP_PROXY command -- /usr/bin/curl'], executable='/bin/sh')"),
         ("import subprocess", "subprocess.run(['placeholder', '-c', 'HTTP_PROXY=local exec env -C /tmp command -p wget'], executable=r'C:\\tools\\bash.exe')"),
+        ("import subprocess", "subprocess.run(['placeholder', '-u', 'HTTP_PROXY', 'curl'], executable='/usr/bin/env')"),
+        ("import subprocess", "subprocess.run(args=['placeholder', '-C', '/tmp', 'wget'], executable='ENV.EXE')"),
+        ("import subprocess", "subprocess.run(['placeholder', 'bash', '-c', 'exec command -- /usr/bin/curl'], executable='/usr/bin/env')"),
+        ("import subprocess", "subprocess.run(['placeholder', 'env', '-u', 'HTTP_PROXY', 'sh', '-c', 'command -p wget'], executable=r'C:\\tools\\env.exe')"),
     ],
 )
 def test_equivalent_literal_egress_spellings_fail_until_owned(
@@ -462,6 +466,10 @@ def test_non_network_process_names_do_not_create_false_egress(
         "subprocess.run(['placeholder', '-c', 'command -v curl'], executable='/bin/sh')",
         "subprocess.run(['placeholder', '-c', 'curl https://example.test'], executable='/usr/bin/git')",
         "subprocess.run(['placeholder', 'curl;wget&&ftp'], executable='/bin/echo')",
+        "subprocess.run(['placeholder', '-u', 'HTTP_PROXY', 'git', 'status'], executable='/usr/bin/env')",
+        "subprocess.run(['placeholder', 'bash', '-c', \"echo 'curl;wget|ftp'\"], executable='env.exe')",
+        "subprocess.run(['placeholder', 'sh', '-c', 'command -v curl'], executable='/usr/bin/env')",
+        "subprocess.run(['placeholder', 'echo', 'https://example.test/?a=1&b=2;curl'], executable='env.exe')",
     ],
 )
 def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str) -> None:
@@ -485,6 +493,9 @@ def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str
         "subprocess.run(ARGS, executable='/bin/bash')",
         "subprocess.run(['placeholder', '-c', COMMAND], executable='/bin/sh')",
         "subprocess.run(['placeholder', '--unknown', 'git'], executable='bash.exe')",
+        "subprocess.run(ARGS, executable='/usr/bin/env')",
+        "subprocess.run(['placeholder', '-u', NAME, 'git'], executable='env.exe')",
+        "subprocess.run(['placeholder', '--unknown', 'git'], executable='/usr/bin/env')",
     ],
 )
 def test_unrecognized_or_dynamic_wrapper_grammar_fails_closed(
