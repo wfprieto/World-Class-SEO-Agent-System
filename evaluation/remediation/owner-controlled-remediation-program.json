@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P1",
+  "current_phase": "P2",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -112,11 +112,11 @@
     {
       "id": "P1",
       "title": "Immediate repository security and governance",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "rollback_baseline_commit": "51a3897ae87fa8f50b4c26a553fe7953e65f72b8",
       "verified_commit": "0ed65b4cc4d507c9065d1f7a6829481fa866a28e",
-      "review_snapshot_commit": null,
-      "frozen_package_commit": null,
+      "review_snapshot_commit": "bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d",
+      "frozen_package_commit": "bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d",
       "rollback_evidence_sha256": "e88f9f9915e3ef1f558348ab4bc194936a2414ce716aa30a1b1e7dac915dfceb",
       "authority_evidence": [
         {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen for Phase 1 review."},
@@ -124,7 +124,7 @@
         {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
         {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
       ],
-      "package_certification": [],
+      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733744872","commit":"bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","sha256":null,"environment":"CI","status":"PASS","assertion":"The immutable Phase 1 review snapshot passed centralized provider authentication, all runtime matrices, security and quality gates, both rollback certifications, clean wheels, and aggregate repository certification.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}],
       "owner": "Security owner",
       "approver": "Repository maintainer",
       "verifier": "Independent security reviewer",
@@ -148,12 +148,15 @@
         "learning":[{"class":"AUTOMATED","ref":"tests/test_phase_rollback.py","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"2be14aa666fe4cad6149a7a40c467b3d2dc172b950474bb4fc8641aceba39b2a","environment":"CI","status":"PASS","assertion":"[learning] The failed history-boundary rehearsal now has an end-to-end recurrence guardrail."}],
         "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733527500","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] All 455 tests, centralized provider checks, immutable actions, security gates, clean installs, and exact rollback boundaries passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","conclusion":"success","jobs":["provider-authentication","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash": "e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36", "verdicts": []}
+      "review": {"evidence_package_hash": "e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36", "verdicts": [
+        {"review_id":"p1-round7-scrummaster-bc60ec1","reviewer_id":"senior-scrummaster-3","role":"SENIOR_SCRUMMASTER_3","context_id":"p1-r7-scrum-bc60ec1-20260802","provider":"OpenAI","model":"GPT-5.6 Codex","evidence_package_hash":"e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36","verdict":"APPROVE_GREAT","strongest_objections":["The prior closed-state counterexample blocked closure; the identical isolated harness now passes all 26 remediation tests including both formerly failing closure-delta tests.","The snapshot constructor retains unrelated later metadata, which is acceptable because snapshot and closure derive from the same payload while target closure fields and later statuses are normalized and explicitly regression-tested.","Pre-closure CI cannot itself commit P1 closure; the new P1-COMPLETE/P2-IN_PROGRESS regression closes that gap by reconstructing the historical snapshot and proving bounded delta validity.","Provider rollback remains untested as a destructive production transaction because rehearsal would weaken live protections; fail-closed tests and live read-only verification bound the risk.","Merge availability remains blocked pending Phase P8 independent-reviewer onboarding.","The snapshot lacked only closure metadata; its hash and candidate-complete preflight were exact and clean."],"evidence_refs":["git:bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","git:0ed65b4cc4d507c9065d1f7a6829481fa866a28e","tests/test_remediation_program.py@bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","failure:FAIL-0023:RESOLVED","learning:LEARN-0023:CONFIRMED","counterexample-reproduction:P1-COMPLETE/P2-IN_PROGRESS:26-passed","computed-evidence-package-hash:e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733527500","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733744872","artifact:phase-rollback-receipt:8828841337","ci-regression-summary:456-passed"],"residual_risks":["Future closure tests can bypass the snapshot constructor.","Provider write semantics may change before an incident rollback.","Privileged owner evidence expires after 24 hours.","Merge availability remains blocked pending Phase P8 onboarding.","GitHub Actions artifacts are retention-limited."],"required_changes":[],"submitted_at":"2026-08-02T05:22:02.7592454Z","saw_other_reviewer_verdict":false,"is_builder":false},
+        {"review_id":"p1-vp-engineering-2802d845-66be-4617-b5f6-bf900120d491","reviewer_id":"vp-engineering","role":"VP_ENGINEERING","context_id":"784bf4a3-e3fe-4f9a-8cf4-a3e448f4dc24","provider":"OpenAI","model":"GPT-5","evidence_package_hash":"e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36","verdict":"APPROVE_GREAT","strongest_objections":["Three rejected reviews proved status-only changes insufficient; _review_snapshot_payload now clears target closure metadata and normalizes later phases.","The fix did not weaken assertions: bounded allowlisting and material-change rejection remain covered, plus the exact P1-complete/P2-active counterexample passes.","Lifecycle helpers remain test infrastructure while the production validator is unchanged and exact CI is green.","Provider rollback deliberately restores weaker controls but requires explicit authorization, fresh capture, exact comparison, and fail-closed receipts.","Provider rollback is non-atomic and retains explicit owner recovery responsibility.","Merge availability remains blocked pending eligible collaborator onboarding."],"evidence_refs":["immutable snapshot bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","verified implementation 0ed65b4cc4d507c9065d1f7a6829481fa866a28e","evaluation/remediation/owner-controlled-remediation-program.json@bc60ec1036d7c28f10b179c5d8e69ca47d37fc8d","tests/test_remediation_program.py@0ed65b4cc4d507c9065d1f7a6829481fa866a28e","FAIL-0023 and LEARN-0023","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733527500","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30733744872","independent evidence-package recomputation: e8ef661b7b9b443e4ca1439198d11862907abd64b97e8721fdf29963ce50bd36"],"residual_risks":["Future closure tests can bypass the snapshot constructor.","Provider rollback remains non-atomic.","Privileged provider evidence expires after 24 hours.","GitHub API outages block certification.","Merge availability remains blocked pending Phase P8 onboarding.","No destructive production rehearsal was performed."],"required_changes":[],"submitted_at":"2026-08-02T05:21:24Z","saw_other_reviewer_verdict":false,"is_builder":false}
+      ]}
     },
     {
       "id": "P2",
       "title": "Canonical product and capability contract",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "rollback_baseline_commit": null,
       "verified_commit": null,
       "review_snapshot_commit": null,
