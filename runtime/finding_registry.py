@@ -336,6 +336,15 @@ class FindingRegistry:
                 )
 
 
+def _decision_evidence(values: Any, *, context: str) -> list[str]:
+    if not isinstance(values, list) or not values:
+        raise ValueError(f"{context} requires canonical evidence references")
+    normalized = [value.strip() for value in values if isinstance(value, str) and value.strip()]
+    if len(normalized) != len(values) or len(set(normalized)) != len(normalized):
+        raise ValueError(f"{context} evidence references must be non-empty and unique")
+    return sorted(normalized)
+
+
 def build_decisions(
     conflicts: list[dict[str, Any]],
     findings: list[dict[str, Any]],
@@ -348,7 +357,9 @@ def build_decisions(
                 "decision_id": f"decision-{conflict['conflict_id']}",
                 "proposal": f"Resolve conflict for {conflict['affected_scope']}",
                 "decision": "Revise",
-                "evidence": list(conflict.get("finding_ids", [])),
+                "evidence": _decision_evidence(
+                    conflict.get("record_keys"), context="conflict decision"
+                ),
                 "counterarguments": [conflict.get("reason", "Conflicting specialist conclusions")],
                 "risk": conflict.get("risk", "High"),
                 "owner": "SEO Scrummaster Agent",
@@ -372,7 +383,10 @@ def build_decisions(
                 "decision_id": "decision-high-risk-review",
                 "proposal": "Accept high-risk findings for roadmap planning, not automatic implementation.",
                 "decision": "Approve",
-                "evidence": [str(item.get("id")) for item in critical],
+                "evidence": _decision_evidence(
+                    [item.get("root_cause_key") for item in critical],
+                    context="high-risk decision",
+                ),
                 "counterarguments": [
                     "High-risk SEO changes may affect indexation, revenue, compliance, or security."
                 ],

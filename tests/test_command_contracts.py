@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 from jsonschema import Draft202012Validator
 
-from runtime.finding_registry import FindingRegistry
+from runtime.finding_registry import FindingRegistry, build_decisions
 from seoctl.command_contracts import (
     FAILURE_CONTRACT,
     command_contracts,
@@ -483,6 +483,58 @@ def test_reused_finding_id_does_not_contaminate_unrelated_scope() -> None:
     )
     assert unrelated_record["state"] == "ACCEPTED"
     assert sum(record["state"] == "CONFLICTED" for record in records) == 2
+
+    decisions = build_decisions(conflicts, records)
+    conflict_decision = next(
+        decision for decision in decisions if decision["decision"] == "Revise"
+    )
+    conflicted_keys = {
+        record["root_cause_key"] for record in records if record["state"] == "CONFLICTED"
+    }
+    assert conflict_decision["evidence"] == sorted(conflicted_keys)
+    assert len(conflict_decision["evidence"]) == 2
+    assert unrelated_record["root_cause_key"] not in conflict_decision["evidence"]
+
+    high_risk_decision = next(
+        decision for decision in decisions if decision["decision_id"] == "decision-high-risk-review"
+    )
+    assert high_risk_decision["evidence"] == [unrelated_record["root_cause_key"]]
+
+
+def test_build_decisions_fails_closed_without_unique_canonical_identity() -> None:
+    conflict = {
+        "conflict_id": "conflict-1",
+        "affected_scope": "product",
+        "finding_ids": ["shared", "shared"],
+        "reason": "Opposite actions",
+        "risk": "High",
+    }
+    with pytest.raises(ValueError, match="canonical evidence references"):
+        build_decisions([conflict], [])
+
+    conflict["record_keys"] = ["product::enable", "product::enable"]
+    with pytest.raises(ValueError, match="non-empty and unique"):
+        build_decisions([conflict], [])
+
+
+def test_high_risk_decision_uses_distinct_resolvable_root_cause_keys() -> None:
+    records = [
+        {
+            "id": "shared",
+            "state": "ACCEPTED",
+            "severity": "High",
+            "root_cause_key": "product::crawl budget",
+        },
+        {
+            "id": "shared",
+            "state": "ACCEPTED",
+            "severity": "Critical",
+            "root_cause_key": "article::schema gap",
+        },
+    ]
+    decision = build_decisions([], records)[0]
+    assert decision["evidence"] == ["article::schema gap", "product::crawl budget"]
+    assert len(set(decision["evidence"])) == 2
 
 
 def test_finding_registry_structured_polarity_catches_crawling_action_variants() -> None:
