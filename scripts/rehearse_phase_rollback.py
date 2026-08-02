@@ -74,6 +74,10 @@ def main() -> int:
         "result": "TREE_MATCH",
     }
     args.receipt.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    # The tree and index already equal the baseline. Move only the disposable checkout's
+    # symbolic HEAD so baseline validators that inspect history evaluate the restored boundary,
+    # while the receipt retains the immutable candidate identity.
+    subprocess.run(["git", "reset", "--soft", baseline], cwd=ROOT, check=True)
     return 0
 
 

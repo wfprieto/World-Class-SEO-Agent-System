@@ -610,6 +610,19 @@ def test_closure_delta_accepts_only_state_verdict_and_certification_fields(
     assert _closure_delta_errors(closed, closed["phases"][0], root, snapshot_commit) == []
 
 
+def test_closure_delta_remains_valid_after_later_phase_commits(tmp_path: Path) -> None:
+    root = _write_fixture(tmp_path, _program())
+    snapshot_commit = _commit_fixture(root, "review snapshot")
+    closed = _closure_payload(_program(), snapshot_commit)
+    _write_fixture(root, closed)
+    _commit_fixture(root, "bounded phase closure")
+    (root / "later-phase.txt").write_text("later material work", encoding="utf-8")
+    _commit_fixture(root, "later phase implementation")
+    current = json.loads((root / PROGRAM_PATH.relative_to(ROOT)).read_text(encoding="utf-8"))
+
+    assert _closure_delta_errors(current, current["phases"][0], root, snapshot_commit) == []
+
+
 def test_closure_delta_rejects_material_program_and_unrelated_file_changes(
     tmp_path: Path,
 ) -> None:
