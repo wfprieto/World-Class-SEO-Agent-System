@@ -1,58 +1,23 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "3.0.0",
   "phase_id": "P0",
+  "strategy": "DYNAMIC_EXACT_SNAPSHOT",
   "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
-  "candidate_commit": "79f0908bccb271f10b464dd8816f4440347efd04",
-  "executed_at": "2026-08-01T23:48:00Z",
-  "environment": "Windows PowerShell with Python 3.14",
-  "worktree_path_class": "validated disposable Git worktree under the task workspace",
-  "bounded_commits_reverted_newest_first": [
-    "79f0908bccb271f10b464dd8816f4440347efd04",
-    "ce3df1b8f049ba2a56626f8172ff185266b50b53",
-    "baf4cd2c345fc4e4bb2803d2ae28ce634a76688f",
-    "3fc8320bf2690805ebadbb59057ada76137c11c2",
-    "82b1154344c94ab5bfa08b1973bfa5534ef09961",
-    "8d29bd33c6c77e77640b24bd4ffe0022d2f3792b",
-    "86bbba3ccd591e0ecc50ec58eaac40f2645f38b5",
-    "cb90c797618450d42ecc1106c91416fc5147445b",
-    "349e9e66ee8c6937a371e3e78adbd79fb68d64a3"
+  "candidate_selector": "review_snapshot_commit",
+  "commit_range": "baseline_commit..review_snapshot_commit",
+  "revert_order": "newest_first",
+  "expected_baseline_tree": "f998720c9d97180902eb6493f76265f55b3010b9",
+  "workflow": ".github/workflows/validate.yml",
+  "job": "phase0-rollback-certification",
+  "required_assertions": [
+    "candidate_equals_review_snapshot_commit",
+    "all_commits_in_baseline_exclusive_range_reverted",
+    "post_revert_tree_equals_baseline_tree",
+    "baseline_validation_passes"
   ],
-  "commands": [
-    {
-      "command": "git worktree add --detach <validated-disposable-path> 79f0908bccb271f10b464dd8816f4440347efd04",
-      "exit_code": 0,
-      "assertion": "The rehearsal began from the exact frozen implementation commit."
-    },
-    {
-      "command": "git revert --no-commit <nine bounded commits newest-to-oldest>",
-      "exit_code": 0,
-      "assertion": "The complete Phase 0 change set reverted without conflict in the disposable worktree."
-    },
-    {
-      "command": "git diff --exit-code e8c37abb5e939d4433e42ea8a02af63549ca0010 -- .",
-      "exit_code": 0,
-      "assertion": "The post-revert source tree exactly matched the baseline commit."
-    },
-    {
-      "command": "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1",
-      "exit_code": 0,
-      "assertion": "Baseline repository certification passed after the actual bounded revert."
-    },
-    {
-      "command": "python -m pytest -q tests/test_improvement_loop.py --basetemp <isolated-path>",
-      "exit_code": 0,
-      "assertion": "All 10 baseline improvement-loop tests passed after the actual bounded revert."
-    },
-    {
-      "command": "git worktree remove --force <validated-disposable-path>",
-      "exit_code": 0,
-      "assertion": "Git removed the disposable dirty worktree after evidence capture."
-    }
-  ],
-  "result": "PASS",
-  "recovery_position": "Revert the nine recorded Phase 0 commits newest-to-oldest as one bounded operation.",
+  "recovery_position": "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list <baseline_commit>..<review_snapshot_commit>, and revert every returned commit newest-to-oldest as one bounded operation.",
   "limitations": [
-    "This rehearsal verifies deterministic source recovery and baseline repository health, not public release or real-world SEO outcomes.",
-    "The revert was intentionally not committed or pushed because it was a disposable recovery rehearsal."
+    "The durable artifact defines the current-boundary-safe recovery algorithm; the canonical CI job supplies the authenticated exact-head execution receipt.",
+    "Recovery certification proves deterministic source restoration and baseline validation, not public release or real-world SEO outcomes."
   ]
 }

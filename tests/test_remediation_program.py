@@ -15,6 +15,7 @@ from scripts.validate_remediation_program import (
     canonical_text_digest,
     _closure_delta_errors,
     _evidence_errors,
+    _rollback_evidence_errors,
     _validate_complete_phase,
     validate,
 )
@@ -575,6 +576,25 @@ def test_reviewer_registry_is_hash_bound_and_worktree_mutation_cannot_reauthoriz
 
 def test_rollback_digest_is_checkout_line_ending_independent() -> None:
     assert canonical_text_digest(b"one\ntwo\n") == canonical_text_digest(b"one\r\ntwo\r\n")
+
+
+def test_durable_rollback_procedure_rejects_stale_candidate_and_inventory() -> None:
+    rollback_path = ROOT / "evaluation" / "remediation" / "phase0-rollback-evidence.json"
+    rollback = json.loads(rollback_path.read_text(encoding="utf-8"))
+
+    assert _rollback_evidence_errors(rollback, _program(), ROOT, "P0 rollback") == []
+
+    rollback["candidate_selector"] = "verified_commit"
+    rollback["commit_range"] = "baseline_commit..obsolete_candidate_commit"
+    rollback["recovery_position"] = "Revert the nine recorded commits."
+    rollback["candidate_commit"] = "7" * 40
+
+    errors = _rollback_evidence_errors(rollback, _program(), ROOT, "P0 rollback")
+
+    assert any("fields do not match" in item for item in errors)
+    assert any("candidate_selector is stale or unsafe" in item for item in errors)
+    assert any("commit_range is stale or unsafe" in item for item in errors)
+    assert any("recovery_position is stale or unsafe" in item for item in errors)
 
 
 def test_closure_delta_accepts_only_state_verdict_and_certification_fields(

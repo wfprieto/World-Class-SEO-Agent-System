@@ -329,6 +329,72 @@ def _validate_sequence(
     return errors
 
 
+def _rollback_evidence_errors(
+    payload: dict[str, Any], program: dict[str, Any], root: Path, label: str
+) -> list[str]:
+    """Reject stale, partial, or snapshot-specific durable rollback instructions."""
+    errors: list[str] = []
+    required_fields = {
+        "schema_version",
+        "phase_id",
+        "strategy",
+        "baseline_commit",
+        "candidate_selector",
+        "commit_range",
+        "revert_order",
+        "expected_baseline_tree",
+        "workflow",
+        "job",
+        "required_assertions",
+        "recovery_position",
+        "limitations",
+    }
+    if set(payload) != required_fields:
+        errors.append(f"{label} fields do not match the canonical durable procedure")
+    expected_values = {
+        "schema_version": "3.0.0",
+        "phase_id": "P0",
+        "strategy": "DYNAMIC_EXACT_SNAPSHOT",
+        "baseline_commit": program.get("baseline", {}).get("commit"),
+        "candidate_selector": "review_snapshot_commit",
+        "commit_range": "baseline_commit..review_snapshot_commit",
+        "revert_order": "newest_first",
+        "workflow": ".github/workflows/validate.yml",
+        "job": "phase0-rollback-certification",
+        "recovery_position": (
+            "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list "
+            "<baseline_commit>..<review_snapshot_commit>, and revert every returned commit "
+            "newest-to-oldest as one bounded operation."
+        ),
+    }
+    for key, expected in expected_values.items():
+        if payload.get(key) != expected:
+            errors.append(f"{label} {key} is stale or unsafe")
+    required_assertions = {
+        "candidate_equals_review_snapshot_commit",
+        "all_commits_in_baseline_exclusive_range_reverted",
+        "post_revert_tree_equals_baseline_tree",
+        "baseline_validation_passes",
+    }
+    if set(payload.get("required_assertions", [])) != required_assertions:
+        errors.append(f"{label} does not require every rollback safety assertion")
+    baseline = str(program.get("baseline", {}).get("commit", ""))
+    if (root / ".git").exists() and baseline:
+        try:
+            baseline_tree = subprocess.check_output(
+                ["git", "rev-parse", f"{baseline}^{{tree}}"],
+                cwd=root,
+                text=True,
+                timeout=20,
+            ).strip()
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            errors.append(f"{label} cannot resolve the baseline tree")
+        else:
+            if payload.get("expected_baseline_tree") != baseline_tree:
+                errors.append(f"{label} expected_baseline_tree does not match baseline_commit")
+    return errors
+
+
 def _validate_complete_phase(
     phase: dict[str, Any],
     program: dict[str, Any],
@@ -383,6 +449,17 @@ def _validate_complete_phase(
         errors.append(
             f"{phase_id} cannot be COMPLETE: rollback evidence digest does not match reviewed package"
         )
+    else:
+        try:
+            rollback_payload = _load_object(rollback_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"{phase_id} cannot be COMPLETE: rollback evidence is invalid: {exc}")
+        else:
+            errors.extend(
+                _rollback_evidence_errors(
+                    rollback_payload, program, root, f"{phase_id} rollback evidence"
+                )
+            )
 
     authority = phase.get("authority_evidence", [])
     required_authority = {
