@@ -267,6 +267,20 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
             "subprocess.run('HTTP_PROXY=local exec wget https://example.test', shell=True)",
         ),
         ("import os", "os.system('HTTP_PROXY=local exec curl https://example.test')"),
+        ("import subprocess", "subprocess.run('git status;curl https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('git status&&curl https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('git status||wget https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('git status|/usr/bin/curl https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('git status&wget https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('git status\\ncurl https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('echo ok>/tmp/result;curl https://example.test', shell=True)"),
+        ("import subprocess", "subprocess.run('echo $(curl https://example.test)', shell=True)"),
+        ("import subprocess", "subprocess.run('echo `wget https://example.test`', shell=True)"),
+        ("import subprocess", "subprocess.run(['/bin/bash', '-c', 'git status;curl https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'git&&/usr/bin/wget https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'command curl https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'command -- /usr/bin/wget https://example.test'])"),
+        ("import subprocess", "subprocess.run(['/bin/sh', '-c', 'exec env -u HTTP_PROXY command -p curl'])"),
     ],
 )
 def test_equivalent_literal_egress_spellings_fail_until_owned(
@@ -429,6 +443,17 @@ def test_non_network_process_names_do_not_create_false_egress(
         "subprocess.run(['/usr/bin/env', '-C', '/tmp', 'git', 'status'])",
         "subprocess.run(['/usr/bin/env', '--unset=HTTP_PROXY', '--chdir=/tmp', 'git'])",
         "subprocess.run('HTTP_PROXY=local exec echo curl', shell=True)",
+        "subprocess.run('command git status', shell=True)",
+        "subprocess.run('command -- git status', shell=True)",
+        "subprocess.run('command -p echo curl', shell=True)",
+        "subprocess.run('command -v curl', shell=True)",
+        "subprocess.run('command -V -- wget', shell=True)",
+        "subprocess.run(\"echo 'literal;curl|wget&&x>y$(curl)`wget`'\", shell=True)",
+        "subprocess.run('echo \"literal;curl|wget&&x>y\"', shell=True)",
+        "subprocess.run(['/bin/bash', '-c', \"echo 'literal;curl|wget&&x>y'\"])",
+        "subprocess.run(['/bin/bash', '-c', 'command git status'])",
+        "subprocess.run(['git', 'status;curl&&wget|ftp>/tmp/value'])",
+        "subprocess.run(['echo', 'https://example.test/?a=1&b=2;curl'])",
     ],
 )
 def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str) -> None:
@@ -447,6 +472,8 @@ def test_literal_wrapper_negative_controls_remain_safe(tmp_path: Path, call: str
         "subprocess.run(['/usr/bin/env', '--unknown', 'git', 'status'])",
         "subprocess.run(['/bin/sh', OPTION, 'git status'])",
         "subprocess.run(['/usr/bin/env', OPTION, 'git', 'status'])",
+        "subprocess.run(['command', OPTION, 'git'])",
+        "subprocess.run(COMMAND, shell=True)",
     ],
 )
 def test_unrecognized_or_dynamic_wrapper_grammar_fails_closed(

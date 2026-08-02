@@ -7,28 +7,24 @@ import json
 import re
 import shlex
 import sys
+from itertools import dropwhile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "architecture-contract.json"
 SCHEMA_PATH = ROOT / "schemas" / "architecture-contract.schema.json"
-NETWORK_IMPORTS = {
-    "aiohttp", "http.client", "httpx", "playwright", "requests", "selenium", "socket",
-    "urllib.request", "urllib3", "websockets"}
+NETWORK_IMPORTS = {"aiohttp", "http.client", "httpx", "playwright", "requests", "selenium", "socket", "urllib.request", "urllib3", "websockets"}
 NETWORK_IMPORT_PREFIXES = tuple(f"{item}." for item in NETWORK_IMPORTS)
-NETWORK_PROCESS_COMMANDS = {
-    "curl", "ftp", "invoke-restmethod", "invoke-webrequest", "powershell", "pwsh", "wget"}
+NETWORK_PROCESS_COMMANDS = {"curl", "ftp", "invoke-restmethod", "invoke-webrequest", "powershell", "pwsh", "wget"}
 SHELL_LONG_OPTIONS = {"--login", "--noprofile", "--norc", "--posix", "--restricted", "--verbose"}
 SHELL_SHORT_OPTIONS = frozenset("abefhklmnptuvxBCEHPTc")
 ENV_FLAG_OPTIONS = {"-0", "-i", "--debug", "--ignore-environment", "--null"}
 ENV_VALUE_OPTIONS = {"-C", "-u", "--chdir", "--unset"}
-SHELL_OPERATORS = {"&", "&&", ";", "|", "||"}
-SUBPROCESS_CALLS = {
-    "subprocess.call", "subprocess.check_call", "subprocess.check_output", "subprocess.Popen",
-    "subprocess.run"}
+SHELL_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*").fullmatch
+SUBPROCESS_CALLS = {"subprocess.call", "subprocess.check_call", "subprocess.check_output", "subprocess.Popen", "subprocess.run"}
 def _load(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
@@ -119,16 +115,13 @@ def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
     resolved_head = aliases.get(head, head)
     return f"{resolved_head}{separator}{tail}"
 def _literal_text(node: ast.AST | None) -> str | None:
-    if not isinstance(node, ast.Constant):
+    value = getattr(node, "value", None)
+    if isinstance(value, str):
+        return value
+    try:
+        return value.decode("utf-8") if isinstance(value, bytes) else None
+    except UnicodeDecodeError:
         return None
-    if isinstance(node.value, str):
-        return node.value
-    if isinstance(node.value, bytes):
-        try:
-            return node.value.decode("utf-8")
-        except UnicodeDecodeError:
-            return None
-    return None
 def _literal_process_tokens(node: ast.AST) -> list[str] | None:
     text = _literal_text(node)
     if text is not None:
@@ -136,14 +129,15 @@ def _literal_process_tokens(node: ast.AST) -> list[str] | None:
             return shlex.split(text, posix=False)
         except ValueError:
             return None
-    if isinstance(node, (ast.List, ast.Tuple)):
-        values = [_literal_text(item) for item in node.elts]
-        return [item for item in values if item is not None] if all(item is not None for item in values) else None
-    return None
+    elements = getattr(node, "elts", None)
+    if elements is None:
+        return None
+    values = list(map(_literal_text, elements))
+    return None if None in values else cast(list[str], values)
 def _call_argument(node: ast.Call, position: int | None, keyword: str) -> ast.AST | None:
-    if position is not None and len(node.args) > position:
-        return node.args[position]
-    return next((item.value for item in node.keywords if item.arg == keyword), None)
+    positional = node.args[position : position + 1] if position is not None else []
+    keywords = {item.arg: item.value for item in node.keywords}
+    return next(iter(positional), keywords.get(keyword))
 def _literal_dynamic_imports(tree: ast.AST) -> set[str]:
     aliases = _import_aliases(tree)
     imported: set[str] = set()
@@ -186,11 +180,17 @@ def _unresolved_dynamic_errors(module_trees: dict[str, ast.AST]) -> list[str]:
                 errors.append(f"unresolved literal relative import: {source} -> {name}")
     return errors
 def _normalized_process_command(command: str) -> str:
-    stripped = command.strip().strip('"\'')
-    name = stripped.replace("\\", "/").rsplit("/", 1)[-1].casefold()
+    name = command.strip().strip('"\'').replace("\\", "/").rsplit("/", 1)[-1].casefold()
     return name.removesuffix(".exe")
-def _is_shell_assignment(token: str) -> bool:
-    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", token) is not None
+def _shell_literal_tokens(text: str) -> tuple[list[str], bool]:
+    lexer = shlex.shlex(text, posix=True, punctuation_chars=";&|<>")
+    lexer.whitespace_split, lexer.commenters = True, ""
+    try:
+        tokens = list(lexer)
+    except ValueError:
+        return [], True
+    operators = re.sub(r"'[^']*'|\"[^\"]*\"", "", text)
+    return tokens, bool(re.search(r"[\r\n]|[;&|<>]", operators) or re.search(r"(?<!\\)(?:\$\(|`)", re.sub(r"'[^']*'", "", text)))
 def _shell_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bool]:
     index = 1
     while index < len(tokens):
@@ -206,9 +206,8 @@ def _shell_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bo
             continue
         if index >= len(tokens):
             return None, True
-        try:
-            nested = shlex.split(tokens[index], posix=True)
-        except ValueError:
+        nested, unsafe = _shell_literal_tokens(tokens[index])
+        if unsafe:
             return None, True
         return _effective_process_command(nested, depth + 1, shell_words=True)
     return _normalized_process_command(tokens[0]), False
@@ -227,38 +226,44 @@ def _env_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bool
                 return None, True
         elif option.startswith("-"):
             return None, True
-        elif _is_shell_assignment(option):
+        elif SHELL_ASSIGNMENT(option):
             index += 1
         else:
             break
     if index >= len(tokens):
         return "env", False
     return _effective_process_command(tokens[index:], depth + 1)
-def _effective_process_command(
-    tokens: list[str], depth: int = 0, *, shell_words: bool = False
-) -> tuple[str | None, bool]:
-    """Return the effective executable and whether bounded wrapper parsing was unsafe."""
+def _command_wrapper_result(tokens: list[str], depth: int) -> tuple[str | None, bool]:
+    remaining = tokens[1:]
+    index = len(remaining) - len(list(dropwhile(lambda token: token.startswith("-"), remaining)))
+    options = tuple(remaining[:index])
+    if options in {("-v",), ("-V",), ("-v", "--"), ("-V", "--")}:
+        return "command", False
+    if options not in {(), ("-p",), ("--",), ("-p", "--")}:
+        return None, True
+    return _effective_process_command(remaining[index:], depth + 1)
+def _effective_process_command(tokens: list[str], depth: int = 0, *, shell_words: bool = False) -> tuple[str | None, bool]:
     if depth > 3:
         return None, True
     if shell_words:
-        while tokens and _is_shell_assignment(tokens[0]):
-            tokens = tokens[1:]
+        tokens = list(dropwhile(SHELL_ASSIGNMENT, tokens))
         if tokens[:1] == ["exec"]:
             tokens = tokens[1:]
-        if not SHELL_OPERATORS.isdisjoint(tokens):
-            return None, True
     if not tokens:
         return None, False
     command = _normalized_process_command(tokens[0])
-    wrapper = {"bash": _shell_wrapper_result, "sh": _shell_wrapper_result,
-               "env": _env_wrapper_result}.get(command)
+    wrapper = {"bash": _shell_wrapper_result, "sh": _shell_wrapper_result, "env": _env_wrapper_result, "command": _command_wrapper_result}.get(command)
     return wrapper(tokens, depth) if wrapper else (command, False)
 def _process_argument_result(node: ast.AST, *, shell_words: bool = False) -> tuple[str | None, bool]:
-    tokens = _literal_process_tokens(node)
-    if tokens is not None:
-        return _effective_process_command(tokens, shell_words=shell_words)
+    text = _literal_text(node)
+    if shell_words:
+        tokens, unsafe = _shell_literal_tokens(text) if text is not None else ([], True)
+        return (None, True) if unsafe else _effective_process_command(tokens, shell_words=True)
+    literal_tokens = _literal_process_tokens(node)
+    if literal_tokens is not None:
+        return _effective_process_command(literal_tokens, shell_words=shell_words)
     head = _literal_text(next(iter(getattr(node, "elts", ())), None))
-    return None, _normalized_process_command(head or "") in {"bash", "sh", "env"}
+    return None, _normalized_process_command(head or "") in {"bash", "sh", "env", "command"}
 def _is_network_import(name: str) -> bool:
     return name in NETWORK_IMPORTS or name.startswith(NETWORK_IMPORT_PREFIXES)
 def _import_has_network_egress(node: ast.AST) -> bool:
