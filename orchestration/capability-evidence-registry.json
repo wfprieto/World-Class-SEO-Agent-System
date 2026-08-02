@@ -3336,6 +3336,66 @@
         "schema-detect-validate-generate"
       ]
     },
+    "system.doctor": {
+      "claim_ceiling": "REGISTRY_VERIFIED",
+      "delivery_state": "COMMAND_BACKED",
+      "evidence": {
+        "AUTOMATED": {
+          "refs": [
+            "tests/test_seoctl.py",
+            "tests/test_seoctl_entrypoint.py"
+          ],
+          "status": "PASS"
+        },
+        "CI": {
+          "refs": [],
+          "status": "NOT_RUN"
+        },
+        "DEPLOYED": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "OPERATIONAL": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "PROVIDER": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "SOURCE": {
+          "refs": [
+            "orchestration/capability-registry.json",
+            "seoctl/command-registry-overlay.json"
+          ],
+          "status": "PASS"
+        }
+      },
+      "execution_mode": "DETERMINISTIC",
+      "network_class": "none",
+      "owner": "SEO Diagnostic Infrastructure Agent",
+      "owner_skill_alignment": {
+        "declares_all_command_skills": false,
+        "missing_skills": [
+          "definition-of-done"
+        ]
+      },
+      "participant_skill_alignment": {
+        "SEO Diagnostic Infrastructure Agent": {
+          "declares_all_command_skills": false,
+          "missing_skills": [
+            "definition-of-done"
+          ]
+        }
+      },
+      "participants": [
+        "SEO Diagnostic Infrastructure Agent"
+      ],
+      "skills": [
+        "seo-diagnostic-stack-design",
+        "definition-of-done"
+      ]
+    },
     "system.route": {
       "claim_ceiling": "REGISTRY_VERIFIED",
       "delivery_state": "COMMAND_BACKED",
@@ -5181,11 +5241,13 @@
         "SEO Scrummaster Agent"
       ],
       "backing_command_owners": [
+        "SEO Diagnostic Infrastructure Agent",
         "SEO Scrummaster Agent"
       ],
       "backing_commands": [
         "knowledge.product-claims",
-        "knowledge.validate"
+        "knowledge.validate",
+        "system.doctor"
       ],
       "claim_ceiling": "REGISTRY_VERIFIED",
       "declared_owners": [],
@@ -7309,7 +7371,8 @@
       "backing_commands": [
         "integrations.config",
         "integrations.list",
-        "integrations.preflight"
+        "integrations.preflight",
+        "system.doctor"
       ],
       "claim_ceiling": "REGISTRY_VERIFIED",
       "declared_owners": [],

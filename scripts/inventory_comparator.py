@@ -22,19 +22,15 @@ effective_inventory = importlib.import_module(
 )
 _effective_command_registry = effective_inventory.effective_command_registry
 _effective_inventory_hashes = effective_inventory.effective_inventory_hashes
+scoring = importlib.import_module(
+    "scripts.comparative_scoring" if __package__ else "comparative_scoring"
+)
+validate_scorecard = scoring.validate_scorecard
+weighted_score = scoring.weighted_score
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPARATIVE = ROOT / "evaluation" / "comparative"
 
-MATURITY_MAX_SCORE = {
-    "ABSENT": 1.9,
-    "DOCUMENTED": 3.9,
-    "STUB": 5.9,
-    "FUNCTIONAL": 7.9,
-    "LIVE_CAPABLE": 8.9,
-    "PRODUCTION_READY": 9.5,
-    "BEST_IN_CLASS": 10.0,
-}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -161,52 +157,6 @@ def validate_capability_inventory(ledger: dict[str, Any], root: Path = ROOT) -> 
             errors.append(
                 f"{row_id} contradicts the effective command inventory: missing {missing}"
             )
-    return errors
-
-
-def weighted_score(scorecard: dict[str, Any]) -> float:
-    return round(
-        sum((float(row["score"]) / 10.0) * float(row["weight"]) for row in scorecard["categories"]),
-        4,
-    )
-
-
-def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
-    errors: list[str] = []
-    categories = scorecard.get("categories")
-    if not isinstance(categories, list) or len(categories) != 10:
-        return ["scorecard must contain exactly ten categories"]
-    raw_ids = [row.get("id") for row in categories if isinstance(row, dict)]
-    if not all(isinstance(item, int) for item in raw_ids) or sorted(
-        item for item in raw_ids if isinstance(item, int)
-    ) != list(range(1, 11)):
-        errors.append("category ids must be unique integers 1 through 10")
-    weight = sum(float(row.get("weight", 0)) for row in categories)
-    if abs(weight - 100.0) > 0.0001:
-        errors.append(f"category weights must total 100; found {weight}")
-    for row in categories:
-        if not isinstance(row, dict):
-            errors.append("every category must be an object")
-            continue
-        maturity = str(row.get("evidence_maturity", ""))
-        score = float(row.get("score", -1))
-        if maturity not in MATURITY_MAX_SCORE:
-            errors.append(f"category {row.get('id')} has unknown evidence maturity {maturity!r}")
-            continue
-        maximum = MATURITY_MAX_SCORE[maturity]
-        if score > maximum:
-            errors.append(
-                f"category {row.get('id')} score {score} exceeds maturity ceiling {maximum} for {maturity}"
-            )
-        evidence = row.get("evidence")
-        if not isinstance(evidence, list) or not evidence:
-            errors.append(f"category {row.get('id')} has no evidence")
-        if score >= 8 and maturity not in {"LIVE_CAPABLE", "PRODUCTION_READY", "BEST_IN_CLASS"}:
-            errors.append(f"category {row.get('id')} cannot score 8+ without live-capable evidence")
-    calculated = weighted_score(scorecard)
-    claimed = float(scorecard.get("overall_score", -1))
-    if abs(calculated - claimed) > 0.0001:
-        errors.append(f"overall_score is {claimed}, but the formula produces {calculated}")
     return errors
 
 

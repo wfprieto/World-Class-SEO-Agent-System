@@ -98,6 +98,35 @@ def test_scorecard_formula_cannot_be_changed_or_miscalculated():
     assert any("formula produces 69.9" in error for error in errors)
 
 
+def test_score_change_cannot_pass_by_recomputing_arithmetic() -> None:
+    scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
+    broken = copy.deepcopy(scorecard)
+    broken["categories"][0]["score"] = 8.8
+    broken["overall_score"] = weighted_score(broken)
+
+    assert "category scores differ from the reviewed score profile" in validate_scorecard(
+        broken
+    )
+
+
+def test_scorecard_evidence_ids_and_digests_are_bound() -> None:
+    scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
+    altered = copy.deepcopy(scorecard)
+    altered["categories"][0]["evidence"][0]["claim"] = "Substituted claim"
+    assert any("evidence digest mismatch" in error for error in validate_scorecard(altered))
+
+    duplicate = copy.deepcopy(scorecard)
+    first = duplicate["categories"][0]["evidence"][0]["id"]
+    duplicate["categories"][1]["evidence"][0]["id"] = first
+    assert "evidence ids must be non-empty and unique" in validate_scorecard(duplicate)
+
+
+def test_scorecard_rejects_non_finite_scores() -> None:
+    scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
+    scorecard["categories"][0]["score"] = float("nan")
+    assert any("score must be finite" in error for error in validate_scorecard(scorecard))
+
+
 def test_documentation_or_stub_maturity_cannot_claim_world_class_score():
     scorecard = load_json(COMPARATIVE / "world-class-baseline.json")
     broken = copy.deepcopy(scorecard)

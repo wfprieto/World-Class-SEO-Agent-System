@@ -4,7 +4,7 @@
   "target_commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
   "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
   "canonical_inventory_sha256": {
-    "effective_command_registry": "35a5072a24d5548f187ad42c163bbc63c7217faa46e0a2952735c75781496deb",
+    "effective_command_registry": "a58b188399897a5c016bbf60c73d2a7b89968bcc51b574cd7ae2cd1fb07c5014",
     "effective_capability_registry": "021600095dad93faf31ef66484ee602997237b867af93705948be580ad4276f4"
   },
   "verification_state": {

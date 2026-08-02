@@ -16,10 +16,24 @@
       "score": 7.0,
       "evidence_maturity": "LIVE_CAPABLE",
       "evidence": [
-        {"source": "README.md", "claim": "Claude SEO documents 18 specialist agents and parallel execution.", "state": "VERIFIED"},
-        {"source": "Repository architecture", "claim": "Agents are strongly command-oriented but lack the target system's structured governance and evidence contracts.", "state": "VERIFIED"}
+        {
+          "source": "README.md",
+          "claim": "Claude SEO documents 18 specialist agents and parallel execution.",
+          "state": "VERIFIED",
+          "id": "category-1-evidence-1",
+          "sha256": "8f03a6c19027ecf373986906ef73a816d753f04b8d435b5198cd46b203543f87"
+        },
+        {
+          "source": "Repository architecture",
+          "claim": "Agents are strongly command-oriented but lack the target system's structured governance and evidence contracts.",
+          "state": "VERIFIED",
+          "id": "category-1-evidence-2",
+          "sha256": "81c85cf45c1cc80ad64e7f49262528bd484cfa2c0bad5679e0a66b94f3a02d0a"
+        }
       ],
-      "open_gaps": ["No equivalent bounded runtime OS or strict handoff contract."]
+      "open_gaps": [
+        "No equivalent bounded runtime OS or strict handoff contract."
+      ]
     },
     {
       "id": 2,
@@ -28,8 +42,20 @@
       "score": 9.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "README.md", "claim": "Claude SEO documents 25 invocable commands and self-contained skill packages.", "state": "VERIFIED"},
-        {"source": "skills/", "claim": "Reference material is tightly coupled to operational skills.", "state": "VERIFIED"}
+        {
+          "source": "README.md",
+          "claim": "Claude SEO documents 25 invocable commands and self-contained skill packages.",
+          "state": "VERIFIED",
+          "id": "category-2-evidence-1",
+          "sha256": "72620667026596f16cef6c3a7c92ba06765d88493105260266697241647bf182"
+        },
+        {
+          "source": "skills/",
+          "claim": "Reference material is tightly coupled to operational skills.",
+          "state": "VERIFIED",
+          "id": "category-2-evidence-2",
+          "sha256": "6ebcaa8586bd24392ca8c7d8b8d47e402c06472050028fc8249ce6b47a3f2f9c"
+        }
       ],
       "open_gaps": []
     },
@@ -40,8 +66,20 @@
       "score": 10.0,
       "evidence_maturity": "BEST_IN_CLASS",
       "evidence": [
-        {"source": "CHANGELOG.md v2.2.0", "claim": "The project documents a 50-script execution inventory with production fixes and cross-platform hardening.", "state": "VERIFIED"},
-        {"source": "README command table", "claim": "Users receive an immediately callable command surface across technical, content, schema, local, commerce, links and drift.", "state": "VERIFIED"}
+        {
+          "source": "CHANGELOG.md v2.2.0",
+          "claim": "The project documents a 50-script execution inventory with production fixes and cross-platform hardening.",
+          "state": "VERIFIED",
+          "id": "category-3-evidence-1",
+          "sha256": "52baefad135ffa22f8ec661680197972d02b79fd286c723acac075285edc14f1"
+        },
+        {
+          "source": "README command table",
+          "claim": "Users receive an immediately callable command surface across technical, content, schema, local, commerce, links and drift.",
+          "state": "VERIFIED",
+          "id": "category-3-evidence-2",
+          "sha256": "8cc45fec757b90cbb9123809731c66e36af2ae35bebbf6cb2e578f0b53c22a7a"
+        }
       ],
       "open_gaps": []
     },
@@ -52,9 +90,19 @@
       "score": 4.0,
       "evidence_maturity": "STUB",
       "evidence": [
-        {"source": "Repository architecture", "claim": "Parallel agents and shared cache exist without the target's schema-bound DAG, budget and decision-record system.", "state": "VERIFIED"}
+        {
+          "source": "Repository architecture",
+          "claim": "Parallel agents and shared cache exist without the target's schema-bound DAG, budget and decision-record system.",
+          "state": "VERIFIED",
+          "id": "category-4-evidence-1",
+          "sha256": "70bdbfd1ed2986fb750a8d24a8d420feaf9d730bcb792b2d3748f3d6d61776ab"
+        }
       ],
-      "open_gaps": ["No strict session state.", "No material-claim evidence binding.", "No bounded cross-agent governance loop comparable to the target."]
+      "open_gaps": [
+        "No strict session state.",
+        "No material-claim evidence binding.",
+        "No bounded cross-agent governance loop comparable to the target."
+      ]
     },
     {
       "id": 5,
@@ -63,10 +111,24 @@
       "score": 9.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "README extensions", "claim": "Eight optional extensions and multiple live Google, Bing, marketplace and crawling integrations are documented and installable.", "state": "VERIFIED"},
-        {"source": "CHANGELOG.md v2.2.0", "claim": "Integration installers have security, portability, credential and package-version fixes.", "state": "VERIFIED"}
+        {
+          "source": "README extensions",
+          "claim": "Eight optional extensions and multiple live Google, Bing, marketplace and crawling integrations are documented and installable.",
+          "state": "VERIFIED",
+          "id": "category-5-evidence-1",
+          "sha256": "c7e8f022c587cedd6dd3b5b3dc1efa9729e57cd019ccc358368e7c5c5da077f8"
+        },
+        {
+          "source": "CHANGELOG.md v2.2.0",
+          "claim": "Integration installers have security, portability, credential and package-version fixes.",
+          "state": "VERIFIED",
+          "id": "category-5-evidence-2",
+          "sha256": "ceecd1019eeb951bf2c66fdd1c2eb8176d3a0e9e3c1b86b73e4d74c07cdf2325"
+        }
       ],
-      "open_gaps": ["Provider governance and cost controls are less comprehensive than the target runtime."]
+      "open_gaps": [
+        "Provider governance and cost controls are less comprehensive than the target runtime."
+      ]
     },
     {
       "id": 6,
@@ -75,7 +137,13 @@
       "score": 9.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "skills/*/references", "claim": "The comparator maintains a large skill-coupled reference library with current Google, schema, privacy, content and AI-search guidance.", "state": "VERIFIED"}
+        {
+          "source": "skills/*/references",
+          "claim": "The comparator maintains a large skill-coupled reference library with current Google, schema, privacy, content and AI-search guidance.",
+          "state": "VERIFIED",
+          "id": "category-6-evidence-1",
+          "sha256": "83901eb011d6cf41e3a26ecb5c4e5860f1746aea5c3ef606ed3c91dbecee22e3"
+        }
       ],
       "open_gaps": []
     },
@@ -86,10 +154,24 @@
       "score": 7.5,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "README badges", "claim": "The public README advertises 326 passing tests and CI status.", "state": "VERIFIED"},
-        {"source": "CHANGELOG.md v2.2.0", "claim": "The suite includes security regression, installer, cross-platform and manifest checks.", "state": "VERIFIED"}
+        {
+          "source": "README badges",
+          "claim": "The public README advertises 326 passing tests and CI status.",
+          "state": "VERIFIED",
+          "id": "category-7-evidence-1",
+          "sha256": "4323e231f157dfb5f3a124fc174b461ff0e469f2549cfb0b30195230e0ebacc0"
+        },
+        {
+          "source": "CHANGELOG.md v2.2.0",
+          "claim": "The suite includes security regression, installer, cross-platform and manifest checks.",
+          "state": "VERIFIED",
+          "id": "category-7-evidence-2",
+          "sha256": "15fa8b25803ca242583c10910af804c4ecbdfbf74c16da17b16416b007bbd601"
+        }
       ],
-      "open_gaps": ["No equivalent agent-output and session schema contract suite."]
+      "open_gaps": [
+        "No equivalent agent-output and session schema contract suite."
+      ]
     },
     {
       "id": 8,
@@ -98,7 +180,13 @@
       "score": 8.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "FLOW prompt library", "claim": "Claude SEO exposes granular content, humanization, verification and media-oriented execution paths.", "state": "VERIFIED"}
+        {
+          "source": "FLOW prompt library",
+          "claim": "Claude SEO exposes granular content, humanization, verification and media-oriented execution paths.",
+          "state": "VERIFIED",
+          "id": "category-8-evidence-1",
+          "sha256": "ff2e76812190a13f3df2c52a84f17823ee19b3ea4c5f3c4887d1024e25034d96"
+        }
       ],
       "open_gaps": []
     },
@@ -109,7 +197,13 @@
       "score": 9.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "README.md", "claim": "Installation, Quick Start, commands, extensions, limitations and ecosystem paths are public and immediately actionable.", "state": "VERIFIED"}
+        {
+          "source": "README.md",
+          "claim": "Installation, Quick Start, commands, extensions, limitations and ecosystem paths are public and immediately actionable.",
+          "state": "VERIFIED",
+          "id": "category-9-evidence-1",
+          "sha256": "2b775a7dbba17c521f7df2b92454e141479ab9a000f12cc4132f5ee2d20692cc"
+        }
       ],
       "open_gaps": []
     },
@@ -120,7 +214,13 @@
       "score": 9.0,
       "evidence_maturity": "PRODUCTION_READY",
       "evidence": [
-        {"source": "README badges and releases", "claim": "The project has releases, marketplace distribution, contributors, security reporting and public ecosystem signals.", "state": "VERIFIED"}
+        {
+          "source": "README badges and releases",
+          "claim": "The project has releases, marketplace distribution, contributors, security reporting and public ecosystem signals.",
+          "state": "VERIFIED",
+          "id": "category-10-evidence-1",
+          "sha256": "926046a2e2102fad68b7db9d114eae493b08a6b75d50bc0081ffc24a0946e6ac"
+        }
       ],
       "open_gaps": []
     }
@@ -131,5 +231,6 @@
     "The comparator is pinned for this improvement cycle; upstream changes do not alter the baseline mid-cycle.",
     "Public repository claims are treated as verified only when supported by current README, changelog or executable repository evidence.",
     "The target must beat this comparator through capability outcomes, not by copying file counts."
-  ]
+  ],
+  "score_model_version": "comparative-static-v1"
 }

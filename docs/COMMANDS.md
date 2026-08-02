@@ -64,6 +64,7 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 | `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl system doctor` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design`, `definition-of-done` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 | `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
@@ -93,6 +94,7 @@ python -m seoctl --registry-check
 python -m seoctl audit technical --url https://example.com --output audit-runs/example-com
 python -m seoctl knowledge validate
 python -m seoctl knowledge product-claims --status BLOCKED
+python -m seoctl system doctor --as-of 2026-08-02
 python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx
 python -m seoctl system route "Run a full SEO audit" --domain https://example.com --business-type saas
 python -m seoctl system run "Build an SEO content brief" --domain https://example.com --business-type saas

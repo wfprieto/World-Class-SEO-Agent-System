@@ -104,6 +104,7 @@ class SEOOrchestrator:
         )
         session.agent_outputs.append(
             {
+                "contract_version": "2.0.0",
                 "output_id": f"{session.session_id}-routing-output",
                 "agent": "SEO Scrummaster Agent",
                 "summary": (
@@ -121,6 +122,7 @@ class SEOOrchestrator:
                             f"business profiles: {profile.get('profiles', ['generic'])}; "
                             f"profile confidence: {profile.get('confidence', 'Low')}."
                         ),
+                        "state": "CURRENT",
                     }
                 ],
                 "confidence": result.confidence if result.confidence in {"High", "Medium", "Low"} else "Low",

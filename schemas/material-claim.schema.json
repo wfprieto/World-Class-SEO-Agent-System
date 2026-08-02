@@ -13,18 +13,19 @@
     "inference"
   ],
   "properties": {
-    "claim_id": {"type": "string"},
+    "claim_id": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
     "claim_type": {
       "type": "string",
       "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
     },
-    "statement": {"type": "string"},
+    "statement": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
     "normalized_value": {},
     "unit": {"type": "string"},
     "evidence_refs": {
       "type": "array",
-      "items": {"type": "string"},
-      "minItems": 1
+      "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+      "minItems": 1,
+      "uniqueItems": true
     },
     "evidence_state": {
       "type": "string",

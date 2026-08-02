@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from runtime.capability_resolver import CapabilityResolver
 from runtime.execution_limits import ExecutionLimits
@@ -16,7 +17,6 @@ from runtime.run_budget import RunBudget
 from runtime.state import Handoff, SessionState
 from runtime.structured_output import StructuredOutputResult, StructuredOutputService
 from runtime.tools import ToolDispatcher, ToolRequest
-
 
 AGENT_FILE_NAMES = {
     "SEO Technical Agent": "seo-technical-agent.md",
@@ -289,14 +289,17 @@ class AgentExecutor:
         state: str,
     ) -> dict[str, Any]:
         return {
+            "contract_version": "2.0.0",
             "output_id": f"{session.session_id}-{agent_name.lower().replace(' ', '-')}-failure",
             "agent": agent_name,
             "summary": f"{agent_name} did not produce a valid executable output.",
             "evidence": [{
+                "id": "runtime-validation",
                 "source": "runtime_validation",
                 "type": "execution_error",
                 "date_checked": session.created_at[:10],
                 "notes": "; ".join(errors[:5]) or "Unknown structured-output failure.",
+                "state": "CURRENT",
             }],
             "confidence": "Low",
             "findings": [],

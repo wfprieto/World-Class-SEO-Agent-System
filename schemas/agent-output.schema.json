@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "contract_version",
     "agent",
     "summary",
     "evidence",
@@ -18,9 +19,20 @@
     "dependencies",
     "acceptance_criteria",
     "verification",
-    "follow_up"
+    "follow_up",
+    "material_claims",
+    "execution_state"
   ],
   "properties": {
+    "contract_version": {
+      "type": "string",
+      "enum": ["1.0.0", "2.0.0"],
+      "description": "Evidence contract version. Runtime validation requires this explicitly; unversioned payloads must pass through the opt-in legacy normalizer."
+    },
+    "legacy_unverified": {
+      "type": "boolean",
+      "description": "True only for explicitly normalized version 1.0.0 output."
+    },
     "output_id": {
       "type": "string",
       "description": "Stable runtime output identifier used by handoffs and workflow events."
@@ -43,10 +55,14 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Optional stable evidence identifier."
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "description": "Stable evidence identifier used by every evidence reference."
           },
           "source": {
             "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
             "description": "URL, file, export, report, crawl, API, or user-provided source."
           },
           "type": {
@@ -63,7 +79,7 @@
           },
           "state": {
             "type": "string",
-            "enum": ["CURRENT", "STALE", "MISSING", "INVALID", "CONTRADICTORY"],
+            "enum": ["CURRENT", "UNVERIFIED", "STALE", "MISSING", "INVALID", "CONTRADICTORY"],
             "description": "Truthful freshness and consistency state used by finding reconciliation."
           }
         }
@@ -103,8 +119,10 @@
           },
           "evidence_refs": {
             "type": "array",
-            "description": "References to evidence items by stable id or source label.",
-            "items": {"type": "string"}
+            "description": "References to evidence items by unique stable id.",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
           },
           "action_polarity": {
             "type": "object",
@@ -200,15 +218,20 @@
         "additionalProperties": false,
         "required": ["claim_id", "claim_type", "statement", "evidence_refs", "evidence_state", "inference"],
         "properties": {
-          "claim_id": {"type": "string"},
+          "claim_id": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
           "claim_type": {
             "type": "string",
             "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
           },
-          "statement": {"type": "string"},
+          "statement": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
           "normalized_value": {},
           "unit": {"type": "string"},
-          "evidence_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "evidence_refs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
+          },
           "evidence_state": {
             "type": "string",
             "enum": ["AVAILABLE", "PARTIAL", "MISSING", "STALE", "INVALID", "BLOCKED"]
@@ -250,16 +273,55 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "required": ["contract_version"],
+        "properties": {"contract_version": {"const": "2.0.0"}}
+      },
+      "then": {
+        "required": ["execution_state", "material_claims"],
+        "properties": {
+          "evidence": {
+            "items": {"required": ["id", "source", "type", "date_checked", "notes", "state"]}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["contract_version"],
+        "properties": {"contract_version": {"const": "1.0.0"}}
+      },
+      "then": {
+        "required": ["execution_state", "material_claims", "legacy_unverified"],
+        "properties": {
+          "execution_state": {"const": "PARTIAL"},
+          "legacy_unverified": {"const": true},
+          "evidence": {
+            "items": {
+              "required": ["id", "source", "type", "date_checked", "notes", "state"],
+              "properties": {"state": {"const": "UNVERIFIED"}}
+            }
+          }
+        }
+      }
+    }
+  ],
   "examples": [
     {
+      "contract_version": "1.0.0",
+      "legacy_unverified": true,
       "agent": "SEO Technical Agent",
       "summary": "The product template emits conflicting canonical and hreflang signals.",
       "evidence": [
         {
+          "id": "crawl-export-2026-07-03.csv",
           "source": "crawl-export-2026-07-03.csv",
           "type": "crawl_export",
           "date_checked": "2026-07-03",
-          "notes": "Sample of 50 product URLs showed canonical conflicts."
+          "notes": "Sample of 50 product URLs showed canonical conflicts.",
+          "state": "UNVERIFIED"
         }
       ],
       "confidence": "High",
@@ -287,7 +349,9 @@
       "dependencies": ["International & Multilingual SEO Agent validation", "Template access"],
       "acceptance_criteria": ["Self-canonical is present on sampled localized URLs", "Return hreflang tags validate", "No unexpected noindex or robots blocks"],
       "verification": ["Run hreflang audit on sample URLs", "Inspect rendered HTML", "Submit sample URLs for indexation validation when available"],
-      "follow_up": "Recheck sampled localized URLs 14 days after deployment or after next sitemap submission."
+      "follow_up": "Recheck sampled localized URLs 14 days after deployment or after next sitemap submission.",
+      "material_claims": [],
+      "execution_state": "PARTIAL"
     }
   ]
 }

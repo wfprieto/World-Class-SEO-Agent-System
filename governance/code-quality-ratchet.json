@@ -236,14 +236,6 @@
     }
   },
   "function_exceptions": {
-    "runtime.evidence_binding::validate_evidence_binding": {
-      "max_span": 50,
-      "max_complexity": 21,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "runtime.structured_output::StructuredOutputService.complete_agent_output": {
       "max_span": 99,
       "max_complexity": 9,
@@ -908,14 +900,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "seoctl.cli::build_parser": {
-      "max_span": 86,
-      "max_complexity": 1,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "seoctl.content_cli::_result": {
       "max_span": 7,
       "max_complexity": 1,
@@ -1372,14 +1356,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "scripts.inventory_comparator::validate_scorecard": {
-      "max_span": 37,
-      "max_complexity": 21,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "scripts.run_improvement_cycle::evaluate_cycle": {
       "max_span": 89,
       "max_complexity": 23,
@@ -1398,14 +1374,6 @@
     },
     "scripts.scan_secrets::scan": {
       "max_span": 27,
-      "max_complexity": 17,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "scripts.seo_pdf_report::build_html": {
-      "max_span": 48,
       "max_complexity": 17,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
@@ -1519,14 +1487,6 @@
     "scripts.validate_product_proof_program::validate": {
       "max_span": 149,
       "max_complexity": 22,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "scripts.validate_reference_freshness::validate": {
-      "max_span": 58,
-      "max_complexity": 24,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1687,13 +1647,9 @@
       "runtime/business_profile_resolver.py|C901|`_explicit_profiles` is too complex (13 > 10)": 1,
       "runtime/business_profile_resolver.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/business_profile_resolver.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "runtime/evidence_binding.py|C901|`validate_evidence_binding` is too complex (18 > 10)": 1,
-      "runtime/executor.py|I001|Import block is un-sorted or un-formatted": 1,
-      "runtime/executor.py|UP035|Import from `collections.abc` instead: `AsyncIterator`": 1,
       "runtime/routing.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/state.py|UP017|Use `datetime.UTC` alias": 3,
       "runtime/state.py|UP037|Remove quotes from type annotation": 1,
-      "runtime/structured_output.py|B904|Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling": 1,
       "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/capture_github_controls.py|I001|Import block is un-sorted or un-formatted": 1,
@@ -1703,7 +1659,6 @@
       "scripts/generate_capability_evidence_registry.py|C901|`build` is too complex (20 > 10)": 1,
       "scripts/generate_capability_evidence_registry.py|E402|Module level import not at top of file": 2,
       "scripts/generate_command_docs.py|E402|Module level import not at top of file": 1,
-      "scripts/inventory_comparator.py|C901|`validate_scorecard` is too complex (11 > 10)": 1,
       "scripts/plan_github_controls_rollback.py|C901|`restored_state_errors` is too complex (11 > 10)": 1,
       "scripts/plan_github_controls_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/rehearse_phase_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
@@ -1714,7 +1669,6 @@
       "scripts/run_security_mutation_checks.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/scan_secrets.py|C901|`scan` is too complex (11 > 10)": 1,
       "scripts/scan_secrets.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "scripts/seo_pdf_report.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/validate_canonical_skill_consistency.py|E401|Multiple imports on one line": 1,
       "scripts/validate_canonical_skill_consistency.py|E701|Multiple statements on one line (colon)": 6,
       "scripts/validate_canonical_skill_consistency.py|E702|Multiple statements on one line (semicolon)": 11,
@@ -1731,7 +1685,6 @@
       "scripts/validate_product_contract.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_product_proof_program.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/validate_pytest_temp_isolation.py|I001|Import block is un-sorted or un-formatted": 1,
-      "scripts/validate_reference_freshness.py|C901|`validate` is too complex (16 > 10)": 1,
       "scripts/validate_release_artifacts.py|C901|`validate` is too complex (12 > 10)": 1,
       "scripts/validate_release_version.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_remediation_program.py|C901|`_evidence_errors` is too complex (22 > 10)": 1,
@@ -1753,7 +1706,6 @@
       "seoctl/authority_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "seoctl/cli.py|E402|Module level import not at top of file": 11,
       "seoctl/cli.py|I001|Import block is un-sorted or un-formatted": 1,
-      "seoctl/cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "seoctl/content_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "seoctl/extensions_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "seoctl/google_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,

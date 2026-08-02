@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 import sqlite3
 import sys
 import threading
@@ -23,7 +22,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from adapters import mcp_extensions, rendered_page  # noqa: E402
+import seo_pdf_report  # noqa: E402
+
+from adapters import rendered_page  # noqa: E402
 from adapters.evidence_store import EvidenceIntegrityError, EvidenceStore  # noqa: E402
 from adapters.mcp_extensions import (  # noqa: E402
     Extension,
@@ -32,9 +33,6 @@ from adapters.mcp_extensions import (  # noqa: E402
 )
 from adapters.page_drift import PageDrift, verify_untampered  # noqa: E402
 from adapters.registry import default_adapters  # noqa: E402
-
-import seo_pdf_report  # noqa: E402
-
 
 # ============ Pass 13: optional-dependency success paths (injected, not faked live) ====
 
@@ -385,9 +383,17 @@ def test_shipped_registry_passes_governance():
 
 
 def _ext(**kw) -> dict[str, Extension]:
-    base = dict(id="x", provider="X", cost_tier="free", unlocks="read stuff",
-                kit_targets=(), allowed_operations=("read",),
-                forbidden_operations=("write",), env_vars=(), mcp_hint="x")
+    base = {
+        "id": "x",
+        "provider": "X",
+        "cost_tier": "free",
+        "unlocks": "read stuff",
+        "kit_targets": (),
+        "allowed_operations": ("read",),
+        "forbidden_operations": ("write",),
+        "env_vars": (),
+        "mcp_hint": "x",
+    }
     base.update(kw)
     return {base["id"]: Extension(**base)}
 
@@ -478,9 +484,20 @@ def test_report_handles_malformed_findings(tmp_path: Path):
 
 
 def test_report_handles_unsupported_evidence_state_and_missing_chart(tmp_path: Path):
-    markup = seo_pdf_report.build_html(_agent_output(confidence="Banana", scores={"bad": "x"}))
-    assert "Banana" in markup      # rendered, not silently dropped
-    assert "<img" not in markup    # invalid chart data omitted, report still produced
+    with pytest.raises(ValueError, match="must be numeric"):
+        seo_pdf_report.build_html(_agent_output(confidence="Banana", scores={"bad": "x"}))
+
+
+@pytest.mark.parametrize("score", [float("nan"), float("inf"), -0.01, 100.01])
+def test_report_rejects_non_finite_or_out_of_range_scores(score: float):
+    with pytest.raises(ValueError, match="finite and between 0 and 100"):
+        seo_pdf_report.build_html(_agent_output(scores={"audit": score}))
+
+
+def test_report_labels_unversioned_compatibility_input_as_unverified():
+    markup = seo_pdf_report.build_html(_agent_output())
+    assert 'data-report-state="LEGACY_UNVERIFIED"' in markup
+    assert "Legacy unverified input" in markup
 
 
 def test_report_rejects_invalid_output_location():

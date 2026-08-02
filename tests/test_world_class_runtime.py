@@ -51,6 +51,7 @@ class ValidStructuredClient:
         agent = match.group(1)
         slug = re.sub(r"[^a-z0-9]+", "-", agent.lower()).strip("-")
         payload = {
+            "contract_version": "2.0.0",
             "output_id": f"fixture-{slug}",
             "agent": agent,
             "summary": "Validated specialist output.",
@@ -60,6 +61,7 @@ class ValidStructuredClient:
                 "type": "test_fixture",
                 "date_checked": "2026-07-11",
                 "notes": "Deterministic fixture evidence.",
+                "state": "CURRENT",
             }],
             "confidence": "High",
             "findings": [{

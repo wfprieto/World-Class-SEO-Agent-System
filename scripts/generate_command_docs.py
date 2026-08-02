@@ -52,6 +52,7 @@ def render() -> str:
         "python -m seoctl audit technical --url https://example.com --output audit-runs/example-com",
         "python -m seoctl knowledge validate",
         "python -m seoctl knowledge product-claims --status BLOCKED",
+        "python -m seoctl system doctor --as-of 2026-08-02",
         "python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx",
         "python -m seoctl system route \"Run a full SEO audit\" --domain https://example.com --business-type saas",
         "python -m seoctl system run \"Build an SEO content brief\" --domain https://example.com --business-type saas",

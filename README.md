@@ -17,8 +17,11 @@ Requires Python 3.11, 3.12, or 3.13.
 ```bash
 python -m pip install -e .
 seoctl --registry-check
+seoctl system doctor
 seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/first-run --max-urls 20
 ```
+
+`seoctl system doctor` performs deterministic, read-only local checks for the supported Python version, required assets, command registry, architecture contract, per-pack knowledge provenance, and dependency lock. It performs no network request or provider authentication and does not claim live-site or deployment readiness.
 
 `seoctl audit technical` is the sole flagship command. It performs bounded read-only diagnosis and produces a decision-ready technical SEO evidence package with exactly ten artifacts in the gitignored `outputs/first-run/` directory: `crawl.json`, `findings.json`, `decisions.json`, `agent-contributions.json`, `trust-summary.json`, `technical-audit.md`, `executive-summary.md`, `remediation-plan.csv`, `verification-plan.json`, and `run-manifest.json`.
 

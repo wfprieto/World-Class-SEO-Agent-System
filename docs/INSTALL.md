@@ -23,7 +23,10 @@ python -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e .
 seoctl --registry-check
+seoctl system doctor
 ```
+
+The doctor is a static local readiness check. It does not contact providers, validate credentials, inspect deployments, or prove SEO outcomes. On an unsupported interpreter it fails closed and reports the exact local check that failed.
 
 ## Development install
 

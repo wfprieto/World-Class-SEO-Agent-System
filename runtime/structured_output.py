@@ -34,7 +34,7 @@ def _extract_json(content: str) -> dict[str, Any]:
         start = text.find("{")
         end = text.rfind("}")
         if start < 0 or end <= start:
-            raise ValueError("model response did not contain a JSON object")
+            raise ValueError("model response did not contain a JSON object") from None
         parsed = json.loads(text[start : end + 1])
     if not isinstance(parsed, dict):
         raise ValueError("agent output must be a JSON object")
@@ -55,22 +55,17 @@ def _echo_output(
     required_handoffs: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Explicit synthetic output for deterministic offline execution, never a live finding."""
-    prior_finding_ids = [
-        str(item.get("id"))
-        for prior in prior_outputs
-        for item in prior.get("findings", [])
-        if isinstance(item, dict) and item.get("id")
-    ]
     prior_sources = [
         str(item.get("source"))
         for prior in prior_outputs
         for item in prior.get("evidence", [])
         if isinstance(item, dict) and item.get("source")
     ]
-    evidence_refs = prior_finding_ids or prior_sources
     evidence_source = prior_sources[0] if prior_sources else "runtime_request"
+    evidence_id = "synthetic-runtime-context"
     slug = _slug(agent_name)
     return {
+        "contract_version": "2.0.0",
         "output_id": f"synthetic-{slug}",
         "agent": agent_name,
         "summary": (
@@ -79,10 +74,12 @@ def _echo_output(
         ),
         "evidence": [
             {
+                "id": evidence_id,
                 "source": evidence_source,
                 "type": "synthetic_runtime_fixture",
                 "date_checked": "1970-01-01",
                 "notes": "Offline echo-mode evidence; no live website or provider was inspected.",
+                "state": "CURRENT",
             }
         ],
         "confidence": "Low",
@@ -92,7 +89,7 @@ def _echo_output(
                 "severity": "Low",
                 "finding": f"{agent_name} executed in synthetic offline mode for request: {request[:160]}",
                 "affected_scope": domain or "Unspecified property",
-                "evidence_refs": evidence_refs or [evidence_source],
+                "evidence_refs": [evidence_id],
             }
         ],
         "recommended_actions": [
@@ -217,8 +214,11 @@ class StructuredOutputService:
                 f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
                 "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
                 "provider results. Every factual numeric or URL claim must also appear in "
-                "material_claims with valid evidence_refs. Downstream findings must explicitly "
-                "reference or challenge the supplied dependency evidence.\n\n"
+                "material_claims with valid evidence_refs. Set contract_version to 2.0.0 and "
+                "explicitly provide execution_state and material_claims. Give every evidence "
+                "item a unique stable id and declared state; evidence_refs must use only those "
+                "ids. Downstream findings must explicitly reference or challenge the supplied "
+                "dependency evidence.\n\n"
                 + json.dumps(schema, separators=(",", ":"))
             ),
         )
@@ -227,7 +227,6 @@ class StructuredOutputService:
         last_response: LLMResponse | None = None
         errors: list[str] = []
         output: dict[str, Any] | None = None
-
         for correction in range(budget.limits.max_correction_attempts + 1):
             try:
                 budget.reserve_llm_call(correction=correction > 0)
@@ -248,10 +247,8 @@ class StructuredOutputService:
                 output = None
             else:
                 output.setdefault("output_id", f"{_slug(agent_name)}-output")
-                output.setdefault("material_claims", [])
                 output.setdefault("skills_used", skills)
                 output.setdefault("knowledge_used", knowledge)
-                output.setdefault("execution_state", "COMPLETE")
                 errors = self._errors(output, expected_agent=agent_name)
                 if not errors:
                     return StructuredOutputResult(

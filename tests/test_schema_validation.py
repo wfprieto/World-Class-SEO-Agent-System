@@ -5,6 +5,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from runtime.evidence_binding import normalize_legacy_output
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,6 +27,31 @@ def test_agent_output_schema_rejects_missing_follow_up():
     payload.pop("follow_up")
     errors = list(Draft202012Validator(schema).iter_errors(payload))
     assert any("follow_up" in error.message for error in errors)
+
+
+def test_agent_output_schema_rejects_implicit_evidence_contract_fields():
+    schema = load_json("schemas/agent-output.schema.json")
+    payload = load_json("examples/full-audit-example/agent-output.json")
+    validator = Draft202012Validator(schema)
+
+    for field in ("contract_version", "execution_state", "material_claims"):
+        mutated = json.loads(json.dumps(payload))
+        mutated.pop(field)
+        assert any(field in error.message for error in validator.iter_errors(mutated))
+
+
+def test_explicit_legacy_normalization_produces_schema_valid_partial_output():
+    schema = load_json("schemas/agent-output.schema.json")
+    payload = load_json("examples/full-audit-example/agent-output.json")
+    for field in ("contract_version", "legacy_unverified", "execution_state", "material_claims"):
+        payload.pop(field)
+    for evidence in payload["evidence"]:
+        evidence.pop("id")
+        evidence.pop("state")
+
+    normalized = normalize_legacy_output(payload)
+
+    assert list(Draft202012Validator(schema).iter_errors(normalized)) == []
 
 
 def test_agent_output_schema_rejects_unknown_fields():

@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
+from datetime import date
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from seoctl.result_contract import exit_code_for_status as exit_code_for_status
 from seoctl.result_contract import normalize_error
@@ -120,6 +122,16 @@ def _system_run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return envelope("system.run", "failed", result), EXIT_FAILED
 
 
+def _system_doctor(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    from seoctl.doctor import diagnose
+
+    result = diagnose(ROOT, as_of=args.as_of)
+    passed = result["status"] == "PASS"
+    return envelope("system.doctor", "ok" if passed else "failed", result), (
+        EXIT_OK if passed else EXIT_FAILED
+    )
+
+
 def _content_relevance(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = assess_relevance(_json(args.site), args.topic, args.market, args.search_volume)
     return envelope("content.relevance", "ok", result), EXIT_OK
@@ -214,6 +226,7 @@ def _benchmark_tracer(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 HANDLERS: dict[str, Callable[[argparse.Namespace], tuple[dict[str, Any], int]]] = {
     "system_route": _system_route,
     "system_run": _system_run,
+    "system_doctor": _system_doctor,
     "content_relevance": _content_relevance,
     "content_serp": _content_serp,
     "content_brief_decision": _content_brief_decision,
@@ -236,11 +249,7 @@ def _common_session(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mode", default="Audit", choices=["Audit", "Implementation", "Strategy", "Monitoring", "Research", "Debate"])
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="seoctl", description="World-Class SEO Agent System operator CLI")
-    parser.add_argument("--registry-check", action="store_true", help="Validate commands and agent execution ownership, then exit.")
-    groups = parser.add_subparsers(dest="group")
-
+def _add_system_commands(groups: argparse._SubParsersAction) -> None:
     system = groups.add_parser("system", help="Route or execute coordinated SEO workflows")
     system_sub = system.add_subparsers(dest="action")
     route = system_sub.add_parser("route")
@@ -259,6 +268,17 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--max-runtime-seconds", type=int, default=900)
     run.add_argument("--max-estimated-cost", type=float)
     run.set_defaults(command_id="system.run")
+    doctor = system_sub.add_parser("doctor")
+    doctor.add_argument("--as-of", type=date.fromisoformat)
+    doctor.set_defaults(command_id="system.doctor")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="seoctl", description="World-Class SEO Agent System operator CLI")
+    parser.add_argument("--registry-check", action="store_true", help="Validate commands and agent execution ownership, then exit.")
+    groups = parser.add_subparsers(dest="group")
+
+    _add_system_commands(groups)
 
     content = groups.add_parser("content")
     content_sub = content.add_subparsers(dest="action")

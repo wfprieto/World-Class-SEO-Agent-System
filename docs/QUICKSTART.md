@@ -5,8 +5,11 @@
 ```bash
 python -m pip install -e .
 seoctl --registry-check
+seoctl system doctor
 seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/first-run --max-urls 20
 ```
+
+The doctor performs bounded static checks only and makes no network or provider-authentication call. A pass means the local repository contracts are coherent; it does not certify a live provider, deployment, website, ranking, traffic, or conversion result.
 
 `seoctl audit technical` is the sole flagship command. This fixture command performs no live crawl and writes a decision-ready technical SEO evidence package containing exactly these ten reviewable files under the gitignored `outputs/first-run/` directory:
 
