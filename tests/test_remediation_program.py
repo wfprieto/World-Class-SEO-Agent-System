@@ -662,6 +662,9 @@ def test_phase_zero_requires_explicit_review_snapshot_before_closure() -> None:
     payload = _program()
     phase = payload["phases"][0]
     phase["status"] = "COMPLETE"
+    phase["review_snapshot_commit"] = None
+    phase["frozen_package_commit"] = None
+    phase["package_certification"] = []
     _refresh_review(payload, phase)
 
     errors = _validate_complete_phase(phase, payload, ROOT)

@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P1",
+  "current_phase": "P0",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -34,10 +34,10 @@
     {
       "id": "P0",
       "title": "Program controls and current-state audit",
-      "status": "COMPLETE",
+      "status": "IN_PROGRESS",
       "verified_commit": "0f0d5083dd2b18c1e422e4504e6df47209d65ea8",
-      "review_snapshot_commit": "2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2",
-      "frozen_package_commit": "2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2",
+      "review_snapshot_commit": null,
+      "frozen_package_commit": null,
       "rollback_evidence_sha256": "76c6972fe50456976e04803e29ec03059e2c88cc75c24f12080c1e8af7eabf26",
       "authority_evidence": [
         {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen at the verified commit."},
@@ -45,7 +45,7 @@
         {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
         {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
       ],
-      "package_certification": [{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725406448","commit":"2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","sha256":null,"environment":"CI","status":"PASS","assertion":"The immutable Phase 0 review snapshot passed every canonical workflow job, including exact-head rollback certification.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","repository-certification"]}}],
+      "package_certification": [],
       "owner": "Repository maintainer",
       "approver": "Repository maintainer",
       "verifier": "Independent reviewers",
@@ -100,18 +100,12 @@
         "learning": [{"class": "SOURCE", "ref": "evaluation/remediation/owner-controlled-remediation-program.json", "commit": "0f0d5083dd2b18c1e422e4504e6df47209d65ea8", "sha256": "b8b03594d7b93f7137bb4d9ce13cb994a6bb1a57262d4de897aa138e0ab3afef", "environment": "LOCAL", "status": "PASS", "assertion": "[learning] Failure history and current recurrence verification are distinct."}],
         "unexpected_change_scan": [{"class": "CI", "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725175487", "commit": "0f0d5083dd2b18c1e422e4504e6df47209d65ea8", "sha256": null, "environment": "CI", "status": "PASS", "assertion": "[unexpected_change_scan] Aggregate and exact-head rollback certification found no regression.", "provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"0f0d5083dd2b18c1e422e4504e6df47209d65ea8","conclusion":"success","jobs":["validate","phase0-rollback-certification","repository-certification"]}}]
       },
-      "review": {
-        "evidence_package_hash": "9a163559f83be4581fd24cdfe916ba0ec132574f6f8ab893648a63bab5ea7276",
-        "verdicts": [
-          {"review_id":"review-p0-senior-scrummaster-r5","reviewer_id":"senior-scrummaster-3","role":"SENIOR_SCRUMMASTER_3","context_id":"context-scrummaster-p0-r5-7f4c91e2","provider":"OpenAI","model":"GPT-5","evidence_package_hash":"9a163559f83be4581fd24cdfe916ba0ec132574f6f8ab893648a63bab5ea7276","verdict":"APPROVE_GREAT","strongest_objections":["The checked-in rollback narrative remains historical at candidate 79f0908 and nine commits; the authenticated snapshot-run receipt resolves exact-head recovery for this gate, but the historical file must not be presented as the current receipt.","The final closure transition has not yet executed in canonical CI; approval is limited to this immutable review snapshot and requires the later allowlisted closure commit to pass without changing executable or reviewed evidence fields.","Reviewer identity and fresh-context declarations remain repository-controlled assertions rather than cryptographic identities; immutable authority digests, distinct contexts, and schema constants substantially constrain but do not eliminate that trust assumption.","The validation workflow still references version tags for third-party GitHub Actions instead of immutable action SHAs; this is explicitly inventoried for Phase P6 and does not invalidate the bounded Phase P0 control objective.","No Claude SEO capability-parity or real-world effectiveness claim is demonstrated by this phase; Phase P0 establishes governance and audit controls only, with those outcome classes explicitly excluded."],"evidence_refs":["snapshot commit 2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","evidence package 9a163559f83be4581fd24cdfe916ba0ec132574f6f8ab893648a63bab5ea7276 independently recomputed at snapshot","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725406448","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725406448/job/91436275312","run 30725406448 artifact 8826174339 phase0-rollback-receipt: candidate 2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2, baseline e8c37abb5e939d4433e42ea8a02af63549ca0010, 14 commits, matching tree f998720c9d97180902eb6493f76265f55b3010b9, PASS","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725175487","focused adversarial verification at snapshot: 34 tests passed; remediation validator PASS; mypy PASS"],"residual_risks":["GitHub artifact retention can expire the exact-head rollback receipt; the canonical workflow can regenerate it while the referenced run remains available.","The closure commit must remain limited to the validator's state, verdict, snapshot identity, and package-certification allowlist.","Third-party Actions tag immutability remains assigned to the later transport and workflow-integrity phase."],"required_changes":[],"submitted_at":"2026-08-02T00:43:54Z","saw_other_reviewer_verdict":false,"is_builder":false},
-          {"review_id":"review-p0-vp-engineering-r5-2b7fef10","reviewer_id":"vp-engineering","role":"VP_ENGINEERING","context_id":"vp-p0-r5-20260802T004305Z-2b7fef10","provider":"OpenAI","model":"GPT-5","evidence_package_hash":"9a163559f83be4581fd24cdfe916ba0ec132574f6f8ab893648a63bab5ea7276","verdict":"APPROVE_GREAT","strongest_objections":["The durable phase0-rollback-evidence.json records the earlier 79f0908 candidate and nine-commit rehearsal rather than the reviewed snapshot; this is acceptable for P0 only because authenticated run 30725406448 independently proves exact-head rollback from 2b7fef10 to the byte-identical baseline.","GitHub receipt authentication validates repository, workflow name, head SHA, conclusion, and required jobs but does not itself bind the workflow path or workflow ID; independent provider inspection confirmed run 30725406448 used the unique canonical .github/workflows/validate.yml workflow.","Reviewer identity remains a repository-governed assertion rather than a cryptographic signature; immutable authority digests, distinct contexts, canonical registry enforcement, closure allowlisting, and protected CI must remain the operational trust boundary.","The canonical workflow still references official GitHub Actions by mutable major-version tags instead of immutable commit SHAs; this known supply-chain hardening item remains assigned to P6 and must not be represented as already remediated by P0."],"evidence_refs":["snapshot:2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","executable:0f0d5083dd2b18c1e422e4504e6df47209d65ea8","baseline:e8c37abb5e939d4433e42ea8a02af63549ca0010","evidence-package-sha256:9a163559f83be4581fd24cdfe916ba0ec132574f6f8ab893648a63bab5ea7276","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725406448","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725406448/job/91436275312","artifact:phase0-rollback-receipt:8826174339:sha256:6aa1bc01cdf55d3ef7ac2651be0adffcf7372be2438f34308b6016b65c4a48de","https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30725175487","evaluation/remediation/owner-controlled-remediation-program.json@2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","scripts/validate_remediation_program.py@2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2","tests/test_remediation_program.py@2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2",".github/workflows/validate.yml@2b7fef10bbdcd6baa80cf524c5d4f8bac5a3cfc2"],"residual_risks":["Closure still requires an allowlisted metadata-only commit containing both independent verdicts, followed by a fresh successful canonical workflow run.","GitHub API availability and rate limits are intentional fail-closed dependencies for completed-phase validation.","The uploaded rollback receipt expires under GitHub artifact retention, although the workflow remains capable of regenerating exact-head proof.","Repository-wide security, architecture, capability, documentation, and operations deficiencies assigned to P1-P8 remain unresolved and are not covered by this P0 approval."],"required_changes":[],"submitted_at":"2026-08-02T00:43:05Z","saw_other_reviewer_verdict":false,"is_builder":false}
-        ]
-      }
+      "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
       "id": "P1",
       "title": "Immediate repository security and governance",
-      "status": "IN_PROGRESS",
+      "status": "NOT_STARTED",
       "verified_commit": null,
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
