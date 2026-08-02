@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 from pathlib import Path
@@ -60,6 +61,28 @@ def local_errors(root: Path = ROOT) -> list[str]:
     if (root / ".github/ISSUE_TEMPLATE/bug_report.md").exists():
         errors.append("legacy duplicate bug_report.md must not weaken the issue form")
 
+    for workflow_path in sorted((root / ".github/workflows").glob("*.yml")):
+        workflow_text = workflow_path.read_text(encoding="utf-8")
+        for reference in re.findall(r"\buses:\s*([^\s#]+)", workflow_text):
+            if not re.fullmatch(r"[^/@\s]+/[^/@\s]+@[0-9a-f]{40}", reference):
+                errors.append(f"{workflow_path.name} has mutable action reference {reference}")
+        workflow_document = _load_yaml(workflow_path)
+        for job in workflow_document.get("jobs", {}).values():
+            for step in job.get("steps", []):
+                if not isinstance(step, dict):
+                    continue
+                reference = str(step.get("uses", ""))
+                options = step.get("with", {})
+                if not isinstance(options, dict):
+                    options = {}
+                if (
+                    reference.startswith("actions/checkout@")
+                    and options.get("persist-credentials") is not False
+                ):
+                    errors.append(
+                        f"{workflow_path.name} checkout must set persist-credentials: false"
+                    )
+
     names: dict[str, str] = {}
     for path in sorted((root / ".github/ISSUE_TEMPLATE").glob("*.yml")):
         document = _load_yaml(path)
@@ -86,6 +109,13 @@ def local_errors(root: Path = ROOT) -> list[str]:
     checks = ruleset.get("required_status_checks", [])
     if [check.get("context") for check in checks] != ["repository-certification"]:
         errors.append("repository-certification must be the sole required status check")
+    reviewer = contract.get("independent_reviewer", {})
+    if reviewer.get("accountable_owner") != "Repository maintainer":
+        errors.append("independent reviewer onboarding requires the repository maintainer owner")
+    if reviewer.get("due_phase") != "P8":
+        errors.append("independent reviewer onboarding must remain due by Phase P8")
+    if reviewer.get("merge_availability") != "BLOCKED_UNTIL_ELIGIBLE_REVIEWER_IS_ONBOARDED":
+        errors.append("governance must fail closed while no eligible reviewer is onboarded")
 
     if workflow.get("permissions") != {"contents": "read"}:
         errors.append("validation workflow must retain least-privilege contents: read permission")
@@ -118,9 +148,9 @@ def local_errors(root: Path = ROOT) -> list[str]:
     return errors
 
 
-def provider_errors(snapshot_path: Path, root: Path = ROOT) -> list[str]:
-    snapshot = _load_json(snapshot_path)
-    contract = _load_json(root / "governance/github-controls.json")
+def provider_state_errors(
+    snapshot: dict[str, Any], contract: dict[str, Any], *, require_fresh: bool = True
+) -> list[str]:
     errors: list[str] = []
     if snapshot.get("repository") != contract.get("repository"):
         errors.append("provider snapshot repository does not match the contract")
@@ -140,9 +170,25 @@ def provider_errors(snapshot_path: Path, root: Path = ROOT) -> list[str]:
     captured_at = snapshot.get("captured_at")
     if not isinstance(captured_at, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", captured_at):
         errors.append("provider snapshot requires a UTC captured_at timestamp")
+    elif require_fresh:
+        captured = dt.datetime.strptime(captured_at, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=dt.UTC
+        )
+        if dt.datetime.now(dt.UTC) - captured > dt.timedelta(hours=24):
+            errors.append("provider snapshot is older than the 24-hour closure window")
     if snapshot.get("authenticated") is not True:
         errors.append("provider snapshot must attest authenticated capture")
+    if not isinstance(snapshot.get("authenticated_actor"), str):
+        errors.append("provider snapshot must identify the authenticated actor")
+    if snapshot.get("capture_method") != "gh-api-live":
+        errors.append("provider snapshot must identify the live gh API capture method")
     return errors
+
+
+def provider_errors(snapshot_path: Path, root: Path = ROOT) -> list[str]:
+    snapshot = _load_json(snapshot_path)
+    contract = _load_json(root / "governance/github-controls.json")
+    return provider_state_errors(snapshot, contract)
 
 
 def main() -> int:

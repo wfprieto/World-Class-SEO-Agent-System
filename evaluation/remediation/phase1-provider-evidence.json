@@ -1,9 +1,10 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "repository": "wfprieto/World-Class-SEO-Agent-System",
   "authenticated": true,
-  "captured_at": "2026-08-02T01:44:02Z",
-  "captured_by": "owner-authorized gh API session",
+  "authenticated_actor": "wfprieto",
+  "capture_method": "gh-api-live",
+  "captured_at": "2026-08-02T02:30:14Z",
   "default_branch": "main",
   "private_vulnerability_reporting": true,
   "discussions": true,
@@ -16,10 +17,15 @@
     "name": "Protect main",
     "target": "branch",
     "enforcement": "active",
-    "include": ["~DEFAULT_BRANCH"],
+    "include": [
+      "~DEFAULT_BRANCH"
+    ],
     "exclude": [],
     "required_status_checks": [
-      {"context": "repository-certification", "integration_id": 15368}
+      {
+        "context": "repository-certification",
+        "integration_id": 15368
+      }
     ],
     "strict_required_status_checks_policy": true,
     "required_approving_review_count": 1,
@@ -27,7 +33,9 @@
     "require_last_push_approval": true,
     "required_review_thread_resolution": true,
     "require_code_owner_review": false,
-    "allowed_merge_methods": ["squash"],
+    "allowed_merge_methods": [
+      "squash"
+    ],
     "required_linear_history": true,
     "block_deletion": true,
     "block_non_fast_forward": true,
@@ -39,5 +47,6 @@
     "GET /repos/wfprieto/World-Class-SEO-Agent-System/vulnerability-alerts",
     "GET /repos/wfprieto/World-Class-SEO-Agent-System/rulesets/18955880"
   ],
-  "result": "PASS"
+  "result": "PASS",
+  "errors": []
 }

@@ -28,6 +28,10 @@
   },
   "independent_reviewer": {
     "status": "OWNER_ACTION_REQUIRED",
-    "constraint": "A material change requires approval from a real collaborator other than the last pusher; no identity is invented by automation."
+    "constraint": "A material change requires approval from a real collaborator other than the last pusher; no identity is invented by automation.",
+    "accountable_owner": "Repository maintainer",
+    "due_phase": "P8",
+    "merge_availability": "BLOCKED_UNTIL_ELIGIBLE_REVIEWER_IS_ONBOARDED",
+    "closure_truth": "The protection is enforced and fail-closed; Phase 1 does not claim that a second eligible collaborator already exists."
   }
 }

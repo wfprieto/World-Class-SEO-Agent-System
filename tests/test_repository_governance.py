@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import datetime as dt
 from pathlib import Path
 
 from scripts.validate_repository_governance import local_errors, provider_errors
@@ -59,6 +60,24 @@ def test_incomplete_certification_aggregation_is_rejected(tmp_path: Path) -> Non
     assert any("canonical certification job" in error for error in local_errors(root))
 
 
+def test_mutable_action_and_persisted_checkout_credentials_are_rejected(tmp_path: Path) -> None:
+    root = _copy_repository_surface(tmp_path)
+    workflow = root / ".github/workflows/validate.yml"
+    workflow.write_text(
+        workflow.read_text(encoding="utf-8")
+        .replace(
+            "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "actions/checkout@v7",
+            1,
+        )
+        .replace("persist-credentials: false", "persist-credentials: true", 1),
+        encoding="utf-8",
+    )
+    errors = local_errors(root)
+    assert any("mutable action reference" in error for error in errors)
+    assert any("persist-credentials" in error for error in errors)
+
+
 def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Path) -> None:
     contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
     snapshot = {
@@ -68,7 +87,11 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
         "discussions": True,
         "vulnerability_alerts": True,
         "authenticated": True,
-        "captured_at": "2026-08-02T01:44:02Z",
+        "authenticated_actor": "test-owner",
+        "capture_method": "gh-api-live",
+        "captured_at": dt.datetime.now(dt.UTC).replace(microsecond=0).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        ),
         "ruleset": dict(contract["ruleset"]),
     }
     path = tmp_path / "snapshot.json"

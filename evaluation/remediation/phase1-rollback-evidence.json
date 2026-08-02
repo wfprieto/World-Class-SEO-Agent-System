@@ -19,6 +19,6 @@
   "limitations": [
     "Execute in a clean disposable checkout and preserve the candidate reference before recovery.",
     "The range must be linear; merge commits fail certification until explicit mainline handling is supported.",
-    "Provider settings must be restored separately from the captured Phase 1 provider evidence."
+    "Provider restoration uses scripts/plan_github_controls_rollback.py, the exact pre-change capture, three explicit owner confirmations, and mandatory post-restore verification."
   ]
 }

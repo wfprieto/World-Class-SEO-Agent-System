@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "capture_kind": "PRE_CHANGE_AUTHENTICATED_AUDIT",
+  "capture_window_end": "2026-08-02T01:43:27Z",
+  "authenticated_actor": "wfprieto",
+  "default_branch": "main",
+  "private_vulnerability_reporting": false,
+  "discussions": false,
+  "vulnerability_alerts": false,
+  "dependabot_security_updates": false,
+  "secret_scanning": true,
+  "secret_scanning_push_protection": true,
+  "ruleset_id": 18955880,
+  "ruleset": {
+    "name": "Protect main",
+    "target": "branch",
+    "enforcement": "active",
+    "include": ["~DEFAULT_BRANCH"],
+    "exclude": [],
+    "required_status_checks": [
+      {"context": "validate", "integration_id": 15368}
+    ],
+    "strict_required_status_checks_policy": true,
+    "required_approving_review_count": 0,
+    "dismiss_stale_reviews_on_push": true,
+    "require_last_push_approval": false,
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": false,
+    "allowed_merge_methods": ["squash"],
+    "required_linear_history": true,
+    "block_deletion": true,
+    "block_non_fast_forward": true,
+    "bypass_actor_count": 0
+  }
+}
