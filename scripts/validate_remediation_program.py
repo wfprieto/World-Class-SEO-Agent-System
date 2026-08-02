@@ -351,16 +351,25 @@ def _rollback_evidence_errors(
     }
     if set(payload) != required_fields:
         errors.append(f"{label} fields do not match the canonical durable procedure")
+    phase_id = str(payload.get("phase_id", ""))
+    phase: dict[str, Any] = next(
+        (item for item in program.get("phases", []) if item.get("id") == phase_id), {}
+    )
+    baseline_commit = phase.get("rollback_baseline_commit")
+    if phase_id == "P0" and not baseline_commit:
+        baseline_commit = program.get("baseline", {}).get("commit")
     expected_values = {
         "schema_version": "3.0.0",
-        "phase_id": "P0",
+        "phase_id": phase_id,
         "strategy": "DYNAMIC_EXACT_SNAPSHOT",
-        "baseline_commit": program.get("baseline", {}).get("commit"),
+        "baseline_commit": baseline_commit,
         "candidate_selector": "review_snapshot_commit",
         "commit_range": "baseline_commit..review_snapshot_commit",
         "revert_order": "newest_first",
         "workflow": ".github/workflows/validate.yml",
-        "job": "phase0-rollback-certification",
+        "job": (
+            "phase0-rollback-certification" if phase_id == "P0" else "phase-rollback-certification"
+        ),
         "recovery_position": (
             "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list "
             "<baseline_commit>..<review_snapshot_commit>, and revert every returned commit "
@@ -378,7 +387,11 @@ def _rollback_evidence_errors(
     }
     if set(payload.get("required_assertions", [])) != required_assertions:
         errors.append(f"{label} does not require every rollback safety assertion")
-    baseline = str(program.get("baseline", {}).get("commit", ""))
+    if not phase:
+        errors.append(f"{label} phase_id does not identify a program phase")
+    if not baseline_commit:
+        errors.append(f"{label} phase has no rollback_baseline_commit")
+    baseline = str(baseline_commit or "")
     if (root / ".git").exists() and baseline:
         try:
             baseline_tree = subprocess.check_output(
@@ -727,13 +740,22 @@ def _validate_complete_phase(
 def _closure_delta_errors(
     program: dict[str, Any], phase: dict[str, Any], root: Path, snapshot_commit: str
 ) -> list[str]:
-    """Require closure to change only verdict/state fields from the reviewed snapshot."""
+    """Require the first post-snapshot commit to be a bounded metadata-only closure."""
     errors: list[str] = []
     if not (root / ".git").exists():
         return errors
     try:
+        descendants = subprocess.check_output(
+            ["git", "rev-list", "--reverse", "--ancestry-path", f"{snapshot_commit}..HEAD"],
+            cwd=root,
+            text=True,
+            timeout=20,
+        ).splitlines()
+        if not descendants:
+            return ["closure commit is missing after the immutable review snapshot"]
+        closure_commit = descendants[0]
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{snapshot_commit}..HEAD"],
+            ["git", "diff", "--name-only", f"{snapshot_commit}..{closure_commit}"],
             cwd=root,
             text=True,
             timeout=20,
@@ -742,10 +764,11 @@ def _closure_delta_errors(
         if set(changed) - {allowed_path}:
             errors.append("closure changes files outside the canonical remediation program")
         snapshot = _load_object_at_commit(root, allowed_path, snapshot_commit)
+        closure = _load_object_at_commit(root, allowed_path, closure_commit)
     except (OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return ["closure cannot load the immutable review snapshot"]
 
-    current_copy = json.loads(json.dumps(program))
+    current_copy = json.loads(json.dumps(closure))
     snapshot_copy = json.loads(json.dumps(snapshot))
     phase_id = str(phase.get("id"))
     current_phase = next(item for item in current_copy["phases"] if item["id"] == phase_id)

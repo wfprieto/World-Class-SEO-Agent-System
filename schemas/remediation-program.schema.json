@@ -140,7 +140,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "id", "title", "status", "verified_commit", "review_snapshot_commit", "frozen_package_commit", "rollback_evidence_sha256", "authority_evidence", "package_certification", "owner", "approver", "verifier", "notify",
+        "id", "title", "status", "rollback_baseline_commit", "verified_commit", "review_snapshot_commit", "frozen_package_commit", "rollback_evidence_sha256", "authority_evidence", "package_certification", "owner", "approver", "verifier", "notify",
         "scope", "non_goals", "rollback", "acceptance_criteria", "required_evidence_classes",
         "evidence_status", "gates", "gate_evidence", "review"
       ],
@@ -148,6 +148,10 @@
         "id": {"type": "string", "pattern": "^P[0-8]$"},
         "title": {"type": "string", "minLength": 8},
         "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE"]},
+        "rollback_baseline_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
         "verified_commit": {
           "type": ["string", "null"],
           "pattern": "^[0-9a-f]{40}$"

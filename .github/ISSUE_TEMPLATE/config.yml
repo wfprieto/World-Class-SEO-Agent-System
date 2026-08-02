@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/wfprieto/World-Class-SEO-Agent-System/security/policy
-    about: Do not report security vulnerabilities in public issues. Follow the security policy.
+    url: https://github.com/wfprieto/World-Class-SEO-Agent-System/security/advisories/new
+    about: Report vulnerabilities privately. Never include security details in a public issue.
   - name: Usage and workflow questions
     url: https://github.com/wfprieto/World-Class-SEO-Agent-System/discussions
     about: Use Discussions for questions, ideas, and implementation help.
+  - name: Structured support request
+    url: https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/new?template=support_request.yml
+    about: Use the repository-owned support form when a structured reproduction is needed.

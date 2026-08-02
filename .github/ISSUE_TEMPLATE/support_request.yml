@@ -1,0 +1,48 @@
+name: Support request
+description: Ask for non-security usage or implementation help
+title: "[Support]: "
+labels: ["support"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not submit vulnerabilities, credentials, private URLs, or client data here. Use the private security report form for security issues.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective or problem
+      description: Describe what you are trying to accomplish and what is blocking you.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: Tag, commit SHA, or branch
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Python version, installation method, and relevant non-sensitive configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: attempts
+    attributes:
+      label: What you tried
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected outcome
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Privacy and security
+      options:
+        - label: I removed credentials, private URLs, client data, and vulnerability details.
+          required: true

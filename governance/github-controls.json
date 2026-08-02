@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "default_branch": "main",
+  "private_vulnerability_reporting": true,
+  "discussions": true,
+  "vulnerability_alerts": true,
+  "ruleset": {
+    "name": "Protect main",
+    "target": "branch",
+    "enforcement": "active",
+    "include": ["~DEFAULT_BRANCH"],
+    "exclude": [],
+    "required_status_checks": [
+      {"context": "repository-certification", "integration_id": 15368}
+    ],
+    "strict_required_status_checks_policy": true,
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews_on_push": true,
+    "require_last_push_approval": true,
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": false,
+    "allowed_merge_methods": ["squash"],
+    "required_linear_history": true,
+    "block_deletion": true,
+    "block_non_fast_forward": true,
+    "bypass_actor_count": 0
+  },
+  "independent_reviewer": {
+    "status": "OWNER_ACTION_REQUIRED",
+    "constraint": "A material change requires approval from a real collaborator other than the last pusher; no identity is invented by automation."
+  }
+}
