@@ -133,7 +133,8 @@ def evidence_package_hash(program: dict[str, Any], phase: dict[str, Any]) -> str
 
 
 def _evidence_errors(
-    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str, *, allow_ancestor: bool = False
+    evidence: dict[str, Any], verified_commit: str | None, root: Path, label: str, *,
+    allow_ancestor: bool = False, require_unchanged: bool = True,
 ) -> list[str]:
     errors: list[str] = []
     evidence_class = str(evidence.get("class", ""))
@@ -172,7 +173,7 @@ def _evidence_errors(
             errors.append(f"{label} evidence does not exist at verified_commit: {reference}")
         elif not expected_digest or hashlib.sha256(content).hexdigest() != expected_digest:
             errors.append(f"{label} evidence digest is not immutable: {reference}")
-        if allow_ancestor and (root / ".git").exists() and verified_commit and expected_digest:
+        if allow_ancestor and require_unchanged and (root / ".git").exists() and verified_commit and expected_digest:
             try:
                 verified_content = subprocess.check_output(
                     ["git", "show", f"{verified_commit}:{source_path}"], cwd=root,
@@ -521,7 +522,7 @@ def _validate_complete_phase(
                 f"{phase_id} cannot be COMPLETE: failure {failure.get('id')} lacks a confirmed guardrail"
             )
         for evidence in failure.get("evidence_refs", []):
-            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}", allow_ancestor=True))
+            errors.extend(_evidence_errors(evidence, str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: failure {failure.get('id')}"))
         for record in linked:
             for evidence in record.get("observed_evidence", []):
                 errors.extend(
@@ -529,10 +530,11 @@ def _validate_complete_phase(
                         evidence,
                         str(verified_commit) if verified_commit else None,
                         root,
-                        f"{phase_id} cannot be COMPLETE: learning {record.get('id')}", allow_ancestor=True,
+                        f"{phase_id} cannot be COMPLETE: learning {record.get('id')}",
+                        allow_ancestor=True, require_unchanged=False,
                     )
                 )
-            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification", allow_ancestor=True))
+            errors.extend(_evidence_errors(record.get("verification_evidence", {}), str(verified_commit) if verified_commit else None, root, f"{phase_id} cannot be COMPLETE: learning {record.get('id')} verification"))
     return errors
 
 
