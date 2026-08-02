@@ -169,3 +169,12 @@ def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field:
     del missing[field]
     path.write_text(json.dumps(missing), encoding="utf-8")
     assert any(field in error for error in provider_errors(path))
+
+
+def test_repository_validator_enumerates_only_tracked_documents() -> None:
+    validator = (ROOT / "scripts/validate-repository.ps1").read_text(encoding="utf-8")
+
+    assert "git -C $Root ls-files" in validator
+    assert 'Get-TrackedFiles "*.json"' in validator
+    assert 'Get-TrackedFiles "*.md"' in validator
+    assert 'Get-ChildItem -Path $Root -Recurse' not in validator

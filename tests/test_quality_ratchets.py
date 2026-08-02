@@ -1,9 +1,29 @@
 from __future__ import annotations
 
+import copy
 import json
+import sys
 from pathlib import Path
 
-from scripts.validate_quality_ratchets import ROOT, _repository_setting_errors, build_contract, validate
+from scripts.validate_quality_ratchets import (
+    FILE_DEFAULTS,
+    FILE_METRICS,
+    FUNCTION_DEFAULTS,
+    FUNCTION_METRICS,
+    MINIMUM_CRITICAL_COVERAGE,
+    MINIMUM_REPOSITORY_COVERAGE,
+    PACKAGES,
+    ROOT,
+    RUFF_RULES,
+    _contract_digest,
+    _monotonic_contract_errors,
+    _repository_setting_errors,
+    _ruff_counts,
+    main,
+    measure,
+    tightened_contract,
+    validate,
+)
 
 
 def _baseline(tmp_path: Path, sources: dict[str, str] | None = None) -> Path:
@@ -15,7 +35,34 @@ def _baseline(tmp_path: Path, sources: dict[str, str] | None = None) -> Path:
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-    contract = build_contract(tmp_path)
+    files, functions = measure(tmp_path)
+    def exceptions(measurements, defaults, pairs):
+        return {
+            key: {
+                **{limit: metrics[metric] for metric, limit in pairs},
+                "owner": "Quality owner",
+                "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+                "removal_phase": "P7",
+            }
+            for key, metrics in measurements.items()
+            if any(metrics[metric] > defaults[limit] for metric, limit in pairs)
+        }
+    contract = {
+        "schema_version": "1.0.0",
+        "packages": list(PACKAGES),
+        "file_defaults": dict(FILE_DEFAULTS),
+        "function_defaults": dict(FUNCTION_DEFAULTS),
+        "file_exceptions": exceptions(files, FILE_DEFAULTS, FILE_METRICS),
+        "function_exceptions": exceptions(functions, FUNCTION_DEFAULTS, FUNCTION_METRICS),
+        "ruff": {
+            "rules": list(RUFF_RULES),
+            "violation_counts": dict(sorted(_ruff_counts(tmp_path).items())),
+        },
+        "coverage": {
+            "repository_floor": MINIMUM_REPOSITORY_COVERAGE,
+            "critical_file_floors": dict(MINIMUM_CRITICAL_COVERAGE),
+        },
+    }
     contract_path = tmp_path / "governance" / "code-quality-ratchet.json"
     contract_path.parent.mkdir(parents=True)
     contract_path.write_text(json.dumps(contract), encoding="utf-8")
@@ -107,3 +154,82 @@ def test_repository_settings_cannot_weaken_ruff_coverage_or_ci(tmp_path: Path) -
     assert "pyproject Ruff profile must equal the canonical P3 rule profile" in errors
     assert "repository coverage floor is weaker than the quality contract" in errors
     assert any("validate_architecture_contract.py" in error for error in errors)
+
+
+def test_canonical_defaults_and_coverage_minima_are_immutable(tmp_path: Path) -> None:
+    contract_path = _baseline(tmp_path)
+    previous = json.loads(contract_path.read_text(encoding="utf-8"))
+    weakened = copy.deepcopy(previous)
+    weakened["file_defaults"]["max_lines"] = 999
+    weakened["function_defaults"]["max_complexity"] = 99
+    weakened["coverage"]["repository_floor"] = 77
+    critical = next(iter(MINIMUM_CRITICAL_COVERAGE))
+    weakened["coverage"]["critical_file_floors"][critical] -= 1
+    contract_path.write_text(json.dumps(weakened), encoding="utf-8")
+
+    errors = validate(
+        tmp_path, contract_path, enforce_repository_settings=False,
+        previous_contract=previous,
+    )
+    assert "file defaults must equal the immutable canonical new-code policy" in errors
+    assert "function defaults must equal the immutable canonical new-code policy" in errors
+    assert "repository coverage floor is below the immutable canonical minimum" in errors
+    assert any("critical coverage floor is below" in error for error in errors)
+
+
+def test_same_commit_regeneration_cannot_raise_legacy_ceiling(tmp_path: Path) -> None:
+    source = "def legacy(value):\n" + "\n".join(
+        f"    if value == {index}: value += 1" for index in range(16)
+    ) + "\n    return value\n"
+    contract_path = _baseline(tmp_path, {"runtime/legacy.py": source})
+    previous = json.loads(contract_path.read_text(encoding="utf-8"))
+    changed = source.replace("    return value", "    if value == 99: value += 1\n    return value")
+    (tmp_path / "runtime/legacy.py").write_text(changed, encoding="utf-8")
+    current = copy.deepcopy(previous)
+    current["function_exceptions"]["runtime.legacy::legacy"]["max_complexity"] += 1
+    contract_path.write_text(json.dumps(current), encoding="utf-8")
+
+    errors = validate(
+        tmp_path, contract_path, enforce_repository_settings=False,
+        previous_contract=previous,
+    )
+    assert "quality ratchet cannot raise runtime.legacy::legacy max_complexity" in errors
+
+
+def test_reductions_require_and_receive_immediate_tightening(tmp_path: Path) -> None:
+    source = "def legacy(value):\n" + "\n".join(
+        "    value += 1" for _ in range(80)
+    ) + "\n    return value\n"
+    contract_path = _baseline(tmp_path, {"runtime/legacy.py": source})
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    (tmp_path / "runtime/legacy.py").write_text(
+        source.replace("    value += 1\n", "", 1), encoding="utf-8"
+    )
+    assert any("stale quality function ceiling" in error for error in validate(
+        tmp_path, contract_path, enforce_repository_settings=False
+    ))
+    tightened = tightened_contract(tmp_path, contract)
+    assert not _monotonic_contract_errors(contract, tightened)
+    contract_path.write_text(json.dumps(tightened), encoding="utf-8")
+    assert validate(tmp_path, contract_path, enforce_repository_settings=False) == []
+
+
+def test_safe_updater_rejects_new_debt_and_cli_requires_exact_approval(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    contract_path = _baseline(tmp_path)
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    (tmp_path / "runtime/new_debt.py").write_text("import os\n", encoding="utf-8")
+    try:
+        tightened_contract(tmp_path, contract)
+    except ValueError as exc:
+        assert "cannot baseline new Ruff debt" in str(exc)
+    else:
+        raise AssertionError("new Ruff debt was silently baselined")
+
+    monkeypatch.setattr(sys, "argv", ["validate_quality_ratchets.py", "--write-baseline"])
+    assert main() == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output["current_contract_sha256"] == _contract_digest(
+        json.loads((ROOT / "governance/code-quality-ratchet.json").read_text(encoding="utf-8"))
+    )

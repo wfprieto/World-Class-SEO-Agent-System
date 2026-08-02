@@ -18,12 +18,12 @@ Repository branch coverage cannot fall below 78 percent. Critical files also hav
 
 ## Typed runtime boundary
 
-`runtime.adapter_contracts` is the canonical adapter port. The dispatcher accepts injected `RuntimeAdapter` mappings, validates every `AdapterResult`, preserves request order and completed sibling evidence, propagates cancellation, and converts malformed adapter output into an isolated failure. Compatibility imports preserve existing callers without defining a second class.
+`runtime.adapter_contracts` is the canonical adapter port. Its explicit status vocabulary separates success, partial, missing, invalid, and blocking outcomes. The dispatcher rejects unknown statuses before evidence calculation, treats every required non-success as blocked, invalid, or missing, preserves request order and completed sibling evidence, propagates cancellation, and converts malformed optional output into an isolated failure. Compatibility imports preserve existing callers without defining a second class.
 
 ## Change procedure
 
 1. Run both contract validators before tests.
 2. Add a failing mutation for each new rule or exception class.
-3. Tighten baselines whenever debt is removed.
+3. Tighten baselines whenever debt is removed. `--write-baseline` is reduction-only and requires `--approve-tightening` with the SHA-256 printed by a rejected unapproved write; it refuses new exceptions, raised ceilings, new Ruff fingerprints, or lowered coverage floors.
 4. Run focused boundary tests, full mypy, the complete suite, branch coverage, risk coverage, security mutations, clean-wheel checks, and cross-platform CI.
 5. Do not describe a green ratchet as proof of deployment, release maturity, provider operation, or SEO effectiveness.

@@ -63,6 +63,7 @@
     "integrations/authority_media/transport.py",
     "integrations/extensions/indexnow.py",
     "integrations/google/client.py",
+    "integrations/technical/browser.py",
     "integrations/technical/http.py",
     "runtime/llm.py"
   ]

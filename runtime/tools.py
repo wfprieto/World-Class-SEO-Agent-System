@@ -10,7 +10,12 @@ from typing import Any
 from adapters.registry import default_adapters
 from runtime.adapter_contracts import (
     AdapterNotConfigured,
+    BLOCKING_ADAPTER_STATUSES,
+    INVALID_ADAPTER_STATUSES,
+    MISSING_ADAPTER_STATUSES,
+    PARTIAL_ADAPTER_STATUSES,
     RuntimeAdapter,
+    SUCCESS_ADAPTER_STATUSES,
     validate_adapter_result,
 )
 from runtime.telemetry import OperationTelemetry, redact
@@ -41,6 +46,25 @@ class ToolDispatchResult:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+REQUIRED_TOOL_FAILURE_STATES = frozenset({"BLOCKED", "INVALID", "MISSING"})
+
+
+def _adapter_evidence_state(status: str, *, required: bool) -> str:
+    """Map one validated status to its fail-closed workflow evidence state."""
+
+    if status in SUCCESS_ADAPTER_STATUSES:
+        return "AVAILABLE"
+    if status in INVALID_ADAPTER_STATUSES:
+        return "INVALID"
+    if status in MISSING_ADAPTER_STATUSES:
+        return "MISSING"
+    if required and status in PARTIAL_ADAPTER_STATUSES | BLOCKING_ADAPTER_STATUSES:
+        return "BLOCKED"
+    if status in BLOCKING_ADAPTER_STATUSES:
+        return "INVALID"
+    return "PARTIAL"
 
 
 class ToolDispatcher:
@@ -167,7 +191,7 @@ class ToolDispatcher:
                 evidence_state="BLOCKED" if request.required else "INVALID",
             )
 
-        evidence_state = "AVAILABLE" if result.status in {"ok", "complete", "success"} else "PARTIAL"
+        evidence_state = _adapter_evidence_state(result.status, required=request.required)
         self._record(
             trace,
             status=str(result.status).upper(),

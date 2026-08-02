@@ -4,7 +4,7 @@ import copy
 import json
 from pathlib import Path
 
-from scripts.validate_architecture_contract import ROOT, SCHEMA_PATH, validate
+from scripts.validate_architecture_contract import SCHEMA_PATH, validate
 
 
 def _contract() -> dict:
@@ -88,6 +88,71 @@ def test_new_internal_cycle_fails_even_with_exact_exceptions(tmp_path: Path) -> 
     assert any(error.startswith("internal import cycle:") for error in errors)
 
 
+def test_single_dot_relative_cycle_fails(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/a.py": "from .b import B\n",
+            "runtime/b.py": "from .a import A\n",
+        },
+    )
+
+    assert any(
+        error.startswith("internal import cycle:")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+def test_multi_dot_relative_cycle_fails(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "integrations/shared.py": "from .nested.worker import Worker\n",
+            "integrations/nested/__init__.py": "",
+            "integrations/nested/worker.py": "from ..shared import Shared\n",
+        },
+    )
+
+    assert any(
+        error.startswith("internal import cycle:")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+def test_package_init_relative_cycle_fails(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/package/__init__.py": "from .worker import Worker\n",
+            "runtime/package/worker.py": "import runtime.package\n",
+        },
+    )
+
+    assert any(
+        error.startswith("internal import cycle:")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+def test_mixed_absolute_relative_cycle_fails(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/a.py": "from .b import B\n",
+            "runtime/b.py": "from runtime.a import A\n",
+        },
+    )
+
+    assert any(
+        error.startswith("internal import cycle:")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
 def test_broad_or_unknown_exception_fails_closed(tmp_path: Path) -> None:
     contract = _contract()
     broad = copy.deepcopy(contract)
@@ -126,6 +191,37 @@ def test_new_direct_network_module_fails_until_explicitly_owned(tmp_path: Path) 
     )
     errors = validate(tmp_path, contract_path, schema_path)
     assert "unapproved network-capable module: integrations/new_transport.py" in errors
+
+
+def test_new_playwright_browser_module_fails_until_explicitly_owned(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"integrations/new_browser.py": "from playwright.sync_api import sync_playwright\n"},
+    )
+
+    assert "unapproved network-capable module: integrations/new_browser.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
+
+
+def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/dynamic_client.py": (
+                "import importlib\nclient = importlib.import_module('httpx')\n"
+            ),
+            "runtime/process_client.py": (
+                "import subprocess\nsubprocess.run(['curl', 'https://example.test'])\n"
+            ),
+        },
+    )
+    errors = validate(tmp_path, contract_path, schema_path)
+
+    assert "unapproved network-capable module: runtime/dynamic_client.py" in errors
+    assert "unapproved network-capable module: runtime/process_client.py" in errors
 
 
 def test_network_allowlist_cannot_hide_missing_module(tmp_path: Path) -> None:

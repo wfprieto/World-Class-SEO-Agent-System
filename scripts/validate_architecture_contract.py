@@ -10,11 +10,37 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "architecture-contract.json"
 SCHEMA_PATH = ROOT / "schemas" / "architecture-contract.schema.json"
-NETWORK_IMPORTS = {"socket", "urllib.request", "http.client", "requests", "httpx", "aiohttp"}
+NETWORK_IMPORTS = {
+    "aiohttp",
+    "http.client",
+    "httpx",
+    "playwright",
+    "requests",
+    "selenium",
+    "socket",
+    "urllib.request",
+    "urllib3",
+    "websockets",
+}
+NETWORK_PROCESS_COMMANDS = {
+    "curl",
+    "ftp",
+    "Invoke-RestMethod",
+    "Invoke-WebRequest",
+    "powershell",
+    "pwsh",
+    "wget",
+}
+SUBPROCESS_CALLS = {
+    "subprocess.call",
+    "subprocess.check_call",
+    "subprocess.check_output",
+    "subprocess.Popen",
+    "subprocess.run",
+}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -28,38 +54,94 @@ def _module_name(path: Path, root: Path) -> str:
     relative = path.relative_to(root).with_suffix("")
     parts = list(relative.parts)
     if parts[-1] == "__init__":
-        return ".".join(parts)
+        parts.pop()
     return ".".join(parts)
 
 
-def _imports(tree: ast.AST) -> set[str]:
+def _relative_import_base(source: str, *, is_package: bool, level: int) -> str | None:
+    package_parts = source.split(".") if is_package else source.split(".")[:-1]
+    keep = len(package_parts) - (level - 1)
+    if keep <= 0:
+        return None
+    return ".".join(package_parts[:keep])
+
+
+def _imports(tree: ast.AST, *, source: str, is_package: bool) -> set[str]:
     imported: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             imported.update(alias.name for alias in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-            imported.add(node.module)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0:
+                if node.module:
+                    imported.add(node.module)
+                continue
+            base = _relative_import_base(source, is_package=is_package, level=node.level)
+            if base is None:
+                continue
+            if node.module:
+                imported.add(f"{base}.{node.module}")
+            else:
+                imported.update(f"{base}.{alias.name}" for alias in node.names)
     return imported
 
 
-def _has_network_import(tree: ast.AST) -> bool:
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            if any(
-                alias.name in NETWORK_IMPORTS
-                or any(alias.name.startswith(f"{item}.") for item in NETWORK_IMPORTS)
-                for alias in node.names
-            ):
-                return True
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            full_names = {node.module, *(f"{node.module}.{alias.name}" for alias in node.names)}
-            if any(
-                name in NETWORK_IMPORTS
-                or any(name.startswith(f"{item}.") for item in NETWORK_IMPORTS)
-                for name in full_names
-            ):
-                return True
+def _call_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        parent = _call_name(node.value)
+        return f"{parent}.{node.attr}" if parent else node.attr
+    return None
+
+
+def _literal_process_command(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value.strip().split(maxsplit=1)[0] if node.value.strip() else None
+    if isinstance(node, (ast.List, ast.Tuple)) and node.elts:
+        first = node.elts[0]
+        if isinstance(first, ast.Constant) and isinstance(first.value, str):
+            return first.value
+    return None
+
+
+def _is_network_import(name: str) -> bool:
+    return name in NETWORK_IMPORTS or any(
+        name.startswith(f"{item}.") for item in NETWORK_IMPORTS
+    )
+
+
+def _import_has_network_egress(node: ast.AST) -> bool:
+    if isinstance(node, ast.Import):
+        return any(_is_network_import(alias.name) for alias in node.names)
+    if isinstance(node, ast.ImportFrom) and node.module:
+        full_names = {node.module, *(f"{node.module}.{alias.name}" for alias in node.names)}
+        return any(_is_network_import(name) for name in full_names)
     return False
+
+
+def _call_has_network_egress(node: ast.AST) -> bool:
+    if not isinstance(node, ast.Call):
+        return False
+    call_name = _call_name(node.func)
+    if call_name in {"__import__", "importlib.import_module"} and node.args:
+        imported = node.args[0]
+        return (
+            isinstance(imported, ast.Constant)
+            and isinstance(imported.value, str)
+            and _is_network_import(imported.value)
+        )
+    if call_name in {*SUBPROCESS_CALLS, "os.system"} and node.args:
+        command = _literal_process_command(node.args[0])
+        return bool(command and command in NETWORK_PROCESS_COMMANDS)
+    return False
+
+
+def _has_network_import(tree: ast.AST) -> bool:
+    return any(
+        _import_has_network_egress(node) or _call_has_network_egress(node)
+        for node in ast.walk(tree)
+    )
 
 
 def _cycles(graph: dict[str, set[str]]) -> list[list[str]]:
@@ -125,7 +207,7 @@ def validate(
                 continue
             source = _module_name(path, root)
             module_paths[source] = path
-            module_imports[source] = _imports(tree)
+            module_imports[source] = _imports(tree, source=source, is_package=path.name == "__init__.py")
             if _has_network_import(tree):
                 network_paths.add(path.relative_to(root).as_posix())
 
@@ -138,7 +220,7 @@ def validate(
             target_package = imported.split(".", 1)[0]
             if target_package not in package_layers:
                 continue
-            target = imported if "." in imported else f"{imported}.__init__"
+            target = imported
             if target in module_paths:
                 graph[source].add(target)
             target_layer = package_layers[target_package]

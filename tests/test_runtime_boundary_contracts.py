@@ -6,8 +6,12 @@ from typing import Any
 import pytest
 
 from adapters.base import AdapterResult as CompatibilityAdapterResult
-from runtime.adapter_contracts import AdapterResult, validate_adapter_result
-from runtime.tools import ToolDispatcher, ToolRequest
+from runtime.adapter_contracts import (
+    CANONICAL_ADAPTER_STATUSES,
+    AdapterResult,
+    validate_adapter_result,
+)
+from runtime.tools import REQUIRED_TOOL_FAILURE_STATES, ToolDispatcher, ToolRequest
 
 
 class _ReturningAdapter:
@@ -28,6 +32,7 @@ def test_adapter_result_has_one_canonical_runtime_identity() -> None:
         (object(), "must return AdapterResult"),
         (AdapterResult("", "ok", {}, []), "source must be"),
         (AdapterResult("fixture", "", {}, []), "status must be"),
+        (AdapterResult("fixture", "banana", {}, []), "unsupported adapter result status"),
         (AdapterResult("fixture", "ok", {}, [1]), "list of strings"),
         (AdapterResult("fixture", "ok", {"bad": object()}, []), "JSON-serializable"),
         (AdapterResult("fixture", "ok", {"bad": float("nan")}, []), "JSON-serializable"),
@@ -52,6 +57,102 @@ def test_dispatcher_isolates_malformed_boundary_result() -> None:
     assert result.status == "failed"
     assert result.error_type == "InternalAdapterError"
     assert result.evidence_state == "BLOCKED"
+
+
+def test_canonical_status_vocabulary_covers_success_partial_and_failure_states() -> None:
+    expected = {
+        "ok",
+        "complete",
+        "success",
+        "needs-review",
+        "partial",
+        "empty",
+        "not_found",
+        "not_configured",
+        "invalid",
+        "invalid_response",
+        "blocked",
+        "failed",
+        "unauthorized",
+        "rate_limited",
+    }
+    assert CANONICAL_ADAPTER_STATUSES == expected
+
+
+def test_required_unknown_status_is_blocked_before_workflow() -> None:
+    dispatcher = ToolDispatcher(
+        {"bad": _ReturningAdapter(AdapterResult("fixture", "banana", {}, []))}
+    )
+
+    result = asyncio.run(dispatcher.dispatch(ToolRequest("bad", {}, required=True)))
+
+    assert result.status == "failed"
+    assert result.error_type == "InternalAdapterError"
+    assert result.evidence_state == "BLOCKED"
+    assert result.evidence_state in REQUIRED_TOOL_FAILURE_STATES
+
+
+@pytest.mark.parametrize(
+    "status,expected_state",
+    [
+        ("partial", "BLOCKED"),
+        ("needs-review", "BLOCKED"),
+        ("empty", "MISSING"),
+        ("invalid_response", "INVALID"),
+        ("unauthorized", "BLOCKED"),
+    ],
+)
+def test_required_non_success_statuses_fail_closed(
+    status: str, expected_state: str
+) -> None:
+    dispatcher = ToolDispatcher(
+        {"bounded": _ReturningAdapter(AdapterResult("fixture", status, {}, []))}
+    )
+
+    result = asyncio.run(
+        dispatcher.dispatch(ToolRequest("bounded", {}, required=True))
+    )
+
+    assert result.evidence_state == expected_state
+    assert result.evidence_state in REQUIRED_TOOL_FAILURE_STATES
+
+
+@pytest.mark.parametrize(
+    "status,expected_state",
+    [("partial", "PARTIAL"), ("failed", "INVALID")],
+)
+def test_optional_known_non_success_statuses_remain_isolated(
+    status: str, expected_state: str
+) -> None:
+    dispatcher = ToolDispatcher(
+        {"bounded": _ReturningAdapter(AdapterResult("fixture", status, {}, []))}
+    )
+
+    result = asyncio.run(dispatcher.dispatch(ToolRequest("bounded", {}, required=False)))
+
+    assert result.status == status
+    assert result.evidence_state == expected_state
+    assert result.required is False
+
+
+def test_optional_unknown_status_isolated_without_erasing_sibling() -> None:
+    dispatcher = ToolDispatcher(
+        {
+            "bad": _ReturningAdapter(AdapterResult("fixture", "banana", {}, [])),
+            "good": _ReturningAdapter(AdapterResult("fixture", "ok", {"value": 1}, [])),
+        }
+    )
+
+    results = asyncio.run(
+        dispatcher.dispatch_many(
+            [ToolRequest("bad", {}, required=False), ToolRequest("good", {})]
+        )
+    )
+
+    assert results[0].status == "failed"
+    assert results[0].evidence_state == "INVALID"
+    assert results[1].status == "ok"
+    assert results[1].data == {"value": 1}
 
 
 def test_dispatch_many_preserves_order_and_completed_sibling_evidence() -> None:

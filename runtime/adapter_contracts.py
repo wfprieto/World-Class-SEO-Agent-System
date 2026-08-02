@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Generic, Literal, Protocol, TypeGuard, TypeVar, runtime_checkable
 
 
 class AdapterNotConfigured(RuntimeError):
@@ -13,6 +13,49 @@ class AdapterNotConfigured(RuntimeError):
 
 
 AdapterDataT = TypeVar("AdapterDataT")
+AdapterStatus = Literal[
+    "ok",
+    "complete",
+    "success",
+    "needs-review",
+    "partial",
+    "empty",
+    "not_found",
+    "not_configured",
+    "invalid",
+    "invalid_response",
+    "blocked",
+    "failed",
+    "unauthorized",
+    "rate_limited",
+]
+CANONICAL_ADAPTER_STATUSES: frozenset[str] = frozenset(
+    {
+        "ok",
+        "complete",
+        "success",
+        "needs-review",
+        "partial",
+        "empty",
+        "not_found",
+        "not_configured",
+        "invalid",
+        "invalid_response",
+        "blocked",
+        "failed",
+        "unauthorized",
+        "rate_limited",
+    }
+)
+SUCCESS_ADAPTER_STATUSES: frozenset[str] = frozenset({"ok", "complete", "success"})
+PARTIAL_ADAPTER_STATUSES: frozenset[str] = frozenset({"needs-review", "partial"})
+MISSING_ADAPTER_STATUSES: frozenset[str] = frozenset(
+    {"empty", "not_found", "not_configured"}
+)
+INVALID_ADAPTER_STATUSES: frozenset[str] = frozenset({"invalid", "invalid_response"})
+BLOCKING_ADAPTER_STATUSES: frozenset[str] = frozenset(
+    {"blocked", "failed", "unauthorized", "rate_limited"}
+)
 _SECRET_PATTERN = re.compile(
     r"(?i)(?:authorization\s*:\s*bearer\s+\S+|(?:api[_-]?key|token|secret|password)\s*[=:]\s*\S+)"
 )
@@ -20,7 +63,7 @@ _SECRET_PATTERN = re.compile(
 
 @dataclass
 class AdapterResult(Generic[AdapterDataT]):
-    """Normalized adapter response crossing the runtime trust boundary."""
+    """Untrusted adapter response; validate it before runtime consumption."""
 
     source: str
     status: str
@@ -39,6 +82,12 @@ class RuntimeAdapter(Protocol):
 SEOAdapter = RuntimeAdapter
 
 
+def is_adapter_status(value: object) -> TypeGuard[AdapterStatus]:
+    """Return whether an untrusted value is a canonical adapter status."""
+
+    return isinstance(value, str) and value in CANONICAL_ADAPTER_STATUSES
+
+
 def validate_adapter_result(result: object) -> AdapterResult[Any]:
     """Reject malformed, unsafe, or non-serializable adapter boundary values."""
 
@@ -48,6 +97,8 @@ def validate_adapter_result(result: object) -> AdapterResult[Any]:
         raise TypeError("adapter result source must be a non-empty string")
     if not isinstance(result.status, str) or not result.status.strip():
         raise TypeError("adapter result status must be a non-empty string")
+    if not is_adapter_status(result.status):
+        raise ValueError(f"unsupported adapter result status: {result.status!r}")
     if not isinstance(result.warnings, list) or any(
         not isinstance(item, str) for item in result.warnings
     ):

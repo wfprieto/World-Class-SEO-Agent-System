@@ -13,7 +13,7 @@ from runtime.routing import RouteResult
 from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.schema_registry import SchemaRegistry
 from runtime.state import Handoff, SessionState
-from runtime.tools import ToolRequest
+from runtime.tools import REQUIRED_TOOL_FAILURE_STATES, ToolRequest
 from runtime.workflow_graph import WorkflowNode, build_workflow_graph
 
 
@@ -45,7 +45,7 @@ class WorkflowRunner:
         required_tool_failures = [
             tool
             for tool in tools
-            if tool.required and tool.evidence_state in {"BLOCKED", "INVALID", "MISSING"}
+            if tool.required and tool.evidence_state in REQUIRED_TOOL_FAILURE_STATES
         ]
         for tool in required_tool_failures:
             session.open_risks.append(

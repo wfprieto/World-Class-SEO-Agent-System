@@ -262,7 +262,7 @@
     },
     "runtime.tools::ToolDispatcher.dispatch": {
       "max_span": 80,
-      "max_complexity": 14,
+      "max_complexity": 13,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1478,7 +1478,7 @@
     },
     "scripts.validate_architecture_contract::validate": {
       "max_span": 74,
-      "max_complexity": 30,
+      "max_complexity": 29,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1551,14 +1551,6 @@
     "scripts.validate_product_proof_program::validate": {
       "max_span": 149,
       "max_complexity": 22,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "scripts.validate_quality_ratchets::validate": {
-      "max_span": 69,
-      "max_complexity": 30,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1768,7 +1760,6 @@
       "scripts/scan_secrets.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/seo_pdf_report.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/validate_architecture_contract.py|C901|`validate` is too complex (18 > 10)": 1,
-      "scripts/validate_architecture_contract.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_canonical_skill_consistency.py|E401|Multiple imports on one line": 1,
       "scripts/validate_canonical_skill_consistency.py|E701|Multiple statements on one line (colon)": 6,
       "scripts/validate_canonical_skill_consistency.py|E702|Multiple statements on one line (semicolon)": 11,
@@ -1786,8 +1777,6 @@
       "scripts/validate_product_contract.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_product_proof_program.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/validate_pytest_temp_isolation.py|I001|Import block is un-sorted or un-formatted": 1,
-      "scripts/validate_quality_ratchets.py|C901|`validate` is too complex (22 > 10)": 1,
-      "scripts/validate_quality_ratchets.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_reference_freshness.py|C901|`validate` is too complex (16 > 10)": 1,
       "scripts/validate_release_artifacts.py|C901|`validate` is too complex (12 > 10)": 1,
       "scripts/validate_release_version.py|I001|Import block is un-sorted or un-formatted": 1,
