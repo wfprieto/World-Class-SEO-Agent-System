@@ -141,6 +141,20 @@ def _closure_payload(payload: dict, snapshot_commit: str) -> dict:
     return closed
 
 
+def _review_snapshot_payload(payload: dict, phase_index: int) -> dict:
+    snapshot = copy.deepcopy(payload)
+    phase = snapshot["phases"][phase_index]
+    snapshot["current_phase"] = phase["id"]
+    phase["status"] = "IN_PROGRESS"
+    phase["review_snapshot_commit"] = None
+    phase["frozen_package_commit"] = None
+    phase["package_certification"] = []
+    phase["review"]["verdicts"] = []
+    for later_phase in snapshot["phases"][phase_index + 1 :]:
+        later_phase["status"] = "NOT_STARTED"
+    return snapshot
+
+
 def _complete_phase(payload: dict, phase_index: int) -> None:
     phase = payload["phases"][phase_index]
     phase["status"] = "COMPLETE"
@@ -635,9 +649,10 @@ def test_durable_rollback_procedure_rejects_stale_candidate_and_inventory() -> N
 def test_closure_delta_accepts_only_state_verdict_and_certification_fields(
     tmp_path: Path,
 ) -> None:
-    root = _write_fixture(tmp_path, _program())
+    review_snapshot = _review_snapshot_payload(_program(), 0)
+    root = _write_fixture(tmp_path, review_snapshot)
     snapshot_commit = _commit_fixture(root, "review snapshot")
-    closed = _closure_payload(_program(), snapshot_commit)
+    closed = _closure_payload(review_snapshot, snapshot_commit)
     _write_fixture(root, closed)
     _commit_fixture(root, "phase closure")
     closed = json.loads((root / PROGRAM_PATH.relative_to(ROOT)).read_text(encoding="utf-8"))
@@ -646,9 +661,10 @@ def test_closure_delta_accepts_only_state_verdict_and_certification_fields(
 
 
 def test_closure_delta_remains_valid_after_later_phase_commits(tmp_path: Path) -> None:
-    root = _write_fixture(tmp_path, _program())
+    review_snapshot = _review_snapshot_payload(_program(), 0)
+    root = _write_fixture(tmp_path, review_snapshot)
     snapshot_commit = _commit_fixture(root, "review snapshot")
-    closed = _closure_payload(_program(), snapshot_commit)
+    closed = _closure_payload(review_snapshot, snapshot_commit)
     _write_fixture(root, closed)
     _commit_fixture(root, "bounded phase closure")
     (root / "later-phase.txt").write_text("later material work", encoding="utf-8")
@@ -658,12 +674,37 @@ def test_closure_delta_remains_valid_after_later_phase_commits(tmp_path: Path) -
     assert _closure_delta_errors(current, current["phases"][0], root, snapshot_commit) == []
 
 
+def test_closure_fixture_ignores_completed_later_phase_metadata(tmp_path: Path) -> None:
+    payload = _program()
+    payload["phases"][1]["status"] = "COMPLETE"
+    payload["phases"][1]["review_snapshot_commit"] = "1" * 40
+    payload["phases"][1]["frozen_package_commit"] = "1" * 40
+    payload["phases"][1]["package_certification"] = [{"later-phase": True}]
+    _set_current_phase(payload, "P2")
+
+    review_snapshot = _review_snapshot_payload(payload, 0)
+    assert [phase["status"] for phase in review_snapshot["phases"][:3]] == [
+        "IN_PROGRESS",
+        "NOT_STARTED",
+        "NOT_STARTED",
+    ]
+    root = _write_fixture(tmp_path, review_snapshot)
+    snapshot_commit = _commit_fixture(root, "review snapshot")
+    closed = _closure_payload(review_snapshot, snapshot_commit)
+    _write_fixture(root, closed)
+    _commit_fixture(root, "bounded phase closure")
+    current = json.loads((root / PROGRAM_PATH.relative_to(ROOT)).read_text(encoding="utf-8"))
+
+    assert _closure_delta_errors(current, current["phases"][0], root, snapshot_commit) == []
+
+
 def test_closure_delta_rejects_material_program_and_unrelated_file_changes(
     tmp_path: Path,
 ) -> None:
-    root = _write_fixture(tmp_path, _program())
+    review_snapshot = _review_snapshot_payload(_program(), 0)
+    root = _write_fixture(tmp_path, review_snapshot)
     snapshot_commit = _commit_fixture(root, "review snapshot")
-    closed = _closure_payload(_program(), snapshot_commit)
+    closed = _closure_payload(review_snapshot, snapshot_commit)
     closed["objective"] = "A material objective change hidden in the closure commit."
     _write_fixture(root, closed)
     (root / "unrelated.txt").write_text("not closure metadata", encoding="utf-8")
