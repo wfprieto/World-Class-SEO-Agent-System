@@ -4,9 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11–3.13](https://img.shields.io/badge/python-3.11%E2%80%933.13-blue.svg)](pyproject.toml)
 
-A model-agnostic, evidence-first operating system for technical SEO, content strategy, GEO/AIO, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
+A model-agnostic, evidence-governed SEO operating system for technical SEO, content strategy, GEO/AIO, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
 
-It gives SEO professionals and coding teams a structured way to route work, use specialist agents and skills, apply evidence and quality gates, and produce verifiable implementation plans.
+Its primary operator is a technical SEO practitioner or SEO engineer accountable for an authorized audit and implementation handoff. SEO strategists and analysts, agency and in-house SEO teams, growth and product engineers, and coding-agent users are supported secondary users.
+
+The product is documentation-first: knowledge, skills, evidence, and orchestration contracts are the primary layer. A bounded CLI runtime and optional integration adapters provide the executable layer. The exact product boundary is defined in [`governance/product-contract.json`](governance/product-contract.json) and explained in [`docs/PRODUCT-CAPABILITY-CONTRACT.md`](docs/PRODUCT-CAPABILITY-CONTRACT.md).
 
 ## Get a working result in 60 seconds
 
@@ -18,7 +20,9 @@ seoctl --registry-check
 seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/first-run --max-urls 20
 ```
 
-This deterministic fixture audit makes no live request and writes six inspectable artifacts to the gitignored `outputs/first-run/` directory: `run-manifest.json`, `technical-audit.md`, `executive-summary.md`, `remediation-plan.csv`, `verification-plan.json`, and `agent-contributions.json`. The manifest labels the evidence mode `FIXTURE`; these results demonstrate the audit contract, not the condition of `example.com` or any other live site.
+`seoctl audit technical` is the sole flagship command. It performs bounded read-only diagnosis and produces a decision-ready technical SEO evidence package with exactly ten artifacts in the gitignored `outputs/first-run/` directory: `crawl.json`, `findings.json`, `decisions.json`, `agent-contributions.json`, `trust-summary.json`, `technical-audit.md`, `executive-summary.md`, `remediation-plan.csv`, `verification-plan.json`, and `run-manifest.json`.
+
+This deterministic fixture audit makes no live request. The manifest labels the evidence mode `FIXTURE`; these results prove deterministic contract behavior only, not the condition of `example.com` or any other live site. A bounded live run reports observations from an authorized target at a stated time. Neither mode proves complete site coverage, search-engine indexing, ranking, traffic, conversion, production readiness, or comparative superiority, and the flagship makes no external change.
 
 Inspect every registered command family and its family-specific options:
 
@@ -54,15 +58,16 @@ The core system is LLM agnostic. Any capable coding or reasoning model can use t
 
 ## Who It Is For
 
-- SEO engineers
-- Technical SEO specialists
-- SEO strategists
-- Content SEO teams
-- Agency operators
-- Growth engineers
-- Product teams responsible for organic acquisition
-- Developers building SEO-aware sites and applications
-- AI/coding-agent users who want repeatable SEO workflows
+Primary operator:
+
+- Technical SEO practitioner or SEO engineer accountable for an authorized audit and implementation handoff
+
+Supported secondary users:
+
+- SEO strategists and analysts
+- Agency and in-house SEO teams
+- Growth and product engineers
+- Coding-agent users
 
 ## Core Operating Rule
 
@@ -138,7 +143,7 @@ World-Class-SEO-Agent-System/
 
 ## Best Use Cases
 
-- Full SEO audits
+- Evidence-dependent multi-agent audit synthesis through `system.run` and `full-site-audit`
 - Technical SEO implementation in codebases
 - Content briefs and refresh plans
 - GEO/AIO and AI citation readiness
@@ -271,6 +276,8 @@ Dry-run routing:
 ```powershell
 python main.py "Run a full SEO audit" --domain https://example.com
 ```
+
+`system.run` and the `full-site-audit` skill are evidence-dependent multi-agent orchestration capabilities, not alternate flagship commands or completeness guarantees. Their outputs must disclose which domains ran and which evidence remained missing.
 
 Dry-run execution with the built-in echo client:
 

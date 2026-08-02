@@ -66,6 +66,8 @@ jobs:
           seoctl --registry-check
           python scripts/generate_command_docs.py --check
           python scripts/generate_skill_index.py --check
+          python scripts/generate_capability_evidence_registry.py --check
+          python scripts/validate_product_contract.py
           python scripts/validate_reference_freshness.py
           python scripts/validate_seo_claims.py
           python scripts/validate_product_claims.py
@@ -165,6 +167,7 @@ jobs:
           scripts/verify_clean_wheel.py scripts/validate_remediation_program.py
           scripts/capture_github_controls.py scripts/validate_repository_governance.py
           scripts/validate_pytest_temp_isolation.py
+          scripts/generate_capability_evidence_registry.py scripts/validate_product_contract.py
           --ignore-missing-imports --check-untyped-defs
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py

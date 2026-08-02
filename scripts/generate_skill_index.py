@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "skills" / "skill-catalog.json"
 PACKAGES = ROOT / "skills" / "package-registry.json"
 DEFAULT_OUT = ROOT / "skills" / "SKILL_INDEX.md"
+EVIDENCE_REGISTRY = ROOT / "orchestration" / "capability-evidence-registry.json"
 
 
 def _load(path: Path) -> dict:
@@ -23,6 +24,7 @@ def render() -> str:
     catalog = _load(CATALOG)
     package_payload = _load(PACKAGES)
     packages = package_payload.get("packages", {})
+    evidence = _load(EVIDENCE_REGISTRY)["skills"]
     package_document = str(package_payload.get("package_document", ""))
     lines = [
         "# Skill Index",
@@ -40,9 +42,15 @@ def render() -> str:
         lines.extend([f"## {name}", ""])
         for skill in skills:
             if skill in packages:
-                lines.append(f"- `{skill}` — package: `{package_document}#{skill}`")
+                lines.append(
+                    f"- `{skill}` — `{evidence[skill]['delivery_state']}` / "
+                    f"`{evidence[skill]['claim_ceiling']}` — package: `{package_document}#{skill}`"
+                )
             else:
-                lines.append(f"- `{skill}`")
+                lines.append(
+                    f"- `{skill}` — `{evidence[skill]['delivery_state']}` / "
+                    f"`{evidence[skill]['claim_ceiling']}`"
+                )
         lines.append("")
     lines.extend([
         "## Package coverage", "",

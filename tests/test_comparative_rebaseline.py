@@ -5,6 +5,8 @@ from pathlib import Path
 
 from scripts.inventory_comparator import (
     COMPARATIVE,
+    _catalog_skill_ids,
+    _skill_ids,
     _sha256,
     inventory_repo,
     load_json,
@@ -26,6 +28,24 @@ def test_inventory_digest_is_stable_across_git_line_endings(tmp_path: Path):
     crlf.write_bytes(b'{\r\n  "value": 1\r\n}\r\n')
 
     assert _sha256(lf) == _sha256(crlf)
+
+
+def test_skill_inventory_accepts_generated_evidence_annotations(tmp_path: Path):
+    index = tmp_path / "SKILL_INDEX.md"
+    index.write_text(
+        "- `plain-skill`\n"
+        "- `classified-skill` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`\n"
+        "- `packaged-skill` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY` — package: `x#y`\n",
+        encoding="utf-8",
+    )
+
+    assert _skill_ids(index) == {"plain-skill", "classified-skill", "packaged-skill"}
+
+
+def test_generated_skill_index_matches_machine_catalog():
+    assert _skill_ids(ROOT / "skills/SKILL_INDEX.md") == _catalog_skill_ids(
+        ROOT / "skills/skill-catalog.json"
+    )
 
 
 def test_comparative_rebaseline_is_valid_and_reproducible():

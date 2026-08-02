@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date
 
 from integrations.product_proof.crawler import RobotsPolicy, parse_robots
-from integrations.product_proof.service import ProductProofTechnicalAudit
+from integrations.product_proof.service import ARTIFACT_FILENAMES, ProductProofTechnicalAudit
 from scripts.validate_seo_claims import validate
 from seoctl.audit_cli import run
 
@@ -80,7 +80,15 @@ def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
     assert 'Pages carry noindex instructions that Google may be unable to read' in titles
     assert 'Early page images are lazy-loaded' in titles
     assert 'Empty faceted combinations return successful responses' in titles
-    for name in ('run-manifest.json','technical-audit.md','executive-summary.md','remediation-plan.csv','verification-plan.json','agent-contributions.json'):
+    expected_artifacts = {
+      'crawl.json', 'findings.json', 'decisions.json', 'agent-contributions.json',
+      'trust-summary.json', 'technical-audit.md', 'executive-summary.md',
+      'remediation-plan.csv', 'verification-plan.json', 'run-manifest.json',
+    }
+    assert len(ARTIFACT_FILENAMES) == 10
+    assert set(ARTIFACT_FILENAMES.values()) == expected_artifacts
+    assert {path.name for path in out.iterdir()} == expected_artifacts
+    for name in expected_artifacts:
       assert (out/name).is_file() and (out/name).stat().st_size > 0
     manifest=json.loads((out/'run-manifest.json').read_text())
     assert manifest['evidence_mode']=='FIXTURE'

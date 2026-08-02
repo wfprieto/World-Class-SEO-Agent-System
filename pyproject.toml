@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "world-class-seo-agent-system"
 version = "1.7.0"
-description = "Model-agnostic SEO agent operating system with runtime contracts, adapters, schemas, workflows, and validation tests."
+description = "model-agnostic, evidence-governed SEO operating system with documentation-first contracts and a bounded executable layer."
 requires-python = ">=3.11,<3.14"
 dependencies = ["jsonschema>=4.22.0,<5", "tenacity>=8.2.0"]
 classifiers = [

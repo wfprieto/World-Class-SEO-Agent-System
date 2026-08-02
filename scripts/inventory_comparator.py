@@ -185,11 +185,27 @@ def _skill_ids(path: Path) -> set[str]:
     text = path.read_text(encoding="utf-8-sig")
     return set(
         re.findall(
-            r"^- `([a-z0-9-]+)`(?:\s+—\s+package:.*)?$",
+            # The identifier is the contract; generated annotations may evolve.
+            r"^- `([a-z0-9-]+)`(?:[ \t]+[^\r\n]*)?$",
             text,
             flags=re.MULTILINE,
         )
     )
+
+
+def _catalog_skill_ids(path: Path) -> set[str]:
+    """Inventory skills from the machine authority, not its rendered reference."""
+    payload = load_json(path)
+    categories = payload.get("categories", [])
+    if not isinstance(categories, list):
+        return set()
+    return {
+        str(skill)
+        for category in categories
+        if isinstance(category, dict) and isinstance(category.get("skills"), list)
+        for skill in category["skills"]
+        if isinstance(skill, str) and skill
+    }
 
 
 def _test_functions(path: Path) -> int:
@@ -217,7 +233,7 @@ def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
     workflow_files = list((root / "workflows").glob("*.md"))
     return {
         "agent_files": len(agent_files),
-        "indexed_skills": len(_skill_ids(root / "skills" / "SKILL_INDEX.md")),
+        "indexed_skills": len(_catalog_skill_ids(root / "skills" / "skill-catalog.json")),
         "python_scripts": len(script_files),
         "python_adapters": len(adapter_files),
         "knowledge_files": len(knowledge_files),

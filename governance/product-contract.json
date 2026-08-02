@@ -1,0 +1,75 @@
+{
+  "$schema": "../schemas/product-contract.schema.json",
+  "schema_version": "1.0.0",
+  "contract_id": "world-class-seo-product",
+  "product_name": "World-Class SEO Agent System",
+  "product_category": "model-agnostic, evidence-governed SEO operating system",
+  "layer_model": {
+    "primary": "documentation-first knowledge, skills, evidence, and orchestration contracts",
+    "executable": "bounded CLI runtime and optional integration adapters"
+  },
+  "primary_operator": "technical SEO practitioner or SEO engineer accountable for an authorized audit and implementation handoff",
+  "secondary_users": [
+    "SEO strategists and analysts",
+    "agency and in-house SEO teams",
+    "growth and product engineers",
+    "coding-agent users"
+  ],
+  "flagship": {
+    "command_id": "audit.technical",
+    "command": "seoctl audit technical",
+    "skill": "product-proof-technical-audit",
+    "owner": "SEO Full Audit/Analyst Agent",
+    "mode": "bounded read-only diagnosis",
+    "outcome": "decision-ready technical SEO evidence package",
+    "artifacts": [
+      "crawl.json",
+      "findings.json",
+      "decisions.json",
+      "agent-contributions.json",
+      "trust-summary.json",
+      "technical-audit.md",
+      "executive-summary.md",
+      "remediation-plan.csv",
+      "verification-plan.json",
+      "run-manifest.json"
+    ]
+  },
+  "non_flagship_capabilities": {
+    "system.run": "evidence-dependent multi-agent orchestration",
+    "full-site-audit": "broad audit synthesis capability, not a completeness guarantee"
+  },
+  "proof_boundaries": {
+    "fixture": "proves deterministic contract behavior only",
+    "live_bounded": "reports observations from an authorized bounded run at a stated time",
+    "never_implies": [
+      "complete site coverage",
+      "search-engine indexing",
+      "ranking improvement",
+      "traffic improvement",
+      "conversion improvement",
+      "production readiness",
+      "comparative superiority"
+    ],
+    "external_changes": false
+  },
+  "capability_classification": {
+    "command_network_proof": {
+      "none": "LOCAL_DETERMINISTIC",
+      "live_optional": "LIVE_BOUNDED",
+      "provider_optional": "PROVIDER_OR_FIXTURE"
+    },
+    "agent_execution_proof": {
+      "executable": "COMMAND_BACKED",
+      "advisory": "DOCUMENTED_ADVISORY",
+      "governance": "GOVERNANCE_CONTROL"
+    }
+  },
+  "authoritative_surfaces": [
+    {"path": "README.md", "required_terms": ["model-agnostic, evidence-governed SEO operating system", "technical SEO practitioner or SEO engineer", "decision-ready technical SEO evidence package"]},
+    {"path": "SYSTEM_SPEC.md", "required_terms": ["model-agnostic, evidence-governed SEO operating system", "technical SEO practitioner or SEO engineer"]},
+    {"path": "pyproject.toml", "required_terms": ["model-agnostic, evidence-governed SEO operating system"]},
+    {"path": "docs/QUICKSTART.md", "required_terms": ["seoctl audit technical", "decision-ready technical SEO evidence package"]},
+    {"path": "skills/product-proof-technical-audit.md", "required_terms": ["decision-ready technical SEO evidence package"]}
+  ]
+}

@@ -2,9 +2,9 @@
 
 ## `full-site-audit`
 
-Purpose: Produce a complete SEO health report across technical, content, IA, authority, local/international, accessibility, CRO, GEO/AIO, security, and compliance.
+Purpose: Synthesize an evidence-dependent SEO health report across the domains actually supported by supplied evidence and executed specialist work. Missing domains remain explicit; this skill does not guarantee complete site coverage.
 
-System prompt: Act as the lead audit synthesizer. Coordinate specialist evidence, disclose missing data, score conservatively, and produce a decision-ready audit that downstream agents can execute.
+System prompt: Act as the lead audit synthesizer. Coordinate specialist evidence, disclose missing data and unexecuted domains, score conservatively, and produce a decision-ready audit that downstream agents can execute. This is a broad orchestration capability, not the product's flagship command.
 
 Inputs:
 
@@ -26,6 +26,8 @@ Output:
 Quality gate:
 
 - Every score must disclose missing data.
+- The report must name the domains that executed and may not imply coverage for domains that did not execute.
+- `system.run` and `full-site-audit` must not be labeled flagship.
 
 ## `technical-audit`
 

@@ -19,6 +19,19 @@ from runtime.assets import resolve_asset_root
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[2])
 
+ARTIFACT_FILENAMES = {
+    "crawl": "crawl.json",
+    "findings": "findings.json",
+    "decisions": "decisions.json",
+    "contributions": "agent-contributions.json",
+    "trust": "trust-summary.json",
+    "technical_report": "technical-audit.md",
+    "executive_report": "executive-summary.md",
+    "remediation": "remediation-plan.csv",
+    "verification": "verification-plan.json",
+    "manifest": "run-manifest.json",
+}
+
 
 class FixtureHttpClient:
     """Exact-response fixture transport. Fixture success is never called live proof."""
@@ -98,18 +111,7 @@ class ProductProofTechnicalAudit:
         output.mkdir(parents=True, exist_ok=True)
         run_seed = json.dumps({"url": safe_url, "config": config.to_dict(), "evidence_mode": evidence_mode}, sort_keys=True)
         run_id = hashlib.sha256(run_seed.encode("utf-8")).hexdigest()[:16]
-        artifacts = {
-            "crawl": output / "crawl.json",
-            "findings": output / "findings.json",
-            "decisions": output / "decisions.json",
-            "contributions": output / "agent-contributions.json",
-            "trust": output / "trust-summary.json",
-            "technical_report": output / "technical-audit.md",
-            "executive_report": output / "executive-summary.md",
-            "remediation": output / "remediation-plan.csv",
-            "verification": output / "verification-plan.json",
-            "manifest": output / "run-manifest.json",
-        }
+        artifacts = {name: output / filename for name, filename in ARTIFACT_FILENAMES.items()}
         self._write_json(artifacts["crawl"], crawl)
         self._write_json(artifacts["findings"], evaluated["findings"])
         self._write_json(artifacts["decisions"], evaluated["decisions"])

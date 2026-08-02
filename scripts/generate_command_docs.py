@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -12,10 +13,12 @@ if str(ROOT) not in sys.path:
 from seoctl.registry import command_specs, load_registry, validate_registry
 
 DEFAULT_OUT = ROOT / "docs" / "COMMANDS.md"
+EVIDENCE_REGISTRY = ROOT / "orchestration" / "capability-evidence-registry.json"
 
 
 def render() -> str:
     registry = load_registry()
+    evidence = json.loads(EVIDENCE_REGISTRY.read_text(encoding="utf-8-sig"))["commands"]
     errors = validate_registry(registry)
     if errors:
         raise ValueError("invalid command registry: " + "; ".join(errors))
@@ -26,13 +29,15 @@ def render() -> str:
         "",
         "Run `python -m seoctl --help` for interactive argument details.",
         "",
-        "| Command | Owner | Skills | Network |",
-        "|---|---|---|---|",
+        "| Command | Owner | Skills | Network | Delivery | Execution | Claim ceiling |",
+        "|---|---|---|---|---|---|---|",
     ]
     for spec in sorted(command_specs(registry), key=lambda item: item.path):
         lines.append(
             "| `seoctl " + " ".join(spec.path) + "` | " + spec.owner + " | "
-            + ", ".join(f"`{skill}`" for skill in spec.skills) + " | `" + spec.network + "` |"
+            + ", ".join(f"`{skill}`" for skill in spec.skills) + " | `" + spec.network + "` | `"
+            + evidence[spec.id]["delivery_state"] + "` | `" + evidence[spec.id]["execution_mode"]
+            + "` | `" + evidence[spec.id]["claim_ceiling"] + "` |"
         )
     lines.extend([
         "", "## Stable exit codes", "", "| Code | Meaning |", "|---:|---|",
