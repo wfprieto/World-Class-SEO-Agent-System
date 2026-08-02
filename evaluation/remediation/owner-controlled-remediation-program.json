@@ -343,30 +343,409 @@
       "id": "P6",
       "title": "Transport and local-data security hardening",
       "status": "IN_PROGRESS",
-      "rollback_baseline_commit": null,
-      "verified_commit": null,
+      "rollback_baseline_commit": "7a495d1efc2a05039a92f08d697a9a09c9b3f4fc",
+      "verified_commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
-      "rollback_evidence_sha256": null,
-      "authority_evidence": [],
+      "rollback_evidence_sha256": "d09c0cdcd179ecffee92f4c5d548747d6cdb850cb7854261c32cf2265cf8cbda",
+      "authority_evidence": [
+            {
+                  "class": "SOURCE",
+                  "ref": "evaluation/reviewer-registry.json",
+                  "commit": "2908ef489a5c6f5985fa0295b7ad246a54a61b64",
+                  "sha256": "9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc",
+                  "environment": "CI",
+                  "status": "PASS",
+                  "assertion": "Reviewer identities, roles, and independence constraints are bound to immutable source."
+            },
+            {
+                  "class": "SOURCE",
+                  "ref": "schemas/reviewer-verdict.schema.json",
+                  "commit": "2908ef489a5c6f5985fa0295b7ad246a54a61b64",
+                  "sha256": "42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c",
+                  "environment": "CI",
+                  "status": "PASS",
+                  "assertion": "Reviewer verdict structure and evidence-hash binding are immutable."
+            },
+            {
+                  "class": "SOURCE",
+                  "ref": "evaluation/reviewers/senior-scrummaster-3.md",
+                  "commit": "2908ef489a5c6f5985fa0295b7ad246a54a61b64",
+                  "sha256": "58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81",
+                  "environment": "CI",
+                  "status": "PASS",
+                  "assertion": "Senior ScrumMaster review authority is bound to immutable source."
+            },
+            {
+                  "class": "SOURCE",
+                  "ref": "evaluation/reviewers/vp-engineering.md",
+                  "commit": "2908ef489a5c6f5985fa0295b7ad246a54a61b64",
+                  "sha256": "ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931",
+                  "environment": "CI",
+                  "status": "PASS",
+                  "assertion": "VP Engineering review authority is bound to immutable source."
+            }
+      ],
       "package_certification": [],
       "owner": "Security owner",
       "approver": "Repository maintainer",
       "verifier": "Independent security reviewer",
-      "notify": ["Runtime architecture owner", "Quality owner"],
-      "scope": ["outbound transport", "LLM redirects", "dependency integrity", "workflow integrity", "local-data protection"],
-      "non_goals": ["provider dashboard mutation", "live credential use", "public release"],
+      "notify": [
+            "Runtime architecture owner",
+            "Quality owner"
+      ],
+      "scope": [
+            "outbound transport",
+            "LLM redirects",
+            "dependency integrity",
+            "workflow integrity",
+            "local-data protection"
+      ],
+      "non_goals": [
+            "provider dashboard mutation",
+            "live credential use",
+            "public release"
+      ],
       "rollback": "Revert each security boundary only if legitimate compatibility tests fail; never restore a proven unsafe behavior.",
       "acceptance_criteria": [
-        {"id": "P6-AC-01", "description": "Every outbound transport enforces or delegates to one canonical security policy.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P6-AC-02", "description": "Credentials and private evidence cannot cross unapproved redirects, logs, telemetry, or examples.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+            {
+                  "id": "P6-AC-01",
+                  "description": "Every outbound transport enforces or delegates to one canonical security policy.",
+                  "horizon": "IMMEDIATE",
+                  "status": "PASS",
+                  "evidence_refs": [
+                        {
+                              "class": "SOURCE",
+                              "ref": "scripts/architecture_network_inventory.py",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": "a98a375f4b7c9ce8a52298f83bd821ad380a09afff879231f27acdd803a64027",
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "The exact code-owned oracle binds every observed direct network sink to one bounded policy and delegate."
+                        },
+                        {
+                              "class": "AUTOMATED",
+                              "ref": "tests/test_architecture_contract.py",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": "287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0",
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."
+                        },
+                        {
+                              "class": "CI",
+                              "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": null,
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.",
+                              "provenance": {
+                                    "repository": "wfprieto/World-Class-SEO-Agent-System",
+                                    "workflow": "Validate repository",
+                                    "head_sha": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                                    "conclusion": "success",
+                                    "jobs": [
+                                          "provider-authentication",
+                                          "validate matrix (6)",
+                                          "validate",
+                                          "quality_security_release",
+                                          "clean wheel (2)",
+                                          "phase0-rollback-certification",
+                                          "phase-rollback-certification",
+                                          "repository-certification"
+                                    ]
+                              }
+                        }
+                  ]
+            },
+            {
+                  "id": "P6-AC-02",
+                  "description": "Credentials and private evidence cannot cross unapproved redirects, logs, telemetry, or examples.",
+                  "horizon": "IMMEDIATE",
+                  "status": "PASS",
+                  "evidence_refs": [
+                        {
+                              "class": "SOURCE",
+                              "ref": "requirements-dev.txt",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": "127493303096108d815c5a2f03d1b6b3514446f6bdf03e07511e6323c02552b4",
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "The complete pip-compile lock pins and hashes runtime, test, pip, setuptools, and wheel dependencies."
+                        },
+                        {
+                              "class": "AUTOMATED",
+                              "ref": "tests/test_release_risk_boundaries.py",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": "0610957f45ef3254c153001c75f79e2c8c29aa249e1d468c931cc0c2ed066e00",
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "Fixed dependency mutations reject unhashed pins and omission of pip or setuptools from a pip-tools lock."
+                        },
+                        {
+                              "class": "AUTOMATED",
+                              "ref": "tests/test_sensitive_data.py",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": "cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03",
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."
+                        },
+                        {
+                              "class": "CI",
+                              "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                              "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "sha256": null,
+                              "environment": "CI",
+                              "status": "PASS",
+                              "assertion": "All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.",
+                              "provenance": {
+                                    "repository": "wfprieto/World-Class-SEO-Agent-System",
+                                    "workflow": "Validate repository",
+                                    "head_sha": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                                    "conclusion": "success",
+                                    "jobs": [
+                                          "provider-authentication",
+                                          "validate matrix (6)",
+                                          "validate",
+                                          "quality_security_release",
+                                          "clean wheel (2)",
+                                          "phase0-rollback-certification",
+                                          "phase-rollback-certification",
+                                          "repository-certification"
+                                    ]
+                              }
+                        }
+                  ]
+            }
       ],
-      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
-      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
-      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
-      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
-      "review": {"evidence_package_hash": null, "verdicts": []}
-    },
+      "required_evidence_classes": [
+            "SOURCE",
+            "AUTOMATED",
+            "CI"
+      ],
+      "evidence_status": {
+            "SOURCE": "PASS",
+            "AUTOMATED": "PASS",
+            "CI": "PASS",
+            "PROVIDER": "OUT_OF_SCOPE",
+            "DEPLOYED": "OUT_OF_SCOPE",
+            "OPERATIONAL": "OUT_OF_SCOPE"
+      },
+      "gates": {
+            "implementation_audit": "PASS",
+            "focused_tests": "PASS",
+            "full_certification": "PASS",
+            "security_review": "PASS",
+            "documentation": "PASS",
+            "learning": "PASS",
+            "unexpected_change_scan": "PASS"
+      },
+      "gate_evidence": {
+            "implementation_audit": [
+                  {
+                        "class": "SOURCE",
+                        "ref": "scripts/architecture_network_inventory.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "a98a375f4b7c9ce8a52298f83bd821ad380a09afff879231f27acdd803a64027",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[implementation_audit] The exact code-owned oracle binds every observed direct network sink to one bounded policy and delegate."
+                  }
+            ],
+            "focused_tests": [
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_architecture_contract.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[focused_tests] Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_release_risk_boundaries.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "0610957f45ef3254c153001c75f79e2c8c29aa249e1d468c931cc0c2ed066e00",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[focused_tests] Fixed dependency mutations reject unhashed pins and omission of pip or setuptools from a pip-tools lock."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_sensitive_data.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[focused_tests] Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."
+                  }
+            ],
+            "full_certification": [
+                  {
+                        "class": "CI",
+                        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": null,
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[full_certification] All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.",
+                        "provenance": {
+                              "repository": "wfprieto/World-Class-SEO-Agent-System",
+                              "workflow": "Validate repository",
+                              "head_sha": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "conclusion": "success",
+                              "jobs": [
+                                    "provider-authentication",
+                                    "validate matrix (6)",
+                                    "validate",
+                                    "quality_security_release",
+                                    "clean wheel (2)",
+                                    "phase0-rollback-certification",
+                                    "phase-rollback-certification",
+                                    "repository-certification"
+                              ]
+                        }
+                  }
+            ],
+            "security_review": [
+                  {
+                        "class": "SOURCE",
+                        "ref": "scripts/architecture_network_inventory.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "a98a375f4b7c9ce8a52298f83bd821ad380a09afff879231f27acdd803a64027",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[security_review] The exact code-owned oracle binds every observed direct network sink to one bounded policy and delegate."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_sensitive_data.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[security_review] Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."
+                  },
+                  {
+                        "class": "CI",
+                        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": null,
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[security_review] All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.",
+                        "provenance": {
+                              "repository": "wfprieto/World-Class-SEO-Agent-System",
+                              "workflow": "Validate repository",
+                              "head_sha": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "conclusion": "success",
+                              "jobs": [
+                                    "provider-authentication",
+                                    "validate matrix (6)",
+                                    "validate",
+                                    "quality_security_release",
+                                    "clean wheel (2)",
+                                    "phase0-rollback-certification",
+                                    "phase-rollback-certification",
+                                    "repository-certification"
+                              ]
+                        }
+                  }
+            ],
+            "documentation": [
+                  {
+                        "class": "SOURCE",
+                        "ref": "docs/ARCHITECTURE.md",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "b97803a463650e32b3ca149f2ebf988cf9b96d7af11a8044801c4440428f898c",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[documentation] The bounded every-hop, evidence-redaction, browser-validation, and explicit DNS-rebinding limitations are documented."
+                  }
+            ],
+            "learning": [
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_quality_ratchets.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "94312a8bf0f425c0da4964d900bd28a21dc91e11e2ee86c89b3e2cc6d7bed0be",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[learning] The guarded monotonic ratchet rejects stale or weakened quality state after integrated security corrections."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_release_risk_boundaries.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "0610957f45ef3254c153001c75f79e2c8c29aa249e1d468c931cc0c2ed066e00",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[learning] Fixed dependency mutations reject unhashed pins and omission of pip or setuptools from a pip-tools lock."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_sensitive_data.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[learning] Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."
+                  },
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_architecture_contract.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[learning] Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."
+                  }
+            ],
+            "unexpected_change_scan": [
+                  {
+                        "class": "AUTOMATED",
+                        "ref": "tests/test_architecture_contract.py",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": "287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0",
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[unexpected_change_scan] Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."
+                  },
+                  {
+                        "class": "CI",
+                        "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                        "commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                        "sha256": null,
+                        "environment": "CI",
+                        "status": "PASS",
+                        "assertion": "[unexpected_change_scan] All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.",
+                        "provenance": {
+                              "repository": "wfprieto/World-Class-SEO-Agent-System",
+                              "workflow": "Validate repository",
+                              "head_sha": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "conclusion": "success",
+                              "jobs": [
+                                    "provider-authentication",
+                                    "validate matrix (6)",
+                                    "validate",
+                                    "quality_security_release",
+                                    "clean wheel (2)",
+                                    "phase0-rollback-certification",
+                                    "phase-rollback-certification",
+                                    "repository-certification"
+                              ]
+                        }
+                  }
+            ]
+      },
+      "review": {
+            "evidence_package_hash": "cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
+            "verdicts": []
+      }
+},
     {
       "id": "P7",
       "title": "Reports documentation onboarding and knowledge",
@@ -510,7 +889,7 @@
       "phase_id": "P6",
       "severity": "HIGH",
       "summary": "Legacy rendered-page fetching can follow a validated public URL to an unvalidated private redirect.",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "source_refs": ["adapters/rendered_page.py", "adapters/registry.py"],
       "remediation": "Route all rendered-page requests and redirects through the canonical bounded transport.",
       "acceptance": "A public-to-private redirect target is rejected before any request reaches it."
@@ -520,7 +899,7 @@
       "phase_id": "P6",
       "severity": "HIGH",
       "summary": "Credential-bearing LLM requests follow redirects and retry permanent failures too broadly.",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "source_refs": ["runtime/llm.py"],
       "remediation": "Disable unsafe credential redirects and retry only explicitly transient responses or network faults.",
       "acceptance": "Credentials never cross hosts and permanent, malformed, or oversized failures execute once."
@@ -530,7 +909,7 @@
       "phase_id": "P6",
       "severity": "HIGH",
       "summary": "Timed-out threaded tools can continue side effects after the runtime reports failure.",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "source_refs": ["runtime/tools.py"],
       "remediation": "Introduce determinate deadlines or indeterminate outcomes with stable operation identity and safe retry rules.",
       "acceptance": "A timeout cannot cause an untracked duplicate side effect or a false definitive failure."
@@ -540,7 +919,7 @@
       "phase_id": "P6",
       "severity": "MEDIUM",
       "summary": "Local evidence privacy and several outbound integration boundaries are platform-incomplete.",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "source_refs": ["runtime", "adapters/gsc_live_example.py", ".github/workflows"],
       "remediation": "Enforce Windows-aware private storage, bounded token endpoints, immutable actions, and transport inventory tests.",
       "acceptance": "Platform and mutation tests prove private storage and every credentialed transport boundary."
@@ -626,7 +1005,10 @@
     {"id":"FAIL-0047","phase_id":"P5","summary":"Independent Scrum review rejected the first P5 snapshot because evidence-free ACCEPTED handoffs were consumable and malformed UNRESOLVED acknowledgements bypassed exact node, output, recipient, action, evidence, and criteria checks.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"runtime/handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"1ed2c9439ac33a5ab4cf520c535c3bed7a48343f493fae4c5d71b5cb67a9848c","environment":"CI","status":"PASS","assertion":"Only exact CHALLENGED or exact reasoned UNRESOLVED acknowledgements can terminate zero-evidence controls; every disposition validates the full addressed context."},{"class":"AUTOMATED","ref":"tests/test_handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"8e27f79bebff08b923a55fe996e6b8987afb722a31ecee22d5fb2e376b2a3681","environment":"CI","status":"PASS","assertion":"Fixed negative cases reject evidence-free ACCEPTED and malformed UNRESOLVED acknowledgements while preserving exact challenge and reasoned unresolved controls."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30767529660","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":null,"environment":"CI","status":"PASS","assertion":"All 14 exact-head jobs passed after the affected-control correction.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","phase-rollback-certification","repository-certification"]}}]},
     {"id":"FAIL-0048","phase_id":"P5","summary":"Independent VP review reproduced mutable terminal-state trust, unexpected current-session graph edges, arbitrary valid declared handoff-target substitution, and 35 undispositioned architecture exceptions whose removal target was P5.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"8e27f79bebff08b923a55fe996e6b8987afb722a31ecee22d5fb2e376b2a3681","environment":"CI","status":"PASS","assertion":"Direct terminal mutation, post-seal field changes, invalid receipts, and unexpected graph edges are fixed fail-closed cases."},{"class":"AUTOMATED","ref":"tests/test_agent_differentiation.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"7e82ec29750641264f7fe26310187329eaf8b5a0e09e70c42faf7838d5264b02","environment":"CI","status":"PASS","assertion":"A valid non-self handoff target substitution is rejected against the agent-specific evaluation contract."},{"class":"SOURCE","ref":"governance/architecture-exception-disposition.json","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"46f6391e5e1a6611359ac8bf1d7825a9bb450647f3c3531054a75f5a6ef524f5","environment":"CI","status":"PASS","assertion":"All 35 exact overdue P5 architecture exception edges are count- and digest-bound to an explicit P8 replan without broadening the architecture allowlist."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30767529660","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":null,"environment":"CI","status":"PASS","assertion":"Architecture, quality, mutation, full-suite, rollback, clean-install, and repository certification all passed at exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","conclusion":"success","jobs":["validate","quality_security_release","phase-rollback-certification","repository-certification"]}}]},
     {"id":"FAIL-0049","phase_id":"P5","summary":"Affected-control VP re-review proved that the closed-world unexpected-handoff check rejected the runtime's own exact append_risk_handoff escalation because legitimate control production was absent from the reconciliation declaration source.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"runtime/handoff_control_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"6e2af109b67435e362a8fa1458e67ca00592f81d33fdd4ab2300524b2fb27358","environment":"CI","status":"PASS","assertion":"Only one exact typed per-run declaration with matching materialized fields, receiving context, and valid receipt can authorize a non-dependency risk control."},{"class":"AUTOMATED","ref":"tests/test_handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"8e27f79bebff08b923a55fe996e6b8987afb722a31ecee22d5fb2e376b2a3681","environment":"CI","status":"PASS","assertion":"An exact append_risk_handoff escalation passes, while an undeclared risk-shaped same-session record with exact CHALLENGED acknowledgement and a valid terminal receipt remains UNEXPECTED_HANDOFF."}]},
-    {"id":"FAIL-0050","phase_id":"P5","summary":"Affected-control Scrum re-review reproduced receipt-valid zero-evidence acceptance by directly consuming and resealing both declared-control and dependency handoffs.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"runtime/handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"1ed2c9439ac33a5ab4cf520c535c3bed7a48343f493fae4c5d71b5cb67a9848c","environment":"CI","status":"PASS","assertion":"Reconciliation independently enforces the terminal semantic invariant that ACCEPTED requires non-empty evidence references."},{"class":"AUTOMATED","ref":"tests/test_handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"8e27f79bebff08b923a55fe996e6b8987afb722a31ecee22d5fb2e376b2a3681","environment":"CI","status":"PASS","assertion":"Fixed declared-control and dependency mutations directly consume zero-evidence handoffs as ACCEPTED, reseal valid receipts, and require EVIDENCE_FREE_ACCEPTANCE failure."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30767529660","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":null,"environment":"CI","status":"PASS","assertion":"All 14 exact-head jobs passed with the terminal semantic invariant and both resealed mutations.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","conclusion":"success","jobs":["validate matrix (6)","quality_security_release","phase-rollback-certification","repository-certification"]}}]}
+    {"id":"FAIL-0050","phase_id":"P5","summary":"Affected-control Scrum re-review reproduced receipt-valid zero-evidence acceptance by directly consuming and resealing both declared-control and dependency handoffs.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"runtime/handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"1ed2c9439ac33a5ab4cf520c535c3bed7a48343f493fae4c5d71b5cb67a9848c","environment":"CI","status":"PASS","assertion":"Reconciliation independently enforces the terminal semantic invariant that ACCEPTED requires non-empty evidence references."},{"class":"AUTOMATED","ref":"tests/test_handoff_governance.py","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":"8e27f79bebff08b923a55fe996e6b8987afb722a31ecee22d5fb2e376b2a3681","environment":"CI","status":"PASS","assertion":"Fixed declared-control and dependency mutations directly consume zero-evidence handoffs as ACCEPTED, reseal valid receipts, and require EVIDENCE_FREE_ACCEPTANCE failure."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30767529660","commit":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","sha256":null,"environment":"CI","status":"PASS","assertion":"All 14 exact-head jobs passed with the terminal semantic invariant and both resealed mutations.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2d22354869e7a13e395d3e20fbd835cdfe8e9949","conclusion":"success","jobs":["validate matrix (6)","quality_security_release","phase-rollback-certification","repository-certification"]}}]},
+    {"id":"FAIL-0051","phase_id":"P6","summary":"The first Phase 6 CI clean install failed because pip-tools introduced setuptools while the hash lock omitted unsafe build dependencies; an installed local setuptools masked the defect.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_release_risk_boundaries.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"0610957f45ef3254c153001c75f79e2c8c29aa249e1d468c931cc0c2ed066e00","environment":"CI","status":"PASS","assertion":"Fixed dependency mutations reject unhashed pins and omission of pip or setuptools from a pip-tools lock."},{"class":"SOURCE","ref":"requirements-dev.txt","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"127493303096108d815c5a2f03d1b6b3514446f6bdf03e07511e6323c02552b4","environment":"CI","status":"PASS","assertion":"The complete pip-compile lock pins and hashes runtime, test, pip, setuptools, and wheel dependencies."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}]},
+    {"id":"FAIL-0052","phase_id":"P6","summary":"Independent review reproduced labeled credential persistence through a sensitive EvidenceStore URL, raw JSONL session identifier, telemetry operation, and rendered evidence bodies.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_sensitive_data.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03","environment":"CI","status":"PASS","assertion":"Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}]},
+    {"id":"FAIL-0053","phase_id":"P6","summary":"Independent review proved that schema-valid descriptive network policy and delegate strings could be fabricated without changing observed direct egress.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"scripts/architecture_network_inventory.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"a98a375f4b7c9ce8a52298f83bd821ad380a09afff879231f27acdd803a64027","environment":"CI","status":"PASS","assertion":"The exact code-owned oracle binds every observed direct network sink to one bounded policy and delegate."},{"class":"AUTOMATED","ref":"tests/test_architecture_contract.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0","environment":"CI","status":"PASS","assertion":"Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}]}
   ],
   "learning_records": [
     {
@@ -1281,6 +1663,9 @@
       "rollback_position":"Preserve the reconciliation-level EVIDENCE_FREE_ACCEPTANCE invariant and both receipt-valid mutation tests as one boundary.",
       "residual_risk":"Receipts remain deterministic in-process mutation detectors and do not prove actor identity, authorization, or semantic truth of evidence.",
       "owner":"Runtime architecture owner","due_phase":"P5","apivr_next_action":"Re-review only the terminal ACCEPTED-without-evidence invariant against the replacement immutable snapshot."
-    }
+    },
+    {"id":"LEARN-0051","phase_id":"P6","failure_id":"FAIL-0051","status":"CONFIRMED","affected_invariant":"A reproducible hash lock must install in a clean environment without consulting already installed build tooling.","expected_result":"Every package selected by pip-tools, including pip and setuptools when unsafe dependencies are enabled, is pinned and SHA-256 hashed.","observed_evidence":[{"class":"AUTOMATED","ref":"tests/test_release_risk_boundaries.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"0610957f45ef3254c153001c75f79e2c8c29aa249e1d468c931cc0c2ed066e00","environment":"CI","status":"PASS","assertion":"Fixed dependency mutations reject unhashed pins and omission of pip or setuptools from a pip-tools lock."}],"learning":"An installed developer dependency can create a false green dry run; clean-lock verification must ignore installed packages and pip-compile must include unsafe build dependencies explicitly.","recurrence_signature":"A require-hashes install succeeds locally but a clean CI resolver requests an unhashed pip or setuptools distribution.","guardrail":"Generate with --allow-unsafe, require pip and setuptools whenever pip-tools is locked, and verify with --ignore-installed --require-hashes.","verification_evidence":{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}},"rollback_position":"Preserve the generated lock, build-dependency validator, clean-install command, and mutation tests together.","residual_risk":"Package availability and advisories can change; exact hashes establish integrity, not future vulnerability absence.","owner":"Security owner","due_phase":"P6","apivr_next_action":"Run the clean ignored-environment hash install before every dependency-lock acceptance."},
+    {"id":"LEARN-0052","phase_id":"P6","failure_id":"FAIL-0052","status":"CONFIRMED","affected_invariant":"Bounded labeled credentials must be sanitized at every persistence and evidence-output sink, including identifier and operation fields.","expected_result":"Known sensitive query keys are rejected before persistence and labeled secrets never appear in local memory, telemetry, or rendered evidence.","observed_evidence":[{"class":"AUTOMATED","ref":"tests/test_sensitive_data.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"cde4b2467b6d7c3fd8e18abda6677cec9da6cb399d4bf65667d66ecf31b89c03","environment":"CI","status":"PASS","assertion":"Fixed sink mutations reject sensitive URL queries and prevent labeled credentials in SQLite, JSONL memory, telemetry, raw/rendered bodies, and accessibility evidence."}],"learning":"Redacting selected payload fields is weaker than sanitizing the complete sink object; identifiers, operation names, raw bodies, and accessibility content are also persistence surfaces.","recurrence_signature":"A labeled credential survives because a new sink field is outside a field-by-field redaction allowlist.","guardrail":"Use one canonical query-key set, hash lookup-only session identifiers, redact complete sink mappings, and replay fixed counterexamples.","verification_evidence":{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}},"rollback_position":"Preserve canonical keys, sink-level redaction, hashed session lookup, and all persistence mutations as one boundary.","residual_risk":"The bounded patterns do not claim arbitrary high-entropy secret discovery or hostile trusted-code isolation.","owner":"Security owner","due_phase":"P6","apivr_next_action":"Add every new persistence or evidence sink to the fixed labeled-secret mutation suite."},
+    {"id":"LEARN-0053","phase_id":"P6","failure_id":"FAIL-0053","status":"CONFIRMED","affected_invariant":"Every statically observed direct network sink must match an independently code-owned exact transport policy and delegate.","expected_result":"Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress fail deterministic validation.","observed_evidence":[{"class":"AUTOMATED","ref":"tests/test_architecture_contract.py","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":"287f639ba8d071557c92a7488caf8e192cbb6febb9501b4888a7875b57f5baa0","environment":"CI","status":"PASS","assertion":"Fabricated delegates, valid-but-wrong policies, unknown mapped sinks, and unregistered egress all fail closed."}],"learning":"Schema-valid governance text is self-authorized unless a separate executable oracle binds exact expected values.","recurrence_signature":"A direct network sink remains green after its delegate or policy is replaced by another schema-valid string.","guardrail":"Compare the exact observed sink set and every mapping value to a code-owned finite oracle with adverse substitutions.","verification_evidence":{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443","commit":"fdab1b669ec260be7b4aa3e2466de8f41327be79","sha256":null,"environment":"CI","status":"PASS","assertion":"All six OS/Python matrices, provider authentication, quality and security, both rollback jobs, both clean wheels, and aggregate repository certification passed at the exact head.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"fdab1b669ec260be7b4aa3e2466de8f41327be79","conclusion":"success","jobs":["provider-authentication","validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}},"rollback_position":"Preserve observed-sink discovery, exact mapping oracle, governance registry, and fixed mutants together.","residual_risk":"This is explicitly bounded static analysis and does not claim whole-program data-flow proof, DNS pinning, or complete DNS-rebinding prevention.","owner":"Security owner","due_phase":"P6","apivr_next_action":"Require an explicit oracle update and mutations for every new direct egress sink."}
   ]
 }
