@@ -62,6 +62,23 @@ class Handoff:
     resolution: str = "PENDING"
     terminal_receipt: str = ""
 
+    def control_contract(self) -> dict[str, Any]:
+        """Return immutable fields used by an exact graph control declaration."""
+        return {
+            "handoff_id": self.handoff_id,
+            "from_agent": self.from_agent,
+            "to_agent": self.to_agent,
+            "reason": self.reason,
+            "context_summary": self.context_summary,
+            "evidence_refs": list(self.evidence_refs),
+            "requested_action": self.requested_action,
+            "risk_level": self.risk_level,
+            "acceptance_criteria": list(self.acceptance_criteria),
+            "due_trigger": self.due_trigger,
+            "source_node_id": self.source_node_id,
+            "target_node_id": self.target_node_id,
+        }
+
     def consume(
         self,
         output_id: str,

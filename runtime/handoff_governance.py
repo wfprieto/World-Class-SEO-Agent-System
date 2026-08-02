@@ -1,19 +1,18 @@
 """Deterministic, bounded reconciliation for required workflow handoffs.
 
-This module validates only the explicit dependency edges in a materialized
-``WorkflowGraph``.  It intentionally does not infer semantic handoffs from
-natural-language agent output.
+This module validates explicit dependency edges and exact runtime-declared
+open-risk controls in a materialized ``WorkflowGraph``. It intentionally does
+not infer semantic handoffs from natural-language agent output.
 """
 
 from __future__ import annotations
 
-import hmac
-import json
 from collections.abc import Iterable
 from dataclasses import asdict
-from hashlib import sha256
 from typing import Any
 
+from runtime.handoff_control_governance import audit_declared_controls
+from runtime.handoff_receipts import seal_terminal_handoff, terminal_receipt_is_valid
 from runtime.state import Handoff
 from runtime.workflow_graph import WorkflowGraph, WorkflowNode
 
@@ -50,7 +49,7 @@ def resolve_handoff_acknowledgements(
         handoff.receiving_output_id = output_id
         handoff.receiving_node_id = node_id
         handoff.block(note)
-        _seal_terminal_handoff(handoff)
+        seal_terminal_handoff(handoff)
     elif (
         disposition in {"ACCEPTED", "CHALLENGED"}
         and exact
@@ -58,7 +57,7 @@ def resolve_handoff_acknowledgements(
         and (bool(handoff.evidence_refs) or disposition == "CHALLENGED")
     ):
         handoff.consume(output_id, node_id, str(disposition))
-        _seal_terminal_handoff(handoff)
+        seal_terminal_handoff(handoff)
     else:
         _invalid_ack(
             handoff,
@@ -87,28 +86,7 @@ def _ack_context_is_exact(
 
 def _invalid_ack(handoff: Handoff, reason: str) -> None:
     handoff.block(reason)
-    _seal_terminal_handoff(handoff)
-
-
-def terminal_handoff_receipt(handoff: Handoff) -> str:
-    """Hash canonical runtime fields for mutation detection, not identity trust."""
-    fields = {
-        key: value
-        for key, value in asdict(handoff).items()
-        if key != "terminal_receipt"
-    }
-    encoded = json.dumps(fields, sort_keys=True, separators=(",", ":")).encode()
-    return sha256(encoded).hexdigest()
-
-
-def _seal_terminal_handoff(handoff: Handoff) -> None:
-    handoff.terminal_receipt = terminal_handoff_receipt(handoff)
-
-
-def terminal_receipt_is_valid(handoff: Handoff) -> bool:
-    return bool(handoff.terminal_receipt) and hmac.compare_digest(
-        handoff.terminal_receipt, terminal_handoff_receipt(handoff)
-    )
+    seal_terminal_handoff(handoff)
 
 
 def expected_handoff_id(session_id: str, node_id: str, index: int) -> str:
@@ -138,7 +116,13 @@ def reconcile_required_handoffs(
         session_id, graph, node_states, outputs_by_node, by_id
     )
     issues.extend(edge_issues)
-    issues.extend(_unexpected_handoffs(records, session_id, expected_ids))
+    declared_ids, control_issues = audit_declared_controls(
+        graph.declared_control_handoffs, by_id, outputs_by_node
+    )
+    issues.extend(control_issues)
+    issues.extend(
+        _unexpected_handoffs(records, session_id, expected_ids | declared_ids)
+    )
     issues.extend(_finalize_pending(records))
 
     unresolved = [
@@ -150,17 +134,22 @@ def reconcile_required_handoffs(
         for handoff in records
         if handoff.status != "CONSUMED"
     ]
+    consumed_dependency_handoffs = sum(
+        1
+        for handoff_id in expected_ids
+        if len(by_id.get(handoff_id, [])) == 1
+        and by_id[handoff_id][0].status == "CONSUMED"
+        and terminal_receipt_is_valid(by_id[handoff_id][0])
+    )
     return {
-        "scope": "materialized-workflow-dependency-edges",
+        "scope": "materialized-dependency-edges-and-exact-declared-risk-controls",
         "status": "PASS" if not issues and not unresolved else "FAIL",
+        "expected_dependency_handoffs": len(expected_ids),
+        "declared_risk_control_handoffs": len(declared_ids),
+        "consumed_dependency_handoffs": consumed_dependency_handoffs,
+        # Compatibility aliases retained for existing report consumers.
         "expected_required": len(expected_ids),
-        "consumed_required": sum(
-            1
-            for handoff_id in expected_ids
-            if len(by_id.get(handoff_id, [])) == 1
-            and by_id[handoff_id][0].status == "CONSUMED"
-            and terminal_receipt_is_valid(by_id[handoff_id][0])
-        ),
+        "consumed_required": consumed_dependency_handoffs,
         "issues": issues,
         "unresolved": unresolved,
         "handoffs": [asdict(handoff) for handoff in records],
@@ -229,7 +218,7 @@ def _finalize_pending(records: list[Handoff]) -> list[dict[str, str]]:
         if handoff.status != "CREATED":
             continue
         handoff.block("No addressed output consumed this handoff before workflow completion.")
-        _seal_terminal_handoff(handoff)
+        seal_terminal_handoff(handoff)
         issues.append(
             _issue(
                 "SILENTLY_DROPPED_HANDOFF",
@@ -241,7 +230,7 @@ def _finalize_pending(records: list[Handoff]) -> list[dict[str, str]]:
 
 
 def _unexpected_handoffs(
-    records: list[Handoff], session_id: str, expected_ids: set[str]
+    records: list[Handoff], session_id: str, allowed_ids: set[str]
 ) -> list[dict[str, str]]:
     return [
         _issue(
@@ -251,7 +240,7 @@ def _unexpected_handoffs(
         )
         for handoff in records
         if handoff.handoff_id.startswith(f"{session_id}-")
-        and handoff.handoff_id not in expected_ids
+        and handoff.handoff_id not in allowed_ids
     ]
 
 
@@ -311,7 +300,7 @@ def _audit_required_edge(
         )
     elif handoff.status == "CREATED":
         handoff.block("No exact acknowledgement resolved this required handoff.")
-        _seal_terminal_handoff(handoff)
+        seal_terminal_handoff(handoff)
         result.append(
             _issue("SILENTLY_DROPPED_HANDOFF", handoff_id, handoff.unresolved_reason)
         )

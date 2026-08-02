@@ -32,8 +32,7 @@ def append_risk_handoff(
     scrum_node_id = next(
         (node.id for node in graph.nodes if node.agent == "SEO Scrummaster Agent"), ""
     )
-    session.handoffs.append(
-        Handoff(
+    handoff = Handoff(
             handoff_id=f"{session.session_id}-risk-escalation-001",
             from_agent=route.lead_agent,
             to_agent="SEO Scrummaster Agent",
@@ -50,9 +49,16 @@ def append_risk_handoff(
                 "No gated implementation proceeds on unresolved evidence.",
             ],
             due_trigger="Before implementation or publication.",
+            source_node_id="workflow-control:open-risks",
             target_node_id=scrum_node_id,
         )
+    graph.declared_control_handoffs.append(
+        {
+            "control_type": "OPEN_RISK_ESCALATION",
+            "handoff": handoff.control_contract(),
+        }
     )
+    session.handoffs.append(handoff)
 
 
 def block_node(

@@ -32,6 +32,7 @@ class WorkflowGraph:
     nodes: list[WorkflowNode] = field(default_factory=list)
     deliverable_node_id: str = ""
     capacity_exclusions: list[dict[str, str]] = field(default_factory=list)
+    declared_control_handoffs: list[dict[str, object]] = field(default_factory=list)
 
     def validate(self, *, max_nodes: int, max_depth: int) -> None:
         if not self.nodes:
@@ -113,6 +114,7 @@ class WorkflowGraph:
             "deliverable_node_id": self.deliverable_node_id,
             "nodes": [node.to_dict() for node in self.nodes],
             "capacity_exclusions": self.capacity_exclusions,
+            "declared_control_handoffs": self.declared_control_handoffs,
         }
 
 

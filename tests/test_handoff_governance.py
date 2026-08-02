@@ -8,9 +8,11 @@ from runtime.handoff_governance import (
     reconcile_required_handoffs,
     resolve_handoff_acknowledgements,
 )
+from runtime.handoff_receipts import terminal_receipt_is_valid
 from runtime.routing import RouteResult
 from runtime.state import Handoff, SessionState
 from runtime.workflow_graph import WorkflowGraph, WorkflowNode, build_workflow_graph
+from runtime.workflow_run_support import append_risk_handoff
 
 SESSION = "seo-session-fixture"
 HANDOFF_ID = f"{SESSION}-receiver-handoff-01"
@@ -91,7 +93,10 @@ def _ack(handoff: Handoff, disposition: str = "ACCEPTED") -> dict:
 def test_valid_required_handoff_is_consumed_without_false_positive() -> None:
     report = _audit([_handoff()])
     assert report["status"] == "PASS"
-    assert report["expected_required"] == report["consumed_required"] == 1
+    assert report["expected_dependency_handoffs"] == 1
+    assert report["consumed_dependency_handoffs"] == 1
+    assert report["expected_required"] == 1
+    assert report["consumed_required"] == 1
     assert report["issues"] == []
     assert report["unresolved"] == []
 
@@ -330,3 +335,95 @@ def test_vertical_capacity_exclusion_is_explicit_not_silently_truncated() -> Non
         }
     ]
     assert graph.to_dict()["capacity_exclusions"] == graph.capacity_exclusions
+
+
+def test_exact_resolved_declared_risk_control_is_not_unexpected() -> None:
+    session = SessionState.create(
+        request="Review an open risk",
+        mode="Audit",
+        domain="https://example.com",
+        business_type="generic",
+    )
+    session.open_risks.append("Required evidence is unavailable.")
+    graph = WorkflowGraph(
+        id="declared-risk-control",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        lead_agent="Source Agent",
+        supporting_agents=["SEO Scrummaster Agent"],
+        workflow="workflows/request-routing.md",
+        required_evidence=[],
+        escalation="Review the open risk.",
+        confidence="Low",
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff, "CHALLENGED")],
+        output_id="scrum-output",
+        node_id="scrum",
+        output_agent="SEO Scrummaster Agent",
+    )
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={
+            "scrum": {
+                "output_id": "scrum-output",
+                "agent": "SEO Scrummaster Agent",
+            }
+        },
+        handoffs=session.handoffs,
+    )
+    assert report["status"] == "PASS"
+    assert report["declared_risk_control_handoffs"] == 1
+    assert "UNEXPECTED_HANDOFF" not in _codes(report)
+
+
+def test_declared_control_does_not_exempt_an_extra_current_session_handoff() -> None:
+    session = SessionState.create("risk", "Audit", "https://example.com", "generic")
+    session.open_risks.append("Risk")
+    graph = WorkflowGraph(
+        id="declared-risk-plus-forgery",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        "Source Agent", ["SEO Scrummaster Agent"], "workflows/request-routing.md",
+        [], "Review risk.", "Low"
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    resolve_handoff_acknowledgements(
+        handoff, [_ack(handoff, "CHALLENGED")], output_id="scrum-output",
+        node_id="scrum", output_agent="SEO Scrummaster Agent"
+    )
+    forged = deepcopy(handoff)
+    forged.handoff_id = f"{session.session_id}-risk-escalation-forged"
+    forged.status = "CREATED"
+    forged.receiving_output_id = ""
+    forged.receiving_node_id = ""
+    forged.consumed_at = ""
+    forged.unresolved_reason = ""
+    forged.resolution = "PENDING"
+    forged.terminal_receipt = ""
+    resolve_handoff_acknowledgements(
+        forged,
+        [_ack(forged, "CHALLENGED")],
+        output_id="scrum-output",
+        node_id="scrum",
+        output_agent="SEO Scrummaster Agent",
+    )
+    assert terminal_receipt_is_valid(forged)
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={"scrum": {"output_id": "scrum-output", "agent": "SEO Scrummaster Agent"}},
+        handoffs=[handoff, forged],
+    )
+    assert "UNEXPECTED_HANDOFF" in _codes(report)
