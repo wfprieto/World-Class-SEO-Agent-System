@@ -53,6 +53,17 @@
     ],
     "external_changes": false
   },
+  "claim_language_policy": {
+    "brand_name_only": "World-Class SEO Agent System",
+    "prohibited_patterns": [
+      "\\bmost effective\\b",
+      "\\bproduction[- ]ready\\b",
+      "\\bbest (?:seo agent system )?in the world\\b",
+      "\\bproven superior\\b",
+      "\\ball integrations (?:are )?verified live\\b",
+      "\\bseven autonomous (?:ai )?agents\\b"
+    ]
+  },
   "capability_classification": {
     "command_network_proof": {
       "none": "LOCAL_DETERMINISTIC",

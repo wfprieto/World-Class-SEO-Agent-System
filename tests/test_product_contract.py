@@ -179,6 +179,14 @@ def contract_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
             "never_implies": ["production readiness"],
             "external_changes": False,
         },
+        "claim_language_policy": {
+            "brand_name_only": "World-Class SEO Agent System",
+            "prohibited_patterns": [
+                r"\bmost effective\b",
+                r"\bproduction[- ]ready\b",
+                r"\bproven superior\b",
+            ],
+        },
         "capability_classification": {
             "command_network_proof": {
                 "none": "LOCAL_DETERMINISTIC",
@@ -279,6 +287,21 @@ def test_authority_surface_requires_every_canonical_term(contract_repo: Path) ->
     assert validator.validate(contract_repo) == [
         "README.md is missing canonical product term: "
         "decision-ready technical SEO evidence package"
+    ]
+
+
+@pytest.mark.parametrize("surface", sorted(validator.EXPECTED_AUTHORITIES))
+def test_every_authority_rejects_blocked_maturity_wording(
+    contract_repo: Path, surface: str
+) -> None:
+    path = contract_repo / surface
+    path.write_text(path.read_text(encoding="utf-8") + "\nProduction ready.\n", encoding="utf-8")
+
+    errors = validator.validate(contract_repo)
+
+    assert errors == [
+        f"{surface} contains prohibited product wording matched by "
+        "'\\\\bproduction[- ]ready\\\\b': 'Production ready'"
     ]
 
 

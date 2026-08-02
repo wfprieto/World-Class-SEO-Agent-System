@@ -3,7 +3,7 @@
   "$id": "https://example.invalid/schemas/product-contract.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$schema", "schema_version", "contract_id", "product_name", "product_category", "layer_model", "primary_operator", "secondary_users", "flagship", "non_flagship_capabilities", "proof_boundaries", "capability_classification", "authoritative_surfaces"],
+  "required": ["$schema", "schema_version", "contract_id", "product_name", "product_category", "layer_model", "primary_operator", "secondary_users", "flagship", "non_flagship_capabilities", "proof_boundaries", "claim_language_policy", "capability_classification", "authoritative_surfaces"],
   "properties": {
     "$schema": {"const": "../schemas/product-contract.schema.json"},
     "schema_version": {"const": "1.0.0"},
@@ -27,6 +27,13 @@
     "proof_boundaries": {
       "type": "object", "additionalProperties": false, "required": ["fixture", "live_bounded", "never_implies", "external_changes"],
       "properties": {"fixture": {"minLength": 1, "type": "string"}, "live_bounded": {"minLength": 1, "type": "string"}, "never_implies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}}, "external_changes": {"const": false}}
+    },
+    "claim_language_policy": {
+      "type": "object", "additionalProperties": false, "required": ["brand_name_only", "prohibited_patterns"],
+      "properties": {
+        "brand_name_only": {"const": "World-Class SEO Agent System"},
+        "prohibited_patterns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}}
+      }
     },
     "capability_classification": {
       "type": "object", "additionalProperties": false, "required": ["command_network_proof", "agent_execution_proof"],

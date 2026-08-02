@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import sys
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -237,6 +238,17 @@ def validate(root: Path = ROOT) -> list[str]:
         for term in row["required_terms"]:
             if str(term) not in text:
                 errors.append(f"{relative} is missing canonical product term: {term}")
+        for pattern in contract["claim_language_policy"]["prohibited_patterns"]:
+            try:
+                match = re.search(str(pattern), text, flags=re.IGNORECASE)
+            except re.error as exc:
+                errors.append(f"invalid prohibited product-claim pattern {pattern!r}: {exc}")
+                continue
+            if match:
+                errors.append(
+                    f"{relative} contains prohibited product wording matched by {pattern!r}: "
+                    f"{match.group(0)!r}"
+                )
 
     try:
         registry, _ = _effective_command_registry(root)
