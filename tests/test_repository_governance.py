@@ -5,6 +5,8 @@ import shutil
 import datetime as dt
 from pathlib import Path
 
+import pytest
+
 from scripts.validate_repository_governance import local_errors, provider_errors
 
 
@@ -46,6 +48,21 @@ def test_weakened_certification_contract_is_rejected(tmp_path: Path) -> None:
     contract["ruleset"]["required_approving_review_count"] = 0
     path.write_text(json.dumps(contract), encoding="utf-8")
     assert any("required_approving_review_count" in error for error in local_errors(root))
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["dependabot_security_updates", "secret_scanning", "secret_scanning_push_protection"],
+)
+def test_governance_contract_cannot_disable_security_service(
+    tmp_path: Path, field: str
+) -> None:
+    root = _copy_repository_surface(tmp_path)
+    path = root / "governance/github-controls.json"
+    contract = json.loads(path.read_text(encoding="utf-8"))
+    contract[field] = False
+    path.write_text(json.dumps(contract), encoding="utf-8")
+    assert any(field in error for error in local_errors(root))
 
 
 def test_incomplete_certification_aggregation_is_rejected(tmp_path: Path) -> None:
@@ -101,6 +118,9 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
         "private_vulnerability_reporting": True,
         "discussions": True,
         "vulnerability_alerts": True,
+        "dependabot_security_updates": True,
+        "secret_scanning": True,
+        "secret_scanning_push_protection": True,
         "authenticated": True,
         "authenticated_actor": "test-owner",
         "capture_method": "gh-api-live",
@@ -115,3 +135,37 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
     snapshot["ruleset"]["require_last_push_approval"] = False
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     assert any("require_last_push_approval" in error for error in provider_errors(path))
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["dependabot_security_updates", "secret_scanning", "secret_scanning_push_protection"],
+)
+def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field: str) -> None:
+    contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
+    snapshot = {
+        "repository": contract["repository"],
+        "default_branch": "main",
+        "private_vulnerability_reporting": True,
+        "discussions": True,
+        "vulnerability_alerts": True,
+        "dependabot_security_updates": True,
+        "secret_scanning": True,
+        "secret_scanning_push_protection": True,
+        "authenticated": True,
+        "authenticated_actor": "test-owner",
+        "capture_method": "gh-api-live",
+        "captured_at": dt.datetime.now(dt.UTC).replace(microsecond=0).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        ),
+        "ruleset": dict(contract["ruleset"]),
+    }
+    path = tmp_path / "snapshot.json"
+    weakened = dict(snapshot)
+    weakened[field] = False
+    path.write_text(json.dumps(weakened), encoding="utf-8")
+    assert any(field in error for error in provider_errors(path))
+    missing = dict(snapshot)
+    del missing[field]
+    path.write_text(json.dumps(missing), encoding="utf-8")
+    assert any(field in error for error in provider_errors(path))

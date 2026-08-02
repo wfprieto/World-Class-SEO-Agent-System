@@ -5,6 +5,9 @@
   "private_vulnerability_reporting": true,
   "discussions": true,
   "vulnerability_alerts": true,
+  "dependabot_security_updates": true,
+  "secret_scanning": true,
+  "secret_scanning_push_protection": true,
   "ruleset": {
     "name": "Protect main",
     "target": "branch",

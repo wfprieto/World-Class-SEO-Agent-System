@@ -94,6 +94,15 @@ def local_errors(root: Path = ROOT) -> list[str]:
             names[name] = path.name
 
     ruleset = contract.get("ruleset", {})
+    for service in (
+        "private_vulnerability_reporting",
+        "vulnerability_alerts",
+        "dependabot_security_updates",
+        "secret_scanning",
+        "secret_scanning_push_protection",
+    ):
+        if contract.get(service) is not True:
+            errors.append(f"governance contract must require {service}=true")
     expected = {
         "required_approving_review_count": 1,
         "dismiss_stale_reviews_on_push": True,
@@ -180,7 +189,15 @@ def provider_state_errors(
     errors: list[str] = []
     if snapshot.get("repository") != contract.get("repository"):
         errors.append("provider snapshot repository does not match the contract")
-    for key in ("default_branch", "private_vulnerability_reporting", "discussions", "vulnerability_alerts"):
+    for key in (
+        "default_branch",
+        "private_vulnerability_reporting",
+        "discussions",
+        "vulnerability_alerts",
+        "dependabot_security_updates",
+        "secret_scanning",
+        "secret_scanning_push_protection",
+    ):
         if snapshot.get(key) != contract.get(key):
             errors.append(f"provider setting {key} does not match the contract")
     observed = snapshot.get("ruleset")
