@@ -15,6 +15,7 @@ from scripts.validate_remediation_program import (
     canonical_text_digest,
     _closure_delta_errors,
     _evidence_errors,
+    _load_object_at_commit,
     _rollback_evidence_errors,
     _validate_candidate_complete_phase,
     _validate_complete_phase,
@@ -44,17 +45,11 @@ def test_frozen_in_progress_package_runs_completion_preflight() -> None:
         for item in reversed(current["phases"])
         if item["review_snapshot_commit"] and item["review"]["evidence_package_hash"]
     )
-    snapshot_text = subprocess.check_output(
-        [
-            "git",
-            "show",
-            f"{closed_phase['review_snapshot_commit']}:{PROGRAM_PATH.relative_to(ROOT).as_posix()}",
-        ],
-        cwd=ROOT,
-        text=True,
-        encoding="utf-8",
+    payload = _load_object_at_commit(
+        ROOT,
+        PROGRAM_PATH.relative_to(ROOT).as_posix(),
+        str(closed_phase["review_snapshot_commit"]),
     )
-    payload = json.loads(snapshot_text)
     phase_id = closed_phase["id"]
     phase = next(item for item in payload["phases"] if item["id"] == phase_id)
     assert phase["status"] == "IN_PROGRESS"
@@ -139,6 +134,20 @@ def _commit_fixture(root: Path, message: str) -> str:
     subprocess.run(["git", "add", "--all"], cwd=root, check=True)
     subprocess.run(["git", "commit", "-m", message], cwd=root, check=True, capture_output=True)
     return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+
+
+def test_commit_object_loader_decodes_utf8_independent_of_windows_code_page(
+    tmp_path: Path,
+) -> None:
+    source_path = "governance/unicode-contract.json"
+    source = tmp_path / source_path
+    source.parent.mkdir(parents=True)
+    source.write_text('{"boundary":"preflight—not the builder"}', encoding="utf-8")
+    commit = _commit_fixture(tmp_path, "add unicode contract")
+
+    assert _load_object_at_commit(tmp_path, source_path, commit) == {
+        "boundary": "preflight—not the builder"
+    }
 
 
 def _closure_payload(payload: dict, snapshot_commit: str) -> dict:
