@@ -668,14 +668,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations.product_proof.service::ProductProofTechnicalAudit.run": {
-      "max_span": 75,
-      "max_complexity": 19,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.technical.browser::PlaywrightRenderer.render": {
       "max_span": 128,
       "max_complexity": 21,
@@ -1628,7 +1620,6 @@
       "integrations/product_proof/intelligence.py|C901|`analyze` is too complex (11 > 10)": 1,
       "integrations/product_proof/intelligence.py|E701|Multiple statements on one line (colon)": 20,
       "integrations/product_proof/intelligence.py|E702|Multiple statements on one line (semicolon)": 32,
-      "integrations/product_proof/report.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/product_proof/rules.py|C901|`ai_cwv_facets` is too complex (12 > 10)": 1,
       "integrations/product_proof/rules.py|C901|`canon` is too complex (13 > 10)": 1,
       "integrations/product_proof/rules.py|C901|`robots` is too complex (13 > 10)": 1,
@@ -1637,8 +1628,6 @@
       "integrations/product_proof/rules.py|E702|Multiple statements on one line (semicolon)": 48,
       "integrations/product_proof/rules.py|F401|`typing.Any` imported but unused": 1,
       "integrations/product_proof/rules.py|I001|Import block is un-sorted or un-formatted": 1,
-      "integrations/product_proof/service.py|I001|Import block is un-sorted or un-formatted": 1,
-      "integrations/product_proof/service.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "integrations/technical/browser.py|C901|`render` is too complex (14 > 10)": 1,
       "integrations/technical/http.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/technical/http.py|SIM108|Use ternary operator `final_url = validate_public_url(final_url) if final_url else safe` instead of `if`-`else`-block": 1,
