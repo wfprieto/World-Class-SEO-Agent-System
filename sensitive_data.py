@@ -7,6 +7,28 @@ from collections.abc import Mapping
 from typing import Any
 
 REDACTED = "[REDACTED]"
+SENSITIVE_QUERY_KEYS = frozenset(
+    {
+        "access_token",
+        "api_key",
+        "apikey",
+        "auth",
+        "authorization",
+        "client_secret",
+        "code",
+        "credential",
+        "id_token",
+        "key",
+        "password",
+        "passwd",
+        "refresh_token",
+        "secret",
+        "session",
+        "sessionid",
+        "signature",
+        "token",
+    }
+)
 
 _SENSITIVE_KEY = re.compile(
     r"(?i)(authorization|api[_-]?key|access[_-]?token|refresh[_-]?token|"
@@ -26,9 +48,7 @@ _LABELED_SECRET = re.compile(
     r"token|auth|signature|"
     r"client[_ -]?secret)\s*[:=]\s*)([^\s,;&]+)"
 )
-_AUTH_SCHEME_SECRET = re.compile(
-    r"(?i)(\b(?:authorization\s*:\s*)?(?:bearer|basic)\s+)([^\s,;]+)"
-)
+_AUTH_SCHEME_SECRET = re.compile(r"(?i)(\b(?:authorization\s*:\s*)?(?:bearer|basic)\s+)([^\s,;]+)")
 _SENSITIVE_QUERY = re.compile(
     r"(?i)([?&](?:access_token|api_key|apikey|auth|authorization|client_secret|"
     r"password|refresh_token|secret|session|signature|token)=)([^&#\s]*)"
@@ -40,10 +60,7 @@ def redact(value: Any, *, key: str = "") -> Any:
     if key and _SENSITIVE_KEY.search(key):
         return REDACTED
     if isinstance(value, Mapping):
-        return {
-            str(item_key): redact(item, key=str(item_key))
-            for item_key, item in value.items()
-        }
+        return {str(item_key): redact(item, key=str(item_key)) for item_key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact(item) for item in value]
     if not isinstance(value, str):

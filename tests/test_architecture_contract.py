@@ -213,6 +213,56 @@ def test_registered_network_sink_requires_canonical_transport_mapping(tmp_path: 
     )
 
 
+@pytest.mark.parametrize(
+    "mapping",
+    [
+        {
+            "policy": "CONFIGURED_LLM_ENDPOINT_BOUNDED_HTTP",
+            "delegates_to": "runtime.fabricated_transport",
+        },
+        {
+            "policy": "PUBLIC_URL_SAFETY",
+            "delegates_to": "runtime.llm",
+        },
+    ],
+)
+def test_network_transport_mapping_must_match_verified_exact_contract(
+    tmp_path: Path, mapping: dict[str, str]
+) -> None:
+    contract = _contract()
+    contract["network_modules"] = ["runtime/llm.py"]
+    contract["network_transports"] = {"runtime/llm.py": mapping}
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        contract,
+        {"runtime/llm.py": "import urllib.request\n"},
+    )
+
+    assert "network transport contract mismatch: runtime/llm.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
+
+
+def test_unknown_owned_transport_has_no_unverified_escape_hatch(tmp_path: Path) -> None:
+    contract = _contract()
+    path = "integrations/new_transport.py"
+    contract["network_modules"] = [path]
+    contract["network_transports"] = {
+        path: {
+            "policy": "PUBLIC_WEB_EVERY_HOP",
+            "delegates_to": "integrations.new_transport",
+        }
+    }
+    contract_path, schema_path = _fixture(
+        tmp_path, contract, {path: "import urllib.request\n"}
+    )
+
+    assert (
+        f"network sink has no mechanically verified transport contract: {path}"
+        in validate(tmp_path, contract_path, schema_path)
+    )
+
+
 def test_new_playwright_browser_module_fails_until_explicitly_owned(tmp_path: Path) -> None:
     contract_path, schema_path = _fixture(
         tmp_path,

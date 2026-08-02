@@ -26,7 +26,7 @@ from adapters.evidence_integrity import (
 from adapters.evidence_integrity import (
     sha256_text as _sha256,
 )
-from sensitive_data import redact_evidence_fields
+from sensitive_data import SENSITIVE_QUERY_KEYS, redact_evidence_fields
 
 __all__ = [
     "DEFAULT_DB",
@@ -43,23 +43,6 @@ DEFAULT_PAYLOAD_SCHEMA_VERSION: Final = "1"
 MAX_TEXT_LENGTH: Final = 2_048
 MAX_PAYLOAD_BYTES: Final = 2_000_000
 _SCHEMA_INIT_LOCK = threading.Lock()
-
-SENSITIVE_QUERY_KEYS: Final = frozenset(
-    {
-        "access_token",
-        "api_key",
-        "apikey",
-        "auth",
-        "authorization",
-        "code",
-        "password",
-        "passwd",
-        "session",
-        "sessionid",
-        "token",
-    }
-)
-
 
 class EvidenceStoreError(RuntimeError):
     """Base class for evidence-store failures."""

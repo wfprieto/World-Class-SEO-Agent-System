@@ -28,5 +28,7 @@ class OperationTelemetry:
         payload = asdict(self)
         payload.pop("started_monotonic", None)
         payload["duration_ms"] = round((time.monotonic() - self.started_monotonic) * 1000, 3)
-        payload["metadata"] = redact(payload["metadata"])
-        return payload
+        sanitized = redact(payload)
+        if not isinstance(sanitized, dict):
+            raise TypeError("telemetry redaction must preserve mapping shape")
+        return sanitized

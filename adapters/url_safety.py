@@ -12,15 +12,10 @@ import socket
 import urllib.parse
 from collections.abc import Callable
 
+from sensitive_data import SENSITIVE_QUERY_KEYS
+
 ALLOWED_SCHEMES = frozenset({"http", "https"})
 ALLOWED_TARGET_PORTS = frozenset({80, 443})
-SENSITIVE_QUERY_KEYS = frozenset(
-    {
-        "access_token", "api_key", "apikey", "auth", "authorization",
-        "client_secret", "code", "id_token", "key", "password",
-        "refresh_token", "secret", "session", "signature", "token",
-    }
-)
 Resolver = Callable[..., list[tuple]]
 _EVIDENCE_HEADER_ALLOWLIST = frozenset(
     {"cache-control", "content-length", "content-type", "etag", "last-modified", "vary"}
