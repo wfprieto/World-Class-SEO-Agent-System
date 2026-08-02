@@ -162,7 +162,12 @@
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
       "rollback_evidence_sha256": "41b9556720865408c7531121cedc64f0ddb833980d090e3145e6b4bcd9ee7832",
-      "authority_evidence": [],
+      "authority_evidence": [
+        {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen for Phase 2 review."},
+        {"class":"SOURCE","ref":"schemas/reviewer-verdict.schema.json","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c","environment":"CI","status":"PASS","assertion":"The canonical reviewer verdict schema is frozen for Phase 2 review."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
+      ],
       "package_certification": [],
       "owner": "Product authority",
       "approver": "Repository maintainer",
@@ -187,7 +192,7 @@
         "learning":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"[learning] Generated-reference annotations cannot silently collapse the canonical skill inventory."},{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"5d20196f4a99e41d65a6530d2e9c93f60ee454fb","sha256":"568f063e39a44efc318e39b57fb80a2bf90e974a1d18527414f30e53cc9751a2","environment":"LOCAL","status":"PASS","assertion":"[learning] Historical package preflight loads and recomputes the immutable review-snapshot program instead of rewinding mutable current state."}],
         "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30735218923","commit":"f71d274e3e627db8befc456513f29c6ead8224fe","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] All 470 tests, generated-reference checks, provider checks, quality/security gates, clean installs, and exact rollback boundaries passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"f71d274e3e627db8befc456513f29c6ead8224fe","conclusion":"success","jobs":["provider-authentication","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash": null, "verdicts": []}
+      "review": {"evidence_package_hash": "61592f44b3da2b78ce5364aa28ff22c2e5440b18e0b404c8342de0a4a691b258", "verdicts": []}
     },
     {
       "id": "P3",
