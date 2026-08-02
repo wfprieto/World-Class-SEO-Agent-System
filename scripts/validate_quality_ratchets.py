@@ -266,7 +266,8 @@ def _repository_setting_errors(root: Path, contract: dict[str, Any]) -> list[str
         if float(risk.get(path, -1)) < float(floor):
             errors.append(f"critical coverage floor is missing or weak: {path}")
     workflow = (root / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
-    errors.extend(_workflow_errors(workflow, float(coverage["repository_floor"])))
+    release = (root / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    errors.extend(_workflow_errors(workflow, float(coverage["repository_floor"]), release))
     errors += ["CI risk coverage validator script is missing"] * int(not (root / "scripts" / "validate_risk_coverage.py").is_file())
     for command in (
         "python scripts/validate_architecture_contract.py",

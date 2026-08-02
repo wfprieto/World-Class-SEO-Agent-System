@@ -152,6 +152,10 @@ def test_repository_settings_cannot_weaken_ruff_coverage_or_ci(tmp_path: Path) -
         workflow.replace("python scripts/validate_architecture_contract.py", "python -m compileall runtime"),
         encoding="utf-8",
     )
+    (tmp_path / ".github" / "workflows" / "release.yml").write_text(
+        (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     errors = _repository_setting_errors(tmp_path, contract)
     assert "pyproject Ruff profile must equal the canonical P3 rule profile" in errors
     assert "repository coverage floor is weaker than the quality contract" in errors
@@ -292,6 +296,67 @@ def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
     errors = _workflow_errors(uppercase_unpinned, 78.0)
     assert any("canonical lowercase" in error for error in errors)
     assert any("immutable 40-character SHA" in error for error in errors)
+    missing_candidate = workflow.replace(
+        "          ref: ${{ github.event.pull_request.head.sha || github.sha }}\n", "", 1
+    )
+    assert any(
+        "exact event commit" in error
+        for error in _workflow_errors(missing_candidate, 78.0)
+    )
+    branch_override = workflow.replace(
+        "ref: ${{ github.event.pull_request.head.sha || github.sha }}", "ref: main", 1
+    )
+    assert any(
+        "exact event commit" in error
+        for error in _workflow_errors(branch_override, 78.0)
+    )
+    for override in ("repository: attacker/fork", "path: unrelated"):
+        mutated = workflow.replace(
+            "          fetch-depth: 0", f"          {override}\n          fetch-depth: 0", 1
+        )
+        assert any(
+            "canonical source-integrity settings" in error
+            for error in _workflow_errors(mutated, 78.0)
+        )
+
+
+def test_release_checkout_is_bound_to_tag_event_commit() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    assert _workflow_errors(workflow, 78.0, release) == []
+    mutations = (
+        release.replace("ref: ${{ github.sha }}", "ref: main", 1),
+        release.replace("          ref: ${{ github.sha }}\n", "", 1),
+        release.replace(
+            "          fetch-depth: 0", "          path: release-src\n          fetch-depth: 0", 1
+        ),
+        release.replace(
+            "          fetch-depth: 0",
+            "          repository: attacker/fork\n          fetch-depth: 0",
+            1,
+        ),
+    )
+    for mutated in mutations:
+        assert _workflow_errors(workflow, 78.0, mutated)
+
+
+def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    root_pytest_mask = "env:\n  PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n\n"
+    errors = _workflow_errors(root_pytest_mask + workflow, 78.0)
+    assert any("PYTEST_ADDOPTS" in error for error in errors)
+    job_pythonpath = workflow.replace(
+        "  quality_security_release:\n    needs: validate",
+        "  quality_security_release:\n    env:\n      PYTHONPATH: unrelated\n    needs: validate",
+        1,
+    )
+    assert any("PYTHONPATH" in error for error in _workflow_errors(job_pythonpath, 78.0))
+    unrelated_job_env = workflow.replace(
+        "  provider_authentication:\n",
+        "  provider_authentication:\n    env:\n      PROVIDER_TEST_LABEL: offline\n",
+        1,
+    )
+    assert _workflow_errors(unrelated_job_env, 78.0) == []
 
 
 def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:
@@ -385,6 +450,10 @@ def test_repository_policy_rejects_risk_script_deletion_and_floor_weakening(
     (tmp_path / "pyproject.toml").write_text(pyproject, encoding="utf-8")
     (tmp_path / ".github/workflows/validate.yml").write_text(
         (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (tmp_path / ".github/workflows/release.yml").write_text(
+        (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     contract = json.loads((ROOT / "governance/code-quality-ratchet.json").read_text())
