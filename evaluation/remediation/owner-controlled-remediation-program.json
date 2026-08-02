@@ -114,28 +114,41 @@
       "title": "Immediate repository security and governance",
       "status": "IN_PROGRESS",
       "rollback_baseline_commit": "51a3897ae87fa8f50b4c26a553fe7953e65f72b8",
-      "verified_commit": null,
+      "verified_commit": "098a1ec639a8e2667648636eeb1a59da15c331c2",
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
-      "rollback_evidence_sha256": null,
-      "authority_evidence": [],
+      "rollback_evidence_sha256": "ca743b1005c8e7a073084ecbca7ad134896dc1b5ac6bcb5fd30253c1ba0f2383",
+      "authority_evidence": [
+        {"class":"SOURCE","ref":"evaluation/reviewer-registry.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"9646683f573f742ec78b4a42c8fab93ad6fe649826d92957889695484fc2d8cc","environment":"CI","status":"PASS","assertion":"The canonical reviewer registry is frozen for Phase 1 review."},
+        {"class":"SOURCE","ref":"schemas/reviewer-verdict.schema.json","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"42a25107051aac5c4fa56ad4a516e2b08943ec8ccdd7eee8b601e2762a9b7d1c","environment":"CI","status":"PASS","assertion":"The canonical reviewer verdict schema is frozen for Phase 1 review."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/senior-scrummaster-3.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"58d7d803d7c133878c7f29821268531b7e32550516df1efab5e105d1b694ea81","environment":"CI","status":"PASS","assertion":"The Senior ScrumMaster reviewer instructions are frozen."},
+        {"class":"SOURCE","ref":"evaluation/reviewers/vp-engineering.md","commit":"3fc8320bf2690805ebadbb59057ada76137c11c2","sha256":"ccef392ca05227541d27dfbb02e9cf269ec83e4810d44afb6b2adeabfc73b931","environment":"CI","status":"PASS","assertion":"The VP Engineering reviewer instructions are frozen."}
+      ],
       "package_certification": [],
       "owner": "Security owner",
       "approver": "Repository maintainer",
       "verifier": "Independent security reviewer",
       "notify": ["Quality owner", "Community maintainer"],
       "scope": ["vulnerability reporting", "security services", "required certification", "support path"],
-      "non_goals": ["public release", "live provider verification"],
+      "non_goals": ["public release", "code-owner enforcement before a real independent identity is designated"],
       "rollback": "Restore the recorded repository settings and revert only the Phase 1 workflow and documentation changes.",
       "acceptance_criteria": [
-        {"id": "P1-AC-01", "description": "The documented vulnerability-reporting and support paths resolve to enabled destinations.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P1-AC-02", "description": "Main requires repository certification and independent review for material changes.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+        {"id":"P1-AC-01","description":"The documented vulnerability-reporting and support paths resolve to enabled destinations.","horizon":"IMMEDIATE","status":"PASS","evidence_refs":[{"class":"SOURCE","ref":"SECURITY.md","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"fe2018514a7a9c6b681556447375fb5cc8f8ef8ce3b81ffb83a4019137e64c07","environment":"LOCAL","status":"OBSERVED","assertion":"Security and support documentation uses the direct private advisory destination and repository-owned support fallback."},{"class":"PROVIDER","ref":"evaluation/remediation/phase1-provider-evidence.json","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"159181e323561db7f88063a8b6286fd521a5e869265cfb3ab284ec1a18abdf8b","environment":"PROVIDER","status":"PASS","assertion":"Authenticated GitHub API observations confirm private reporting, Discussions, and vulnerability alerts are enabled."}]},
+        {"id":"P1-AC-02","description":"Main requires repository certification and independent review for material changes.","horizon":"IMMEDIATE","status":"PASS","evidence_refs":[{"class":"PROVIDER","ref":"evaluation/remediation/phase1-provider-evidence.json","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"159181e323561db7f88063a8b6286fd521a5e869265cfb3ab284ec1a18abdf8b","environment":"PROVIDER","status":"PASS","assertion":"The active no-bypass main ruleset requires one approval, last-push independence, resolved threads, and repository-certification."},{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30728223423","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":null,"environment":"CI","status":"PASS","assertion":"Exact-head repository-certification passed after every canonical job including both rollback rehearsals.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"098a1ec639a8e2667648636eeb1a59da15c331c2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}]}
       ],
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI", "PROVIDER"],
-      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
-      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_RUN", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
-      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
-      "review": {"evidence_package_hash": null, "verdicts": []}
+      "evidence_status": {"SOURCE":"PASS","AUTOMATED":"PASS","CI":"PASS","PROVIDER":"PASS","DEPLOYED":"OUT_OF_SCOPE","OPERATIONAL":"OUT_OF_SCOPE"},
+      "gates": {"implementation_audit":"PASS","focused_tests":"PASS","full_certification":"PASS","security_review":"PASS","documentation":"PASS","learning":"PASS","unexpected_change_scan":"PASS"},
+      "gate_evidence": {
+        "implementation_audit":[{"class":"SOURCE","ref":"governance/github-controls.json","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"615c6e3146288c30c094ad597879142312d8e3781c1684065cd000404b8e9bd9","environment":"LOCAL","status":"PASS","assertion":"[implementation_audit] Independent repository and provider audits converged on the enforced source-of-truth controls."}],
+        "focused_tests":[{"class":"AUTOMATED","ref":"tests/test_repository_governance.py","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"8394d43bb48d718b10cd6324411063ff45caf3d4b1cc8d66ef77c4cb57decef4","environment":"CI","status":"PASS","assertion":"[focused_tests] Governance mutations and fail-closed provider comparisons passed."}],
+        "full_certification":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30728223423","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":null,"environment":"CI","status":"PASS","assertion":"[full_certification] Exact-head matrix, quality, wheel, rollback, and aggregate certification passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"098a1ec639a8e2667648636eeb1a59da15c331c2","conclusion":"success","jobs":["validate matrix (6)","validate","quality_security_release","clean wheel (2)","phase0-rollback-certification","phase-rollback-certification","repository-certification"]}}],
+        "security_review":[{"class":"PROVIDER","ref":"evaluation/remediation/phase1-provider-evidence.json","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"159181e323561db7f88063a8b6286fd521a5e869265cfb3ab284ec1a18abdf8b","environment":"PROVIDER","status":"PASS","assertion":"[security_review] Authenticated provider controls match the fail-closed governance contract."}],
+        "documentation":[{"class":"SOURCE","ref":"SECURITY.md","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"fe2018514a7a9c6b681556447375fb5cc8f8ef8ce3b81ffb83a4019137e64c07","environment":"LOCAL","status":"PASS","assertion":"[documentation] Security boundaries, reporting, invariants, severity, limitations, and support routes are explicit."}],
+        "learning":[{"class":"AUTOMATED","ref":"tests/test_phase_rollback.py","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"2be14aa666fe4cad6149a7a40c467b3d2dc172b950474bb4fc8641aceba39b2a","environment":"CI","status":"PASS","assertion":"[learning] The failed history-boundary rehearsal now has an end-to-end recurrence guardrail."}],
+        "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30728223423","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] All 435 tests, security gates, clean installs, and exact rollback boundaries passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"098a1ec639a8e2667648636eeb1a59da15c331c2","conclusion":"success","jobs":["repository-certification"]}}]
+      },
+      "review": {"evidence_package_hash": "73cd3272a06e413e88d5a7c7cb02ed396f97639a676d8e0b1bb107c54555bc3b", "verdicts": []}
     },
     {
       "id": "P2",
@@ -350,7 +363,7 @@
       "phase_id": "P1",
       "severity": "HIGH",
       "summary": "Repository security reporting and main-branch controls require live setting verification.",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "source_refs": ["SECURITY.md", ".github/workflows/validate.yml"],
       "remediation": "Align documented private reporting and required certification with enabled GitHub settings.",
       "acceptance": "Live repository settings and documented paths agree and material changes require review."
@@ -501,7 +514,8 @@
     {"id":"FAIL-0012","phase_id":"P0","summary":"Round-four review proved self-declared CI provenance and summary-only rollback receipts were insufficient.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":".github/workflows/validate.yml","commit":"dee4f9a141356b369d1e70014de87cd7b28ee25a","sha256":"6c7bb87fcba22595edfd534f72bcecf35e77f256b361c04c8f090564a368a711","environment":"CI","status":"PASS","assertion":"GitHub API receipt checks and exact-head rollback attestation are canonical workflow gates."}]},
     {"id":"FAIL-0013","phase_id":"P0","summary":"CI authentication was implicitly enabled for imported validator calls, causing fixture evidence to perform provider requests and fail the test matrix.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"dee4f9a141356b369d1e70014de87cd7b28ee25a","sha256":"ae761abffcfab1ad138501c729b604a5e32744076fa83717af6e70aca9178fc7","environment":"CI","status":"PASS","assertion":"Imported validation remains deterministic while the explicit production entry point authenticates provider receipts."}]},
     {"id":"FAIL-0014","phase_id":"P0","summary":"The first closure run exposed a lifecycle mutation test that inherited completed canonical state instead of explicitly constructing its missing-snapshot precondition.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"dee4f9a141356b369d1e70014de87cd7b28ee25a","sha256":"ae761abffcfab1ad138501c729b604a5e32744076fa83717af6e70aca9178fc7","environment":"CI","status":"PASS","assertion":"The lifecycle mutation test explicitly normalizes snapshot, frozen-package, and certification state and passes in all canonical environments."}]},
-    {"id":"FAIL-0015","phase_id":"P0","summary":"Round-six review found that the durable rollback artifact still directed operators to an obsolete static nine-commit range despite exact-head CI proof.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"dee4f9a141356b369d1e70014de87cd7b28ee25a","sha256":"ae761abffcfab1ad138501c729b604a5e32744076fa83717af6e70aca9178fc7","environment":"CI","status":"PASS","assertion":"The durable rollback mutation test rejects static candidates, obsolete ranges, partial recovery instructions, and extra stale fields."}]}
+    {"id":"FAIL-0015","phase_id":"P0","summary":"Round-six review found that the durable rollback artifact still directed operators to an obsolete static nine-commit range despite exact-head CI proof.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"dee4f9a141356b369d1e70014de87cd7b28ee25a","sha256":"ae761abffcfab1ad138501c729b604a5e32744076fa83717af6e70aca9178fc7","environment":"CI","status":"PASS","assertion":"The durable rollback mutation test rejects static candidates, obsolete ranges, partial recovery instructions, and extra stale fields."}]},
+    {"id":"FAIL-0016","phase_id":"P1","summary":"The first generic Phase 1 rollback run restored the baseline tree but left symbolic HEAD at the candidate, causing history-aware baseline validation to inspect later commits.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_phase_rollback.py","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"2be14aa666fe4cad6149a7a40c467b3d2dc172b950474bb4fc8641aceba39b2a","environment":"CI","status":"PASS","assertion":"The end-to-end mini-repository regression proves candidate preservation and clean baseline HEAD, tree, index, and tracked worktree alignment."}]}
   ],
   "learning_records": [
     {
@@ -701,6 +715,19 @@
       "rollback_position":"Preserve dynamic exact-snapshot derivation or replace it only with a stronger authenticated recovery manifest.",
       "residual_risk":"The uploaded execution receipt remains subject to GitHub artifact retention, while the durable procedure remains reproducible.",
       "owner":"Repository maintainer","due_phase":"P0","apivr_next_action":"Freeze and certify the new durable rollback contract before fresh independent review."
+    },
+    {
+      "id":"LEARN-0016","phase_id":"P1","failure_id":"FAIL-0016","status":"CONFIRMED",
+      "affected_invariant":"A rollback rehearsal must restore both content and the Git revision context before history-aware baseline validation starts.",
+      "expected_result":"The receipt preserves the candidate while HEAD, index tree, and tracked worktree align cleanly to the Phase 1 baseline.",
+      "observed_evidence":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30727909020","commit":"9a66956c211b0f3f39df7bf8876195341d59dc5c","sha256":null,"environment":"CI","status":"OBSERVED","assertion":"Tree restoration passed but baseline remediation validation rejected candidate-history files."}],
+      "learning":"Tree equality is necessary but insufficient when restored validators inspect Git history; the disposable checkout revision boundary is part of the rollback state.",
+      "recurrence_signature":"The post-revert tree equals the baseline tree while git rev-parse HEAD still identifies the candidate.",
+      "guardrail":"After proving the revert tree, preserve candidate provenance in the receipt, soft-reset the disposable checkout to baseline, and assert HEAD, tree, index, and tracked worktree alignment before validation.",
+      "verification_evidence":{"class":"AUTOMATED","ref":"tests/test_phase_rollback.py","commit":"098a1ec639a8e2667648636eeb1a59da15c331c2","sha256":"2be14aa666fe4cad6149a7a40c467b3d2dc172b950474bb4fc8641aceba39b2a","environment":"CI","status":"PASS","assertion":"Exact-head run 30728223423 passed the end-to-end recurrence test and phase-rollback-certification."},
+      "rollback_position":"Retain revision-context alignment or replace it only with an equivalent isolated baseline checkout after exact revert-tree proof.",
+      "residual_risk":"Untracked receipt files intentionally remain outside tracked-tree cleanliness checks until artifact upload.",
+      "owner":"Quality owner","due_phase":"P1","apivr_next_action":"Freeze the exact green Phase 1 package for two fresh independent reviews."
     }
   ]
 }
