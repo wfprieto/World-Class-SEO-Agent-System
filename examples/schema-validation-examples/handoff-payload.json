@@ -23,5 +23,6 @@
   "receiving_node_id": "",
   "consumed_at": "",
   "unresolved_reason": "",
-  "resolution": "PENDING"
+  "resolution": "PENDING",
+  "terminal_receipt": ""
 }

@@ -314,4 +314,5 @@ def _resolve_node_handoffs(
             matches,
             output_id=output_id,
             node_id=node.id,
+            output_agent=str(output.get("agent", "")),
         )

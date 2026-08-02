@@ -32,7 +32,19 @@ def _graph() -> WorkflowGraph:
 
 
 def _handoff() -> Handoff:
-    handoff = Handoff(
+    handoff = _pending()
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff)],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    return handoff
+
+
+def _pending() -> Handoff:
+    return Handoff(
         handoff_id=HANDOFF_ID,
         from_agent="Source Agent",
         to_agent="Receiver Agent",
@@ -46,8 +58,6 @@ def _handoff() -> Handoff:
         source_node_id="source",
         target_node_id="receiver",
     )
-    handoff.consume("receiver-output", "receiver")
-    return handoff
 
 
 def _audit(handoffs: list[Handoff]) -> dict:
@@ -65,16 +75,6 @@ def _audit(handoffs: list[Handoff]) -> dict:
 
 def _codes(report: dict) -> set[str]:
     return {item["code"] for item in report["issues"]}
-
-
-def _pending() -> Handoff:
-    handoff = _handoff()
-    handoff.status = "CREATED"
-    handoff.receiving_output_id = ""
-    handoff.receiving_node_id = ""
-    handoff.consumed_at = ""
-    handoff.resolution = "PENDING"
-    return handoff
 
 
 def _ack(handoff: Handoff, disposition: str = "ACCEPTED") -> dict:
@@ -105,6 +105,7 @@ def test_valid_required_handoff_is_consumed_without_false_positive() -> None:
         ("wrong-recipient", "WRONG_RECIPIENT"),
         ("wrong-consumer", "WRONG_CONSUMER"),
         ("silently-dropped", "SILENTLY_DROPPED_HANDOFF"),
+        ("unexpected", "UNEXPECTED_HANDOFF"),
     ],
 )
 def test_fixed_handoff_mutation_catalog_fails_closed(
@@ -129,6 +130,10 @@ def test_fixed_handoff_mutation_catalog_fails_closed(
         handoff.status = "CREATED"
         handoff.receiving_output_id = ""
         handoff.consumed_at = ""
+    elif mutation == "unexpected":
+        unexpected = deepcopy(handoff)
+        unexpected.handoff_id = f"{SESSION}-unexpected-control-01"
+        records.append(unexpected)
 
     report = _audit(records)
     assert report["status"] == "FAIL"
@@ -178,6 +183,7 @@ def test_acknowledgement_contract_mutations_cannot_consume(mutation: str) -> Non
         [acknowledgement],
         output_id="receiver-output",
         node_id=node_id,
+        output_agent="Receiver Agent",
     )
     assert handoff.status == "BLOCKED"
     assert handoff.resolution == "UNRESOLVED"
@@ -193,6 +199,7 @@ def test_zero_evidence_control_handoff_supports_explicit_challenge() -> None:
         [acknowledgement],
         output_id="receiver-output",
         node_id="receiver",
+        output_agent="Receiver Agent",
     )
     assert handoff.status == "CONSUMED"
     assert handoff.resolution == "CHALLENGED"
@@ -208,10 +215,95 @@ def test_explicit_unresolved_ack_is_terminal_and_reasoned() -> None:
         [acknowledgement],
         output_id="receiver-output",
         node_id="receiver",
+        output_agent="Receiver Agent",
     )
     assert handoff.status == "BLOCKED"
     assert handoff.resolution == "UNRESOLVED"
     assert handoff.unresolved_reason == "Required source is unavailable."
+    assert handoff.terminal_receipt
+
+
+def test_unresolved_terminal_receipt_is_bound_to_exact_receiver_output() -> None:
+    handoff = _pending()
+    acknowledgement = _ack(handoff, "UNRESOLVED")
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id="foreign-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    report = _audit([handoff])
+    assert "WRONG_CONSUMER" in _codes(report)
+
+
+def test_zero_evidence_control_handoff_rejects_accepted_disposition() -> None:
+    handoff = _pending()
+    handoff.evidence_refs = []
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff, "ACCEPTED")],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.unresolved_reason.startswith("Invalid acknowledgement:")
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["wrong-node", "blank-output", "wrong-recipient", "wrong-action", "wrong-ref", "wrong-criteria", "blank-note"],
+)
+def test_unresolved_ack_requires_exact_terminal_context(mutation: str) -> None:
+    handoff = _pending()
+    acknowledgement = _ack(handoff, "UNRESOLVED")
+    node_id = "receiver"
+    output_id = "receiver-output"
+    output_agent = "Receiver Agent"
+    if mutation == "wrong-node":
+        node_id = "other-node"
+    elif mutation == "blank-output":
+        output_id = ""
+    elif mutation == "wrong-recipient":
+        output_agent = "Other Agent"
+    elif mutation == "wrong-action":
+        acknowledgement["requested_action_addressed"] = "Other action"
+    elif mutation == "wrong-ref":
+        acknowledgement["evidence_refs_addressed"] = ["other-evidence"]
+    elif mutation == "wrong-criteria":
+        acknowledgement["acceptance_criteria_addressed"] = ["Other criterion"]
+    elif mutation == "blank-note":
+        acknowledgement["resolution_note"] = "   "
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id=output_id,
+        node_id=node_id,
+        output_agent=output_agent,
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.unresolved_reason.startswith("Invalid acknowledgement:")
+    assert handoff.terminal_receipt
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["direct-consume", "action-after-seal", "resolution-after-seal", "time-after-seal"],
+)
+def test_terminal_receipt_rejects_direct_or_post_resolution_mutation(mutation: str) -> None:
+    handoff = _pending() if mutation == "direct-consume" else _handoff()
+    if mutation == "direct-consume":
+        handoff.consume("receiver-output", "receiver")
+    elif mutation == "action-after-seal":
+        handoff.requested_action = "Tampered action"
+    elif mutation == "resolution-after-seal":
+        handoff.resolution = "CHALLENGED"
+    else:
+        handoff.consumed_at = "2099-01-01T00:00:00+00:00"
+    report = _audit([handoff])
+    assert report["status"] == "FAIL"
+    assert "INVALID_TERMINAL_RECEIPT" in _codes(report)
 
 
 def test_vertical_capacity_exclusion_is_explicit_not_silently_truncated() -> None:

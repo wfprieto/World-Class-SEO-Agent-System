@@ -223,6 +223,7 @@ def _evaluation_case_errors(
         "responsibility_id": contract["responsibility_id"],
         "expected_artifact": contract["output_binding"],
         "execution_class": contract["execution_class"],
+        "expected_handoff_to": contract["handoff_to"],
     }
     errors = [
         f"evaluation {field} does not bind to matrix: {agent}"

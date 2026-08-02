@@ -11,6 +11,7 @@ function Test-PythonValidator{param([string]$Script,[string[]]$Arguments=@());$s
 Test-JsonFiles;Test-MarkdownLinks;Test-AgentReferences
 Test-PythonValidator "scripts/validate_canonical_skill_consistency.py"
 Test-PythonValidator "scripts/validate_agent_differentiation.py" @("--mutations")
+Test-PythonValidator "scripts/validate_architecture_exception_disposition.py"
 Test-PythonValidator "scripts/validate_release_version.py"
 Test-PythonValidator "scripts/validate_seo_claims.py"
 Test-PythonValidator "scripts/validate_product_claims.py"

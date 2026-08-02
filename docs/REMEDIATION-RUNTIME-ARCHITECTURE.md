@@ -37,6 +37,12 @@ request
   missing, duplicate, foreign-session (stale), wrong-recipient, wrong-consumer, and silently
   dropped records are reported deterministically. Any still-pending handoff becomes `BLOCKED`
   with an `unresolved_reason`; the runtime does not infer delivery from natural-language text.
+  Terminal records carry a deterministic receipt over their canonical runtime fields so direct
+  status mutation or bypassing the exact resolver fails reconciliation. The receipt detects
+  in-process tampering; it is not a secret, digital signature, identity proof, or external trust
+  guarantee. Empty-evidence control handoffs may be exactly `CHALLENGED` or `UNRESOLVED`, never
+  `ACCEPTED`. Every current-session record outside an exact materialized dependency edge is
+  reported as `UNEXPECTED_HANDOFF` rather than silently accepted.
 - Bounded specialist capacity is explicit in the materialized graph. Candidates beyond the
   two-vertical or six-support limits appear in `capacity_exclusions` with
   `NOT_EXECUTED_CAPACITY`, and any such exclusion prevents a `COMPLETE` workflow claim.

@@ -49,6 +49,8 @@ def _matrix_mutants(registry: dict[str, Any], matrix: dict[str, Any]) -> list[Mu
     template["agents"][source]["output_binding"] = "templates/content-brief.md"
     advisory = copy.deepcopy(matrix)
     advisory["agents"]["SEO Accessibility Agent"]["execution_class"] = "executable"
+    handoff = copy.deepcopy(matrix)
+    handoff["agents"][source]["handoff_to"] = "SEO Output Report Agent"
     swapped = copy.deepcopy(matrix)
     left, right = swapped["agents"][source], swapped["agents"]["SEO Copywriter/Content Agent"]
     left["responsibility_id"], right["responsibility_id"] = (
@@ -62,6 +64,7 @@ def _matrix_mutants(registry: dict[str, Any], matrix: dict[str, Any]) -> list[Mu
         ("undeclared-contributor", registry, contributor, "undeclared agent"),
         ("wrong-template-binding", registry, template, "not bound"),
         ("advisory-class-mismatch", registry, advisory, "execution class"),
+        ("handoff-target-substitution", registry, handoff, "evaluation expected_handoff_to"),
         ("responsibility-owner-swap", registry, swapped, "evaluation responsibility_id"),
     ]
 

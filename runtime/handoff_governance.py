@@ -7,8 +7,11 @@ natural-language agent output.
 
 from __future__ import annotations
 
+import hmac
+import json
 from collections.abc import Iterable
 from dataclasses import asdict
+from hashlib import sha256
 from typing import Any
 
 from runtime.state import Handoff
@@ -21,6 +24,7 @@ def resolve_handoff_acknowledgements(
     *,
     output_id: str,
     node_id: str,
+    output_agent: str,
 ) -> None:
     """Apply one exact acknowledgement or leave the handoff pending.
 
@@ -34,28 +38,77 @@ def resolve_handoff_acknowledgements(
     if not matches:
         return
     if len(matches) != 1:
-        handoff.block("Duplicate acknowledgements were returned for this handoff.")
+        _invalid_ack(handoff, "Duplicate acknowledgements were returned for this handoff.")
         return
     acknowledgement = matches[0]
     disposition = acknowledgement.get("disposition")
-    if disposition == "UNRESOLVED":
-        handoff.block(str(acknowledgement.get("resolution_note", "")))
-        return
-    exact_contract = (
+    exact = _ack_context_is_exact(
+        handoff, acknowledgement, output_id, node_id, output_agent
+    )
+    note = str(acknowledgement.get("resolution_note", ""))
+    if disposition == "UNRESOLVED" and exact and note.strip():
+        handoff.receiving_output_id = output_id
+        handoff.receiving_node_id = node_id
+        handoff.block(note)
+        _seal_terminal_handoff(handoff)
+    elif (
         disposition in {"ACCEPTED", "CHALLENGED"}
+        and exact
+        and note.strip()
+        and (bool(handoff.evidence_refs) or disposition == "CHALLENGED")
+    ):
+        handoff.consume(output_id, node_id, str(disposition))
+        _seal_terminal_handoff(handoff)
+    else:
+        _invalid_ack(
+            handoff,
+            "Invalid acknowledgement: exact recipient, output, action, evidence, criteria, disposition, and nonblank resolution note are required.",
+        )
+
+
+def _ack_context_is_exact(
+    handoff: Handoff,
+    acknowledgement: dict[str, Any],
+    output_id: str,
+    node_id: str,
+    output_agent: str,
+) -> bool:
+    return (
+        bool(output_id.strip())
+        and node_id == handoff.target_node_id
+        and output_agent == handoff.to_agent
         and acknowledgement.get("requested_action_addressed") == handoff.requested_action
         and sorted(acknowledgement.get("evidence_refs_addressed", []))
         == sorted(handoff.evidence_refs)
         and sorted(acknowledgement.get("acceptance_criteria_addressed", []))
         == sorted(handoff.acceptance_criteria)
-        and node_id == handoff.target_node_id
     )
-    if exact_contract:
-        handoff.consume(output_id, node_id, str(disposition))
-    else:
-        handoff.block(
-            "Acknowledgement did not exactly address the requested action, evidence, criteria, and target node."
-        )
+
+
+def _invalid_ack(handoff: Handoff, reason: str) -> None:
+    handoff.block(reason)
+    _seal_terminal_handoff(handoff)
+
+
+def terminal_handoff_receipt(handoff: Handoff) -> str:
+    """Hash canonical runtime fields for mutation detection, not identity trust."""
+    fields = {
+        key: value
+        for key, value in asdict(handoff).items()
+        if key != "terminal_receipt"
+    }
+    encoded = json.dumps(fields, sort_keys=True, separators=(",", ":")).encode()
+    return sha256(encoded).hexdigest()
+
+
+def _seal_terminal_handoff(handoff: Handoff) -> None:
+    handoff.terminal_receipt = terminal_handoff_receipt(handoff)
+
+
+def terminal_receipt_is_valid(handoff: Handoff) -> bool:
+    return bool(handoff.terminal_receipt) and hmac.compare_digest(
+        handoff.terminal_receipt, terminal_handoff_receipt(handoff)
+    )
 
 
 def expected_handoff_id(session_id: str, node_id: str, index: int) -> str:
@@ -85,6 +138,7 @@ def reconcile_required_handoffs(
         session_id, graph, node_states, outputs_by_node, by_id
     )
     issues.extend(edge_issues)
+    issues.extend(_unexpected_handoffs(records, session_id, expected_ids))
     issues.extend(_finalize_pending(records))
 
     unresolved = [
@@ -105,6 +159,7 @@ def reconcile_required_handoffs(
             for handoff_id in expected_ids
             if len(by_id.get(handoff_id, [])) == 1
             and by_id[handoff_id][0].status == "CONSUMED"
+            and terminal_receipt_is_valid(by_id[handoff_id][0])
         ),
         "issues": issues,
         "unresolved": unresolved,
@@ -174,6 +229,7 @@ def _finalize_pending(records: list[Handoff]) -> list[dict[str, str]]:
         if handoff.status != "CREATED":
             continue
         handoff.block("No addressed output consumed this handoff before workflow completion.")
+        _seal_terminal_handoff(handoff)
         issues.append(
             _issue(
                 "SILENTLY_DROPPED_HANDOFF",
@@ -182,6 +238,21 @@ def _finalize_pending(records: list[Handoff]) -> list[dict[str, str]]:
             )
         )
     return issues
+
+
+def _unexpected_handoffs(
+    records: list[Handoff], session_id: str, expected_ids: set[str]
+) -> list[dict[str, str]]:
+    return [
+        _issue(
+            "UNEXPECTED_HANDOFF",
+            handoff.handoff_id,
+            "current-session handoff is not an exact required materialized graph edge",
+        )
+        for handoff in records
+        if handoff.handoff_id.startswith(f"{session_id}-")
+        and handoff.handoff_id not in expected_ids
+    ]
 
 
 def _required_edges(
@@ -230,11 +301,7 @@ def _audit_required_edge(
                 f"expected {dependency_id}/{expected_sender} -> {node_id}/{node_agent}",
             )
         )
-    if handoff.status == "CONSUMED" and (
-        handoff.receiving_output_id != str(receiver_output.get("output_id", ""))
-        or handoff.receiving_node_id != node_id
-        or receiver_output.get("agent") != node_agent
-    ):
+    if _terminal_has_wrong_consumer(handoff, node_id, node_agent, receiver_output):
         result.append(
             _issue(
                 "WRONG_CONSUMER",
@@ -244,7 +311,32 @@ def _audit_required_edge(
         )
     elif handoff.status == "CREATED":
         handoff.block("No exact acknowledgement resolved this required handoff.")
+        _seal_terminal_handoff(handoff)
         result.append(
             _issue("SILENTLY_DROPPED_HANDOFF", handoff_id, handoff.unresolved_reason)
         )
+    elif not terminal_receipt_is_valid(handoff):
+        result.append(
+            _issue(
+                "INVALID_TERMINAL_RECEIPT",
+                handoff_id,
+                "terminal handoff fields do not match an exact resolver receipt",
+            )
+        )
     return result
+
+
+def _terminal_has_wrong_consumer(
+    handoff: Handoff,
+    node_id: str,
+    node_agent: str,
+    receiver_output: dict[str, Any],
+) -> bool:
+    context_bound = handoff.status == "CONSUMED" or (
+        handoff.status == "BLOCKED" and bool(handoff.receiving_output_id)
+    )
+    return context_bound and (
+        handoff.receiving_output_id != str(receiver_output.get("output_id", ""))
+        or handoff.receiving_node_id != node_id
+        or receiver_output.get("agent") != node_agent
+    )

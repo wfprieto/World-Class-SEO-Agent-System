@@ -332,7 +332,7 @@
         "learning":[{"class":"AUTOMATED","ref":"tests/test_quality_ratchets.py","commit":"2908ef489a5c6f5985fa0295b7ad246a54a61b64","sha256":"94312a8bf0f425c0da4964d900bd28a21dc91e11e2ee86c89b3e2cc6d7bed0be","environment":"CI","status":"PASS","assertion":"[learning] The guarded monotonic ratchet rejects stale or weakened debt state after integrated refactoring."}],
         "unexpected_change_scan":[{"class":"CI","ref":"https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30763651045","commit":"2908ef489a5c6f5985fa0295b7ad246a54a61b64","sha256":null,"environment":"CI","status":"PASS","assertion":"[unexpected_change_scan] Exact source integrity, full tests, typing, security mutations, coverage, dependency audit, rollback, clean installs, and aggregate certification passed.","provenance":{"repository":"wfprieto/World-Class-SEO-Agent-System","workflow":"Validate repository","head_sha":"2908ef489a5c6f5985fa0295b7ad246a54a61b64","conclusion":"success","jobs":["validate","repository-certification"]}}]
       },
-      "review": {"evidence_package_hash":"11fe68d7431603ea8c97e8c25a8ce342cb063dac478b12fae715d30495813453","verdicts":[]}
+      "review": {"evidence_package_hash":null,"verdicts":[]}
     },
     {
       "id": "P6",

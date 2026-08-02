@@ -22,7 +22,8 @@
     "receiving_node_id",
     "consumed_at",
     "unresolved_reason"
-    ,"resolution"
+    ,"resolution",
+    "terminal_receipt"
   ],
   "properties": {
     "handoff_id": {"type": "string"},
@@ -48,8 +49,45 @@
     "receiving_node_id": {"type": "string"},
     "consumed_at": {"type": "string"},
     "unresolved_reason": {"type": "string"},
-    "resolution": {"enum": ["PENDING", "ACCEPTED", "CHALLENGED", "UNRESOLVED"]}
+    "resolution": {"enum": ["PENDING", "ACCEPTED", "CHALLENGED", "UNRESOLVED"]},
+    "terminal_receipt": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$",
+      "description": "Deterministic integrity receipt for terminal runtime fields; not an identity or external trust signature."
+    }
   },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "CREATED"}}},
+      "then": {
+        "properties": {
+          "resolution": {"const": "PENDING"},
+          "terminal_receipt": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "CONSUMED"}}},
+      "then": {
+        "properties": {
+          "resolution": {"enum": ["ACCEPTED", "CHALLENGED"]},
+          "receiving_output_id": {"minLength": 1},
+          "receiving_node_id": {"minLength": 1},
+          "terminal_receipt": {"minLength": 64}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "then": {
+        "properties": {
+          "resolution": {"const": "UNRESOLVED"},
+          "unresolved_reason": {"minLength": 1},
+          "terminal_receipt": {"minLength": 64}
+        }
+      }
+    }
+  ],
   "examples": [
     {
       "handoff_id": "handoff-technical-to-engineer-001",
@@ -69,7 +107,8 @@
       "receiving_node_id": "",
       "consumed_at": "",
       "unresolved_reason": ""
-      ,"resolution": "PENDING"
+      ,"resolution": "PENDING",
+      "terminal_receipt": ""
     }
   ]
 }

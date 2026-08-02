@@ -125,7 +125,7 @@ def _echo_handoff_acknowledgements(
     return [
         {
             "handoff_id": handoff["handoff_id"],
-            "disposition": "ACCEPTED",
+            "disposition": "ACCEPTED" if handoff["evidence_refs"] else "CHALLENGED",
             "requested_action_addressed": handoff["requested_action"],
             "evidence_refs_addressed": handoff["evidence_refs"],
             "acceptance_criteria_addressed": handoff["acceptance_criteria"],

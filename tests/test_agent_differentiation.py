@@ -26,7 +26,7 @@ def test_every_retained_agent_has_a_distinct_responsibility_contract() -> None:
 def test_fixed_overlap_mutation_suite_kills_every_known_case() -> None:
     result = run_mutation_suite(ROOT)
     assert result["status"] == "PASS"
-    assert result["mutants"] == result["killed"] == 11
+    assert result["mutants"] == result["killed"] == 12
 
 
 def test_persona_rename_cannot_rescue_a_duplicated_functional_bundle() -> None:

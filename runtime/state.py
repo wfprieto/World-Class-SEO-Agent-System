@@ -60,6 +60,7 @@ class Handoff:
     consumed_at: str = ""
     unresolved_reason: str = ""
     resolution: str = "PENDING"
+    terminal_receipt: str = ""
 
     def consume(
         self,
