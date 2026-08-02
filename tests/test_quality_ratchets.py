@@ -266,6 +266,20 @@ def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
     assert any("immutable 40-character SHA" in error for error in _workflow_errors(unpinned, 78.0))
     shallow = workflow.replace("fetch-depth: 0", "fetch-depth: 1", 1)
     assert any("fetch-depth: 0" in error for error in _workflow_errors(shallow, 78.0))
+    quoted_shallow = workflow.replace(
+        "uses: actions/checkout@", "uses: 'actions/checkout@", 1
+    ).replace(" # v7", "' # v7", 1).replace(
+        "fetch-depth: 0", "fetch-depth: 1", 1
+    )
+    assert any("fetch-depth: 0" in error for error in _workflow_errors(quoted_shallow, 78.0))
+    duplicate = workflow.replace(
+        "fetch-depth: 0", 'fetch-depth: 0\n          "fetch-depth": 1', 1
+    )
+    assert any("duplicate YAML key" in error for error in _workflow_errors(duplicate, 78.0))
+    quoted_zero = workflow.replace("fetch-depth: 0", 'fetch-depth: "0"', 1)
+    assert _workflow_errors(quoted_zero, 78.0) == []
+    expression = workflow.replace("fetch-depth: 0", "fetch-depth: ${{ github.event.depth }}", 1)
+    assert any("fetch-depth: 0" in error for error in _workflow_errors(expression, 78.0))
 
 
 def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:
@@ -280,9 +294,48 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
             "python scripts/renamed_risk_coverage.py outputs/coverage.json",
             1,
         ),
+        workflow.replace(
+            "        run: pytest -q --cov=runtime",
+            "        run: |\n          exit 0\n          pytest -q --cov=runtime",
+            1,
+        ),
     )
     for mutated in mutations:
         assert _workflow_errors(mutated, 78.0)
+
+
+def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    coverage_run = "        run: pytest -q --cov=runtime"
+    risk_block = (
+        "      - name: Validate critical coverage\n"
+        "        run: python scripts/validate_risk_coverage.py outputs/coverage.json"
+    )
+    for addition in (
+        "\n        if: false",
+        "\n        continue-on-error: true",
+        "\n        shell: bash",
+    ):
+        assert _workflow_errors(workflow.replace(risk_block, risk_block + addition, 1), 78.0)
+    assert _workflow_errors(
+        workflow.replace(coverage_run, coverage_run + " || true", 1), 78.0
+    )
+    conditional_job = workflow.replace(
+        "  quality_security_release:\n    needs: validate",
+        "  quality_security_release:\n    if: false\n    needs: validate",
+        1,
+    )
+    assert any("quality job" in error for error in _workflow_errors(conditional_job, 78.0))
+    coverage_block = next(
+        block for block in workflow.split("      - ") if block.startswith("name: Run coverage gate")
+    ).rstrip()
+    risk_text = next(
+        block for block in workflow.split("      - ") if block.startswith("name: Validate critical coverage")
+    ).rstrip()
+    reversed_workflow = workflow.replace(coverage_block, "__COVERAGE__", 1).replace(
+        risk_text, coverage_block, 1
+    ).replace("__COVERAGE__", risk_text, 1)
+    assert any("must precede" in error for error in _workflow_errors(reversed_workflow, 78.0))
 
 
 def test_repository_policy_rejects_risk_script_deletion_and_floor_weakening(

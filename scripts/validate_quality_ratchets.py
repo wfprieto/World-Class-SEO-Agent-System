@@ -5,13 +5,17 @@ import ast
 import copy
 import hashlib
 import json
-import re
 import subprocess
 import sys
 import tomllib
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+try:
+    from scripts.workflow_quality_contract import workflow_errors as _workflow_errors
+except ModuleNotFoundError:
+    from workflow_quality_contract import workflow_errors as _workflow_errors  # type: ignore[no-redef]  # noqa: I001
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "code-quality-ratchet.json"
@@ -31,7 +35,6 @@ MINIMUM_CRITICAL_COVERAGE = {
     "runtime/structured_output.py": 89.0, "runtime/tools.py": 83.0,
     "runtime/workflow_runner.py": 93.0,
 }
-COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters")
 def _complexity(node: ast.AST) -> int:
     score = 1
     for child in ast.walk(node):
@@ -156,28 +159,6 @@ def _previous_contract(root: Path, contract_path: Path) -> dict[str, Any] | None
         ).stdout)
     except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-def _checkout_errors(lines: list[str]) -> list[str]:
-    indexes = [index for index, line in enumerate(lines) if "uses: actions/checkout@" in line]
-    errors = [] if indexes else ["CI requires at least one pinned actions/checkout step"]
-    for index in indexes:
-        reference = lines[index].split("actions/checkout@", 1)[1].split()[0]
-        indent, following = len(lines[index]) - len(lines[index].lstrip()), lines[index + 1:]
-        boundary = next((offset for offset, line in enumerate(following) if line.strip().startswith("-") and len(line) - len(line.lstrip()) <= indent), len(following))
-        if not re.fullmatch(r"[0-9a-f]{40}", reference):
-            errors.append("every actions/checkout step must use an immutable 40-character SHA")
-        if not re.search(r"(?m)^\s+fetch-depth:\s*0\s*$", "\n".join(following[:boundary])):
-            errors.append("every actions/checkout step must set fetch-depth: 0")
-    return errors
-def _workflow_errors(workflow: str, coverage_floor: float) -> list[str]:
-    lines = workflow.splitlines()
-    coverage = "pytest -q " + " ".join(f"--cov={target}" for target in COVERAGE_TARGETS) + " --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json " + f"--cov-fail-under={coverage_floor:g} --junitxml=outputs/pytest-quality.xml"
-    errors = _checkout_errors(lines)
-    if [line.strip() for line in lines if "pytest" in line and "--cov" in line] != [coverage]:
-        errors.append("CI coverage command must equal the canonical source, report-path, and threshold contract")
-    risk_lines = [line.strip() for line in lines if line.strip().startswith("python scripts/validate_risk_coverage.py")]
-    if risk_lines != ["python scripts/validate_risk_coverage.py outputs/coverage.json"]:
-        errors.append("CI risk coverage command must consume outputs/coverage.json exactly once")
-    return errors
 def _canonical_policy_errors(contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if contract.get("file_defaults") != FILE_DEFAULTS:

@@ -28,8 +28,8 @@ NETWORK_IMPORTS = {
 NETWORK_PROCESS_COMMANDS = {
     "curl",
     "ftp",
-    "Invoke-RestMethod",
-    "Invoke-WebRequest",
+    "invoke-restmethod",
+    "invoke-webrequest",
     "powershell",
     "pwsh",
     "wget",
@@ -100,6 +100,7 @@ def _imports(
                     for alias in node.names
                     if (candidate := f"{base}.{alias.name}") in known_modules
                 )
+    imported.update(_literal_dynamic_imports(tree))
     return imported
 
 
@@ -159,6 +160,32 @@ def _literal_process_command(node: ast.AST) -> str | None:
     return None
 
 
+def _call_argument(node: ast.Call, position: int | None, keyword: str) -> ast.AST | None:
+    if position is not None and len(node.args) > position:
+        return node.args[position]
+    return next((item.value for item in node.keywords if item.arg == keyword), None)
+
+
+def _literal_dynamic_imports(tree: ast.AST) -> set[str]:
+    aliases = _import_aliases(tree)
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or _resolved_call_name(node.func, aliases) not in {
+            "__import__",
+            "importlib.import_module",
+        }:
+            continue
+        argument = _call_argument(node, 0, "name")
+        if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
+            imported.add(argument.value)
+    return imported
+
+
+def _normalized_process_command(command: str) -> str:
+    name = command.replace("\\", "/").rsplit("/", 1)[-1].casefold()
+    return name[:-4] if name.endswith(".exe") else name
+
+
 def _is_network_import(name: str) -> bool:
     return name in NETWORK_IMPORTS or any(
         name.startswith(f"{item}.") for item in NETWORK_IMPORTS
@@ -178,16 +205,22 @@ def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
     if not isinstance(node, ast.Call):
         return False
     call_name = _resolved_call_name(node.func, aliases)
-    if call_name in {"__import__", "importlib.import_module"} and node.args:
-        imported = node.args[0]
+    if call_name in {"__import__", "importlib.import_module"}:
+        imported = _call_argument(node, 0, "name")
         return (
             isinstance(imported, ast.Constant)
             and isinstance(imported.value, str)
             and _is_network_import(imported.value)
         )
-    if call_name in {*SUBPROCESS_CALLS, "os.system"} and node.args:
-        command = _literal_process_command(node.args[0])
-        return bool(command and command in NETWORK_PROCESS_COMMANDS)
+    if call_name in {*SUBPROCESS_CALLS, "os.system"}:
+        argument = _call_argument(node, 0, "args" if call_name != "os.system" else "command")
+        command = _literal_process_command(argument) if argument is not None else None
+        executable = _call_argument(node, None, "executable")
+        executable_name = _literal_process_command(executable) if executable is not None else None
+        return any(
+            value is not None and _normalized_process_command(value) in NETWORK_PROCESS_COMMANDS
+            for value in (command, executable_name)
+        )
     return False
 
 

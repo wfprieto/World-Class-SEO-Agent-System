@@ -178,16 +178,18 @@ jobs:
           scripts/validate_pytest_temp_isolation.py
           scripts/generate_capability_evidence_registry.py scripts/validate_product_contract.py
           scripts/validate_architecture_contract.py scripts/validate_quality_ratchets.py
+          scripts/workflow_quality_contract.py
           --ignore-missing-imports --check-untyped-defs
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py
       - name: Run security mutation probes
         run: python scripts/run_security_mutation_checks.py
+      - name: Prepare quality outputs
+        run: mkdir -p outputs
       - name: Run coverage gate
-        run: |
-          mkdir -p outputs
-          pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
-          python scripts/validate_risk_coverage.py outputs/coverage.json
+        run: pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
+      - name: Validate critical coverage
+        run: python scripts/validate_risk_coverage.py outputs/coverage.json
       - name: Audit declared Python dependencies
         run: pip-audit -r requirements-dev.txt --desc off
       - name: Generate and validate release evidence

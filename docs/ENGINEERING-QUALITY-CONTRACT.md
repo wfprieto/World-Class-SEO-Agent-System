@@ -28,4 +28,4 @@ Repository branch coverage cannot fall below 78 percent. Critical files also hav
 4. Run focused boundary tests, full mypy, the complete suite, branch coverage, risk coverage, security mutations, clean-wheel checks, and cross-platform CI.
 5. Do not describe a green ratchet as proof of deployment, release maturity, provider operation, or SEO effectiveness.
 
-The validator requires preserved prior-contract Git history, immutable-SHA checkout steps with `fetch-depth: 0`, the exact canonical pytest coverage targets and report paths, and `validate_risk_coverage.py outputs/coverage.json`. Missing history or weakened CI wiring fails closed.
+The validator parses workflow YAML structurally, rejects duplicate mapping keys, and requires every checkout step to use an immutable SHA with an effective `fetch-depth: 0`. Coverage and risk validation are separate, exact, dedicated steps in the same job and in that order; conditions, custom shells, `continue-on-error`, multiline wrappers, masking operators, or extra commands invalidate the gate. Missing history, ambiguous YAML, or weakened CI wiring fails closed.

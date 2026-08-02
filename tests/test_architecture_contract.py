@@ -232,6 +232,101 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
 @pytest.mark.parametrize(
     ("import_line", "call"),
     [
+        ("from subprocess import run", "run(args=['curl', 'https://example.test'])"),
+        ("from importlib import import_module", "import_module(name='httpx')"),
+        ("import subprocess", "subprocess.run(['/usr/bin/curl', 'https://example.test'])"),
+        ("import subprocess", "subprocess.run(['CURL.EXE', 'https://example.test'])"),
+        ("import subprocess", "subprocess.run(['powershell.exe', 'Invoke-WebRequest'])"),
+    ],
+)
+def test_equivalent_literal_egress_spellings_fail_until_owned(
+    tmp_path: Path, import_line: str, call: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path, _contract(), {"runtime/process_client.py": f"{import_line}\n{call}\n"}
+    )
+
+    assert "unapproved network-capable module: runtime/process_client.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import importlib\nimportlib.import_module('integrations.google.client')\n",
+        "import importlib as loader\nloader.import_module('integrations.google.client')\n",
+        "from importlib import import_module\nimport_module(name='integrations.google.client')\n",
+    ],
+)
+def test_literal_dynamic_internal_import_obeys_dependency_direction(
+    tmp_path: Path, source: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/dynamic_dependency.py": source,
+            "integrations/google/client.py": "VALUE = 1\n",
+        },
+    )
+
+    assert (
+        "forbidden dependency edge: runtime.dynamic_dependency -> integrations.google.client"
+        in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+def test_literal_dynamic_import_participates_in_cycles(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "runtime/a.py": "import importlib\nimportlib.import_module('runtime.b')\n",
+            "runtime/b.py": "import runtime.a\n",
+        },
+    )
+    assert any(
+        error.startswith("internal import cycle: runtime.a -> runtime.b")
+        for error in validate(tmp_path, contract_path, schema_path)
+    )
+
+
+def test_approved_literal_dynamic_import_remains_valid(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {
+            "seoctl/composition.py": "import importlib\nimportlib.import_module('runtime.contract')\n",
+            "runtime/contract.py": "VALUE = 1\n",
+        },
+    )
+    assert validate(tmp_path, contract_path, schema_path) == []
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "subprocess.run(['git', 'status'])",
+        "subprocess.run(['curl-helper', 'value'])",
+        "subprocess.run(['scurl', 'value'])",
+        "subprocess.run(['tool', 'https://example.test/curl'])",
+    ],
+)
+def test_non_network_process_names_do_not_create_false_egress(
+    tmp_path: Path, call: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/process_client.py": f"import subprocess\n{call}\n"},
+    )
+    assert validate(tmp_path, contract_path, schema_path) == []
+
+
+@pytest.mark.parametrize(
+    ("import_line", "call"),
+    [
         ("from subprocess import run", "run(['curl', 'https://example.test'])"),
         (
             "from subprocess import run as execute",
