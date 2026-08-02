@@ -4,6 +4,8 @@ import copy
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.validate_architecture_contract import SCHEMA_PATH, validate
 
 
@@ -127,7 +129,7 @@ def test_package_init_relative_cycle_fails(tmp_path: Path) -> None:
         _contract(),
         {
             "runtime/package/__init__.py": "from .worker import Worker\n",
-            "runtime/package/worker.py": "import runtime.package\n",
+            "runtime/package/worker.py": "from runtime import package\n",
         },
     )
 
@@ -142,8 +144,11 @@ def test_mixed_absolute_relative_cycle_fails(tmp_path: Path) -> None:
         tmp_path,
         _contract(),
         {
-            "runtime/a.py": "from .b import B\n",
-            "runtime/b.py": "from runtime.a import A\n",
+            "runtime/package/__init__.py": (
+                "from runtime.package import worker as imported_worker\n"
+            ),
+            "runtime/package/worker.py": "from . import helper\n",
+            "runtime/package/helper.py": "from runtime import package as imported_package\n",
         },
     )
 
@@ -222,6 +227,64 @@ def test_literal_dynamic_and_process_egress_fail_until_owned(tmp_path: Path) -> 
 
     assert "unapproved network-capable module: runtime/dynamic_client.py" in errors
     assert "unapproved network-capable module: runtime/process_client.py" in errors
+
+
+@pytest.mark.parametrize(
+    ("import_line", "call"),
+    [
+        ("from subprocess import run", "run(['curl', 'https://example.test'])"),
+        (
+            "from subprocess import run as execute",
+            "execute(['curl', 'https://example.test'])",
+        ),
+        ("from subprocess import Popen", "Popen(['curl', 'https://example.test'])"),
+        (
+            "from subprocess import Popen as launch",
+            "launch(['curl', 'https://example.test'])",
+        ),
+        (
+            "from subprocess import check_output",
+            "check_output(['curl', 'https://example.test'])",
+        ),
+        (
+            "from subprocess import check_output as capture",
+            "capture(['curl', 'https://example.test'])",
+        ),
+    ],
+)
+def test_imported_subprocess_egress_fails_until_owned(
+    tmp_path: Path, import_line: str, call: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/process_client.py": f"{import_line}\n{call}\n"},
+    )
+
+    assert "unapproved network-capable module: runtime/process_client.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
+
+
+@pytest.mark.parametrize(
+    ("import_line", "call"),
+    [
+        ("from importlib import import_module", "import_module('httpx')"),
+        ("from importlib import import_module as load", "load('httpx')"),
+    ],
+)
+def test_imported_dynamic_egress_fails_until_owned(
+    tmp_path: Path, import_line: str, call: str
+) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"runtime/dynamic_client.py": f"{import_line}\nclient = {call}\n"},
+    )
+
+    assert "unapproved network-capable module: runtime/dynamic_client.py" in validate(
+        tmp_path, contract_path, schema_path
+    )
 
 
 def test_network_allowlist_cannot_hide_missing_module(tmp_path: Path) -> None:

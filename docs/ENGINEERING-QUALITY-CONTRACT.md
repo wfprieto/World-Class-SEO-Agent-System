@@ -27,3 +27,5 @@ Repository branch coverage cannot fall below 78 percent. Critical files also hav
 3. Tighten baselines whenever debt is removed. `--write-baseline` is reduction-only and requires `--approve-tightening` with the SHA-256 printed by a rejected unapproved write; it refuses new exceptions, raised ceilings, new Ruff fingerprints, or lowered coverage floors.
 4. Run focused boundary tests, full mypy, the complete suite, branch coverage, risk coverage, security mutations, clean-wheel checks, and cross-platform CI.
 5. Do not describe a green ratchet as proof of deployment, release maturity, provider operation, or SEO effectiveness.
+
+The validator requires preserved prior-contract Git history, immutable-SHA checkout steps with `fetch-depth: 0`, the exact canonical pytest coverage targets and report paths, and `validate_risk_coverage.py outputs/coverage.json`. Missing history or weakened CI wiring fails closed.

@@ -66,7 +66,9 @@ def _relative_import_base(source: str, *, is_package: bool, level: int) -> str |
     return ".".join(package_parts[:keep])
 
 
-def _imports(tree: ast.AST, *, source: str, is_package: bool) -> set[str]:
+def _imports(
+    tree: ast.AST, *, source: str, is_package: bool, known_modules: set[str]
+) -> set[str]:
     imported: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -75,15 +77,45 @@ def _imports(tree: ast.AST, *, source: str, is_package: bool) -> set[str]:
             if node.level == 0:
                 if node.module:
                     imported.add(node.module)
+                    imported.update(
+                        candidate
+                        for alias in node.names
+                        if (candidate := f"{node.module}.{alias.name}") in known_modules
+                    )
                 continue
             base = _relative_import_base(source, is_package=is_package, level=node.level)
             if base is None:
                 continue
             if node.module:
-                imported.add(f"{base}.{node.module}")
+                target = f"{base}.{node.module}"
+                imported.add(target)
+                imported.update(
+                    candidate
+                    for alias in node.names
+                    if (candidate := f"{target}.{alias.name}") in known_modules
+                )
             else:
-                imported.update(f"{base}.{alias.name}" for alias in node.names)
+                imported.update(
+                    candidate
+                    for alias in node.names
+                    if (candidate := f"{base}.{alias.name}") in known_modules
+                )
     return imported
+
+
+def _resolved_imports(
+    module_paths: dict[str, Path], module_trees: dict[str, ast.AST]
+) -> dict[str, set[str]]:
+    known_modules = set(module_paths)
+    return {
+        source: _imports(
+            tree,
+            source=source,
+            is_package=module_paths[source].name == "__init__.py",
+            known_modules=known_modules,
+        )
+        for source, tree in module_trees.items()
+    }
 
 
 def _call_name(node: ast.AST) -> str | None:
@@ -93,6 +125,28 @@ def _call_name(node: ast.AST) -> str | None:
         parent = _call_name(node.value)
         return f"{parent}.{node.attr}" if parent else node.attr
     return None
+
+
+def _import_aliases(tree: ast.AST) -> dict[str, str]:
+    aliases: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local_name = alias.asname or alias.name.split(".", 1)[0]
+                aliases[local_name] = alias.name if alias.asname else local_name
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            for alias in node.names:
+                aliases[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+    return aliases
+
+
+def _resolved_call_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
+    call_name = _call_name(node)
+    if call_name is None:
+        return None
+    head, separator, tail = call_name.partition(".")
+    resolved_head = aliases.get(head, head)
+    return f"{resolved_head}{separator}{tail}"
 
 
 def _literal_process_command(node: ast.AST) -> str | None:
@@ -120,10 +174,10 @@ def _import_has_network_egress(node: ast.AST) -> bool:
     return False
 
 
-def _call_has_network_egress(node: ast.AST) -> bool:
+def _call_has_network_egress(node: ast.AST, aliases: dict[str, str]) -> bool:
     if not isinstance(node, ast.Call):
         return False
-    call_name = _call_name(node.func)
+    call_name = _resolved_call_name(node.func, aliases)
     if call_name in {"__import__", "importlib.import_module"} and node.args:
         imported = node.args[0]
         return (
@@ -138,8 +192,9 @@ def _call_has_network_egress(node: ast.AST) -> bool:
 
 
 def _has_network_import(tree: ast.AST) -> bool:
+    aliases = _import_aliases(tree)
     return any(
-        _import_has_network_egress(node) or _call_has_network_egress(node)
+        _import_has_network_egress(node) or _call_has_network_egress(node, aliases)
         for node in ast.walk(tree)
     )
 
@@ -192,7 +247,7 @@ def validate(
         errors.append("dependency exceptions must have unique source-target pairs")
 
     module_paths: dict[str, Path] = {}
-    module_imports: dict[str, set[str]] = {}
+    module_trees: dict[str, ast.AST] = {}
     network_paths: set[str] = set()
     for package in sorted(package_layers):
         package_root = root / package
@@ -207,10 +262,10 @@ def validate(
                 continue
             source = _module_name(path, root)
             module_paths[source] = path
-            module_imports[source] = _imports(tree, source=source, is_package=path.name == "__init__.py")
+            module_trees[source] = tree
             if _has_network_import(tree):
                 network_paths.add(path.relative_to(root).as_posix())
-
+    module_imports = _resolved_imports(module_paths, module_trees)
     observed_cross_edges: set[tuple[str, str]] = set()
     graph: dict[str, set[str]] = {name: set() for name in module_paths}
     for source, imports in module_imports.items():

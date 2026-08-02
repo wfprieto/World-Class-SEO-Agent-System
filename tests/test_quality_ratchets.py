@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from scripts import validate_quality_ratchets as ratchets
 from scripts.validate_quality_ratchets import (
     FILE_DEFAULTS,
     FILE_METRICS,
@@ -19,6 +20,7 @@ from scripts.validate_quality_ratchets import (
     _monotonic_contract_errors,
     _repository_setting_errors,
     _ruff_counts,
+    _workflow_errors,
     main,
     measure,
     tightened_contract,
@@ -233,3 +235,73 @@ def test_safe_updater_rejects_new_debt_and_cli_requires_exact_approval(
     assert output["current_contract_sha256"] == _contract_digest(
         json.loads((ROOT / "governance/code-quality-ratchet.json").read_text(encoding="utf-8"))
     )
+
+
+def test_canonical_validation_fails_closed_without_prior_git_history(
+    tmp_path: Path, monkeypatch
+) -> None:
+    contract_path = _baseline(tmp_path)
+    monkeypatch.setattr(ratchets, "ROOT", tmp_path)
+    monkeypatch.setattr(ratchets, "_previous_contract", lambda *_args: None)
+    errors = ratchets.validate(
+        tmp_path, contract_path, enforce_repository_settings=False
+    )
+    assert "quality ratchet prior contract Git history is unavailable" in errors
+
+
+def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    assert _workflow_errors(workflow, 78.0) == []
+    no_checkout = "\n".join(
+        line for line in workflow.splitlines() if "uses: actions/checkout@" not in line
+    )
+    assert "CI requires at least one pinned actions/checkout step" in _workflow_errors(
+        no_checkout, 78.0
+    )
+    unpinned = workflow.replace(
+        "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "actions/checkout@v7",
+        1,
+    )
+    assert any("immutable 40-character SHA" in error for error in _workflow_errors(unpinned, 78.0))
+    shallow = workflow.replace("fetch-depth: 0", "fetch-depth: 1", 1)
+    assert any("fetch-depth: 0" in error for error in _workflow_errors(shallow, 78.0))
+
+
+def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    mutations = (
+        workflow.replace("--cov=runtime", "--cov=runtime2", 1),
+        workflow.replace("outputs/coverage.json", "outputs/weaker.json", 1),
+        workflow.replace("--cov-fail-under=78", "--cov-fail-under=77", 1),
+        workflow.replace("python scripts/validate_risk_coverage.py outputs/coverage.json", "", 1),
+        workflow.replace(
+            "python scripts/validate_risk_coverage.py outputs/coverage.json",
+            "python scripts/renamed_risk_coverage.py outputs/coverage.json",
+            1,
+        ),
+    )
+    for mutated in mutations:
+        assert _workflow_errors(mutated, 78.0)
+
+
+def test_repository_policy_rejects_risk_script_deletion_and_floor_weakening(
+    tmp_path: Path
+) -> None:
+    (tmp_path / ".github/workflows").mkdir(parents=True)
+    (tmp_path / "scripts").mkdir()
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    critical = next(iter(MINIMUM_CRITICAL_COVERAGE))
+    pyproject = pyproject.replace(
+        f'"{critical}" = {int(MINIMUM_CRITICAL_COVERAGE[critical])}',
+        f'"{critical}" = {int(MINIMUM_CRITICAL_COVERAGE[critical]) - 1}',
+    )
+    (tmp_path / "pyproject.toml").write_text(pyproject, encoding="utf-8")
+    (tmp_path / ".github/workflows/validate.yml").write_text(
+        (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    contract = json.loads((ROOT / "governance/code-quality-ratchet.json").read_text())
+    errors = _repository_setting_errors(tmp_path, contract)
+    assert f"critical coverage floor is missing or weak: {critical}" in errors
+    assert "CI risk coverage validator script is missing" in errors
