@@ -45,6 +45,12 @@ def capture(owner_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
     rules = {item["type"]: item for item in ruleset["rules"]}
     pull_request = rules["pull_request"]["parameters"]
     status_checks = rules["required_status_checks"]["parameters"]
+    if "bypass_actors" in ruleset:
+        bypass_actor_count = len(ruleset["bypass_actors"])
+    elif owner_snapshot is not None:
+        bypass_actor_count = owner_snapshot["ruleset"]["bypass_actor_count"]
+    else:
+        raise RuntimeError("authenticated provider response omitted bypass actors")
     analysis = repository.get("security_and_analysis", {})
     if owner_snapshot is not None:
         analysis = {
@@ -110,7 +116,7 @@ def capture(owner_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
             "required_linear_history": "required_linear_history" in rules,
             "block_deletion": "deletion" in rules,
             "block_non_fast_forward": "non_fast_forward" in rules,
-            "bypass_actor_count": len(ruleset["bypass_actors"]),
+            "bypass_actor_count": bypass_actor_count,
         },
         "source_endpoints": (
             [
@@ -125,7 +131,11 @@ def capture(owner_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
                 f"GET /repos/{REPOSITORY}/rulesets/{RULESET_ID}",
             ]
         ),
-        "live_fields": ["default_branch", "discussions", "ruleset"],
+        "live_fields": [
+            "default_branch",
+            "discussions",
+            "ruleset_except_bypass_actor_count",
+        ],
         "fresh_owner_capture_fields": (
             []
             if owner_snapshot is None
@@ -135,6 +145,7 @@ def capture(owner_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
                 "dependabot_security_updates",
                 "secret_scanning",
                 "secret_scanning_push_protection",
+                "ruleset.bypass_actor_count",
             ]
         ),
         "owner_capture_at": None if owner_snapshot is None else owner_snapshot["captured_at"],
