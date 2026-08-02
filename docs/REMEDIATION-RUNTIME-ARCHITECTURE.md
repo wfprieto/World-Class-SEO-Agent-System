@@ -32,6 +32,14 @@ request
 - The workflow graph is bounded by node, LLM-call, concurrency, correction, depth, runtime, and optional estimated-cost ceilings.
 - One adapter failure does not erase independent successful evidence.
 - Every dependency handoff is either consumed or explicitly blocked.
+- Handoff governance is bounded to explicit edges in the materialized workflow graph. At
+  workflow completion, required edges are reconciled by stable session and node identity;
+  missing, duplicate, foreign-session (stale), wrong-recipient, wrong-consumer, and silently
+  dropped records are reported deterministically. Any still-pending handoff becomes `BLOCKED`
+  with an `unresolved_reason`; the runtime does not infer delivery from natural-language text.
+- Bounded specialist capacity is explicit in the materialized graph. Candidates beyond the
+  two-vertical or six-support limits appear in `capacity_exclusions` with
+  `NOT_EXECUTED_CAPACITY`, and any such exclusion prevents a `COMPLETE` workflow claim.
 - Scrummaster decisions are schema-valid and precede strategic use of disputed or high-risk findings.
 - Synthetic echo execution proves wiring only and returns a `PARTIAL` workflow, never a completed SEO audit.
 - The canonical SEO evidence store remains `adapters/evidence_store.py`; runtime event memory is separate.

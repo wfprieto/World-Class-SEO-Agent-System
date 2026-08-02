@@ -101,15 +101,12 @@ If this information is missing, ask for it before making paid-tool recommendatio
 ## Primary Skills
 
 - `seo-diagnostic-stack-design`
-- `analytics-synthesis`
-- `score-normalization`
-- `plain-language-seo-report`
-- `official-source-monitor`
-- `decision-record`
+- `product-proof-technical-audit`
+- `ai-retrieval-timeout-audit`
 
 ## Output
 
-Use `templates/seo-diagnostic-infrastructure-plan.md`.
+Use `templates/audit-report.md`.
 
 ## Budget-Aware Stack Guidance
 

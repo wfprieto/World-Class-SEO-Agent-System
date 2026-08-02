@@ -14,7 +14,15 @@
     "requested_action",
     "risk_level",
     "acceptance_criteria",
-    "due_trigger"
+    "due_trigger",
+    "source_node_id",
+    "target_node_id",
+    "status",
+    "receiving_output_id",
+    "receiving_node_id",
+    "consumed_at",
+    "unresolved_reason"
+    ,"resolution"
   ],
   "properties": {
     "handoff_id": {"type": "string"},
@@ -30,12 +38,17 @@
     },
     "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
     "due_trigger": {"type": "string"},
+    "source_node_id": {"type": "string"},
+    "target_node_id": {"type": "string"},
     "status": {
       "type": "string",
       "enum": ["CREATED", "CONSUMED", "BLOCKED"]
     },
     "receiving_output_id": {"type": "string"},
-    "consumed_at": {"type": "string"}
+    "receiving_node_id": {"type": "string"},
+    "consumed_at": {"type": "string"},
+    "unresolved_reason": {"type": "string"},
+    "resolution": {"enum": ["PENDING", "ACCEPTED", "CHALLENGED", "UNRESOLVED"]}
   },
   "examples": [
     {
@@ -49,9 +62,14 @@
       "risk_level": "High",
       "acceptance_criteria": ["Localized sample URLs self-canonicalize", "Existing US product URLs unchanged"],
       "due_trigger": "Before international sitemap resubmission",
+      "source_node_id": "technical-analysis",
+      "target_node_id": "engineering-implementation",
       "status": "CREATED",
       "receiving_output_id": "",
-      "consumed_at": ""
+      "receiving_node_id": "",
+      "consumed_at": "",
+      "unresolved_reason": ""
+      ,"resolution": "PENDING"
     }
   ]
 }

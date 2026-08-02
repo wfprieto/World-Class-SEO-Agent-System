@@ -52,6 +52,7 @@ def _echo_output(
     skills: list[str],
     knowledge: list[str],
     prior_outputs: list[dict[str, Any]],
+    required_handoffs: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Explicit synthetic output for deterministic offline execution, never a live finding."""
     prior_finding_ids = [
@@ -114,7 +115,24 @@ def _echo_output(
         "skills_used": skills,
         "knowledge_used": knowledge,
         "execution_state": "SYNTHETIC",
+        "handoff_acknowledgements": _echo_handoff_acknowledgements(required_handoffs),
     }
+
+
+def _echo_handoff_acknowledgements(
+    required_handoffs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "handoff_id": handoff["handoff_id"],
+            "disposition": "ACCEPTED",
+            "requested_action_addressed": handoff["requested_action"],
+            "evidence_refs_addressed": handoff["evidence_refs"],
+            "acceptance_criteria_addressed": handoff["acceptance_criteria"],
+            "resolution_note": "Synthetic acknowledgement; not production evidence.",
+        }
+        for handoff in required_handoffs
+    ]
 
 
 class StructuredOutputService:
@@ -136,6 +154,36 @@ class StructuredOutputService:
         errors.extend(validate_evidence_binding(output))
         return errors
 
+    def _complete_echo(
+        self,
+        *,
+        agent_name: str,
+        request: str,
+        domain: str,
+        skills: list[str],
+        knowledge: list[str],
+        prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]],
+    ) -> StructuredOutputResult:
+        output = _echo_output(
+            agent_name,
+            request,
+            domain,
+            skills,
+            knowledge,
+            prior_outputs,
+            required_handoffs,
+        )
+        errors = self._errors(output, expected_agent=agent_name)
+        return StructuredOutputResult(
+            status="ok" if not errors else "failed",
+            output=output if not errors else None,
+            errors=errors,
+            attempts=0,
+            response=None,
+            synthetic=True,
+        )
+
     async def complete_agent_output(
         self,
         client: LLMClient,
@@ -147,22 +195,18 @@ class StructuredOutputService:
         skills: list[str],
         knowledge: list[str],
         prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]],
         budget: RunBudget,
     ) -> StructuredOutputResult:
         if getattr(client, "provider", "") == "echo":
-            synthetic_output = _echo_output(
-                agent_name, request, domain, skills, knowledge, prior_outputs
-            )
-            synthetic_errors = self._errors(
-                synthetic_output, expected_agent=agent_name
-            )
-            return StructuredOutputResult(
-                status="ok" if not synthetic_errors else "failed",
-                output=synthetic_output if not synthetic_errors else None,
-                errors=synthetic_errors,
-                attempts=0,
-                response=None,
-                synthetic=True,
+            return self._complete_echo(
+                agent_name=agent_name,
+                request=request,
+                domain=domain,
+                skills=skills,
+                knowledge=knowledge,
+                prior_outputs=prior_outputs,
+                required_handoffs=required_handoffs,
             )
 
         schema = self.schemas.load("agent-output")

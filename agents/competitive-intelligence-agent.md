@@ -28,14 +28,13 @@ Monitor competitors, identify gaps, detect threats, and translate competitive mo
 ## Primary Skills
 
 - `competitive-gap`
-- `backlink-gap`
-- `sxo-page-fit`
-- `geo-aio-citation-audit`
 - `competitor-change-monitor`
+- `competitor-comparison-page-build`
+- `ai-citation-opportunity-map`
 
 ## Output
 
-Use `templates/competitive-intelligence-brief.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

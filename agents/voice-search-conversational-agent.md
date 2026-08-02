@@ -26,12 +26,10 @@ Optimize content for spoken queries, conversational search, assistant-style answ
 
 - `conversational-query-map`
 - `content-brief`
-- `schema-detect-validate-generate`
-- `local-seo-audit`
 
 ## Output
 
-Use `templates/conversational-seo-plan.md`.
+Use `templates/content-brief.md`.
 
 ## Forbidden Actions
 

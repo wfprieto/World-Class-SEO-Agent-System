@@ -27,9 +27,11 @@ Protect the site from legal, policy, regulatory, editorial, and search-quality r
 ## Primary Skills
 
 - `compliance-review`
-- `content-audit`
 - `spam-policy-check`
 - `claims-risk-review`
+- `consent-mode-diagnostic`
+- `product-proof-technical-audit`
+- `review-compliance-audit`
 
 ## Output
 

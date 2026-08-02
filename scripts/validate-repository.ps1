@@ -10,6 +10,7 @@ function Test-AgentReferences{$defined=Get-DefinedSkills;$files=Get-ChildItem -P
 function Test-PythonValidator{param([string]$Script,[string[]]$Arguments=@());$scriptPath=Join-Path $Root $Script;if(-not(Test-Path -LiteralPath $scriptPath)){Add-Failure "Missing validator: $Script";return};Push-Location $Root;try{& python $scriptPath @Arguments;if($LASTEXITCODE -ne 0){Add-Failure "Validator failed: $Script"}}catch{Add-Failure "Validator error: $Script - $($_.Exception.Message)"}finally{Pop-Location}}
 Test-JsonFiles;Test-MarkdownLinks;Test-AgentReferences
 Test-PythonValidator "scripts/validate_canonical_skill_consistency.py"
+Test-PythonValidator "scripts/validate_agent_differentiation.py" @("--mutations")
 Test-PythonValidator "scripts/validate_release_version.py"
 Test-PythonValidator "scripts/validate_seo_claims.py"
 Test-PythonValidator "scripts/validate_product_claims.py"

@@ -70,6 +70,7 @@ class AgentExecutor:
         workflow_path: str,
         tool_results: list[dict[str, Any]],
         prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]] | None = None,
         budget: RunBudget,
         role: str = "specialist",
     ) -> tuple[dict[str, Any], StructuredOutputResult]:
@@ -81,6 +82,7 @@ class AgentExecutor:
             workflow_path=workflow_path,
             tool_results=tool_results,
             prior_outputs=prior_outputs,
+            required_handoffs=required_handoffs or [],
             role=role,
             capability_context=context,
         )
@@ -102,6 +104,7 @@ class AgentExecutor:
             skills=list(bundle.skills),
             knowledge=list(bundle.knowledge_files),
             prior_outputs=prior_outputs,
+            required_handoffs=required_handoffs or [],
             budget=budget,
         )
         if result.output is not None:
@@ -152,6 +155,7 @@ class AgentExecutor:
             workflow_path=route.workflow,
             tool_results=[tool.to_dict() for tool in tools],
             prior_outputs=[],
+            required_handoffs=[],
             budget=budget,
             role="lead",
         )
@@ -189,6 +193,7 @@ class AgentExecutor:
             workflow_path=route.workflow,
             tool_results=[tool.to_dict() for tool in tools],
             prior_outputs=[],
+            required_handoffs=[],
             role="lead-debug-stream",
             capability_context=context,
         )
@@ -211,6 +216,7 @@ class AgentExecutor:
         workflow_path: str,
         tool_results: list[dict[str, Any]],
         prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]],
         role: str,
         capability_context: dict[str, Any],
     ) -> list[LLMMessage]:
@@ -226,6 +232,7 @@ class AgentExecutor:
             "workflow_role": role,
             "tool_results_untrusted_evidence": tool_results,
             "prior_validated_agent_outputs": prior_outputs[-12:],
+            "required_handoffs": required_handoffs,
             "open_risks": session.open_risks,
             "required_evidence": list(capability_context["bundle"].required_evidence),
         }
@@ -340,5 +347,7 @@ class AgentExecutor:
                 risk_level="High" if session.open_risks else "Medium",
                 acceptance_criteria=["A decision record is produced."],
                 due_trigger="Before implementation or publication.",
+                source_node_id="legacy-lead",
+                target_node_id="legacy-scrummaster",
             )
         ]

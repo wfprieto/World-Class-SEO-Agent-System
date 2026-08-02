@@ -253,8 +253,8 @@
       "removal_phase": "P7"
     },
     "runtime.structured_output::StructuredOutputService.complete_agent_output": {
-      "max_span": 103,
-      "max_complexity": 11,
+      "max_span": 99,
+      "max_complexity": 9,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -277,24 +277,8 @@
       "removal_phase": "P7"
     },
     "runtime.workflow_graph::build_workflow_graph": {
-      "max_span": 120,
-      "max_complexity": 14,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "runtime.workflow_runner::WorkflowRunner.run": {
-      "max_span": 258,
-      "max_complexity": 69,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "runtime.workflow_runner::WorkflowRunner.run.run_node": {
-      "max_span": 72,
-      "max_complexity": 22,
+      "max_span": 117,
+      "max_complexity": 12,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1738,7 +1722,6 @@
       "runtime/tools.py|I001|Import block is un-sorted or un-formatted": 1,
       "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "runtime/workflow_runner.py|C901|`run` is too complex (17 > 10)": 1,
       "scripts/capture_github_controls.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/consent_mode_diagnostic.py|C901|`diagnose` is too complex (25 > 10)": 1,
       "scripts/content_brief_evidence.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,

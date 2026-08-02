@@ -33,11 +33,11 @@ Design site structures, URL systems, navigation, taxonomy, internal links, and c
 - `keyword-cluster`
 - `internal-link-map`
 - `content-inventory`
-- `sitemap-audit`
+- `product-proof-technical-audit`
 
 ## Output
 
-Use `templates/ia-map.md` and include URL rules, navigation rules, internal-link rules, and consolidation decisions.
+Use `templates/audit-report.md` and include URL rules, navigation rules, internal-link rules, and consolidation decisions.
 
 ## Forbidden Actions
 

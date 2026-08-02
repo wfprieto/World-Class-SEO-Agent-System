@@ -29,9 +29,9 @@ Convert evidence from all agents into a focused SEO strategy that balances busin
 
 - `seo-roadmap`
 - `prioritization-matrix`
-- `competitive-gap`
 - `forecasting`
 - `executive-summary`
+- `client-performance-narrative`
 
 ## Output
 

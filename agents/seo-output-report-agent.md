@@ -34,12 +34,12 @@ Transform everything the SEO system learned, changed, fixed, created, recommende
 
 - `plain-language-seo-report`
 - `executive-summary`
-- `score-normalization`
-- `decision-record`
+- `product-proof-technical-audit`
+- `client-performance-narrative`
 
 ## Output
 
-Use `templates/plain-language-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Reporting Rules
 

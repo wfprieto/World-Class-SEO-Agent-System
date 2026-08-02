@@ -231,6 +231,23 @@
       "type": "string",
       "enum": ["COMPLETE", "PARTIAL", "BLOCKED", "FAILED", "SYNTHETIC"],
       "description": "Truthful execution state of the agent node."
+    },
+    "handoff_acknowledgements": {
+      "type": "array",
+      "description": "Explicit, per-handoff resolution records. Omission leaves an addressed required handoff unresolved.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handoff_id", "disposition", "requested_action_addressed", "evidence_refs_addressed", "acceptance_criteria_addressed", "resolution_note"],
+        "properties": {
+          "handoff_id": {"type": "string", "minLength": 1},
+          "disposition": {"enum": ["ACCEPTED", "CHALLENGED", "UNRESOLVED"]},
+          "requested_action_addressed": {"type": "string"},
+          "evidence_refs_addressed": {"type": "array", "items": {"type": "string"}},
+          "acceptance_criteria_addressed": {"type": "array", "items": {"type": "string"}},
+          "resolution_note": {"type": "string", "minLength": 1}
+        }
+      }
     }
   },
   "examples": [

@@ -29,10 +29,11 @@ Improve visibility and trust for local, service-area, brick-and-mortar, franchis
 ## Primary Skills
 
 - `local-seo-audit`
-- `schema-detect-validate-generate`
 - `citation-audit`
-- `review-strategy`
-- `local-landing-page-brief`
+- `gbp-profile-audit`
+- `geo-grid-rank-scan`
+- `cross-platform-nap-verify`
+- `review-compliance-audit`
 
 ## Output
 

@@ -31,6 +31,7 @@ class WorkflowGraph:
     id: str
     nodes: list[WorkflowNode] = field(default_factory=list)
     deliverable_node_id: str = ""
+    capacity_exclusions: list[dict[str, str]] = field(default_factory=list)
 
     def validate(self, *, max_nodes: int, max_depth: int) -> None:
         if not self.nodes:
@@ -111,6 +112,7 @@ class WorkflowGraph:
             "id": self.id,
             "deliverable_node_id": self.deliverable_node_id,
             "nodes": [node.to_dict() for node in self.nodes],
+            "capacity_exclusions": self.capacity_exclusions,
         }
 
 
@@ -143,7 +145,24 @@ def _vertical_agents(session: SessionState) -> list[str]:
         agents.append("Local SEO Agent")
     if any(token in value for token in ("international", "multilingual", "global")):
         agents.append("International & Multilingual SEO Agent")
-    return agents[:2]
+    return agents
+
+
+def _capacity_exclusions(agents: list[str], reason: str) -> list[dict[str, str]]:
+    return [
+        {"agent": agent, "reason": reason, "status": "NOT_EXECUTED_CAPACITY"}
+        for agent in agents
+    ]
+
+
+def _eligible_support(route: RouteResult) -> list[str]:
+    reserved = {
+        route.lead_agent,
+        "SEO Scrummaster Agent",
+        "Senior SEO Strategist Agent",
+        "SEO Output Report Agent",
+    }
+    return _dedupe(agent for agent in route.supporting_agents if agent not in reserved)
 
 
 def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowGraph:
@@ -158,7 +177,8 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
             "GEO / AIO Optimization Agent",
             "Negative SEO & Security Agent",
         ]
-        optional_slots = vertical or ["SEO CRO Agent", "Competitive Intelligence Agent"]
+        selected_vertical = vertical[:2]
+        optional_slots = selected_vertical or ["SEO CRO Agent", "Competitive Intelligence Agent"]
         specialists = _dedupe([*fixed, *optional_slots])[:8]
         specialist_nodes = [
             WorkflowNode(
@@ -197,20 +217,13 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
             id="full-audit-v2",
             nodes=[*specialist_nodes, lead, scrum, strategy, report],
             deliverable_node_id=report.id,
+            capacity_exclusions=_capacity_exclusions(
+                vertical[2:], "vertical specialist capacity is bounded to two agents"
+            ),
         )
 
-    support = [
-        agent
-        for agent in route.supporting_agents
-        if agent
-        not in {
-            route.lead_agent,
-            "SEO Scrummaster Agent",
-            "Senior SEO Strategist Agent",
-            "SEO Output Report Agent",
-        }
-    ]
-    support = _dedupe(support)[:6]
+    deduped_support = _eligible_support(route)
+    support = deduped_support[:6]
     support_nodes = [
         WorkflowNode(
             id=f"support-{index:02d}-{_slug(agent)}",
@@ -265,4 +278,7 @@ def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowG
         id=f"routed-{_slug(route.lead_agent)}-v2",
         nodes=nodes,
         deliverable_node_id=final_dependency,
+        capacity_exclusions=_capacity_exclusions(
+            deduped_support[6:], "support specialist capacity is bounded to six agents"
+        ),
     )

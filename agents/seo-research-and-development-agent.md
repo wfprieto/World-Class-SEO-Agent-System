@@ -26,13 +26,11 @@ Design controlled SEO experiments, evaluate new tactics, document outcomes, and 
 ## Primary Skills
 
 - `experiment-design`
-- `seo-drift-monitor`
-- `forecasting`
-- `decision-record`
+- `official-source-monitor`
 
 ## Output
 
-Use `templates/seo-experiment-brief.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

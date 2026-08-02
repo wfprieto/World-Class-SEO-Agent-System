@@ -27,9 +27,10 @@ Coordinate the SEO agent system, challenge assumptions, prioritize work, enforce
 
 - `request-routing`
 - `scrummaster-debate`
-- `prioritization-matrix`
 - `decision-record`
 - `definition-of-done`
+- `prioritization-matrix`
+- `product-proof-technical-audit`
 
 ## Output
 

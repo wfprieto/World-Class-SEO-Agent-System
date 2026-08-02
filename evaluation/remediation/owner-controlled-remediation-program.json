@@ -289,7 +289,7 @@
       "id": "P5",
       "title": "Agent differentiation and handoff governance",
       "status": "IN_PROGRESS",
-      "rollback_baseline_commit": null,
+      "rollback_baseline_commit": "6532a9c04c21fe35458228a2bb63fe4820561099",
       "verified_commit": null,
       "review_snapshot_commit": null,
       "frozen_package_commit": null,

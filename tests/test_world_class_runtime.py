@@ -212,13 +212,15 @@ def test_dependency_handoff_requires_referenced_evidence_before_consumption():
     )
     unconsumed = [
         handoff for handoff in result["handoffs"]
-        if handoff["status"] == "CREATED"
+        if handoff["status"] == "BLOCKED"
     ]
     assert result["handoffs_created"] > 0
     assert result["handoffs_consumed"] < result["handoffs_created"]
     assert unconsumed
     assert all(handoff["evidence_refs"] for handoff in unconsumed)
     assert all(not handoff["receiving_output_id"] for handoff in unconsumed)
+    assert all(handoff["unresolved_reason"] for handoff in unconsumed)
+    assert result["handoff_governance"]["status"] == "FAIL"
     assert result["workflow_status"] == "PARTIAL"
 
 

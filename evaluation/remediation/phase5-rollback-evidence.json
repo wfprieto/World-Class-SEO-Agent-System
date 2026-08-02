@@ -1,0 +1,24 @@
+{
+  "schema_version": "3.0.0",
+  "phase_id": "P5",
+  "strategy": "DYNAMIC_EXACT_SNAPSHOT",
+  "baseline_commit": "6532a9c04c21fe35458228a2bb63fe4820561099",
+  "candidate_selector": "review_snapshot_commit",
+  "commit_range": "baseline_commit..review_snapshot_commit",
+  "revert_order": "newest_first",
+  "expected_baseline_tree": "7bb7c04895773d6d9585a7a838c0586ba51b8b3b",
+  "workflow": ".github/workflows/validate.yml",
+  "job": "phase-rollback-certification",
+  "required_assertions": [
+    "candidate_equals_review_snapshot_commit",
+    "all_commits_in_baseline_exclusive_range_reverted",
+    "post_revert_tree_equals_baseline_tree",
+    "baseline_validation_passes"
+  ],
+  "recovery_position": "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list <baseline_commit>..<review_snapshot_commit>, and revert every returned commit newest-to-oldest as one bounded operation.",
+  "limitations": [
+    "Execute in a clean disposable checkout and preserve the candidate reference before recovery.",
+    "The range must be linear; merge commits fail certification until explicit mainline handling is supported.",
+    "This phase changes repository-local agent differentiation and handoff governance contracts only; PROVIDER, DEPLOYED, and OPERATIONAL evidence remain out of scope."
+  ]
+}

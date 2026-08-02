@@ -52,17 +52,32 @@ class Handoff:
     risk_level: str
     acceptance_criteria: list[str]
     due_trigger: str
+    source_node_id: str = ""
+    target_node_id: str = ""
     status: str = "CREATED"
     receiving_output_id: str = ""
+    receiving_node_id: str = ""
     consumed_at: str = ""
+    unresolved_reason: str = ""
+    resolution: str = "PENDING"
 
-    def consume(self, output_id: str) -> None:
+    def consume(
+        self,
+        output_id: str,
+        node_id: str = "",
+        disposition: str = "ACCEPTED",
+    ) -> None:
         self.status = "CONSUMED"
         self.receiving_output_id = output_id
+        self.receiving_node_id = node_id
         self.consumed_at = datetime.now(timezone.utc).isoformat()
+        self.unresolved_reason = ""
+        self.resolution = disposition
 
-    def block(self) -> None:
+    def block(self, reason: str = "Required handoff could not be consumed.") -> None:
         self.status = "BLOCKED"
+        self.unresolved_reason = reason
+        self.resolution = "UNRESOLVED"
 
 
 @dataclass

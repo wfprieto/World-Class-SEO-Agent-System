@@ -64,10 +64,9 @@ For each request, identify:
 - `product-page-seo-audit`
 - `product-schema-validate-generate`
 - `merchant-data-consistency-audit`
-- `marketplace-intelligence`
-- `marketplace-keyword-gap`
 - `faceted-navigation-governance`
-- `agentic-commerce-readiness-check`
+- `marketplace-intelligence`
+- `product-proof-technical-audit`
 
 `merchant-data-consistency-audit` is mandatory when both page evidence and merchant/feed evidence are available. It may also be invoked with partial evidence to establish the missing reconciliation fields.
 
@@ -85,7 +84,7 @@ For each request, identify:
 
 ## Output
 
-Use the canonical e-commerce report schema. The human-readable report must include:
+Use `templates/ecommerce-seo-report.md` as the canonical e-commerce report. The human-readable report must include:
 
 - executive decision and execution status;
 - scope, target market, active tier, and evidence coverage;
