@@ -84,7 +84,7 @@ Run `python -m seoctl --help` for interactive argument details.
 | 4 | Blocked by evidence, authorization, privacy or governance gate |
 | 5 | Execution or validation failure |
 
-Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.
+Every command writes exactly one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`. Invalid or missing arguments write no usage text, use a stable command ID and `error.code`, and exit 2.
 
 ## Examples
 

@@ -60,6 +60,11 @@
           "notes": {
             "type": "string",
             "description": "Short note explaining relevance, limitations, or confidence."
+          },
+          "state": {
+            "type": "string",
+            "enum": ["CURRENT", "STALE", "MISSING", "INVALID", "CONTRADICTORY"],
+            "description": "Truthful freshness and consistency state used by finding reconciliation."
           }
         }
       }

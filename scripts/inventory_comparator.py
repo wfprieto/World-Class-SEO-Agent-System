@@ -10,11 +10,18 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import importlib
 import json
 import re
 import subprocess
 from pathlib import Path
 from typing import Any
+
+effective_inventory = importlib.import_module(
+    "scripts.effective_inventory" if __package__ else "effective_inventory"
+)
+_effective_command_registry = effective_inventory.effective_command_registry
+_effective_inventory_hashes = effective_inventory.effective_inventory_hashes
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPARATIVE = ROOT / "evaluation" / "comparative"
@@ -72,6 +79,27 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def validate_inventory_freshness(parity: dict[str, Any], root: Path = ROOT) -> list[str]:
+    expected = parity.get("canonical_inventory_sha256")
+    if not isinstance(expected, dict):
+        return ["canonical effective inventory hashes are missing"]
+    try:
+        actual = _effective_inventory_hashes(root)
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        return [f"effective inventory could not be merged: {exc}"]
+    errors = (
+        []
+        if set(expected) == set(actual)
+        else ["canonical effective inventory hash set is incomplete"]
+    )
+    errors.extend(
+        f"effective inventory drifted since evaluation: {label}"
+        for label, digest in actual.items()
+        if expected.get(label) != digest
+    )
+    return errors
+
+
 def validate_current_target_commits(
     world: dict[str, Any],
     parity: dict[str, Any],
@@ -96,24 +124,23 @@ def validate_current_target_commits(
     }
     for label, commit in target_values.items():
         if not re.fullmatch(r"[0-9a-f]{40}", commit) or not _is_ancestor(root, commit, head):
-            errors.append(f"{label} target commit is stale or is not an ancestor of current HEAD {head}")
+            errors.append(
+                f"{label} target commit is stale or is not an ancestor of current HEAD {head}"
+            )
 
-    pins = parity.get("canonical_inventory_sha256", {})
-    for relative in ("seoctl/command-registry.json", "orchestration/capability-registry.json"):
-        path = root / relative
-        expected = pins.get(relative) if isinstance(pins, dict) else None
-        if not path.is_file() or expected != _sha256(path):
-            errors.append(f"canonical inventory drifted since evaluation: {relative}")
+    errors.extend(validate_inventory_freshness(parity, root))
     return errors
 
 
 def validate_capability_inventory(ledger: dict[str, Any], root: Path = ROOT) -> list[str]:
-    """Cross-check code-state claims against the canonical command registry."""
-    registry_path = root / "seoctl" / "command-registry.json"
-    if not registry_path.is_file():
-        return ["canonical command inventory is missing: seoctl/command-registry.json"]
-    registry = load_json(registry_path)
-    command_ids = {str(row.get("id")) for row in registry.get("commands", []) if isinstance(row, dict)}
+    """Cross-check code-state claims against the effective command registry."""
+    try:
+        registry = _effective_command_registry(root)
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        return [f"effective command inventory could not be merged: {exc}"]
+    command_ids = {
+        str(row.get("id")) for row in registry.get("commands", []) if isinstance(row, dict)
+    }
     errors: list[str] = []
     for row in ledger.get("capabilities", []):
         if not isinstance(row, dict):
@@ -126,10 +153,14 @@ def validate_capability_inventory(ledger: dict[str, Any], root: Path = ROOT) -> 
         code_state = row.get("code_state")
         row_id = row.get("id")
         if present and code_state == "ABSENT":
-            errors.append(f"{row_id} contradicts the canonical command inventory: required commands exist")
+            errors.append(
+                f"{row_id} contradicts the effective command inventory: required commands exist"
+            )
         if not present and code_state == "CODE_VERIFIED":
             missing = sorted(required_ids - command_ids)
-            errors.append(f"{row_id} contradicts the canonical command inventory: missing {missing}")
+            errors.append(
+                f"{row_id} contradicts the effective command inventory: missing {missing}"
+            )
     return errors
 
 
@@ -218,7 +249,8 @@ def _test_functions(path: Path) -> int:
         total += sum(
             1
             for node in ast.walk(tree)
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_")
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name.startswith("test_")
         )
     return total
 
@@ -226,7 +258,9 @@ def _test_functions(path: Path) -> int:
 def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
     agent_files = [path for path in (root / "agents").glob("*.md") if path.name != "AGENT_INDEX.md"]
     script_files = [path for path in (root / "scripts").glob("*.py") if path.name != "__init__.py"]
-    adapter_files = [path for path in (root / "adapters").glob("*.py") if path.name != "__init__.py"]
+    adapter_files = [
+        path for path in (root / "adapters").glob("*.py") if path.name != "__init__.py"
+    ]
     knowledge_files = [path for path in (root / "knowledge").iterdir() if path.is_file()]
     reference_files = list((root / "skills").glob("**/references/*"))
     prompt_files = list((root / "skills" / "flow-prompts").glob("*.md"))
@@ -288,7 +322,10 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
         *[f"world-class: {item}" for item in validate_scorecard(world)],
         *[f"claude-seo: {item}" for item in validate_scorecard(claude)],
         *[f"parity: {item}" for item in validate_parity_ledger(parity)],
-        *[f"freshness: {item}" for item in validate_current_target_commits(world, parity, readiness, root)],
+        *[
+            f"freshness: {item}"
+            for item in validate_current_target_commits(world, parity, readiness, root)
+        ],
         *[f"inventory: {item}" for item in validate_capability_inventory(parity, root)],
     ]
     return {
@@ -301,7 +338,9 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
             "gap": round(weighted_score(claude) - weighted_score(world), 4),
             "target": float(world.get("target_score", 92)),
         },
-        "open_capabilities": sum(1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"),
+        "open_capabilities": sum(
+            1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"
+        ),
     }
 
 

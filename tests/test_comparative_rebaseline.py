@@ -1,24 +1,41 @@
 from __future__ import annotations
 
 import copy
+import json
+import shutil
 from pathlib import Path
 
 from scripts.inventory_comparator import (
     COMPARATIVE,
     _catalog_skill_ids,
-    _skill_ids,
+    _effective_inventory_hashes,
     _sha256,
+    _skill_ids,
     inventory_repo,
     load_json,
     validate_all,
     validate_capability_inventory,
     validate_current_target_commits,
+    validate_inventory_freshness,
     validate_parity_ledger,
     validate_scorecard,
     weighted_score,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _registry_fixture(tmp_path: Path) -> Path:
+    for relative in (
+        "seoctl/command-registry.json",
+        "seoctl/command-registry-overlay.json",
+        "orchestration/capability-registry.json",
+        "orchestration/product-proof-capability-overlay.json",
+    ):
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / relative, target)
+    return tmp_path
 
 
 def test_inventory_digest_is_stable_across_git_line_endings(tmp_path: Path):
@@ -123,6 +140,45 @@ def test_comparative_artifacts_fail_closed_when_target_commit_is_stale():
     assert any("world-class target commit is stale" in error for error in errors)
 
 
+def test_effective_inventory_hashes_bind_both_overlays(tmp_path: Path):
+    root = _registry_fixture(tmp_path)
+    parity = load_json(COMPARATIVE / "capability-parity.json")
+    assert validate_inventory_freshness(parity, root) == []
+
+    command_path = root / "seoctl/command-registry-overlay.json"
+    command_overlay = load_json(command_path)
+    command_overlay["commands"][0]["network"] = "none"
+    command_path.write_text(json.dumps(command_overlay), encoding="utf-8")
+    assert any(
+        "effective_command_registry" in error
+        for error in validate_inventory_freshness(parity, root)
+    )
+
+    shutil.copy2(ROOT / "seoctl/command-registry-overlay.json", command_path)
+    capability_path = root / "orchestration/product-proof-capability-overlay.json"
+    capability_overlay = load_json(capability_path)
+    capability_overlay["agent_overrides"]["SEO Technical Agent"]["skills"].append("synthetic-drift")
+    capability_path.write_text(json.dumps(capability_overlay), encoding="utf-8")
+    assert any(
+        "effective_capability_registry" in error
+        for error in validate_inventory_freshness(parity, root)
+    )
+
+
+def test_effective_inventory_hash_ignores_json_formatting_and_unrelated_files(
+    tmp_path: Path,
+):
+    root = _registry_fixture(tmp_path)
+    before = _effective_inventory_hashes(root)
+    for path in (*root.glob("seoctl/*.json"), *root.glob("orchestration/*.json")):
+        payload = load_json(path)
+        path.write_text(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")), encoding="utf-8"
+        )
+    (root / "unrelated.txt").write_text("not an inventory\n", encoding="utf-8")
+    assert _effective_inventory_hashes(root) == before
+
+
 def test_gap_claim_cannot_contradict_canonical_command_inventory():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
     broken = copy.deepcopy(ledger)
@@ -131,7 +187,10 @@ def test_gap_claim_cannot_contradict_canonical_command_inventory():
 
     errors = validate_capability_inventory(broken, ROOT)
 
-    assert any("unified-command-surface" in error and "canonical command inventory" in error for error in errors)
+    assert any(
+        "unified-command-surface" in error and "effective command inventory" in error
+        for error in errors
+    )
 
 
 def test_current_evidence_keeps_code_live_and_external_proof_separate():
