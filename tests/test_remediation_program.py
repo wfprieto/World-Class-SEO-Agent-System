@@ -38,25 +38,27 @@ def _set_current_phase(payload: dict, phase_id: str) -> None:
 
 
 def test_frozen_in_progress_package_runs_completion_preflight() -> None:
-    payload = _program()
-    phase = next(
+    current = _program()
+    closed_phase = next(
         item
-        for item in reversed(payload["phases"])
-        if item["review"]["evidence_package_hash"]
+        for item in reversed(current["phases"])
+        if item["review_snapshot_commit"] and item["review"]["evidence_package_hash"]
     )
-    phase_id = phase["id"]
-    phase_index = next(
-        index for index, item in enumerate(payload["phases"]) if item["id"] == phase_id
+    snapshot_text = subprocess.check_output(
+        [
+            "git",
+            "show",
+            f"{closed_phase['review_snapshot_commit']}:{PROGRAM_PATH.relative_to(ROOT).as_posix()}",
+        ],
+        cwd=ROOT,
+        text=True,
     )
-    payload["current_phase"] = phase_id
-    for later_phase in payload["phases"][phase_index + 1 :]:
-        later_phase["status"] = "NOT_STARTED"
-    phase["status"] = "IN_PROGRESS"
-    phase["review_snapshot_commit"] = None
-    phase["frozen_package_commit"] = None
-    phase["package_certification"] = []
-    phase["review"]["verdicts"] = []
+    payload = json.loads(snapshot_text)
+    phase_id = closed_phase["id"]
+    phase = next(item for item in payload["phases"] if item["id"] == phase_id)
+    assert phase["status"] == "IN_PROGRESS"
     assert phase["review"]["evidence_package_hash"]
+    assert evidence_package_hash(payload, phase) == phase["review"]["evidence_package_hash"]
     assert _validate_candidate_complete_phase(phase, payload, ROOT) == []
 
     mutated = copy.deepcopy(payload)

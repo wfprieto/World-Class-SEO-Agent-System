@@ -157,11 +157,11 @@
       "id": "P2",
       "title": "Canonical product and capability contract",
       "status": "IN_PROGRESS",
-      "rollback_baseline_commit": null,
-      "verified_commit": null,
+      "rollback_baseline_commit": "3c262741732bec284819995fb7b59dd65a3aa424",
+      "verified_commit": "34d8d03119f3d09cf294990e644f0a39b63dfd4d",
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
-      "rollback_evidence_sha256": null,
+      "rollback_evidence_sha256": "41b9556720865408c7531121cedc64f0ddb833980d090e3145e6b4bcd9ee7832",
       "authority_evidence": [],
       "package_certification": [],
       "owner": "Product authority",
@@ -172,13 +172,21 @@
       "non_goals": ["marketing superiority claim", "adoption measurement"],
       "rollback": "Revert the canonical product contract and generated references while preserving executable compatibility.",
       "acceptance_criteria": [
-        {"id": "P2-AC-01", "description": "Canonical product terminology is consistent across validated authorities.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P2-AC-02", "description": "Every command and capability has an honest machine-readable evidence classification.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+        {"id":"P2-AC-01","description":"Canonical product terminology is consistent across validated authorities.","horizon":"IMMEDIATE","status":"PASS","evidence_refs":[{"class":"SOURCE","ref":"governance/product-contract.json","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"c2688834d1062f2646241d114f1250e69a72c7d101b9a9e685c6959967894716","environment":"LOCAL","status":"PASS","assertion":"The schema-validated contract binds category, operator, sole flagship, exact artifacts, and proof boundaries across every configured authority."}]},
+        {"id":"P2-AC-02","description":"Every command and capability has an honest machine-readable evidence classification.","horizon":"IMMEDIATE","status":"PASS","evidence_refs":[{"class":"SOURCE","ref":"orchestration/capability-evidence-registry.json","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"504e3734a72608f6aae59eb8de6a721a987b2e4b91c157936cc6fdb5ef4075cd","environment":"LOCAL","status":"PASS","assertion":"All 67 effective commands and 89 catalog skills have deterministic delivery, execution, ownership, evidence, and claim-ceiling classifications."},{"class":"AUTOMATED","ref":"tests/test_product_contract.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"1fe9a604fd21b4d991515fc4913b02364ad194b780a89e6be9ce3191dc5c6197","environment":"LOCAL","status":"PASS","assertion":"Adversarial tests reject overlay drift, inventory gaps, invalid proof promotion, unsafe references, and flagship contradictions."}]}
       ],
       "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
-      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
-      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
-      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
+      "evidence_status": {"SOURCE":"PASS","AUTOMATED":"PASS","CI":"NOT_RUN","PROVIDER":"OUT_OF_SCOPE","DEPLOYED":"OUT_OF_SCOPE","OPERATIONAL":"OUT_OF_SCOPE"},
+      "gates": {"implementation_audit":"PASS","focused_tests":"PASS","full_certification":"NOT_RUN","security_review":"NOT_APPLICABLE","documentation":"PASS","learning":"PASS","unexpected_change_scan":"PASS"},
+      "gate_evidence": {
+        "implementation_audit":[{"class":"SOURCE","ref":"scripts/validate_product_contract.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"554223343e6e160c2d99238d48938c72b5f618c4266822fa05a75c56808b2998","environment":"LOCAL","status":"PASS","assertion":"[implementation_audit] Effective base-plus-overlay inventories, product authority, artifact contract, proof provenance, and claim ceilings validate fail-closed."}],
+        "focused_tests":[{"class":"AUTOMATED","ref":"tests/test_product_contract.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"1fe9a604fd21b4d991515fc4913b02364ad194b780a89e6be9ce3191dc5c6197","environment":"LOCAL","status":"PASS","assertion":"[focused_tests] Canonical and adversarial product-contract tests passed."}],
+        "full_certification":[],
+        "security_review":[],
+        "documentation":[{"class":"SOURCE","ref":"docs/PRODUCT-CAPABILITY-CONTRACT.md","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"05f103b00fdcf6979e1652ae39e8224d3356c87bedc14dd762c8d56e2004cb91","environment":"LOCAL","status":"PASS","assertion":"[documentation] Human-facing category, operator, flagship, artifact, and proof boundaries match the machine authority."}],
+        "learning":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"[learning] Generated-reference annotations cannot silently collapse the canonical skill inventory."}],
+        "unexpected_change_scan":[{"class":"AUTOMATED","ref":"tests/test_product_proof_technical_audit.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"a6a5d96340f39402eced5f2ecbec74f0bfbb312a34349be43913f69c0c03c69d","environment":"LOCAL","status":"PASS","assertion":"[unexpected_change_scan] The flagship runtime still produces the exact ten-artifact contract; the complete local suite passed 470 tests."}]
+      },
       "review": {"evidence_package_hash": null, "verdicts": []}
     },
     {
@@ -525,7 +533,8 @@
     {"id":"FAIL-0020","phase_id":"P1","summary":"Authenticated receipt checks fanned out across six runtime cells and one cell lost the concurrent GitHub API quota race with HTTP 403.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_repository_governance.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"804949c3bae875c0db5efdd0f016631a5dcd6e62231cc5ac58f41838bab06ad8","environment":"CI","status":"PASS","assertion":"The workflow mutation test rejects provider API authentication inside the runtime matrix."}]},
     {"id":"FAIL-0021","phase_id":"P1","summary":"The first centralized-authentication rule retroactively required the new provider job name in immutable historical runs that predated that job.","status":"RESOLVED","evidence_refs":[{"class":"SOURCE","ref":"scripts/validate_remediation_program.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"85c0c4053694ed7151d1332e8e933015a4632589ecec6f9ac8f8f46e53a22391","environment":"CI","status":"PASS","assertion":"Historical receipt requirements remain version-compatible while current governance requires centralized authentication."}]},
     {"id":"FAIL-0022","phase_id":"P1","summary":"The third Phase 1 ScrumMaster review proved provider rollback stopped after mutation without a fresh exact-state verification receipt, lacked failure-path coverage, and omitted three claimed GitHub security services from the canonical contract.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_github_controls_rollback.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"5a6b3d4ea8fd2d2396242422a01c20686c9096f33ee7666882c663cf8d18621b","environment":"CI","status":"PASS","assertion":"Authorization gates, exact endpoints and payloads, partial provider failure, post-restore mismatch, and successful fresh-capture rollback receipt paths pass at the verified commit."}]},
-    {"id":"FAIL-0023","phase_id":"P1","summary":"Three rejected Phase 1 closure reviews exposed lifecycle-coupled tests that hard-coded active state, inherited later statuses, or reused closure metadata from the mutable canonical program.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"8e018daa5d4890495b51bb4c70ed1b15b18d0915bfafa29f67f7775f8e21174e","environment":"CI","status":"PASS","assertion":"Closure tests now build an isolated review snapshot, clear target closure metadata, normalize all later phases, and prove P0 closure remains allowlisted when source state begins with P1 COMPLETE and P2 IN_PROGRESS."}]}
+    {"id":"FAIL-0023","phase_id":"P1","summary":"Three rejected Phase 1 closure reviews exposed lifecycle-coupled tests that hard-coded active state, inherited later statuses, or reused closure metadata from the mutable canonical program.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"8e018daa5d4890495b51bb4c70ed1b15b18d0915bfafa29f67f7775f8e21174e","environment":"CI","status":"PASS","assertion":"Closure tests now build an isolated review snapshot, clear target closure metadata, normalize all later phases, and prove P0 closure remains allowlisted when source state begins with P1 COMPLETE and P2 IN_PROGRESS."}]},
+    {"id":"FAIL-0024","phase_id":"P2","summary":"Adding evidence annotations to the generated skill index exposed a comparative inventory parser coupled to the prior bare-bullet presentation and collapsed the reported skill count to zero.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"The recurrence tests accept plain, classified, and packaged annotations and require the generated index IDs to equal the machine catalog."}]}
   ],
   "learning_records": [
     {
@@ -829,6 +838,19 @@
       "rollback_position":"Preserve lifecycle-controlled fixtures; do not restore assertions tied to the repository's temporary current phase.",
       "residual_risk":"Future closure tests can still bypass the snapshot constructor unless review preserves the fixture boundary.",
       "owner":"Quality owner","due_phase":"P1","apivr_next_action":"Require every closure-delta test to start from _review_snapshot_payload or an equivalently explicit complete metadata constructor."
+    },
+    {
+      "id":"LEARN-0024","phase_id":"P2","failure_id":"FAIL-0024","status":"CONFIRMED",
+      "affected_invariant":"Repository capability inventories must derive from machine authorities and remain independent of generated-reference presentation.",
+      "expected_result":"Adding delivery, evidence, or package annotations to SKILL_INDEX.md leaves the canonical 89-skill inventory unchanged and keeps the generated reference convergent with the catalog.",
+      "observed_evidence":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"The recurrence suite covers annotated bullets and exact generated-index equality with skill-catalog.json; the full suite passes 470 tests."}],
+      "learning":"A generated human reference is not a stable inventory API; consuming its formatting turns harmless documentation enrichment into false capability deletion.",
+      "recurrence_signature":"A generated reference remains current while a downstream inventory reports zero or fewer capabilities after same-line presentation annotations change.",
+      "guardrail":"inventory_repo counts skills directly from skill-catalog.json, while a separate equality test validates the generated index against the catalog and the parser accepts arbitrary same-line annotations.",
+      "verification_evidence":{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"34d8d03119f3d09cf294990e644f0a39b63dfd4d","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"The comparative suite reports 89 indexed skills from the canonical catalog and proves generated-reference convergence."},
+      "rollback_position":"Preserve catalog-derived inventory; do not restore a generated Markdown document as the capability source of truth.",
+      "residual_risk":"Other future generated documents require the same source-authority review before they are consumed as APIs.",
+      "owner":"Quality owner","due_phase":"P2","apivr_next_action":"Reject inventory logic that parses presentation output when a machine-readable authority exists."
     }
   ]
 }
