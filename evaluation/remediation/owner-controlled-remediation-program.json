@@ -158,7 +158,7 @@
       "title": "Canonical product and capability contract",
       "status": "IN_PROGRESS",
       "rollback_baseline_commit": "3c262741732bec284819995fb7b59dd65a3aa424",
-      "verified_commit": "73323519682e121b68af8bad5c22abe31e293142",
+      "verified_commit": null,
       "review_snapshot_commit": null,
       "frozen_package_commit": null,
       "rollback_evidence_sha256": "41b9556720865408c7531121cedc64f0ddb833980d090e3145e6b4bcd9ee7832",
@@ -541,8 +541,7 @@
     {"id":"FAIL-0023","phase_id":"P1","summary":"Three rejected Phase 1 closure reviews exposed lifecycle-coupled tests that hard-coded active state, inherited later statuses, or reused closure metadata from the mutable canonical program.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"0ed65b4cc4d507c9065d1f7a6829481fa866a28e","sha256":"8e018daa5d4890495b51bb4c70ed1b15b18d0915bfafa29f67f7775f8e21174e","environment":"CI","status":"PASS","assertion":"Closure tests now build an isolated review snapshot, clear target closure metadata, normalize all later phases, and prove P0 closure remains allowlisted when source state begins with P1 COMPLETE and P2 IN_PROGRESS."}]},
     {"id":"FAIL-0024","phase_id":"P2","summary":"Adding evidence annotations to the generated skill index exposed a comparative inventory parser coupled to the prior bare-bullet presentation and collapsed the reported skill count to zero.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_comparative_rebaseline.py","commit":"a1a68919aea4cc3776003fb24a4ac4bfa3fed795","sha256":"f33916df0f185c68461ba780c56ab6fa338dda110c5a45fa9d148fd296c37f00","environment":"LOCAL","status":"PASS","assertion":"The recurrence tests accept plain, classified, and packaged annotations and require the generated index IDs to equal the machine catalog."}]},
     {"id":"FAIL-0025","phase_id":"P2","summary":"Binding truthful Phase 2 failures and learning exposed a historical Phase 1 preflight test that combined the frozen Phase 1 package hash with partially rewound current program state.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"a1a68919aea4cc3776003fb24a4ac4bfa3fed795","sha256":"568f063e39a44efc318e39b57fb80a2bf90e974a1d18527414f30e53cc9751a2","environment":"LOCAL","status":"PASS","assertion":"The test loads the program at review_snapshot_commit, recomputes the exact historical hash, and runs candidate-complete plus mutation assertions against that immutable object."}]},
-    {"id":"FAIL-0026","phase_id":"P2","summary":"The first Phase 2 frozen-package preflight rejected closure because AUD-003 remained open, blocked maturity wording was not mutation-tested across authorities, and failure or learning receipts were not exact-verified-commit bound.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_product_contract.py","commit":"a1a68919aea4cc3776003fb24a4ac4bfa3fed795","sha256":"63a1fa0f4f9a410de05c4f8a3695c9936aebc601922d810cf219b48c2129ea12","environment":"LOCAL","status":"PASS","assertion":"Every configured product authority rejects blocked production-readiness wording, while canonical contract and capability mutations remain covered."}]},
-    {"id":"FAIL-0027","phase_id":"P2","summary":"The first reviewed Phase 2 snapshot changed three hash-covered learning receipts in the freeze commit after calculating its stored evidence-package hash, so Windows closure CI correctly rejected the internally inconsistent immutable package.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"73323519682e121b68af8bad5c22abe31e293142","sha256":"bb322c83e6c68c560b9255dd381692355a48995b94a8505d9fa36c1eafd39422","environment":"CI","status":"PASS","assertion":"The regression loads the latest closed phase from its immutable snapshot, recomputes the canonical evidence-package hash, emits both digests on mismatch, and passed all six exact-head runtime matrices in run 30736727210."}]}
+    {"id":"FAIL-0026","phase_id":"P2","summary":"The first Phase 2 frozen-package preflight rejected closure because AUD-003 remained open, blocked maturity wording was not mutation-tested across authorities, and failure or learning receipts were not exact-verified-commit bound.","status":"RESOLVED","evidence_refs":[{"class":"AUTOMATED","ref":"tests/test_product_contract.py","commit":"a1a68919aea4cc3776003fb24a4ac4bfa3fed795","sha256":"63a1fa0f4f9a410de05c4f8a3695c9936aebc601922d810cf219b48c2129ea12","environment":"LOCAL","status":"PASS","assertion":"Every configured product authority rejects blocked production-readiness wording, while canonical contract and capability mutations remain covered."}]}
   ],
   "learning_records": [
     {
@@ -885,19 +884,6 @@
       "rollback_position":"Preserve blocked-claim enforcement and candidate-complete fail-closed behavior; never bypass an assigned audit finding to freeze a package.",
       "residual_risk":"Authority inventory changes must update the explicit surface manifest or validation fails closed.",
       "owner":"Product authority","due_phase":"P2","apivr_next_action":"Treat prohibited maturity wording as a machine-enforced contract axis distinct from canonical identity terms."
-    },
-    {
-      "id":"LEARN-0027","phase_id":"P2","failure_id":"FAIL-0027","status":"CONFIRMED",
-      "affected_invariant":"The stored evidence-package hash must be calculated from the final committed immutable snapshot, including every hash-covered failure and learning receipt.",
-      "expected_result":"A freeze cannot be reviewed or closed unless recomputing the hash from its own Git blob exactly equals the stored hash.",
-      "observed_evidence":[{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"73323519682e121b68af8bad5c22abe31e293142","sha256":"bb322c83e6c68c560b9255dd381692355a48995b94a8505d9fa36c1eafd39422","environment":"CI","status":"PASS","assertion":"All six Windows and Linux runtime matrices independently passed the immutable historical package regression in exact-head run 30736727210."}],
-      "learning":"A hash computed before final receipt rebinding is stale even when the freeze commit changes only metadata; hash-covered metadata must be finalized before hashing and verified from the resulting commit blob.",
-      "recurrence_signature":"A snapshot's stored package hash differs from a fresh computation over the program JSON read from that same snapshot commit.",
-      "guardrail":"Freeze in two immutable steps: first finalize every hash-covered field, then store only the computed package hash and lifecycle-excluded freeze fields; before review, load the committed Git blob and require exact equality.",
-      "verification_evidence":{"class":"AUTOMATED","ref":"tests/test_remediation_program.py","commit":"73323519682e121b68af8bad5c22abe31e293142","sha256":"bb322c83e6c68c560b9255dd381692355a48995b94a8505d9fa36c1eafd39422","environment":"CI","status":"PASS","assertion":"The historical immutable-blob hash check passes on Python 3.11, 3.12, and 3.13 on both Windows and Linux."},
-      "rollback_position":"Preserve the reopened state and immutable-blob recomputation; never restore the invalid 2377ad9 package as an approved snapshot.",
-      "residual_risk":"A manual freeze can still calculate too early unless the two-step sequence and post-commit recomputation are followed.",
-      "owner":"Quality owner","due_phase":"P2","apivr_next_action":"Require post-commit immutable-blob hash equality before dispatching either independent reviewer."
     }
   ]
 }

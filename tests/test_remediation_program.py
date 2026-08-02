@@ -52,6 +52,7 @@ def test_frozen_in_progress_package_runs_completion_preflight() -> None:
         ],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
     )
     payload = json.loads(snapshot_text)
     phase_id = closed_phase["id"]
