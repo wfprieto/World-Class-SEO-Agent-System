@@ -54,12 +54,13 @@ CI_RUN_PATTERN = re.compile(
 REQUIRED_CI_JOBS: dict[str, set[str]] = {
     "package certification": {
         "validate",
+        "provider-authentication",
         "quality_security_release",
         "repository-certification",
         "phase0-rollback-certification",
     },
-    "gate full_certification": {"validate", "quality_security_release", "repository-certification"},
-    "gate security_review": {"quality_security_release"},
+    "gate full_certification": {"validate", "provider-authentication", "quality_security_release", "repository-certification"},
+    "gate security_review": {"provider-authentication", "quality_security_release"},
     "gate unexpected_change_scan": {"validate", "repository-certification"},
 }
 
@@ -935,7 +936,10 @@ def validate_current_candidate_complete(
 
 
 def main() -> int:
-    authenticate_ci = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    authenticate_ci = (
+        os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+        and os.environ.get("WCSEO_AUTHENTICATE_CI_RECEIPTS", "").lower() == "true"
+    )
     errors = [
         *validate(authenticate_ci=authenticate_ci),
         *validate_current_candidate_complete(authenticate_ci=authenticate_ci),

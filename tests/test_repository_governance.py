@@ -60,6 +60,21 @@ def test_incomplete_certification_aggregation_is_rejected(tmp_path: Path) -> Non
     assert any("canonical certification job" in error for error in local_errors(root))
 
 
+def test_provider_authentication_cannot_fan_out_across_runtime_matrix(tmp_path: Path) -> None:
+    root = _copy_repository_surface(tmp_path)
+    workflow = root / ".github/workflows/validate.yml"
+    text = workflow.read_text(encoding="utf-8")
+    text = text.replace(
+        "run: python scripts/validate_repository_governance.py\n",
+        "run: python scripts/validate_repository_governance.py\n"
+        "      - name: Duplicate provider query\n"
+        "        run: python scripts/capture_github_controls.py --ci-observable\n",
+        1,
+    )
+    workflow.write_text(text, encoding="utf-8")
+    assert any("provider-offline" in error for error in local_errors(root))
+
+
 def test_mutable_action_and_persisted_checkout_credentials_are_rejected(tmp_path: Path) -> None:
     root = _copy_repository_surface(tmp_path)
     workflow = root / ".github/workflows/validate.yml"

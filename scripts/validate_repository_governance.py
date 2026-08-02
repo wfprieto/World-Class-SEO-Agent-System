@@ -18,6 +18,7 @@ ADVISORY_URL = (
 )
 CERTIFICATION_NEEDS = {
     "validation_matrix",
+    "provider_authentication",
     "validate",
     "quality_security_release",
     "clean_wheel_install",
@@ -129,6 +130,31 @@ def local_errors(root: Path = ROOT) -> list[str]:
     if pull_request not in (None, {}):
         errors.append("validation must run on every pull request without path filters")
     jobs = workflow.get("jobs", {})
+    matrix_job = jobs.get("validation_matrix", {})
+    matrix_text = json.dumps(matrix_job, sort_keys=True)
+    if "GITHUB_TOKEN" in matrix_text or "capture_github_controls.py" in matrix_text:
+        errors.append("runtime matrix must remain deterministic and provider-offline")
+    provider_job = jobs.get("provider_authentication")
+    if not isinstance(provider_job, dict) or provider_job.get("name") != "provider-authentication":
+        errors.append("one centralized provider-authentication job is required")
+    else:
+        provider_text = json.dumps(provider_job, sort_keys=True)
+        for required_text in (
+            "WCSEO_AUTHENTICATE_CI_RECEIPTS",
+            "GITHUB_TOKEN",
+            "capture_github_controls.py --ci-observable",
+        ):
+            if required_text not in provider_text:
+                errors.append(f"provider-authentication job is missing {required_text}")
+    aggregate = jobs.get("validate", {})
+    aggregate_needs = aggregate.get("needs", []) if isinstance(aggregate, dict) else []
+    if isinstance(aggregate_needs, str):
+        aggregate_needs = [aggregate_needs]
+    if set(aggregate_needs) != {"validation_matrix", "provider_authentication"}:
+        errors.append("validate aggregate must require matrix and provider authentication")
+    aggregate_text = json.dumps(aggregate, sort_keys=True)
+    if "needs.provider_authentication.result" not in aggregate_text:
+        errors.append("validate aggregate must enforce provider-authentication success")
     matching = [job for job in jobs.values() if job.get("name") == "repository-certification"]
     if len(matching) != 1:
         errors.append("exactly one repository-certification workflow job is required")
