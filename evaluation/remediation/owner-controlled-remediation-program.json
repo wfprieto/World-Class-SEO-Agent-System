@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P6",
+  "current_phase": "P7",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -342,11 +342,11 @@
     {
       "id": "P6",
       "title": "Transport and local-data security hardening",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "rollback_baseline_commit": "7a495d1efc2a05039a92f08d697a9a09c9b3f4fc",
       "verified_commit": "fdab1b669ec260be7b4aa3e2466de8f41327be79",
-      "review_snapshot_commit": null,
-      "frozen_package_commit": null,
+      "review_snapshot_commit": "22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
+      "frozen_package_commit": "22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
       "rollback_evidence_sha256": "d09c0cdcd179ecffee92f4c5d548747d6cdb850cb7854261c32cf2265cf8cbda",
       "authority_evidence": [
             {
@@ -386,7 +386,33 @@
                   "assertion": "VP Engineering review authority is bound to immutable source."
             }
       ],
-      "package_certification": [],
+      "package_certification": [
+            {
+                  "class": "CI",
+                  "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769895765",
+                  "commit": "22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
+                  "sha256": null,
+                  "environment": "CI",
+                  "status": "PASS",
+                  "assertion": "The immutable Phase 6 snapshot passed all matrices, provider authentication, quality and security, P6 rollback rehearsal, clean wheels, and aggregate certification.",
+                  "provenance": {
+                        "repository": "wfprieto/World-Class-SEO-Agent-System",
+                        "workflow": "Validate repository",
+                        "head_sha": "22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
+                        "conclusion": "success",
+                        "jobs": [
+                              "provider-authentication",
+                              "validate matrix (6)",
+                              "validate",
+                              "quality_security_release",
+                              "clean wheel (2)",
+                              "phase0-rollback-certification",
+                              "phase-rollback-certification",
+                              "repository-certification"
+                        ]
+                  }
+            }
+      ],
       "owner": "Security owner",
       "approver": "Repository maintainer",
       "verifier": "Independent security reviewer",
@@ -743,13 +769,82 @@
       },
       "review": {
             "evidence_package_hash": "cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
-            "verdicts": []
+            "verdicts": [
+                  {
+                        "review_id": "0d22298a-d457-4e40-a182-c608582231b4",
+                        "reviewer_id": "senior-scrummaster-3",
+                        "role": "SENIOR_SCRUMMASTER_3",
+                        "context_id": "e04dfda6-1e57-4d24-b39f-5c73a20174fd",
+                        "provider": "OpenAI",
+                        "model": "gpt-5.6-sol",
+                        "evidence_package_hash": "cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
+                        "verdict": "APPROVE_GREAT",
+                        "strongest_objections": [
+                              "The snapshot is intentionally pre-closure; completion metadata and verdicts must enter only through the bounded closure delta.",
+                              "Implementation CI certifies fdab1b6, while exact-snapshot run 30769895765 separately certifies the immutable package and P6 rollback.",
+                              "Network guarantees remain bounded static analysis rather than whole-program data-flow or DNS-pinning proof.",
+                              "Secret redaction remains bounded to canonical keys and labeled patterns rather than arbitrary high-entropy discovery.",
+                              "CI artifacts are retention-limited even though the repository recovery contract remains reproducible."
+                        ],
+                        "evidence_refs": [
+                              "git:22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
+                              "computed-evidence-package-hash:cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
+                              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769895765",
+                              "FAIL-0051..FAIL-0053",
+                              "LEARN-0051..LEARN-0053"
+                        ],
+                        "residual_risks": [
+                              "Static analysis does not prove arbitrary dynamic egress, DNS pinning, or complete DNS-rebinding prevention.",
+                              "Canonical redaction patterns do not detect every unlabeled or novel secret format.",
+                              "GitHub Actions artifacts expire and may later require reproduction from immutable source."
+                        ],
+                        "required_changes": [],
+                        "submitted_at": "2026-08-02T18:23:29.6389305-04:00",
+                        "saw_other_reviewer_verdict": false,
+                        "is_builder": false
+                  },
+                  {
+                        "review_id": "bb4acdb7-97ee-48d5-87d6-15a1814b2b0e",
+                        "reviewer_id": "vp-engineering",
+                        "role": "VP_ENGINEERING",
+                        "context_id": "7475b2ea-6742-465e-907e-a10cc64d6073",
+                        "provider": "OpenAI",
+                        "model": "GPT-5 Codex",
+                        "evidence_package_hash": "cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
+                        "verdict": "APPROVE_GREAT",
+                        "strongest_objections": [
+                              "The first dependency lock falsely passed locally but failed clean CI until unsafe build dependencies were pinned and hashed.",
+                              "The original privacy boundary omitted URL, session, operation, rendered-body, and accessibility sinks.",
+                              "Schema-valid descriptive network mappings were self-authorizing until bound to a finite code-owned oracle.",
+                              "Rollback evidence must execute the exact dynamic snapshot recovery without restoring proven unsafe behavior."
+                        ],
+                        "evidence_refs": [
+                              "snapshot:22f46ed8dbab62178a4cbd445657f6d8c3d71fbf",
+                              "implementation:fdab1b669ec260be7b4aa3e2466de8f41327be79",
+                              "package:cdd7751c5c1029e36bb0cf8df61e1109cc791d5b1c5c631fdafedfbc3601f5d4",
+                              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769353443",
+                              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30769895765",
+                              "FAIL-0051..FAIL-0053",
+                              "LEARN-0051..LEARN-0053"
+                        ],
+                        "residual_risks": [
+                              "Credential redaction is bounded to labeled and known forms, not arbitrary high-entropy discovery.",
+                              "Network inventory is bounded static analysis, not whole-program flow or DNS-pinning proof.",
+                              "Exact hashes establish artifact integrity, not future availability or vulnerability absence."
+                        ],
+                        "required_changes": [],
+                        "submitted_at": "2026-08-02T22:22:21.2408136Z",
+                        "saw_other_reviewer_verdict": false,
+                        "is_builder": false
+                  }
+            ]
       }
 },
     {
       "id": "P7",
       "title": "Reports documentation onboarding and knowledge",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "rollback_baseline_commit": null,
       "verified_commit": null,
       "review_snapshot_commit": null,
@@ -760,20 +855,74 @@
       "owner": "Documentation and knowledge owner",
       "approver": "Repository maintainer",
       "verifier": "Quality owner",
-      "notify": ["SEO capability owner", "Community maintainer"],
-      "scope": ["report model", "evidence traceability", "doctor diagnostics", "documentation sync", "knowledge provenance"],
-      "non_goals": ["real-site case study", "external outcome claim"],
+      "notify": [
+            "SEO capability owner",
+            "Community maintainer"
+      ],
+      "scope": [
+            "report model",
+            "evidence traceability",
+            "doctor diagnostics",
+            "documentation sync",
+            "knowledge provenance"
+      ],
+      "non_goals": [
+            "real-site case study",
+            "external outcome claim"
+      ],
       "rollback": "Revert generated and canonical documentation together and retain schema backward compatibility.",
       "acceptance_criteria": [
-        {"id": "P7-AC-01", "description": "Material report values and scores are reproducible and evidence-bound.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []},
-        {"id": "P7-AC-02", "description": "Onboarding, support, counts, commands, matrices, and knowledge freshness are validator-backed.", "horizon": "IMMEDIATE", "status": "NOT_RUN", "evidence_refs": []}
+            {
+                  "id": "P7-AC-01",
+                  "description": "Material report values and scores are reproducible and evidence-bound.",
+                  "horizon": "IMMEDIATE",
+                  "status": "NOT_RUN",
+                  "evidence_refs": []
+            },
+            {
+                  "id": "P7-AC-02",
+                  "description": "Onboarding, support, counts, commands, matrices, and knowledge freshness are validator-backed.",
+                  "horizon": "IMMEDIATE",
+                  "status": "NOT_RUN",
+                  "evidence_refs": []
+            }
       ],
-      "required_evidence_classes": ["SOURCE", "AUTOMATED", "CI"],
-      "evidence_status": {"SOURCE": "NOT_RUN", "AUTOMATED": "NOT_RUN", "CI": "NOT_RUN", "PROVIDER": "OUT_OF_SCOPE", "DEPLOYED": "OUT_OF_SCOPE", "OPERATIONAL": "OUT_OF_SCOPE"},
-      "gates": {"implementation_audit": "NOT_RUN", "focused_tests": "NOT_RUN", "full_certification": "NOT_RUN", "security_review": "NOT_APPLICABLE", "documentation": "NOT_RUN", "learning": "NOT_RUN", "unexpected_change_scan": "NOT_RUN"},
-      "gate_evidence": {"implementation_audit": [], "focused_tests": [], "full_certification": [], "security_review": [], "documentation": [], "learning": [], "unexpected_change_scan": []},
-      "review": {"evidence_package_hash": null, "verdicts": []}
-    },
+      "required_evidence_classes": [
+            "SOURCE",
+            "AUTOMATED",
+            "CI"
+      ],
+      "evidence_status": {
+            "SOURCE": "NOT_RUN",
+            "AUTOMATED": "NOT_RUN",
+            "CI": "NOT_RUN",
+            "PROVIDER": "OUT_OF_SCOPE",
+            "DEPLOYED": "OUT_OF_SCOPE",
+            "OPERATIONAL": "OUT_OF_SCOPE"
+      },
+      "gates": {
+            "implementation_audit": "NOT_RUN",
+            "focused_tests": "NOT_RUN",
+            "full_certification": "NOT_RUN",
+            "security_review": "NOT_APPLICABLE",
+            "documentation": "NOT_RUN",
+            "learning": "NOT_RUN",
+            "unexpected_change_scan": "NOT_RUN"
+      },
+      "gate_evidence": {
+            "implementation_audit": [],
+            "focused_tests": [],
+            "full_certification": [],
+            "security_review": [],
+            "documentation": [],
+            "learning": [],
+            "unexpected_change_scan": []
+      },
+      "review": {
+            "evidence_package_hash": null,
+            "verdicts": []
+      }
+},
     {
       "id": "P8",
       "title": "Repository operations and integrated re-audit",
