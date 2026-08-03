@@ -5,6 +5,8 @@ provider outcome, ranking, traffic, adoption, or release publication. The machin
 registry in `governance/repository-operations.json` is authoritative for control IDs, owners,
 issues, status, verification commands, blockers, and rollback triggers. This document supplies
 the verify, fail, recover, escalate, and stop procedures for those exact seven controls.
+The six open-issue implementation contracts and closure boundaries are separately authoritative in
+`governance/open-issue-remediation.json` and explained in `docs/OPEN-ISSUE-REMEDIATION.md`.
 
 Run verification from a clean checkout at the repository root. Preserve command output and the
 exact commit SHA. A role records accountability; it does not prove that a second person exists.
@@ -78,7 +80,8 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
   accountable for their surfaces.
 - **Verify:** Run `seoctl system doctor`, `python scripts/validate_reference_freshness.py`,
   dependency and generated-document validation, and `python scripts/validate_repository_governance.py`.
-  Record maintenance evidence in issue #29.
+  Confirm the read-only scheduled maintenance workflow passes on `main` and record its exact commit
+  and run URL in issue #29.
 - **Fail:** Fail on stale provenance, missing digest, generated/manual drift, mutable workflow
   dependency, unsupported count, disabled security service, or undeclared tool requirement.
 - **Recover:** Restore canonical registries and pinned dependencies first, regenerate only derived
@@ -110,6 +113,8 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Owner:** Repository maintainer; functional owners own recovery steps for their components.
 - **Verify:** Run `pwsh -File scripts/validate-repository.ps1`. Confirm every registry runbook path
   and anchor resolves and rehearse bounded rollback in a disposable checkout. Track gaps in issue #31.
+  The scheduled maintenance workflow supplements but never replaces exact-head pull-request
+  certification and rollback jobs.
 - **Fail:** Fail on a missing anchor, destructive or ambiguous step, manual-memory dependency,
   incomplete commit range, absent recovery owner, or procedure that cannot restore last-good state.
 - **Recover:** Revert the unsafe runbook change, restore the last verified procedure, and keep issue
@@ -125,6 +130,7 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Owner:** Repository maintainer, with quality and security owners accountable for certification
   gates.
 - **Verify:** Run `python scripts/validate_repository_operations.py` and
+  `python scripts/validate_open_issue_remediation.py`, then
   `powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1`. Require exact-head
   repository certification, OS/Python matrix, dependency audit, security/quality, clean-wheel,
   source-integrity, provider-authentication, and rollback jobs. Track control drift in issue #32.
@@ -143,3 +149,7 @@ Review starts only after every applicable control is verified, failures have lin
 explicit no-material-learning result, exact-head CI and rollback pass, and provider-dependent
 controls have fresh authenticated evidence. Publication, deployment, adoption, and real-world SEO
 outcomes remain separate decisions.
+
+Issues #29, #31, and #32 are recurring control records and are not closed merely because one run
+passes. Issues #26 and #28 close only at their machine-defined acceptance boundary. Issue #30
+cannot close until its owner-only private-destination prerequisite is independently attested.

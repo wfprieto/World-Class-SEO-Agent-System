@@ -52,6 +52,8 @@ def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path
         "architecture.static",
         "knowledge.provenance",
         "dependencies.lock",
+        "operations.contract",
+        "remediation.open_issues",
     }
     assert checks["python.supported"]["status"] == "PASS"
     assert all(
@@ -79,6 +81,16 @@ def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path
             "dependencies.lock",
             TypeError("lock malformed"),
         ),
+        (
+            "seoctl.doctor.validate_operations",
+            "operations.contract",
+            ValueError("operations malformed"),
+        ),
+        (
+            "seoctl.doctor.validate_open_issues",
+            "remediation.open_issues",
+            ValueError("remediation malformed"),
+        ),
     ],
 )
 def test_system_doctor_converts_validator_exceptions_to_structured_failures(
@@ -94,7 +106,7 @@ def test_system_doctor_converts_validator_exceptions_to_structured_failures(
     assert result["status"] == "FAIL"
     assert checks[check_id]["status"] == "FAIL"
     assert type(failure).__name__ in checks[check_id]["detail"]
-    assert len(checks) == 6
+    assert len(checks) == 8
 
 
 def test_system_doctor_cli_uses_canonical_json_envelope(monkeypatch) -> None:

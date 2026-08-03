@@ -233,9 +233,54 @@ def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
+GAP_DISPOSITIONS = {
+    "CODE_REMEDIATION",
+    "EXTERNAL_EVIDENCE_REQUIRED",
+    "EXCLUDED_PACKAGING_RELEASE",
+    "EXCLUDED_REAL_WORLD_EVIDENCE",
+}
+
+
+def _gap_disposition_errors(row_id: str, row: dict[str, Any], status: str) -> list[str]:
+    if status != "GAP_OPEN":
+        return (
+            [f"{row_id} closed capability must not retain open-gap disposition"]
+            if any(field in row for field in ("gap_disposition", "next_action"))
+            else []
+        )
+    errors = []
+    if row.get("gap_disposition") not in GAP_DISPOSITIONS:
+        errors.append(f"{row_id} has invalid or missing gap disposition")
+    for field in ("owner", "next_action"):
+        value = row.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{row_id} open gap requires {field}")
+    return errors
+
+
+def _parity_row_errors(
+    row_id: str, row: dict[str, Any], status: str, allowed: set[object]
+) -> list[str]:
+    errors: list[str] = []
+    if status not in allowed:
+        errors.append(f"{row_id} has invalid status {status!r}")
+    if status == "GAP_OPEN" and not row.get("target_pr"):
+        errors.append(f"{row_id} is open without a target PR")
+    errors.extend(_gap_disposition_errors(row_id, row, status))
+    if status != "GAP_OPEN" and not row.get("evidence"):
+        errors.append(f"{row_id} claims closure without evidence")
+    acceptance = row.get("acceptance")
+    if not isinstance(acceptance, list) or not acceptance:
+        errors.append(f"{row_id} has no acceptance criteria")
+    return errors
+
+
 def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     allowed = set(ledger.get("allowed_statuses", []))
+    allowed_gap_dispositions = set(ledger.get("allowed_gap_dispositions", []))
+    if allowed_gap_dispositions != GAP_DISPOSITIONS:
+        errors.append("allowed gap dispositions must match the canonical bounded set")
     rows = ledger.get("capabilities")
     if not isinstance(rows, list) or not rows:
         return ["capability parity ledger must contain rows"]
@@ -251,15 +296,7 @@ def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
             errors.append(f"duplicate parity id: {row_id}")
         seen.add(row_id)
         status = str(row.get("status", ""))
-        if status not in allowed:
-            errors.append(f"{row_id} has invalid status {status!r}")
-        if status == "GAP_OPEN" and not row.get("target_pr"):
-            errors.append(f"{row_id} is open without a target PR")
-        if status != "GAP_OPEN" and not row.get("evidence"):
-            errors.append(f"{row_id} claims closure without evidence")
-        acceptance = row.get("acceptance")
-        if not isinstance(acceptance, list) or not acceptance:
-            errors.append(f"{row_id} has no acceptance criteria")
+        errors.extend(_parity_row_errors(row_id, row, status, allowed))
     return errors
 
 

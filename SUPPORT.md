@@ -23,3 +23,5 @@ security vulnerabilities and must not be represented as a completed conduct-repo
 
 Operational intake and escalation procedures are documented in
 [`docs/REPOSITORY-OPERATIONS.md`](docs/REPOSITORY-OPERATIONS.md#ops-security-intake).
+The exact owner-action transition and attestation requirements are documented in
+[`docs/OPEN-ISSUE-REMEDIATION.md`](docs/OPEN-ISSUE-REMEDIATION.md#private-conduct-prerequisite).

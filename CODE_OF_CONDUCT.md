@@ -26,5 +26,13 @@ Maintainers may remove comments, close issues, reject pull requests, or block co
 
 ## Reporting
 
-Report conduct concerns to the repository owner.
+Do not publish conduct concerns, identifying details, or safety information in an issue, pull
+request, or Discussion. A monitored repository-controlled private conduct destination has not yet
+been designated and remains `OWNER_ACTION_REQUIRED` in issue #30. The private vulnerability form
+is for security vulnerabilities and is not a substitute for conduct reporting. Until the owner
+attests a private destination, preserve the concern privately and do not disclose it through a
+public repository channel.
+
+The current status and transition requirements are documented in
+[`docs/OPEN-ISSUE-REMEDIATION.md`](docs/OPEN-ISSUE-REMEDIATION.md#private-conduct-prerequisite).
 

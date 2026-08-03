@@ -10,12 +10,16 @@ from pathlib import Path
 
 from scripts.validate_architecture_contract import validate as validate_architecture
 from scripts.validate_dependency_lock import validate as validate_dependency_lock
+from scripts.validate_open_issue_remediation import validate as validate_open_issues
 from scripts.validate_reference_freshness import validate as validate_references
+from scripts.validate_repository_operations import validate as validate_operations
 from seoctl.registry import load_registry, validate_registry
 
 SUPPORTED_PYTHON = {(3, 11), (3, 12), (3, 13)}
 REQUIRED_ASSETS = (
     "governance/architecture-contract.json",
+    "governance/open-issue-remediation.json",
+    "governance/repository-operations.json",
     "knowledge/reference-registry.json",
     "requirements-dev.in",
     "requirements-dev.txt",
@@ -52,6 +56,60 @@ def _validation_errors(
     return [str(error) for error in errors]
 
 
+def _repository_checks(root: Path, as_of: date | None) -> list[DoctorCheck]:
+    registry_errors = _validation_errors(
+        "command registry",
+        lambda: validate_registry(load_registry(root / "seoctl/command-registry.json")),
+    )
+    return [
+        _check("commands.registry", registry_errors, "command registry is coherent"),
+        _check(
+            "architecture.static",
+            _validation_errors(
+                "architecture validation",
+                lambda: validate_architecture(
+                    root,
+                    root / "governance/architecture-contract.json",
+                    root / "schemas/architecture-contract.schema.json",
+                ),
+            ),
+            "bounded static architecture contract passes",
+        ),
+        _check(
+            "knowledge.provenance",
+            _validation_errors(
+                "knowledge provenance validation",
+                lambda: validate_references(as_of=as_of, root=root),
+            ),
+            "per-pack knowledge provenance and freshness pass",
+        ),
+        _check(
+            "dependencies.lock",
+            _validation_errors(
+                "dependency lock validation",
+                lambda: validate_dependency_lock(
+                    root / "requirements-dev.in", root / "requirements-dev.txt"
+                ),
+            ),
+            "dependency inputs and hash lock agree",
+        ),
+        _check(
+            "operations.contract",
+            _validation_errors(
+                "repository operations validation", lambda: validate_operations(root)
+            ),
+            "repository operations contract passes",
+        ),
+        _check(
+            "remediation.open_issues",
+            _validation_errors(
+                "open issue remediation validation", lambda: validate_open_issues(root)
+            ),
+            "open issue remediation contracts pass",
+        ),
+    ]
+
+
 def diagnose(
     root: Path,
     *,
@@ -72,47 +130,7 @@ def diagnose(
     missing = [relative for relative in REQUIRED_ASSETS if not (root / relative).is_file()]
     checks.append(_check("assets.required", missing, "required local assets are present"))
 
-    registry_errors = _validation_errors(
-        "command registry",
-        lambda: validate_registry(load_registry(root / "seoctl/command-registry.json")),
-    )
-    checks.append(_check("commands.registry", registry_errors, "command registry is coherent"))
-    checks.append(
-        _check(
-            "architecture.static",
-            _validation_errors(
-                "architecture validation",
-                lambda: validate_architecture(
-                    root,
-                    root / "governance/architecture-contract.json",
-                    root / "schemas/architecture-contract.schema.json",
-                ),
-            ),
-            "bounded static architecture contract passes",
-        )
-    )
-    checks.append(
-        _check(
-            "knowledge.provenance",
-            _validation_errors(
-                "knowledge provenance validation",
-                lambda: validate_references(as_of=as_of, root=root),
-            ),
-            "per-pack knowledge provenance and freshness pass",
-        )
-    )
-    checks.append(
-        _check(
-            "dependencies.lock",
-            _validation_errors(
-                "dependency lock validation",
-                lambda: validate_dependency_lock(
-                    root / "requirements-dev.in", root / "requirements-dev.txt"
-                ),
-            ),
-            "dependency inputs and hash lock agree",
-        )
-    )
+    checks.extend(_repository_checks(root, as_of))
     status = "PASS" if all(item.status == "PASS" for item in checks) else "FAIL"
     return {
         "status": status,

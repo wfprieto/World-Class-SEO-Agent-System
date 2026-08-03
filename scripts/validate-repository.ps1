@@ -19,6 +19,8 @@ Test-PythonValidator "scripts/validate_product_proof_program.py"
 Test-PythonValidator "scripts/validate_remediation_program.py"
 Test-PythonValidator "scripts/validate_repository_governance.py"
 Test-PythonValidator "scripts/validate_repository_operations.py"
+Test-PythonValidator "scripts/validate_open_issue_remediation.py"
+Test-PythonValidator "scripts/validate_scheduled_maintenance.py"
 Test-PythonValidator "scripts/validate_pytest_temp_isolation.py"
 Test-PythonValidator "evaluation/tracer/run_tracer.py"
 if($failures.Count -gt 0){Write-Host "Repository validation failed:" -ForegroundColor Red;$failures|ForEach-Object{Write-Host "- $_" -ForegroundColor Red};exit 1}
