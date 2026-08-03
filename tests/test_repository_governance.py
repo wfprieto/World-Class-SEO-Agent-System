@@ -56,7 +56,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
             }
         ],
         "eligible_independent_reviewers": [],
-        "independent_reviewer_status": "OWNER_ACTION_REQUIRED",
+        "independent_reviewer_status": contract["independent_reviewer"]["status"],
         "phase8_issues": [
             {
                 "control_id": control["id"],
@@ -79,7 +79,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
             "merged": False,
         },
         "declared_blockers": {
-            "independent_reviewer": "OWNER_ACTION_REQUIRED",
+            "independent_reviewer": contract["independent_reviewer"]["status"],
             "private_conduct_reporting": "OWNER_ACTION_REQUIRED",
         },
     }
@@ -118,7 +118,7 @@ def test_weakened_certification_contract_is_rejected(tmp_path: Path) -> None:
     root = _copy_repository_surface(tmp_path)
     path = root / "governance/github-controls.json"
     contract = json.loads(path.read_text(encoding="utf-8"))
-    contract["ruleset"]["required_approving_review_count"] = 0
+    contract["ruleset"]["required_approving_review_count"] = 1
     path.write_text(json.dumps(contract), encoding="utf-8")
     assert any("required_approving_review_count" in error for error in local_errors(root))
 
@@ -217,7 +217,7 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
     path = tmp_path / "snapshot.json"
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     assert provider_errors(path) == []
-    snapshot["ruleset"]["require_last_push_approval"] = False
+    snapshot["ruleset"]["require_last_push_approval"] = True
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     assert any("require_last_push_approval" in error for error in provider_errors(path))
 
@@ -261,7 +261,7 @@ def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field:
     ("mutation", "expected_error"),
     [
         ("missing_collaborators", "collaborator inventory"),
-        ("invented_reviewer", "reviewer availability differs"),
+        ("invented_reviewer", "solo-maintainer status is stale"),
         ("closed_issue", "issue 26 state"),
         ("unassigned_issue", "issue 26 is not assigned"),
         ("wrong_pull_head", "pull request head"),

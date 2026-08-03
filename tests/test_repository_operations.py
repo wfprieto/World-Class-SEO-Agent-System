@@ -116,6 +116,7 @@ def test_owner_prerequisites_cannot_be_reported_ready(tmp_path: Path, index: int
         path = contract["critical_paths"][index]
         path["status"] = "READY"
         path["blocker"] = None
+        path["closure_evidence"] = {"status": "PENDING_OWNER_ACTION", "refs": []}
 
     errors = _mutate(tmp_path, false_ready)
     assert any("readiness requires explicit verified closure evidence" in error for error in errors)

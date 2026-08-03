@@ -18,9 +18,9 @@
       {"context": "repository-certification", "integration_id": 15368}
     ],
     "strict_required_status_checks_policy": true,
-    "required_approving_review_count": 1,
+    "required_approving_review_count": 0,
     "dismiss_stale_reviews_on_push": true,
-    "require_last_push_approval": true,
+    "require_last_push_approval": false,
     "required_review_thread_resolution": true,
     "require_code_owner_review": false,
     "allowed_merge_methods": ["squash"],
@@ -30,17 +30,17 @@
     "bypass_actor_count": 0
   },
   "independent_reviewer": {
-    "status": "OWNER_ACTION_REQUIRED",
-    "constraint": "A material change requires approval from a real collaborator other than the last pusher; no identity is invented by automation.",
+    "status": "NOT_APPLICABLE_SOLO_MAINTAINER",
+    "constraint": "The repository has one human account; every material change requires the exact-head repository-certification check and resolved review threads without claiming a nonexistent human approval.",
     "accountable_owner": "Repository maintainer",
     "due_phase": "P8",
-    "merge_availability": "BLOCKED_UNTIL_ELIGIBLE_REVIEWER_IS_ONBOARDED",
-    "closure_truth": "The protection is enforced and fail-closed; Phase 1 does not claim that a second eligible collaborator already exists."
+    "merge_availability": "AVAILABLE_AFTER_REQUIRED_STATUS_CHECKS",
+    "closure_truth": "The owner explicitly selected the solo-maintainer policy after GitHub proved that a self-authored pull request cannot satisfy one required approval."
   },
   "phase8_pull_request": {
     "number": 24,
     "base": "main",
     "head": "agent/owner-controlled-remediation-loop",
-    "allowed_states": ["OPEN", "MERGED"]
+    "allowed_states": ["OPEN", "CLOSED"]
   }
 }

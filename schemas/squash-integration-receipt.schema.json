@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://world-class-seo.local/schemas/squash-integration-receipt.json",
+  "title": "Squash Integration Evidence Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "integration_kind", "pull_request", "source", "target", "equivalence", "tag_protection"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+    "integration_kind": {"const": "GITHUB_SQUASH_PULL_REQUEST"},
+    "pull_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "url", "base_ref", "head_ref", "provider_head_sha", "merged_at"],
+      "properties": {
+        "number": {"const": 24},
+        "url": {"const": "https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/24"},
+        "base_ref": {"const": "main"},
+        "head_ref": {"const": "agent/owner-controlled-remediation-loop"},
+        "provider_head_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "merged_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_commit", "closure_commit", "tree_sha", "evidence_tag"],
+      "properties": {
+        "baseline_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "closure_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tree_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "evidence_tag": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "object_sha", "peeled_commit"],
+          "properties": {
+            "name": {"const": "remediation-evidence-v1"},
+            "object_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "peeled_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "commit", "parent_commit", "tree_sha"],
+      "properties": {
+        "branch": {"const": "main"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "parent_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tree_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "equivalence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "result"],
+      "properties": {
+        "method": {"const": "EXACT_GIT_TREE_IDENTITY"},
+        "result": {"const": "PASS"}
+      }
+    },
+    "tag_protection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleset_id", "enforcement", "include", "block_deletion", "block_update", "bypass_actor_count"],
+      "properties": {
+        "ruleset_id": {"const": 20265151},
+        "enforcement": {"const": "active"},
+        "include": {"const": ["refs/tags/remediation-evidence-v1"]},
+        "block_deletion": {"const": true},
+        "block_update": {"const": true},
+        "bypass_actor_count": {"const": 0}
+      }
+    }
+  }
+}

@@ -1,19 +1,13 @@
-"""Validate the owner-controlled APIVR remediation program.
-
-The validator is intentionally read-only. It prevents phase skipping, false
-completion, reviewer-context reuse, and failure closure without a reusable
-learning guardrail. It never edits source, advances a phase, or merges work.
-"""
+"""Validate the read-only owner-controlled APIVR remediation program."""
 
 from __future__ import annotations
 
 import copy
-import json
 import hashlib
+import json
 import os
 import re
 import subprocess
-import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -21,6 +15,14 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
+
+try:
+    from scripts.remediation_squash_integration import (
+        accepted_history_errors,
+        closure_history_head,
+    )
+except ModuleNotFoundError:
+    from remediation_squash_integration import accepted_history_errors, closure_history_head  # type: ignore[no-redef]  # noqa: I001
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -423,26 +425,17 @@ def _validate_complete_phase(
     frozen_package_commit = phase.get("frozen_package_commit")
     if not verified_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is missing")
+    elif not re.fullmatch(r"[0-9a-f]{40}", str(verified_commit)):
+        errors.append(f"{phase_id} cannot be COMPLETE: verified_commit is malformed")
     elif (root / ".git").exists():
-        try:
-            subprocess.run(
-                ["git", "cat-file", "-e", f"{verified_commit}^{{commit}}"],
-                cwd=root,
-                check=True,
-                capture_output=True,
-                timeout=20,
+        errors.extend(
+            f"{phase_id} cannot be COMPLETE: {item}"
+            for item in accepted_history_errors(
+                root,
+                str(program.get("baseline", {}).get("commit", "")),
+                str(verified_commit),
             )
-            subprocess.run(
-                ["git", "merge-base", "--is-ancestor", str(verified_commit), "HEAD"],
-                cwd=root,
-                check=True,
-                capture_output=True,
-                timeout=20,
-            )
-        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            errors.append(
-                f"{phase_id} cannot be COMPLETE: verified_commit is not an ancestor of HEAD"
-            )
+        )
     if not review_snapshot_commit:
         errors.append(f"{phase_id} cannot be COMPLETE: review_snapshot_commit is missing")
     if not frozen_package_commit:
@@ -630,7 +623,7 @@ def _validate_complete_phase(
                     f"{phase_id} verdict violates immutable reviewer schema: {schema_error.message}"
                 )
     roles = {item.get("role") for item in verdicts}
-    if len(verdicts) != 2 or roles != {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}:
+    if (len(verdicts), roles) != (2, {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}):
         errors.append(
             f"{phase_id} requires one canonical verdict from each independent reviewer role"
         )
@@ -772,13 +765,13 @@ def _validate_candidate_complete_phase(
 def _closure_delta_errors(
     program: dict[str, Any], phase: dict[str, Any], root: Path, snapshot_commit: str
 ) -> list[str]:
-    """Require the first post-snapshot commit to be a bounded metadata-only closure."""
     errors: list[str] = []
     if not (root / ".git").exists():
         return errors
     try:
+        history_head = closure_history_head(root, str(program.get("baseline", {}).get("commit", "")), snapshot_commit)
         descendants = subprocess.check_output(
-            ["git", "rev-list", "--reverse", "--ancestry-path", f"{snapshot_commit}..HEAD"],
+            ["git", "rev-list", "--reverse", "--ancestry-path", f"{snapshot_commit}..{history_head}"],
             cwd=root,
             text=True,
             timeout=20,

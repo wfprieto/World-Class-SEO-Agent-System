@@ -36,8 +36,8 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "10d185a81cf4c6e33b1c32eebd28103db89f75b398499d35b9f1623e0fbecf06"
-RELEASE_CONTRACT_SHA = "d80134087c20294c3c39464880f4d03b7a85cb5eb96afa19c830e93a0946d5a3"
+WORKFLOW_CONTRACT_SHA = "4034fbf4017e40480d25327b90d7dc391c2acfe2ff351a7e4986cdcc1cf647be"
+RELEASE_CONTRACT_SHA = "5ef5ff61423430c2bb55974eb6c1feea3e9e4978c3372e0d2c8f5ba16b3588e9"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
@@ -228,6 +228,7 @@ def _checkout_step_errors(step: dict[str, Any], expected_ref: str) -> list[str]:
     reference = str(step["uses"]).split("@", 1)[1]
     settings = step.get("with", {})
     depth = settings.get("fetch-depth") if isinstance(settings, dict) else None
+    tags = settings.get("fetch-tags") if isinstance(settings, dict) else None
     credentials = settings.get("persist-credentials") if isinstance(settings, dict) else None
     candidate_ref = settings.get("ref") if isinstance(settings, dict) else None
     if not str(step["uses"]).startswith("actions/checkout@"):
@@ -239,12 +240,15 @@ def _checkout_step_errors(step: dict[str, Any], expected_ref: str) -> list[str]:
         or (isinstance(depth, int) and not isinstance(depth, bool) and depth == 0)
     ):
         errors.append("every actions/checkout step must set fetch-depth: 0")
-    if credentials not in {False, "false"}:
-        errors.append("every actions/checkout step must set persist-credentials: false")
+    if (credentials, tags) not in {
+        (False, True), (False, "true"), ("false", True), ("false", "true")
+    }:
+        errors.append("every checkout must set persist-credentials: false and fetch-tags: true")
     if candidate_ref != expected_ref:
         errors.append("every actions/checkout step must check out the exact event commit")
     if not isinstance(settings, dict) or set(settings) != {
         "fetch-depth",
+        "fetch-tags",
         "persist-credentials",
         "ref",
     }:

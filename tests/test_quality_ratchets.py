@@ -264,6 +264,7 @@ def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
         "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\n"
         "        with:\n"
         "          fetch-depth: 0\n"
+        "          fetch-tags: true\n"
         "          persist-credentials: false\n"
         "          ref: ${{ github.event.pull_request.head.sha || github.sha }}\n"
     )

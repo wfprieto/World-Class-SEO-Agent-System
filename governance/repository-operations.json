@@ -26,24 +26,24 @@
     },
     {
       "id": "repository-governance",
-      "title": "Onboard an eligible independent main-branch reviewer",
-      "status": "BLOCKED_OWNER_ACTION",
+      "title": "Maintain solo-owner protected-branch controls",
+      "status": "READY",
       "owner": "Repository maintainer",
       "backup_status": "OWNER_ACTION_REQUIRED",
       "issue": {
         "number": 27,
         "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/27",
-        "expected_state": "OPEN"
+        "expected_state": "CLOSED"
       },
       "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-repository-governance"},
       "verification": ["python scripts/validate_repository_governance.py"],
-      "metric": "Provider-verified eligible independent reviewers",
-      "threshold": "At least one distinct eligible non-last-pusher reviewer",
-      "rollback_trigger": "The eligible reviewer loses access or independence, or protection permits self-approval.",
-      "rollback_procedure": "Restore fail-closed merge blocking and reopen issue #27 until a replacement is verified.",
-      "next_action_due": "2026-08-10",
-      "closure_evidence": {"status": "PENDING_OWNER_ACTION", "refs": []},
-      "blocker": "Only the repository owner is currently available; the owner must invite and verify a distinct eligible reviewer."
+      "metric": "Provider-verified required certification and unresolved-thread enforcement",
+      "threshold": "Zero impossible human approvals; exact-head repository-certification, resolved threads, squash-only merge, and linear history remain enforced",
+      "rollback_trigger": "Required certification, thread resolution, squash-only merge, linear history, deletion protection, or force-push protection weakens.",
+      "rollback_procedure": "Restore the versioned solo-maintainer ruleset contract and reopen issue #27 before another merge.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "VERIFIED", "refs": ["https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/24", "https://github.com/wfprieto/World-Class-SEO-Agent-System/rules/18955880"]},
+      "blocker": null
     },
     {
       "id": "network-provider-boundaries",

@@ -20,6 +20,28 @@ from scripts.validate_repository_governance import provider_state_errors  # noqa
 REPOSITORY = "wfprieto/World-Class-SEO-Agent-System"
 RULESET_ID = 18955880
 PERMISSIONS = ("pull", "triage", "push", "maintain", "admin")
+OWNER_ATTESTED_FIELDS = (
+    "private_vulnerability_reporting",
+    "vulnerability_alerts",
+    "dependabot_security_updates",
+    "secret_scanning",
+    "secret_scanning_push_protection",
+)
+
+
+def _owner_evidence_errors(snapshot: dict[str, Any], contract: dict[str, Any]) -> list[str]:
+    errors = [
+        f"owner evidence {field} does not match the contract"
+        for field in OWNER_ATTESTED_FIELDS
+        if snapshot.get(field) != contract.get(field)
+    ]
+    observed_ruleset = snapshot.get("ruleset", {})
+    expected_ruleset = contract.get("ruleset", {})
+    if observed_ruleset.get("bypass_actor_count") != expected_ruleset.get("bypass_actor_count"):
+        errors.append("owner evidence bypass_actor_count does not match the contract")
+    if snapshot.get("authenticated") is not True or not snapshot.get("captured_at"):
+        errors.append("owner evidence must retain authenticated dated provenance")
+    return errors
 
 
 def _api(endpoint: str) -> Any:
@@ -42,7 +64,7 @@ def _api_list(endpoint: str) -> list[dict[str, Any]]:
     return [item for page in pages for item in page if isinstance(item, dict)]
 
 
-def _collaborator_evidence(owner_login: str) -> dict[str, Any]:
+def _collaborator_evidence(owner_login: str, reviewer_status: str) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     for item in _api_list(f"repos/{REPOSITORY}/collaborators?per_page=100"):
         permissions = item.get("permissions", {})
@@ -64,9 +86,7 @@ def _collaborator_evidence(owner_login: str) -> dict[str, Any]:
     return {
         "collaborators": rows,
         "eligible_independent_reviewers": eligible,
-        "independent_reviewer_status": (
-            "VERIFIED" if eligible else "OWNER_ACTION_REQUIRED"
-        ),
+        "independent_reviewer_status": reviewer_status,
     }
 
 
@@ -111,7 +131,9 @@ def _phase8_evidence(
     contract: dict[str, Any], operations: dict[str, Any]
 ) -> dict[str, Any]:
     owner_login = str(contract["repository"]).partition("/")[0]
-    collaborators = _collaborator_evidence(owner_login)
+    collaborators = _collaborator_evidence(
+        owner_login, str(contract["independent_reviewer"]["status"])
+    )
     conduct = next(
         item for item in operations["critical_paths"] if item["id"] == "security-intake"
     )
@@ -241,9 +263,7 @@ def capture(
         "repository": REPOSITORY,
         "authenticated": True,
         "authenticated_actor": actor["login"],
-        "capture_method": (
-            "gh-api-live" if owner_snapshot is None else "gh-api-live-plus-fresh-owner-capture"
-        ),
+        "capture_method": "gh-api-live" if owner_snapshot is None else "gh-api-live-plus-owner-attestation",
         "captured_at": dt.datetime.now(dt.UTC).replace(microsecond=0).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         ),
@@ -273,7 +293,7 @@ def capture(
             "phase8_issues",
             "phase8_pull_request",
         ],
-        "fresh_owner_capture_fields": (
+        "owner_attested_fields": (
             []
             if owner_snapshot is None
             else [
@@ -307,7 +327,7 @@ def main() -> int:
                 encoding="utf-8"
             )
         )
-        owner_errors = provider_state_errors(owner_snapshot, contract)
+        owner_errors = _owner_evidence_errors(owner_snapshot, contract)
     snapshot = capture(owner_snapshot, contract=contract, operations=operations)
     errors = provider_state_errors(snapshot, contract, operations=operations)
     errors.extend(f"owner capture: {error}" for error in owner_errors)

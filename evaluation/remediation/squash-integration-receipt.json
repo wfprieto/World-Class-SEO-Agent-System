@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "integration_kind": "GITHUB_SQUASH_PULL_REQUEST",
+  "pull_request": {
+    "number": 24,
+    "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/24",
+    "base_ref": "main",
+    "head_ref": "agent/owner-controlled-remediation-loop",
+    "provider_head_sha": "0db24cfffb8d1af5d946f564762ed6126bab5ad4",
+    "merged_at": "2026-08-03T02:27:34Z"
+  },
+  "source": {
+    "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+    "closure_commit": "0db24cfffb8d1af5d946f564762ed6126bab5ad4",
+    "tree_sha": "99ac76d4e436fe06d74127233af61f5d7fdc190d",
+    "evidence_tag": {
+      "name": "remediation-evidence-v1",
+      "object_sha": "51871e60f7c80b7b8f4bbc80e8244e11476091c0",
+      "peeled_commit": "0db24cfffb8d1af5d946f564762ed6126bab5ad4"
+    }
+  },
+  "target": {
+    "branch": "main",
+    "commit": "98e8b4eef21dcc641361aed38cc29e7c25e590dc",
+    "parent_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+    "tree_sha": "99ac76d4e436fe06d74127233af61f5d7fdc190d"
+  },
+  "equivalence": {
+    "method": "EXACT_GIT_TREE_IDENTITY",
+    "result": "PASS"
+  },
+  "tag_protection": {
+    "ruleset_id": 20265151,
+    "enforcement": "active",
+    "include": ["refs/tags/remediation-evidence-v1"],
+    "block_deletion": true,
+    "block_update": true,
+    "bypass_actor_count": 0
+  }
+}

@@ -48,7 +48,7 @@ def _phase8_local_errors(
         "number": 24,
         "base": "main",
         "head": "agent/owner-controlled-remediation-loop",
-        "allowed_states": ["OPEN", "MERGED"],
+        "allowed_states": ["OPEN", "CLOSED"],
     }
     if contract.get("phase8_pull_request") != expected_pull:
         errors.append("Phase 8 provider evidence must bind the exact remediation pull request")
@@ -71,7 +71,6 @@ def local_errors(root: Path = ROOT) -> list[str]:
     config = _load_yaml(root / ".github/ISSUE_TEMPLATE/config.yml")
     workflow = _load_yaml(root / ".github/workflows/validate.yml")
     contract = _load_json(root / "governance/github-controls.json")
-
     if ADVISORY_URL not in security:
         errors.append("SECURITY.md must link directly to the private advisory form")
     contact_urls = {link.get("url") for link in config.get("contact_links", [])}
@@ -115,7 +114,6 @@ def local_errors(root: Path = ROOT) -> list[str]:
             errors.append(f"duplicate issue-template name {name!r}: {names[name]} and {path.name}")
         elif isinstance(name, str):
             names[name] = path.name
-
     ruleset = contract.get("ruleset", {})
     for service in (
         "private_vulnerability_reporting",
@@ -127,9 +125,9 @@ def local_errors(root: Path = ROOT) -> list[str]:
         if contract.get(service) is not True:
             errors.append(f"governance contract must require {service}=true")
     expected = {
-        "required_approving_review_count": 1,
+        "required_approving_review_count": 0,
         "dismiss_stale_reviews_on_push": True,
-        "require_last_push_approval": True,
+        "require_last_push_approval": False,
         "required_review_thread_resolution": True,
         "required_linear_history": True,
         "block_deletion": True,
@@ -144,11 +142,13 @@ def local_errors(root: Path = ROOT) -> list[str]:
         errors.append("repository-certification must be the sole required status check")
     reviewer = contract.get("independent_reviewer", {})
     if reviewer.get("accountable_owner") != "Repository maintainer":
-        errors.append("independent reviewer onboarding requires the repository maintainer owner")
+        errors.append("solo-maintainer governance requires the repository maintainer owner")
     if reviewer.get("due_phase") != "P8":
-        errors.append("independent reviewer onboarding must remain due by Phase P8")
-    if reviewer.get("merge_availability") != "BLOCKED_UNTIL_ELIGIBLE_REVIEWER_IS_ONBOARDED":
-        errors.append("governance must fail closed while no eligible reviewer is onboarded")
+        errors.append("solo-maintainer governance decision must remain bound to Phase P8")
+    if (reviewer.get("status"), reviewer.get("merge_availability")) != (
+        "NOT_APPLICABLE_SOLO_MAINTAINER", "AVAILABLE_AFTER_REQUIRED_STATUS_CHECKS"
+    ):
+        errors.append("governance must bind truthful solo-maintainer status to required checks")
     if workflow.get("permissions") != {"contents": "read"}:
         errors.append("validation workflow must retain least-privilege contents: read permission")
     triggers = workflow.get("on")
@@ -240,11 +240,11 @@ def _collaborator_errors(snapshot: dict[str, Any], contract: dict[str, Any]) -> 
     declared_eligible = snapshot.get("eligible_independent_reviewers")
     if declared_eligible != sorted(derived_eligible):
         errors.append("eligible independent reviewer inventory does not match permissions")
-    derived_status = "VERIFIED" if derived_eligible else "OWNER_ACTION_REQUIRED"
-    if snapshot.get("independent_reviewer_status") != derived_status:
-        errors.append("independent reviewer status does not match collaborator inventory")
-    if contract.get("independent_reviewer", {}).get("status") != derived_status:
-        errors.append("live reviewer availability differs from the fail-closed governance contract")
+    expected_status = contract.get("independent_reviewer", {}).get("status")
+    if snapshot.get("independent_reviewer_status") != expected_status:
+        errors.append("provider reviewer status does not match the governance decision")
+    if expected_status == "NOT_APPLICABLE_SOLO_MAINTAINER" and derived_eligible:
+        errors.append("solo-maintainer status is stale because an eligible reviewer now exists")
     return errors
 
 
@@ -265,8 +265,8 @@ def _phase8_pull_errors(snapshot: dict[str, Any], contract: dict[str, Any]) -> l
         errors.append("Phase 8 pull request state is not allowed by the contract")
     if state == "OPEN" and observed.get("merged") is not False:
         errors.append("an open Phase 8 pull request cannot be recorded as merged")
-    if state == "MERGED" and observed.get("merged") is not True:
-        errors.append("a merged Phase 8 pull request must be recorded as merged")
+    if state == "CLOSED" and observed.get("merged") is not True:
+        errors.append("the closed Phase 8 pull request must be recorded as merged")
     if not isinstance(observed.get("draft"), bool):
         errors.append("Phase 8 pull request draft state must be boolean")
     return errors
@@ -341,6 +341,7 @@ def _base_provider_errors(  # noqa: C901 - bounded normalized provider compariso
     if snapshot.get("capture_method") not in {
         "gh-api-live",
         "gh-api-live-plus-fresh-owner-capture",
+        "gh-api-live-plus-owner-attestation",
     }:
         errors.append("provider snapshot must identify the live gh API capture method")
     return errors

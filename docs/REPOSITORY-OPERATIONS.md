@@ -41,18 +41,18 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 <a id="ops-repository-governance"></a>
 ## repository-governance
 
-- **Owner:** Repository maintainer; a distinct eligible reviewer remains
-  `OWNER_ACTION_REQUIRED` until provider evidence proves otherwise.
+- **Owner:** Repository maintainer operating the explicitly approved solo-maintainer policy.
 - **Verify:** Run `python scripts/validate_repository_governance.py`. Use only centralized provider
-  authentication to confirm rulesets, reviewer permission, CODEOWNERS, and issue #27.
-- **Fail:** Fail when protection weakens, evidence is stale, self-approval is possible, the last
-  pusher supplies the approval, or no eligible reviewer exists.
-- **Recover:** Restore fail-closed protection and the exact versioned GitHub-controls contract;
-  keep issue #27 open until a replacement reviewer is provider-verified.
-- **Escalate:** The maintainer owns collaborator access; independent reviewers own evidence-package
-  verdicts. One rejection blocks closure.
-- **Stop:** Never invent a collaborator, approval, or provider observation. Do not merge while
-  GitHub reports `REVIEW_REQUIRED` without an eligible non-last-pusher approval.
+  authentication to confirm the required certification, thread resolution, squash-only merge,
+  linear history, deletion protection, force-push protection, and issue #27 closure.
+- **Fail:** Fail when any required automated or structural protection weakens, evidence is stale,
+  or the contract claims an unavailable second human reviewer.
+- **Recover:** Restore the exact versioned solo-maintainer GitHub-controls contract and reopen
+  issue #27 before another merge.
+- **Escalate:** The maintainer owns access and ruleset changes; independent engineering agents may
+  review evidence but never impersonate GitHub human approvals.
+- **Stop:** Never invent a collaborator, approval, or provider observation. Do not merge unless the
+  exact-head `repository-certification` check passes and all review threads are resolved.
 
 <a id="ops-network-provider-boundaries"></a>
 ## network-provider-boundaries
