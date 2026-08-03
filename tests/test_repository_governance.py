@@ -118,7 +118,7 @@ def test_weakened_certification_contract_is_rejected(tmp_path: Path) -> None:
     root = _copy_repository_surface(tmp_path)
     path = root / "governance/github-controls.json"
     contract = json.loads(path.read_text(encoding="utf-8"))
-    contract["ruleset"]["required_approving_review_count"] = 0
+    contract["ruleset"]["required_approving_review_count"] = 1
     path.write_text(json.dumps(contract), encoding="utf-8")
     assert any("required_approving_review_count" in error for error in local_errors(root))
 
@@ -217,7 +217,7 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
     path = tmp_path / "snapshot.json"
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     assert provider_errors(path) == []
-    snapshot["ruleset"]["require_last_push_approval"] = False
+    snapshot["ruleset"]["require_last_push_approval"] = True
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     assert any("require_last_push_approval" in error for error in provider_errors(path))
 

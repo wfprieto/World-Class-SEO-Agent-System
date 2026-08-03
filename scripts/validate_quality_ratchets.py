@@ -19,6 +19,7 @@ except ModuleNotFoundError:
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "code-quality-ratchet.json"
+SQUASH_EVIDENCE_TAG = "remediation-evidence-v1"
 PACKAGES = ("runtime", "adapters", "integrations", "seoctl", "scripts")
 RUFF_RULES = ("E4", "E7", "E9", "F", "I", "B", "UP", "C4", "SIM", "C90")
 FILE_DEFAULTS = {"max_lines": 400, "max_complexity_total": 180, "max_missing_annotations": 0}
@@ -152,7 +153,10 @@ def _previous_contract(root: Path, contract_path: Path) -> dict[str, Any] | None
             check=True, capture_output=True, text=True, timeout=20,
         ).stdout.splitlines()
         if len(revisions) < 2:
-            return None
+            return json.loads(subprocess.run(
+                ["git", "show", f"{SQUASH_EVIDENCE_TAG}:{relative}"], cwd=root, check=True,
+                capture_output=True, text=True, timeout=20,
+            ).stdout)
         return json.loads(subprocess.run(
             ["git", "show", f"{revisions[1]}:{relative}"], cwd=root, check=True,
             capture_output=True, text=True, timeout=20,

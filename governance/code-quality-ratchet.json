@@ -219,7 +219,7 @@
       "removal_phase": "P7"
     },
     "scripts/validate_remediation_program.py": {
-      "max_lines": 957,
+      "max_lines": 950,
       "max_complexity_total": 266,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
@@ -1509,7 +1509,7 @@
       "removal_phase": "P7"
     },
     "scripts.validate_remediation_program::_validate_complete_phase": {
-      "max_span": 327,
+      "max_span": 318,
       "max_complexity": 98,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
@@ -1668,8 +1668,6 @@
       "scripts/validate_remediation_program.py|C901|`_rollback_evidence_errors` is too complex (12 > 10)": 1,
       "scripts/validate_remediation_program.py|C901|`_validate_complete_phase` is too complex (57 > 10)": 1,
       "scripts/validate_remediation_program.py|C901|`_validate_program_rules` is too complex (13 > 10)": 1,
-      "scripts/validate_remediation_program.py|F401|`sys` imported but unused": 1,
-      "scripts/validate_remediation_program.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_repository_governance.py|C901|`local_errors` is too complex (41 > 10)": 1,
       "scripts/validate_schema_examples.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_seo_claims.py|C901|`validate` is too complex (17 > 10)": 1,
