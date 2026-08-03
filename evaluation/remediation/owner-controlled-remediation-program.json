@@ -10,7 +10,7 @@
     "coverage_percent": 78.48
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P7",
+  "current_phase": "P8",
   "direct_merge_permitted": false,
   "scope": [
     "product identity and scope",
@@ -3103,11 +3103,11 @@
     {
       "id": "P7",
       "title": "Reports documentation onboarding and knowledge",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "rollback_baseline_commit": "a5b486e12cfd169bc94ba3cc73c007f24e3d9d26",
       "verified_commit": "85c413adf5dbdae1f73df0ca911ffe4ccb0123a2",
-      "review_snapshot_commit": null,
-      "frozen_package_commit": null,
+      "review_snapshot_commit": "9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
+      "frozen_package_commit": "9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
       "rollback_evidence_sha256": "3a19ab6ba3d2d2de1c4962cc5e18d696ef8922caa1739ecc426bfd832772031e",
       "authority_evidence": [
         {
@@ -3147,7 +3147,33 @@
           "assertion": "VP Engineering review authority is bound to immutable source."
         }
       ],
-      "package_certification": [],
+      "package_certification": [
+        {
+          "class": "CI",
+          "ref": "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30774148336",
+          "commit": "9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
+          "sha256": null,
+          "environment": "CI",
+          "status": "PASS",
+          "assertion": "The immutable Phase 7 snapshot passed all canonical repository jobs at exact head.",
+          "provenance": {
+            "repository": "wfprieto/World-Class-SEO-Agent-System",
+            "workflow": "Validate repository",
+            "head_sha": "9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
+            "conclusion": "success",
+            "jobs": [
+              "provider-authentication",
+              "validate matrix (6)",
+              "validate",
+              "quality_security_release",
+              "clean wheel (2)",
+              "phase0-rollback-certification",
+              "phase-rollback-certification",
+              "repository-certification"
+            ]
+          }
+        }
+      ],
       "owner": "Documentation and knowledge owner",
       "approver": "Repository maintainer",
       "verifier": "Quality owner",
@@ -3468,13 +3494,80 @@
       },
       "review": {
         "evidence_package_hash": "359b0f73807dc95531b3e8979a6a7e85ca6e85dad9c70f4138dacccc1e035414",
-        "verdicts": []
+        "verdicts": [
+          {
+            "review_id": "p7-scrum-approve-9a1d6ba-20260802",
+            "reviewer_id": "senior-scrummaster-3",
+            "role": "SENIOR_SCRUMMASTER_3",
+            "context_id": "p7-fresh-scrum-9a1d6ba-359b0f73-20260802",
+            "provider": "OpenAI",
+            "model": "GPT-5",
+            "evidence_package_hash": "359b0f73807dc95531b3e8979a6a7e85ca6e85dad9c70f4138dacccc1e035414",
+            "verdict": "APPROVE_GREAT",
+            "strongest_objections": [
+              "Canonical status previously depended on a version label; malformed canonical payloads and wrong-field bindings now fail closed.",
+              "Comparative scores previously had duplicate authority and nonexistent sources; one reviewed package now binds scores, commits, sources, and content digests.",
+              "The exact combined missing-path, malformed-digest, invalid-date, invalid-freshness, missing-owner, and missing-sources mutation now reports all six failures.",
+              "The comparative baseline is a static reviewed assessment and does not establish deployed behavior, external truth, rankings, traffic, or SEO effectiveness."
+            ],
+            "evidence_refs": [
+              "git:9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
+              "git:85c413adf5dbdae1f73df0ca911ffe4ccb0123a2",
+              "computed-evidence-package-hash:359b0f73807dc95531b3e8979a6a7e85ca6e85dad9c70f4138dacccc1e035414",
+              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30773612105",
+              "independent-focused-replay:34-passed",
+              "independent-source-verification:all-pinned-hashes-matched"
+            ],
+            "residual_risks": [
+              "The source-authority manifest is an offline governance trust root and does not prove external truth.",
+              "The doctor proves bounded static local readiness only, not providers, deployments, rankings, traffic, or outcomes.",
+              "External source and GitHub Actions evidence remains subject to availability and retention."
+            ],
+            "required_changes": [],
+            "submitted_at": "2026-08-03T00:22:46.406Z",
+            "saw_other_reviewer_verdict": false,
+            "is_builder": false
+          },
+          {
+            "review_id": "0a8b23f4-7e61-44b8-9ae6-c427784559d2",
+            "reviewer_id": "vp-engineering",
+            "role": "VP_ENGINEERING",
+            "context_id": "2ab2d7ee-56e2-4dae-975d-d8fb7a4d1893",
+            "provider": "OpenAI",
+            "model": "GPT-5 Codex",
+            "evidence_package_hash": "359b0f73807dc95531b3e8979a6a7e85ca6e85dad9c70f4138dacccc1e035414",
+            "verdict": "APPROVE_GREAT",
+            "strongest_objections": [
+              "Implementation run 30773612105 authenticates 85c413a rather than the snapshot; exact-snapshot run 30774148336 resolves this at 9a1d6ba with all jobs successful.",
+              "Changing the reviewed authority and dependent digests requires a newly sealed package and fresh independent review.",
+              "Content hashes establish pinned identity, not factual truth, completeness, or continuing relevance.",
+              "Phase rollback is proven for the current linear range; future merge commits must fail until explicit mainline handling exists."
+            ],
+            "evidence_refs": [
+              "git:9a1d6ba008c8aaf582d6281b7d511dc5a589cc63",
+              "git:85c413adf5dbdae1f73df0ca911ffe4ccb0123a2",
+              "computed-evidence-package-hash:359b0f73807dc95531b3e8979a6a7e85ca6e85dad9c70f4138dacccc1e035414",
+              "https://github.com/wfprieto/World-Class-SEO-Agent-System/actions/runs/30774148336",
+              "independent-fixed-control-catalog:112-passed",
+              "rollback-proof:commit-count=6;merge-count=0;certification=PASS"
+            ],
+            "residual_risks": [
+              "External comparator objects must remain retrievable or independently preserved.",
+              "Static validation cannot establish external truth or real-world SEO effectiveness.",
+              "GitHub logs and receipts remain subject to availability and retention."
+            ],
+            "required_changes": [],
+            "submitted_at": "2026-08-03T00:27:09.9617179Z",
+            "saw_other_reviewer_verdict": false,
+            "is_builder": false
+          }
+        ]
       }
     },
     {
       "id": "P8",
       "title": "Repository operations and integrated re-audit",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "rollback_baseline_commit": null,
       "verified_commit": null,
       "review_snapshot_commit": null,
