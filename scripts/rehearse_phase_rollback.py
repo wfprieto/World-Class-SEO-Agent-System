@@ -9,6 +9,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.remediation_squash_integration import rollback_history_head
+except ModuleNotFoundError:
+    from remediation_squash_integration import rollback_history_head
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,7 +44,7 @@ def rehearse(root: Path, receipt_path: Path) -> dict[str, Any]:
         root / "evaluation/remediation" / f"phase{phase_id[1:]}-rollback-evidence.json"
     )
     baseline = str(artifact["baseline_commit"])
-    candidate = _git(root, "rev-parse", "HEAD")
+    candidate = rollback_history_head(root, baseline)
     commits = _git(root, "rev-list", f"{baseline}..{candidate}").splitlines()
     if not commits:
         raise RuntimeError("rollback range is empty")

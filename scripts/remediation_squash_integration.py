@@ -166,3 +166,14 @@ def closure_history_head(root: Path, baseline: str, snapshot: str) -> str:
     if errors or integration is None:
         raise ValueError("; ".join(errors) or "authenticated squash source is unavailable")
     return integration.source_closure
+
+
+def rollback_history_head(root: Path, baseline: str) -> str:
+    """Use HEAD for linear work or the authenticated source closure after squash."""
+
+    if _is_ancestor(root, baseline, "HEAD"):
+        return _git(root, "rev-parse", "HEAD")
+    integration, errors = validate_squash_integration(root, baseline)
+    if errors or integration is None:
+        raise ValueError("; ".join(errors) or "authenticated rollback source is unavailable")
+    return integration.source_closure

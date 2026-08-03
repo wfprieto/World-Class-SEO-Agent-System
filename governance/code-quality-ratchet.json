@@ -1638,7 +1638,6 @@
       "scripts/generate_command_docs.py|E402|Module level import not at top of file": 1,
       "scripts/plan_github_controls_rollback.py|C901|`restored_state_errors` is too complex (11 > 10)": 1,
       "scripts/plan_github_controls_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
-      "scripts/rehearse_phase_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/run_improvement_cycle.py|C901|`evaluate_cycle` is too complex (15 > 10)": 1,
       "scripts/run_improvement_cycle.py|C901|`validate_reviewer_independence` is too complex (11 > 10)": 1,
       "scripts/run_improvement_cycle.py|E402|Module level import not at top of file": 1,
