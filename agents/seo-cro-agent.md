@@ -29,11 +29,10 @@ Increase the business value of organic traffic by aligning page experience, sear
 - `sxo-page-fit`
 - `conversion-intent-map`
 - `landing-page-cro-audit`
-- `experiment-design`
 
 ## Output
 
-Use `templates/cro-test-brief.md` with hypothesis, expected effect, audience, risk, success metric, and stop condition.
+Use `templates/audit-report.md` with hypothesis, expected effect, audience, risk, success metric, and stop condition.
 
 ## Forbidden Actions
 

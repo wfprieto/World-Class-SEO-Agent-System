@@ -6,13 +6,14 @@ import asyncio
 import json
 import logging
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
-from typing import AsyncIterator, Protocol
+from typing import Any, Protocol
 
-from tenacity import retry, stop_after_attempt, wait_exponential
-
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 _MAX_RESPONSE_BYTES = 10_000_000
@@ -20,6 +21,28 @@ _MAX_RESPONSE_BYTES = 10_000_000
 
 class LLMConfigurationError(RuntimeError):
     """Raised when a configured LLM provider is missing required or safe settings."""
+
+
+class _RejectCredentialRedirects(urllib.request.HTTPRedirectHandler):
+    """Never forward credential-bearing provider requests to a redirect target."""
+
+    def redirect_request(
+        self,
+        req: Any,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> None:
+        raise LLMConfigurationError("LLM credential request refused a redirect.")
+
+
+def _retryable_transport_failure(exc: BaseException) -> bool:
+    """Retry transient transport/status failures, never parser or policy failures."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code in {408, 425, 429} or 500 <= exc.code <= 599
+    return isinstance(exc, (urllib.error.URLError, TimeoutError, ConnectionError))
 
 
 @dataclass
@@ -114,6 +137,7 @@ class OpenAICompatibleClient:
         base_url: str | None = None,
         *,
         allow_custom_base_url: bool = False,
+        opener: Any | None = None,
     ) -> None:
         raw_base = base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
         env_approval = os.getenv("ALLOW_CUSTOM_LLM_BASE_URL", "").lower() in {
@@ -133,6 +157,7 @@ class OpenAICompatibleClient:
         if not self.api_key:
             variable = "OPENAI_COMPATIBLE_API_KEY" if custom else "OPENAI_API_KEY"
             raise LLMConfigurationError(f"{variable} is required for this endpoint.")
+        self._opener = opener or urllib.request.build_opener(_RejectCredentialRedirects())
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         payload = {
@@ -157,6 +182,7 @@ class OpenAICompatibleClient:
         return self._post_json_with_retry(url, payload)
 
     @retry(
+        retry=retry_if_exception(_retryable_transport_failure),
         wait=wait_exponential(multiplier=1, min=1, max=10),
         stop=stop_after_attempt(3),
         reraise=True,
@@ -172,7 +198,7 @@ class OpenAICompatibleClient:
             },
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with self._opener.open(request, timeout=120) as response:
             declared = response.headers.get("Content-Length")
             if declared and int(declared) > _MAX_RESPONSE_BYTES:
                 raise RuntimeError("LLM response exceeds size limit")
@@ -190,11 +216,18 @@ class AnthropicClient:
 
     provider = "anthropic"
 
-    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str | None = None,
+        *,
+        opener: Any | None = None,
+    ) -> None:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"
         if not self.api_key:
             raise LLMConfigurationError("ANTHROPIC_API_KEY is required for the Anthropic client.")
+        self._opener = opener or urllib.request.build_opener(_RejectCredentialRedirects())
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         system = "\n\n".join(
@@ -230,6 +263,7 @@ class AnthropicClient:
         return self._post_json_with_retry(url, payload)
 
     @retry(
+        retry=retry_if_exception(_retryable_transport_failure),
         wait=wait_exponential(multiplier=1, min=1, max=10),
         stop=stop_after_attempt(3),
         reraise=True,
@@ -246,7 +280,7 @@ class AnthropicClient:
             },
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with self._opener.open(request, timeout=120) as response:
             declared = response.headers.get("Content-Length")
             if declared and int(declared) > _MAX_RESPONSE_BYTES:
                 raise RuntimeError("LLM response exceeds size limit")

@@ -29,11 +29,9 @@ Safely implement SEO improvements in codebases, templates, routing systems, CMS 
 ## Primary Skills
 
 - `technical-implementation`
-- `schema-detect-validate-generate`
-- `sitemap-audit`
-- `redirect-validation`
-- `core-web-vitals-triage`
 - `seo-ci-checks`
+- `redirect-validation`
+- `desktop-commander-execution`
 
 ## Output
 

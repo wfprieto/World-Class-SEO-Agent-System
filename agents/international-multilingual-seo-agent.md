@@ -39,7 +39,7 @@ Scale organic visibility across languages and regions while avoiding duplicate-c
 
 ## Output
 
-Use `templates/international-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

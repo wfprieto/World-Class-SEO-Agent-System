@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://world-class-seo.local/schemas/seoctl-command-input.json",
+  "title": "seoctl normalized command invocation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command", "arguments"],
+  "properties": {
+    "command": {"type": "string", "pattern": "^[a-z0-9-]+\\.[a-z0-9-]+$"},
+    "arguments": {"type": "object"}
+  }
+}

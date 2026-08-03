@@ -28,10 +28,10 @@ Create complete SEO audits, health scores, evidence packs, and performance repor
 ## Primary Skills
 
 - `full-site-audit`
-- `seo-drift-monitor`
-- `indexation-reality-check`
 - `analytics-synthesis`
 - `score-normalization`
+- `seo-drift-monitor`
+- `product-proof-technical-audit`
 
 ## Output
 

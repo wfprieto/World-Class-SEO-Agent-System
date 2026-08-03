@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -12,10 +13,12 @@ if str(ROOT) not in sys.path:
 from seoctl.registry import command_specs, load_registry, validate_registry
 
 DEFAULT_OUT = ROOT / "docs" / "COMMANDS.md"
+EVIDENCE_REGISTRY = ROOT / "orchestration" / "capability-evidence-registry.json"
 
 
 def render() -> str:
     registry = load_registry()
+    evidence = json.loads(EVIDENCE_REGISTRY.read_text(encoding="utf-8-sig"))["commands"]
     errors = validate_registry(registry)
     if errors:
         raise ValueError("invalid command registry: " + "; ".join(errors))
@@ -26,13 +29,15 @@ def render() -> str:
         "",
         "Run `python -m seoctl --help` for interactive argument details.",
         "",
-        "| Command | Owner | Skills | Network |",
-        "|---|---|---|---|",
+        "| Command | Owner | Skills | Network | Delivery | Execution | Claim ceiling |",
+        "|---|---|---|---|---|---|---|",
     ]
     for spec in sorted(command_specs(registry), key=lambda item: item.path):
         lines.append(
             "| `seoctl " + " ".join(spec.path) + "` | " + spec.owner + " | "
-            + ", ".join(f"`{skill}`" for skill in spec.skills) + " | `" + spec.network + "` |"
+            + ", ".join(f"`{skill}`" for skill in spec.skills) + " | `" + spec.network + "` | `"
+            + evidence[spec.id]["delivery_state"] + "` | `" + evidence[spec.id]["execution_mode"]
+            + "` | `" + evidence[spec.id]["claim_ceiling"] + "` |"
         )
     lines.extend([
         "", "## Stable exit codes", "", "| Code | Meaning |", "|---:|---|",
@@ -41,12 +46,13 @@ def render() -> str:
         "| 3 | Optional capability or provider unavailable |",
         "| 4 | Blocked by evidence, authorization, privacy or governance gate |",
         "| 5 | Execution or validation failure |", "",
-        "Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.",
+        "Every command writes exactly one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`. Invalid or missing arguments write no usage text, use a stable command ID and `error.code`, and exit 2.",
         "", "## Examples", "", "```bash",
         "python -m seoctl --registry-check",
         "python -m seoctl audit technical --url https://example.com --output audit-runs/example-com",
         "python -m seoctl knowledge validate",
         "python -m seoctl knowledge product-claims --status BLOCKED",
+        "python -m seoctl system doctor --as-of 2026-08-02",
         "python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx",
         "python -m seoctl system route \"Run a full SEO audit\" --domain https://example.com --business-type saas",
         "python -m seoctl system run \"Build an SEO content brief\" --domain https://example.com --business-type saas",

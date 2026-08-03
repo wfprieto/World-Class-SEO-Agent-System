@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date
 
 from integrations.product_proof.crawler import RobotsPolicy, parse_robots
-from integrations.product_proof.service import ProductProofTechnicalAudit
+from integrations.product_proof.service import ARTIFACT_FILENAMES, ProductProofTechnicalAudit
 from scripts.validate_seo_claims import validate
 from seoctl.audit_cli import run
 
@@ -71,7 +71,10 @@ def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
       max_urls=20,max_depth=3,max_asset_hosts=5)
     assert result.status == 'complete'
     assert result.data['pages_crawled'] == 5
-    assert result.data['agents_executed'] == 7
+    assert result.data['agents_executed'] == 0
+    assert result.data['agent_execution_evidence'] == []
+    assert result.data['contribution_records'] == 7
+    assert result.data['contribution_type'] == 'DETERMINISTIC_RULE_ATTRIBUTION'
     assert result.data['trust_summary']['unsupported_material_findings'] == 0
     findings=json.loads((out/'findings.json').read_text())
     titles='\n'.join(row['title'] for row in findings)
@@ -80,12 +83,30 @@ def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
     assert 'Pages carry noindex instructions that Google may be unable to read' in titles
     assert 'Early page images are lazy-loaded' in titles
     assert 'Empty faceted combinations return successful responses' in titles
-    for name in ('run-manifest.json','technical-audit.md','executive-summary.md','remediation-plan.csv','verification-plan.json','agent-contributions.json'):
+    expected_artifacts = {
+      'crawl.json', 'findings.json', 'decisions.json', 'agent-contributions.json',
+      'trust-summary.json', 'technical-audit.md', 'executive-summary.md',
+      'remediation-plan.csv', 'verification-plan.json', 'run-manifest.json',
+    }
+    assert len(ARTIFACT_FILENAMES) == 10
+    assert set(ARTIFACT_FILENAMES.values()) == expected_artifacts
+    assert {path.name for path in out.iterdir()} == expected_artifacts
+    for name in expected_artifacts:
       assert (out/name).is_file() and (out/name).stat().st_size > 0
     manifest=json.loads((out/'run-manifest.json').read_text())
     assert manifest['evidence_mode']=='FIXTURE'
     assert manifest['fixture_is_live_proof'] is False
-    assert manifest['multi_agent_contribution']['decisions_recorded'] >= 1
+    semantics = manifest['contribution_semantics']
+    assert semantics['type'] == 'DETERMINISTIC_RULE_ATTRIBUTION'
+    assert semantics['agents_executed'] == 0
+    assert semantics['agent_execution_evidence'] == []
+    assert semantics['handoffs_consumed'] == 0
+    assert semantics['decisions_recorded'] >= 1
+    contributions = json.loads((out/'agent-contributions.json').read_text())
+    assert all(row['contribution_type'] == 'DETERMINISTIC_RULE_ATTRIBUTION' for row in contributions)
+    assert all(row['execution_evidence'] == [] for row in contributions)
+    assert '**Evidence mode:** FIXTURE' in (out/'technical-audit.md').read_text()
+    assert '**Evidence mode:** FIXTURE' in (out/'executive-summary.md').read_text()
 
 
 def test_cli_claims_and_audit_fixture(tmp_path: Path):
@@ -97,7 +118,8 @@ def test_cli_claims_and_audit_fixture(tmp_path: Path):
     fixture=_fixture(tmp_path)
     payload, code = run(['audit','technical','--url','https://example.com/','--output',str(tmp_path/'cli'),'--fixture',str(fixture),'--max-urls','20'])
     assert code == 0
-    assert payload['data']['agents_executed'] == 7
+    assert payload['data']['agents_executed'] == 0
+    assert payload['data']['contribution_records'] == 7
 
 
 def test_capability_overlay_preserves_packages_and_adds_source_contract(tmp_path: Path):

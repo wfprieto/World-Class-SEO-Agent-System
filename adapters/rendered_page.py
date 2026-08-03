@@ -3,9 +3,10 @@
 Renders a URL as a browser would, so agents can judge what a user (and a
 JS-incapable AI crawler) actually sees. Returns the canonical AdapterResult.
 
-Security: outbound targets are validated by adapters.url_safety.validate_public_url
-(the kit's single SSRF policy). Browser subresource requests are additionally
-guarded, because the browser resolves DNS itself (rebinding defence).
+Security: outbound targets use the canonical public-web URL policy and bounded
+HTTP transport. Browser requests are revalidated before continuation. This is a
+fail-closed URL/redirect policy, not DNS pinning; DNS rebinding remains a stated
+limitation because the browser and validator resolve independently.
 
 Playwright is optional. Rendering is performed by an injectable `render_fn`, so the
 success-path logic is testable without a live browser. When Playwright is missing or a
@@ -25,12 +26,18 @@ from __future__ import annotations
 
 import re
 import time
-import urllib.parse
-import urllib.request
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from adapters.base import AdapterResult
-from adapters.url_safety import host_is_public, validate_public_url
+from adapters.rendered_evidence import blank_evidence, merge_rendered
+from adapters.url_safety import (
+    sanitize_headers_for_evidence,
+    sanitize_text_for_evidence,
+    sanitize_url_for_evidence,
+    validate_public_url,
+)
+from integrations.technical.http import BoundedHttpClient
 
 _SPA_MARKERS = ('id="root"', 'id="app"', 'id="__next"', "data-reactroot", "ng-version")
 _HTTP_TIMEOUT = 30
@@ -38,21 +45,27 @@ _MAX_RESPONSE_BYTES = 12_000_000
 _RENDER_TIMEOUT_MS = 30_000
 _SPA_TEXT_WORD_FLOOR = 120
 _MODES = ("auto", "always", "never")
-
 DEPENDENCY_MISSING = "dependency_missing"
 RENDER_FAILED = "render_failed"
 FETCH_FAILED = "fetch_failed"
 
 
-def _raw_fetch(url: str) -> tuple[str, int | None, dict]:
-    request = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0 (compatible; SEO-Kit-Render/1.0)"}
+def _raw_fetch(
+    url: str,
+    client: BoundedHttpClient | None = None,
+) -> tuple[str, int | None, dict[str, str]]:
+    transport = client or BoundedHttpClient(
+        timeout=_HTTP_TIMEOUT,
+        max_response_bytes=_MAX_RESPONSE_BYTES,
+        max_redirects=10,
+        user_agent="Mozilla/5.0 (compatible; SEO-Kit-Render/1.0)",
     )
-    with urllib.request.urlopen(request, timeout=_HTTP_TIMEOUT) as response:
-        body = response.read(_MAX_RESPONSE_BYTES + 1)
-        if len(body) > _MAX_RESPONSE_BYTES:
-            raise ValueError("Response exceeds the maximum allowed size")
-        return body.decode("utf-8", "replace"), response.status, dict(response.headers)
+    hop = transport.get(url)
+    return (
+        hop.body.decode("utf-8", "replace"),
+        hop.status_code,
+        sanitize_headers_for_evidence(hop.headers),
+    )
 
 
 def is_spa(raw_html: str) -> bool:
@@ -80,22 +93,14 @@ def dependency_status() -> dict[str, str]:
     return {"playwright": "installed" if _playwright_available() else "missing"}
 
 
-def _blank_evidence(url: str, raw_html: str, status: int | None, headers: dict) -> dict[str, Any]:
-    return {
-        "url": url,
-        "status_code": status,
-        "is_spa": is_spa(raw_html),
-        "mode_used": "raw",
-        "render_engine": None,
-        "raw_content": raw_html,
-        "content": raw_html,
-        "headers": headers,
-        "accessibility_tree": None,
-        "console_errors": [],
-        "render_ms": 0,
-        "js_added_chars": None,
-        "evidence": {"rendered": "Not Run", "accessibility": "Not Run"},
-    }
+def _guard_browser_request(route: Any, block: tuple[str, ...]) -> Any:
+    try:
+        validate_public_url(route.request.url)
+    except ValueError:
+        return route.abort()
+    if route.request.resource_type in block:
+        return route.abort()
+    return route.continue_()
 
 
 def playwright_render(url: str, block: tuple[str, ...] = ()) -> dict[str, Any]:
@@ -108,17 +113,17 @@ def playwright_render(url: str, block: tuple[str, ...] = ()) -> dict[str, Any]:
         context = browser.new_context()
         page = context.new_page()
 
-        def guard(route):
-            host = urllib.parse.urlparse(route.request.url).hostname
-            if host and not host_is_public(host):
-                return route.abort()
-            if route.request.resource_type in block:
-                return route.abort()
-            return route.continue_()
+        def guard(route: Any) -> Any:
+            return _guard_browser_request(route, block)
 
         page.route("**/*", guard)
         errors: list[str] = []
-        page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+        page.on(
+            "console",
+            lambda m: errors.append(sanitize_text_for_evidence(m.text))
+            if m.type == "error"
+            else None,
+        )
         response = page.goto(url, wait_until="networkidle", timeout=_RENDER_TIMEOUT_MS)
         rendered = page.content()
         tree = page.accessibility.snapshot()
@@ -152,12 +157,14 @@ def fetch(
     if mode not in _MODES:
         raise ValueError(f"mode must be one of {_MODES}")
     warnings: list[str] = []
-
     try:
         safe_url = validate_public_url(url)
     except ValueError as exc:
         return AdapterResult(
-            source="rendered_page", status="blocked", data={"url": url}, warnings=[str(exc)]
+            source="rendered_page",
+            status="blocked",
+            data={"url": sanitize_url_for_evidence(url)},
+            warnings=[sanitize_text_for_evidence(exc)],
         )
 
     raw_html: str = ""
@@ -166,9 +173,11 @@ def fetch(
     try:
         raw_html, status, headers = _raw_fetch(safe_url)
     except Exception as exc:  # noqa: BLE001
-        warnings.append(f"{FETCH_FAILED}: {exc}")
+        warnings.append(f"{FETCH_FAILED}: {sanitize_text_for_evidence(exc)}")
 
-    data = _blank_evidence(safe_url, raw_html, status, headers)
+    data = blank_evidence(
+        safe_url, raw_html, status, headers, is_spa=is_spa(raw_html)
+    )
     wants_render = mode == "always" or (mode == "auto" and data["is_spa"])
     if not wants_render:
         return AdapterResult(
@@ -194,22 +203,13 @@ def fetch(
     try:
         rendered = renderer(safe_url, block)
     except Exception as exc:  # noqa: BLE001
-        warnings.append(f"{RENDER_FAILED}: {exc}. Returned raw HTML only; rendered evidence is Not Run.")
+        warnings.append(
+            f"{RENDER_FAILED}: {sanitize_text_for_evidence(exc)}. "
+            "Returned raw HTML only; rendered evidence is Not Run."
+        )
         return AdapterResult(source="rendered_page", status="partial", data=data, warnings=warnings)
 
-    data.update(
-        {
-            "mode_used": "rendered",
-            "render_engine": rendered.get("render_engine", "injected"),
-            "content": rendered.get("content", raw_html),
-            "status_code": rendered.get("status_code") or data["status_code"],
-            "accessibility_tree": rendered.get("accessibility_tree"),
-            "console_errors": rendered.get("console_errors", []),
-            "render_ms": rendered.get("render_ms", 0),
-            "js_added_chars": len(rendered.get("content", "")) - len(raw_html or ""),
-            "evidence": {"rendered": "Verified", "accessibility": "Verified"},
-        }
-    )
+    merge_rendered(data, rendered, raw_html)
     return AdapterResult(source="rendered_page", status="ok", data=data, warnings=warnings)
 
 

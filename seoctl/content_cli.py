@@ -10,12 +10,10 @@ from typing import Any, Callable
 from integrations.content_intelligence.service import ContentIntelligenceService
 from seoctl import cli as core_cli
 from seoctl.cli import (
-    EXIT_BLOCKED,
     EXIT_FAILED,
     EXIT_INPUT,
-    EXIT_OK,
-    EXIT_UNAVAILABLE,
     envelope,
+    exit_code_for_status,
 )
 
 _LEGACY_ACTIONS = {"relevance", "serp", "brief-decision"}
@@ -34,20 +32,12 @@ def _read_json(path: str) -> Any:
 
 
 def _result(command: str, result):
-    if result.status in {"blocked"}:
-        code = EXIT_BLOCKED
-    elif result.status in {"not_configured", "unavailable"}:
-        code = EXIT_UNAVAILABLE
-    elif result.status in {"failed", "invalid", "invalid_response"}:
-        code = EXIT_FAILED
-    else:
-        code = EXIT_OK
     return envelope(
         command,
         result.status,
         result.data,
         warnings=result.warnings,
-    ), code
+    ), exit_code_for_status(result.status)
 
 
 def _quality(args: argparse.Namespace):

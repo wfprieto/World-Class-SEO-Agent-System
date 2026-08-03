@@ -10,6 +10,12 @@ assignees: ""
 
 Name the agent.
 
+## Operations Control and Ownership
+
+- Control ID (registry ID or `UNMAPPED`):
+- Accountable owner:
+- Provider-verified backup or `OWNER_ACTION_REQUIRED`:
+
 ## Improvement
 
 Describe the proposed improvement.
@@ -18,6 +24,16 @@ Describe the proposed improvement.
 
 Why is this needed?
 
+## Verification
+
+- Command or review method:
+- Expected result:
+
+## Rollback Trigger and Recovery
+
+- Trigger:
+- Recovery procedure and stop condition:
+
 ## Handoffs or Skills Affected
 
 - 
@@ -25,4 +41,8 @@ Why is this needed?
 ## Risk
 
 Low / Medium / High / Critical
+
+## Sensitive Data
+
+- [ ] I removed credentials, tokens, private URLs, client data, vulnerability details, and private conduct reports.
 

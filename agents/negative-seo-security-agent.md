@@ -26,14 +26,13 @@ Detect and mitigate SEO threats from spam links, hacked pages, malware, scraping
 
 ## Primary Skills
 
-- `backlink-profile`
 - `negative-seo-threat-review`
 - `security-indexation-check`
-- `seo-drift-monitor`
+- `spam-policy-check`
 
 ## Output
 
-Use `templates/security-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

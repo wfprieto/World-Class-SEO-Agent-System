@@ -1,0 +1,26 @@
+{
+  "schema_version": "3.0.0",
+  "phase_id": "P6",
+  "strategy": "DYNAMIC_EXACT_SNAPSHOT",
+  "baseline_commit": "7a495d1efc2a05039a92f08d697a9a09c9b3f4fc",
+  "candidate_selector": "review_snapshot_commit",
+  "commit_range": "baseline_commit..review_snapshot_commit",
+  "revert_order": "newest_first",
+  "expected_baseline_tree": "98805869ebadcefd7137728c415c464f1cbbe30c",
+  "workflow": ".github/workflows/validate.yml",
+  "job": "phase-rollback-certification",
+  "required_assertions": [
+    "candidate_equals_review_snapshot_commit",
+    "all_commits_in_baseline_exclusive_range_reverted",
+    "post_revert_tree_equals_baseline_tree",
+    "baseline_validation_passes"
+  ],
+  "recovery_position": "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list <baseline_commit>..<review_snapshot_commit>, and revert every returned commit newest-to-oldest as one bounded operation.",
+  "limitations": [
+    "Execute in a clean disposable checkout and preserve the candidate reference before recovery.",
+    "The range must be linear; merge commits fail certification until explicit mainline handling is supported.",
+    "Never restore a proven unsafe transport or secret-persistence behavior in production; rollback is a repository recovery mechanism for compatibility investigation.",
+    "DNS validation and browser resolution are separate; the bounded static controls do not claim DNS pinning or complete DNS-rebinding prevention.",
+    "PROVIDER, DEPLOYED, and OPERATIONAL evidence remain out of scope."
+  ]
+}

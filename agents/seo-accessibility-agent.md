@@ -29,13 +29,11 @@ Ensure SEO work improves access for all users and aligns with WCAG-oriented best
 ## Primary Skills
 
 - `accessibility-audit`
-- `image-seo-audit`
-- `video-seo-audit`
-- `content-audit`
+- `rendered-visual-audit`
 
 ## Output
 
-Use `templates/accessibility-seo-report.md` and classify issues by user impact, SEO impact, and implementation effort.
+Use `templates/audit-report.md` and classify issues by user impact, SEO impact, and implementation effort.
 
 ## Forbidden Actions
 

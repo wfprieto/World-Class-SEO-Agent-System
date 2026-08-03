@@ -1,0 +1,52 @@
+{
+  "schema_version": "2.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "authenticated": true,
+  "authenticated_actor": "wfprieto",
+  "capture_method": "gh-api-live",
+  "captured_at": "2026-08-02T02:30:14Z",
+  "default_branch": "main",
+  "private_vulnerability_reporting": true,
+  "discussions": true,
+  "vulnerability_alerts": true,
+  "dependabot_security_updates": true,
+  "secret_scanning": true,
+  "secret_scanning_push_protection": true,
+  "ruleset_id": 18955880,
+  "ruleset": {
+    "name": "Protect main",
+    "target": "branch",
+    "enforcement": "active",
+    "include": [
+      "~DEFAULT_BRANCH"
+    ],
+    "exclude": [],
+    "required_status_checks": [
+      {
+        "context": "repository-certification",
+        "integration_id": 15368
+      }
+    ],
+    "strict_required_status_checks_policy": true,
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews_on_push": true,
+    "require_last_push_approval": true,
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": false,
+    "allowed_merge_methods": [
+      "squash"
+    ],
+    "required_linear_history": true,
+    "block_deletion": true,
+    "block_non_fast_forward": true,
+    "bypass_actor_count": 0
+  },
+  "source_endpoints": [
+    "GET /repos/wfprieto/World-Class-SEO-Agent-System",
+    "GET /repos/wfprieto/World-Class-SEO-Agent-System/private-vulnerability-reporting",
+    "GET /repos/wfprieto/World-Class-SEO-Agent-System/vulnerability-alerts",
+    "GET /repos/wfprieto/World-Class-SEO-Agent-System/rulesets/18955880"
+  ],
+  "result": "PASS",
+  "errors": []
+}

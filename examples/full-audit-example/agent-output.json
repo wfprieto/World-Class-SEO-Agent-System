@@ -1,12 +1,16 @@
 {
+  "contract_version": "1.0.0",
+  "legacy_unverified": true,
   "agent": "SEO Full Audit/Analyst Agent",
   "summary": "Fictional example.com audit found medium-priority technical and IA issues that limit discovery and topical clarity.",
   "evidence": [
     {
+      "id": "fictional-crawl-sample.csv",
       "source": "fictional-crawl-sample.csv",
       "type": "crawl_export",
       "date_checked": "2026-07-03",
-      "notes": "Sample crawl used for example output."
+      "notes": "Sample crawl used for example output.",
+      "state": "UNVERIFIED"
     }
   ],
   "confidence": "Medium",
@@ -34,5 +38,7 @@
   "dependencies": ["Sitemap generator access"],
   "acceptance_criteria": ["All sampled sitemap URLs return 200", "All sampled sitemap URLs self-canonicalize"],
   "verification": ["Recrawl sitemap", "Inspect canonical tags"],
-  "follow_up": "Recheck sitemap sample after the next deployment or within 14 days."
+  "follow_up": "Recheck sitemap sample after the next deployment or within 14 days.",
+  "material_claims": [],
+  "execution_state": "PARTIAL"
 }

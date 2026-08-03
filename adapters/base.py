@@ -1,26 +1,20 @@
-"""Base contracts for SEO tool adapters."""
+"""Compatibility imports for the canonical implementation-neutral adapter contracts."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Protocol
+from contracts.adapter import (
+    AdapterNotConfigured,
+    AdapterResult,
+    RuntimeAdapter,
+    SEOAdapter,
+    validate_adapter_result,
+)
 
-
-class AdapterNotConfigured(RuntimeError):
-    """Raised when credentials or source files are missing."""
-
-
-@dataclass
-class AdapterResult:
-    source: str
-    status: str
-    data: Any
-    warnings: list[str]
-
-
-class SEOAdapter(Protocol):
-    name: str
-
-    def fetch(self, **kwargs: Any) -> AdapterResult:
-        """Fetch or parse data and return a normalized adapter result."""
+__all__ = [
+    "AdapterNotConfigured",
+    "AdapterResult",
+    "RuntimeAdapter",
+    "SEOAdapter",
+    "validate_adapter_result",
+]
 

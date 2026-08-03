@@ -20,6 +20,10 @@
               "severity": "Medium",
               "finding": "Publish and index the refreshed category content.",
               "affected_scope": "category template",
+              "action_polarity": {
+                "target": "publish category template",
+                "polarity": "ENABLE"
+              },
               "evidence_refs": ["serp-1"]
             }
           ]
@@ -32,6 +36,10 @@
               "severity": "High",
               "finding": "Block publication because the category template is accidentally noindex.",
               "affected_scope": "category template",
+              "action_polarity": {
+                "target": "publish category template",
+                "polarity": "DISABLE"
+              },
               "evidence_refs": ["render-1", "crawl-1"]
             }
           ]
@@ -59,6 +67,10 @@
               "severity": "Medium",
               "finding": "Implement the fastest and cheapest claim on the landing page.",
               "affected_scope": "pricing landing page",
+              "action_polarity": {
+                "target": "publish fastest and cheapest claim",
+                "polarity": "ENABLE"
+              },
               "evidence_refs": ["copy-1"]
             }
           ]
@@ -71,6 +83,10 @@
               "severity": "High",
               "finding": "Block the unsupported fastest and cheapest comparative claim.",
               "affected_scope": "pricing landing page",
+              "action_polarity": {
+                "target": "publish fastest and cheapest claim",
+                "polarity": "DISABLE"
+              },
               "evidence_refs": ["claims-ledger-1"]
             }
           ]

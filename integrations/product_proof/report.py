@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-
 SEVERITY_WEIGHT = {"Critical": 5, "High": 4, "Medium": 3, "Low": 2, "Info": 1}
 
 
@@ -33,7 +32,9 @@ def _priority(row: dict[str, Any]) -> int:
     return SEVERITY_WEIGHT.get(row["severity"], 0)
 
 
-def executive_markdown(target: str, result: dict[str, Any], trust: dict[str, Any]) -> str:
+def executive_markdown(
+    target: str, result: dict[str, Any], trust: dict[str, Any], evidence_mode: str
+) -> str:
     findings = result["findings"]
     critical = [row for row in findings if row["severity"] == "Critical"]
     high = [row for row in findings if row["severity"] == "High"]
@@ -42,6 +43,7 @@ def executive_markdown(target: str, result: dict[str, Any], trust: dict[str, Any
         "# Executive Technical SEO Summary",
         "",
         f"**Target:** {target}",
+        f"**Evidence mode:** {evidence_mode}",
         "",
         "## Outcome",
         "",
@@ -69,9 +71,16 @@ def executive_markdown(target: str, result: dict[str, Any], trust: dict[str, Any
     return "\n".join(lines) + "\n"
 
 
-def technical_markdown(target: str, crawl: dict[str, Any], result: dict[str, Any], trust: dict[str, Any]) -> str:
+def technical_markdown(
+    target: str,
+    crawl: dict[str, Any],
+    result: dict[str, Any],
+    trust: dict[str, Any],
+    evidence_mode: str,
+) -> str:
     lines = [
         "# Evidence-Governed Technical SEO Audit", "", f"**Target:** {target}",
+        f"**Evidence mode:** {evidence_mode}",
         f"**Pages crawled:** {len(crawl['pages'])}", f"**Crawl truncated:** {crawl['truncated']}", "",
         "## Evidence contract", "",
         "- Primary-source rules override conflicting secondary guidance.",

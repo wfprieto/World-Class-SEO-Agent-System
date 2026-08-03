@@ -6,113 +6,113 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 
 ## Core Audit Skills
 
-- `full-site-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#full-site-audit`
-- `product-proof-technical-audit`
-- `seo-diagnostic-stack-design`
-- `technical-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-audit`
-- `crawl-map`
-- `indexation-reality-check`
-- `sitemap-audit`
-- `analytics-synthesis`
-- `seo-drift-monitor` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#seo-drift-monitor`
-- `score-normalization`
+- `full-site-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#full-site-audit`
+- `product-proof-technical-audit` — `COMMAND_BACKED` / `FIXTURE_VERIFIED`
+- `seo-diagnostic-stack-design` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `technical-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-audit`
+- `crawl-map` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `indexation-reality-check` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
+- `sitemap-audit` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `analytics-synthesis` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
+- `seo-drift-monitor` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#seo-drift-monitor`
+- `score-normalization` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
 
 ## Technical Implementation Skills
 
-- `schema-detect-validate-generate` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#schema-detect-validate-generate`
-- `core-web-vitals-triage` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#core-web-vitals-triage`
-- `redirect-validation`
-- `internal-link-map`
-- `seo-ci-checks`
-- `technical-implementation` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-implementation`
-- `programmatic-seo-governance` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#programmatic-seo-governance`
-- `rendered-visual-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#rendered-visual-audit`
-- `single-page-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#single-page-audit`
-- `faceted-navigation-governance`
-- `ai-retrieval-timeout-audit`
+- `schema-detect-validate-generate` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#schema-detect-validate-generate`
+- `core-web-vitals-triage` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#core-web-vitals-triage`
+- `redirect-validation` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `internal-link-map` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `seo-ci-checks` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `technical-implementation` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#technical-implementation`
+- `programmatic-seo-governance` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#programmatic-seo-governance`
+- `rendered-visual-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#rendered-visual-audit`
+- `single-page-audit` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#single-page-audit`
+- `faceted-navigation-governance` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `ai-retrieval-timeout-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
 
 ## Content and IA Skills
 
-- `content-brief` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-brief`
-- `content-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-audit`
-- `content-decay` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-decay`
-- `anti-ai-public-writing`
-- `keyword-cluster`
-- `content-inventory`
-- `sxo-page-fit`
-- `metadata-generation`
-- `conversion-intent-map`
-- `landing-page-cro-audit`
-- `competitor-comparison-page-build` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#competitor-comparison-page-build`
-- `flow-prompt-run`
-- `serp-overlap-cluster`
-- `desktop-commander-execution`
-- `consent-mode-diagnostic` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#consent-mode-diagnostic`
+- `content-brief` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-brief`
+- `content-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-audit`
+- `content-decay` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-decay`
+- `anti-ai-public-writing` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `keyword-cluster` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `content-inventory` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `sxo-page-fit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `metadata-generation` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `conversion-intent-map` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `landing-page-cro-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `competitor-comparison-page-build` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#competitor-comparison-page-build`
+- `flow-prompt-run` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `serp-overlap-cluster` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `desktop-commander-execution` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `consent-mode-diagnostic` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#consent-mode-diagnostic`
 
 ## Local, International, and Media Skills
 
-- `local-seo-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#local-seo-audit`
-- `citation-audit`
-- `review-strategy`
-- `local-landing-page-brief`
-- `regional-keyword-map`
-- `hreflang-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#hreflang-audit`
-- `international-url-architecture`
-- `localized-content-review`
-- `image-seo-audit`
-- `video-seo-audit`
-- `accessibility-audit`
-- `geo-grid-rank-scan`
-- `gbp-profile-audit`
-- `competitor-radius-map`
-- `cross-platform-nap-verify`
-- `review-compliance-audit`
+- `local-seo-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#local-seo-audit`
+- `citation-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `review-strategy` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `local-landing-page-brief` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `regional-keyword-map` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `hreflang-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#hreflang-audit`
+- `international-url-architecture` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `localized-content-review` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `image-seo-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `video-seo-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
+- `accessibility-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `geo-grid-rank-scan` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `gbp-profile-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `competitor-radius-map` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `cross-platform-nap-verify` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `review-compliance-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
 
 ## E-commerce Skills
 
-- `product-page-seo-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#product-page-seo-audit`
-- `product-schema-validate-generate`
-- `marketplace-intelligence`
-- `marketplace-keyword-gap`
-- `merchant-data-consistency-audit`
-- `agentic-commerce-readiness-check`
+- `product-page-seo-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#product-page-seo-audit`
+- `product-schema-validate-generate` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `marketplace-intelligence` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `marketplace-keyword-gap` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
+- `merchant-data-consistency-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `agentic-commerce-readiness-check` — `DOCUMENTED_ONLY` / `DOCUMENTED_ONLY`
 
 ## GEO, Entity, and Conversational Skills
 
-- `geo-aio-citation-audit` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#geo-aio-citation-audit`
-- `brand-serp-audit`
-- `knowledge-graph-sync`
-- `conversational-query-map`
-- `official-source-monitor`
-- `knowledge-sync`
-- `ai-citation-opportunity-map`
+- `geo-aio-citation-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#geo-aio-citation-audit`
+- `brand-serp-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `knowledge-graph-sync` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `conversational-query-map` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `official-source-monitor` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `knowledge-sync` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `ai-citation-opportunity-map` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
 
 ## Authority, Risk, and Strategy Skills
 
-- `backlink-profile` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#backlink-profile`
-- `backlink-gap`
-- `digital-pr-asset-brief`
-- `outreach-prospecting`
-- `negative-seo-threat-review`
-- `security-indexation-check`
-- `compliance-review` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#compliance-review`
-- `spam-policy-check`
-- `claims-risk-review`
-- `competitive-gap`
-- `competitor-change-monitor`
-- `forecasting`
-- `trend-monitor`
-- `seo-roadmap`
-- `executive-summary`
-- `plain-language-seo-report`
-- `content-calendar`
-- `request-routing`
-- `prioritization-matrix`
-- `scrummaster-debate`
-- `experiment-design`
-- `decision-record`
-- `definition-of-done`
-- `client-performance-narrative`
+- `backlink-profile` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#backlink-profile`
+- `backlink-gap` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `digital-pr-asset-brief` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `outreach-prospecting` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `negative-seo-threat-review` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
+- `security-indexation-check` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `compliance-review` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#compliance-review`
+- `spam-policy-check` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `claims-risk-review` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `competitive-gap` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `competitor-change-monitor` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `forecasting` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `trend-monitor` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `seo-roadmap` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `executive-summary` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `plain-language-seo-report` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `content-calendar` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `request-routing` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `prioritization-matrix` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `scrummaster-debate` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `experiment-design` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `decision-record` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
+- `definition-of-done` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `client-performance-narrative` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
 
 ## Package coverage
 

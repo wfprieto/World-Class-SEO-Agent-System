@@ -186,3 +186,53 @@ def test_builder_rating_good_cannot_close_gap_even_with_reviewer_approval():
     result = evaluate_cycle(cycle, builder_context_id=BUILDER_CONTEXT)
     assert result["decision"] == "REWORK_GOOD"
     assert result["persist_lessons"] is False
+
+
+def test_empty_evidence_cannot_be_forged_into_an_approval():
+    cycle = _cycle()
+    cycle["files_changed"] = []
+    cycle["tests_added"] = []
+    cycle["verification"]["evidence_refs"] = []
+    cycle["lessons"] = []
+    evidence = {
+        "cycle_id": cycle["cycle_id"],
+        "gap_id": cycle["gap_id"],
+        "baseline": cycle["baseline"],
+        "files_changed": cycle["files_changed"],
+        "tests_added": cycle["tests_added"],
+        "verification": cycle["verification"],
+        "claude_comparison": cycle["claude_comparison"],
+    }
+    forged_hash = canonical_hash(evidence)
+    for verdict in cycle["reviewer_verdicts"]:
+        verdict["evidence_package_hash"] = forged_hash
+
+    result = evaluate_cycle(cycle, builder_context_id=BUILDER_CONTEXT)
+
+    assert result["decision"] == "INVALID"
+    assert result["persist_lessons"] is False
+
+
+def test_whitespace_evidence_cannot_be_forged_into_an_approval():
+    cycle = _cycle()
+    cycle["files_changed"] = [" "]
+    cycle["tests_added"] = ["\t"]
+    cycle["verification"]["evidence_refs"] = ["\n"]
+    cycle["lessons"] = ["  "]
+    evidence = {
+        "cycle_id": cycle["cycle_id"],
+        "gap_id": cycle["gap_id"],
+        "baseline": cycle["baseline"],
+        "files_changed": cycle["files_changed"],
+        "tests_added": cycle["tests_added"],
+        "verification": cycle["verification"],
+        "claude_comparison": cycle["claude_comparison"],
+    }
+    forged_hash = canonical_hash(evidence)
+    for verdict in cycle["reviewer_verdicts"]:
+        verdict["evidence_package_hash"] = forged_hash
+
+    result = evaluate_cycle(cycle, builder_context_id=BUILDER_CONTEXT)
+
+    assert result["decision"] == "INVALID"
+    assert result["persist_lessons"] is False

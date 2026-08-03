@@ -1,14 +1,16 @@
 # Quality, Security, Observability, and Release Engineering
 
-Phase 5 adds enforceable quality and software-supply-chain gates without making optional providers part of the core runtime.
+The repository uses enforceable, non-regression quality and software-supply-chain gates without making optional providers part of the core runtime.
 
 ## Local gates
 
 ```bash
-ruff check . --select E9,F63,F7,F82
-mypy runtime/telemetry.py runtime/run_budget.py runtime/tools.py scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py scripts/validate_release_artifacts.py scripts/run_performance_benchmarks.py scripts/run_security_mutation_checks.py --ignore-missing-imports --check-untyped-defs
+python scripts/validate_architecture_contract.py
+python scripts/validate_quality_ratchets.py
+ruff check runtime adapters integrations seoctl scripts
+mypy runtime seoctl integrations adapters
 python scripts/scan_secrets.py
-pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-fail-under=65
+pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-fail-under=78
 pip-audit -r requirements-dev.txt --desc off
 python scripts/generate_sbom.py --out outputs/sbom.cdx.json
 python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
@@ -24,7 +26,9 @@ Tool telemetry records operation, duration, request count, retry count, units, e
 
 ## Coverage and quality scope
 
-The quality job enforces a 65 percent repository coverage floor while producing XML and JSON reports. It also applies correctness-critical Ruff rules and scoped mypy checks to the security, telemetry, and release surfaces. Higher category-specific coverage targets remain final-program release gates rather than invented claims.
+The quality job enforces a 78 percent repository branch-coverage floor while producing XML and JSON reports. Critical runtime, persistence, provider, and network files have separate non-regression floors. These floors prevent loss; they are not claims that every lower-covered path is sufficiently tested.
+
+Ruff evaluates `E4`, `E7`, `E9`, `F`, `I`, `B`, `UP`, `C4`, `SIM`, and `C90`. Existing findings are fingerprinted in the machine ratchet; any new fingerprint, increased count, or stale baseline fails. Mypy follows imported bodies normally, while the AST ratchet prevents any new unannotated function and freezes exact legacy annotation ceilings. New files default to 400 lines, new functions to 75 lines and complexity 15, with complete annotations required.
 
 ## Release artifacts
 
@@ -40,4 +44,4 @@ CI builds a wheel in a fresh virtual environment and executes credential-free co
 
 ## Rollback
 
-Revert the Phase 5 commits. Telemetry is additive, generated artifacts are disposable, and no database migration or external provider action is introduced.
+Revert the bounded quality-contract commits. Generated baselines and CI artifacts are disposable, and no database migration or external provider action is introduced.

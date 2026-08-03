@@ -32,14 +32,12 @@ Create and improve content that satisfies search intent, adds information gain, 
 - `content-brief`
 - `content-audit`
 - `content-decay`
+- `metadata-generation`
 - `anti-ai-public-writing`
-- `keyword-cluster`
-- `sxo-page-fit`
-- `geo-aio-citation-audit`
 
 ## Output
 
-Use `templates/content-brief.md`, `templates/content-refresh-plan.md`, or `templates/metadata-set.md`.
+Use `templates/content-brief.md`.
 
 ## Forbidden Actions
 

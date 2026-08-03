@@ -26,15 +26,13 @@ Continuously improve the SEO agent system by monitoring official search changes,
 
 ## Primary Skills
 
-- `knowledge-sync`
 - `official-source-monitor`
+- `knowledge-sync`
 - `experiment-design`
-- `decision-record`
-- `seo-drift-monitor`
 
 ## Output
 
-Use `schemas/rule-update.schema.json` and `templates/knowledge-update.md`.
+Use `templates/audit-report.md`.
 
 Primary workflow: `workflows/continuous-learning-workflow.md`.
 

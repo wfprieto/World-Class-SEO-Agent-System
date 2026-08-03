@@ -4,75 +4,76 @@ This file is generated from `seoctl/command-registry.json` and approved overlays
 
 Run `python -m seoctl --help` for interactive argument details.
 
-| Command | Owner | Skills | Network |
-|---|---|---|---|
-| `seoctl audit technical` | SEO Full Audit/Analyst Agent | `product-proof-technical-audit` | `live_optional` |
-| `seoctl benchmark compare` | AI Principal SEO Scientist | `experiment-design` | `none` |
-| `seoctl benchmark tracer` | SEO Research and Development Agent | `experiment-design` | `none` |
-| `seoctl bing preflight` | SEO Technical Agent | `indexation-reality-check` | `none` |
-| `seoctl cluster serp` | SEO Information Architecture Agent | `serp-overlap-cluster` | `none` |
-| `seoctl content brief` | SEO Copywriter/Content Agent | `content-brief` | `none` |
-| `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` |
-| `seoctl content compare` | Competitive Intelligence Agent | `content-audit` | `none` |
-| `seoctl content decay` | Predictive SEO Trend Agent | `content-decay` | `none` |
-| `seoctl content entities` | SEO Knowledge Graph Sync Agent | `content-audit` | `none` |
-| `seoctl content humanize` | SEO Copywriter/Content Agent | `content-audit` | `none` |
-| `seoctl content quality` | SEO Copywriter/Content Agent | `content-audit` | `none` |
-| `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` |
-| `seoctl content serp` | SEO Copywriter/Content Agent | `content-brief` | `none` |
-| `seoctl content verify` | SEO Compliance & Legal Agent | `compliance-review` | `none` |
-| `seoctl domain history` | Negative SEO & Security Agent | `negative-seo-threat-review` | `live_optional` |
-| `seoctl drift baseline` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
-| `seoctl drift compare` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
-| `seoctl drift history` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` |
-| `seoctl drift report` | SEO Output Report Agent | `seo-drift-monitor` | `none` |
-| `seoctl drift watch` | SEO Diagnostic Infrastructure Agent | `seo-drift-monitor` | `none` |
-| `seoctl google crux-current` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl google crux-history` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl google ga4-report` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
-| `seoctl google gsc-aggregate` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
-| `seoctl google gsc-query` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` |
-| `seoctl google lcp-subparts` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl google pagespeed` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl google sitemap-status` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
-| `seoctl google url-inspection` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
-| `seoctl indexnow submit` | Senior SEO Engineer Agent | `technical-implementation` | `live_optional` |
-| `seoctl indexnow validate` | SEO Technical Agent | `indexation-reality-check` | `none` |
-| `seoctl integrations config` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
-| `seoctl integrations estimate` | SEO Scrummaster Agent | `prioritization-matrix` | `none` |
-| `seoctl integrations list` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
-| `seoctl integrations preflight` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` |
-| `seoctl intelligence ai-citations` | GEO / AIO Optimization Agent | `ai-citation-opportunity-map` | `none` |
-| `seoctl intelligence ai-timeouts` | SEO Diagnostic Infrastructure Agent | `ai-retrieval-timeout-audit` | `none` |
-| `seoctl intelligence performance-narrative` | SEO Output Report Agent | `client-performance-narrative` | `none` |
-| `seoctl intelligence review-compliance` | SEO Compliance & Legal Agent | `review-compliance-audit` | `none` |
-| `seoctl knowledge claims` | AI Principal SEO Scientist | `official-source-monitor` | `none` |
-| `seoctl knowledge product-claims` | SEO Scrummaster Agent | `claims-risk-review`, `definition-of-done` | `none` |
-| `seoctl knowledge validate` | SEO Scrummaster Agent | `product-proof-technical-audit`, `definition-of-done` | `none` |
-| `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` |
-| `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` |
-| `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` |
-| `seoctl media iptc-label` | Visual & Video Search Agent | `image-seo-audit` | `none` |
-| `seoctl media transcript-check` | Visual & Video Search Agent | `video-seo-audit` | `none` |
-| `seoctl media youtube-search` | Visual & Video Search Agent | `video-seo-audit` | `live_optional` |
-| `seoctl privacy consent` | SEO Compliance & Legal Agent | `consent-mode-diagnostic` | `none` |
-| `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` |
-| `seoctl render health` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `none` |
-| `seoctl render page` | SEO Technical Agent | `rendered-visual-audit` | `live_optional` |
-| `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` |
-| `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` |
-| `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` |
-| `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` |
-| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` |
-| `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` |
-| `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` |
-| `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl technical hreflang` | International & Multilingual SEO Agent | `hreflang-audit` | `live_optional` |
-| `seoctl technical indexability` | SEO Technical Agent | `indexation-reality-check` | `live_optional` |
-| `seoctl technical preload` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` |
-| `seoctl technical redirect-chain` | SEO Technical Agent | `technical-audit` | `live_optional` |
-| `seoctl technical robots` | SEO Technical Agent | `technical-audit` | `live_optional` |
-| `seoctl technical sitemap` | SEO Technical Agent | `technical-audit` | `live_optional` |
+| Command | Owner | Skills | Network | Delivery | Execution | Claim ceiling |
+|---|---|---|---|---|---|---|
+| `seoctl audit technical` | SEO Full Audit/Analyst Agent | `product-proof-technical-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `FIXTURE_VERIFIED` |
+| `seoctl benchmark compare` | AI Principal SEO Scientist | `experiment-design` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl benchmark tracer` | SEO Research and Development Agent | `experiment-design` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl bing preflight` | SEO Technical Agent | `indexation-reality-check` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl cluster serp` | SEO Information Architecture Agent | `serp-overlap-cluster` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content brief` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content compare` | Competitive Intelligence Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content decay` | Predictive SEO Trend Agent | `content-decay` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content entities` | SEO Knowledge Graph Sync Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content humanize` | SEO Copywriter/Content Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content quality` | SEO Copywriter/Content Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content serp` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content verify` | SEO Compliance & Legal Agent | `compliance-review` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl domain history` | Negative SEO & Security Agent | `negative-seo-threat-review` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl drift baseline` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl drift compare` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl drift history` | SEO Full Audit/Analyst Agent | `seo-drift-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl drift report` | SEO Output Report Agent | `seo-drift-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl drift watch` | SEO Diagnostic Infrastructure Agent | `seo-drift-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl google crux-current` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google crux-history` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google ga4-report` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google gsc-aggregate` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google gsc-query` | SEO Full Audit/Analyst Agent | `analytics-synthesis` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google lcp-subparts` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google pagespeed` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google sitemap-status` | SEO Technical Agent | `indexation-reality-check` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl google url-inspection` | SEO Technical Agent | `indexation-reality-check` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl indexnow submit` | Senior SEO Engineer Agent | `technical-implementation` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl indexnow validate` | SEO Technical Agent | `indexation-reality-check` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl integrations config` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl integrations estimate` | SEO Scrummaster Agent | `prioritization-matrix` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl integrations list` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl integrations preflight` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl intelligence ai-citations` | GEO / AIO Optimization Agent | `ai-citation-opportunity-map` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl intelligence ai-timeouts` | SEO Diagnostic Infrastructure Agent | `ai-retrieval-timeout-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl intelligence performance-narrative` | SEO Output Report Agent | `client-performance-narrative` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl intelligence review-compliance` | SEO Compliance & Legal Agent | `review-compliance-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl knowledge claims` | AI Principal SEO Scientist | `official-source-monitor` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl knowledge product-claims` | SEO Scrummaster Agent | `claims-risk-review`, `definition-of-done` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl knowledge validate` | SEO Scrummaster Agent | `product-proof-technical-audit`, `definition-of-done` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl media iptc-label` | Visual & Video Search Agent | `image-seo-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl media transcript-check` | Visual & Video Search Agent | `video-seo-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl media youtube-search` | Visual & Video Search Agent | `video-seo-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl privacy consent` | SEO Compliance & Legal Agent | `consent-mode-diagnostic` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl profile resolve` | SEO Scrummaster Agent | `request-routing` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl render health` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl render page` | SEO Technical Agent | `rendered-visual-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl render screenshot` | SEO Diagnostic Infrastructure Agent | `rendered-visual-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl report render` | SEO Output Report Agent | `plain-language-seo-report` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl schema detect` | SEO Technical Agent | `schema-detect-validate-generate` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl schema generate` | Senior SEO Engineer Agent | `schema-detect-validate-generate` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl schema validate` | SEO Technical Agent | `schema-detect-validate-generate` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl system doctor` | SEO Diagnostic Infrastructure Agent | `seo-diagnostic-stack-design`, `definition-of-done` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl system route` | SEO Scrummaster Agent | `request-routing` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl system run` | SEO Full Audit/Analyst Agent | `full-site-audit` | `provider_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical cwv` | SEO Diagnostic Infrastructure Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical hreflang` | International & Multilingual SEO Agent | `hreflang-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical indexability` | SEO Technical Agent | `indexation-reality-check` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical preload` | SEO Technical Agent | `core-web-vitals-triage` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical redirect-chain` | SEO Technical Agent | `technical-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical robots` | SEO Technical Agent | `technical-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
+| `seoctl technical sitemap` | SEO Technical Agent | `technical-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 
 ## Stable exit codes
 
@@ -84,7 +85,7 @@ Run `python -m seoctl --help` for interactive argument details.
 | 4 | Blocked by evidence, authorization, privacy or governance gate |
 | 5 | Execution or validation failure |
 
-Every command writes one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`.
+Every command writes exactly one JSON envelope with `command`, `status`, `data`, `warnings`, and `error`. Invalid or missing arguments write no usage text, use a stable command ID and `error.code`, and exit 2.
 
 ## Examples
 
@@ -93,6 +94,7 @@ python -m seoctl --registry-check
 python -m seoctl audit technical --url https://example.com --output audit-runs/example-com
 python -m seoctl knowledge validate
 python -m seoctl knowledge product-claims --status BLOCKED
+python -m seoctl system doctor --as-of 2026-08-02
 python -m seoctl intelligence ai-timeouts --log access.log --server-stack nginx
 python -m seoctl system route "Run a full SEO audit" --domain https://example.com --business-type saas
 python -m seoctl system run "Build an SEO content brief" --domain https://example.com --business-type saas

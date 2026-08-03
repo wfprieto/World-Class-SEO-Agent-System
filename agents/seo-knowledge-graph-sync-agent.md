@@ -30,13 +30,12 @@ Keep brand, organization, product, location, author, and topical entity informat
 ## Primary Skills
 
 - `knowledge-graph-sync`
-- `schema-detect-validate-generate`
 - `brand-serp-audit`
-- `local-seo-audit`
+- `schema-detect-validate-generate`
 
 ## Output
 
-Use `templates/entity-sync-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

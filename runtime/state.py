@@ -52,17 +52,50 @@ class Handoff:
     risk_level: str
     acceptance_criteria: list[str]
     due_trigger: str
+    source_node_id: str = ""
+    target_node_id: str = ""
     status: str = "CREATED"
     receiving_output_id: str = ""
+    receiving_node_id: str = ""
     consumed_at: str = ""
+    unresolved_reason: str = ""
+    resolution: str = "PENDING"
+    terminal_receipt: str = ""
 
-    def consume(self, output_id: str) -> None:
+    def control_contract(self) -> dict[str, Any]:
+        """Return immutable fields used by an exact graph control declaration."""
+        return {
+            "handoff_id": self.handoff_id,
+            "from_agent": self.from_agent,
+            "to_agent": self.to_agent,
+            "reason": self.reason,
+            "context_summary": self.context_summary,
+            "evidence_refs": list(self.evidence_refs),
+            "requested_action": self.requested_action,
+            "risk_level": self.risk_level,
+            "acceptance_criteria": list(self.acceptance_criteria),
+            "due_trigger": self.due_trigger,
+            "source_node_id": self.source_node_id,
+            "target_node_id": self.target_node_id,
+        }
+
+    def consume(
+        self,
+        output_id: str,
+        node_id: str = "",
+        disposition: str = "ACCEPTED",
+    ) -> None:
         self.status = "CONSUMED"
         self.receiving_output_id = output_id
+        self.receiving_node_id = node_id
         self.consumed_at = datetime.now(timezone.utc).isoformat()
+        self.unresolved_reason = ""
+        self.resolution = disposition
 
-    def block(self) -> None:
+    def block(self, reason: str = "Required handoff could not be consumed.") -> None:
         self.status = "BLOCKED"
+        self.unresolved_reason = reason
+        self.resolution = "UNRESOLVED"
 
 
 @dataclass

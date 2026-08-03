@@ -1,0 +1,24 @@
+{
+  "schema_version": "3.0.0",
+  "phase_id": "P1",
+  "strategy": "DYNAMIC_EXACT_SNAPSHOT",
+  "baseline_commit": "51a3897ae87fa8f50b4c26a553fe7953e65f72b8",
+  "candidate_selector": "review_snapshot_commit",
+  "commit_range": "baseline_commit..review_snapshot_commit",
+  "revert_order": "newest_first",
+  "expected_baseline_tree": "8fa4526c917c73ae69e255f9468a114287088d8f",
+  "workflow": ".github/workflows/validate.yml",
+  "job": "phase-rollback-certification",
+  "required_assertions": [
+    "candidate_equals_review_snapshot_commit",
+    "all_commits_in_baseline_exclusive_range_reverted",
+    "post_revert_tree_equals_baseline_tree",
+    "baseline_validation_passes"
+  ],
+  "recovery_position": "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list <baseline_commit>..<review_snapshot_commit>, and revert every returned commit newest-to-oldest as one bounded operation.",
+  "limitations": [
+    "Execute in a clean disposable checkout and preserve the candidate reference before recovery.",
+    "The range must be linear; merge commits fail certification until explicit mainline handling is supported.",
+    "Provider restoration uses scripts/plan_github_controls_rollback.py, the exact pre-change capture, three explicit owner confirmations, and mandatory post-restore verification."
+  ]
+}

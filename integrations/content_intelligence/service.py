@@ -13,7 +13,7 @@ import re
 from collections import Counter
 from typing import Any
 
-from adapters.base import AdapterResult
+from contracts.adapter import AdapterResult
 from integrations.content_intelligence.analysis import (
     CAPITALIZED,
     FILLER_PATTERNS,

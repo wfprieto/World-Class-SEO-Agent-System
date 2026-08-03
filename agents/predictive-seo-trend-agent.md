@@ -24,14 +24,13 @@ Identify emerging demand, seasonal peaks, market shifts, and search behavior cha
 
 ## Primary Skills
 
-- `forecasting`
 - `trend-monitor`
+- `forecasting`
 - `content-calendar`
-- `competitive-gap`
 
 ## Output
 
-Use `templates/trend-opportunity-brief.md`.
+Use `templates/seo-roadmap.md`.
 
 ## Forbidden Actions
 

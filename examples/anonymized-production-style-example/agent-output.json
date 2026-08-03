@@ -1,24 +1,32 @@
 {
+  "contract_version": "1.0.0",
+  "legacy_unverified": true,
   "agent": "SEO Full Audit/Analyst Agent",
   "summary": "The anonymized production-style sample shows a high-value service page with weak internal support and a blog page generating impressions but limited conversions.",
   "evidence": [
     {
+      "id": "crawl.csv",
       "source": "examples/anonymized-production-style-example/inputs/crawl.csv",
       "type": "crawl_export",
       "date_checked": "2026-07-03",
-      "notes": "Crawler-style export with status, indexability, canonical, depth, and internal link counts."
+      "notes": "Crawler-style export with status, indexability, canonical, depth, and internal link counts.",
+      "state": "UNVERIFIED"
     },
     {
+      "id": "gsc.csv",
       "source": "examples/anonymized-production-style-example/inputs/gsc.csv",
       "type": "first_party_data",
       "date_checked": "2026-07-03",
-      "notes": "Anonymized search performance export for priority pages and queries."
+      "notes": "Anonymized search performance export for priority pages and queries.",
+      "state": "UNVERIFIED"
     },
     {
+      "id": "ga4.csv",
       "source": "examples/anonymized-production-style-example/inputs/ga4.csv",
       "type": "first_party_data",
       "date_checked": "2026-07-03",
-      "notes": "Anonymized analytics-style landing page performance export."
+      "notes": "Anonymized analytics-style landing page performance export.",
+      "state": "UNVERIFIED"
     }
   ],
   "confidence": "Medium",
@@ -80,5 +88,7 @@
     "Validate links in rendered HTML.",
     "Monitor GSC query and page performance after reindexing."
   ],
-  "follow_up": "Review GSC and analytics movement 28 days after the updated pages are crawled."
+  "follow_up": "Review GSC and analytics movement 28 days after the updated pages are crawled.",
+  "material_claims": [],
+  "execution_state": "PARTIAL"
 }

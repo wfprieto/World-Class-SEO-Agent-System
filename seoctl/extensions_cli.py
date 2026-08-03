@@ -11,12 +11,11 @@ from adapters.base import AdapterNotConfigured
 from integrations.extensions.indexnow import IndexNowService
 from integrations.extensions.providers import ProviderService
 from seoctl.cli import (
-    EXIT_BLOCKED,
     EXIT_FAILED,
     EXIT_INPUT,
-    EXIT_OK,
     EXIT_UNAVAILABLE,
     envelope,
+    exit_code_for_status,
 )
 
 
@@ -29,16 +28,7 @@ def _indexnow() -> IndexNowService:
 
 
 def _result(command: str, result):
-    code = EXIT_OK
-    if result.status in {"not_configured", "unavailable"}:
-        code = EXIT_UNAVAILABLE
-    elif result.status == "blocked":
-        code = EXIT_BLOCKED
-    elif result.status in {
-        "failed", "invalid_response", "unauthorized", "rate_limited"
-    }:
-        code = EXIT_FAILED
-    return envelope(command, result.status, result.data, warnings=result.warnings), code
+    return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _read_urls(path: str) -> list[str]:

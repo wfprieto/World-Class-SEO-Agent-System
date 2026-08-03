@@ -12,9 +12,14 @@ import base64
 import html
 import io
 import json
+import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+
+from runtime.evidence_binding import validate_evidence_binding
+from runtime.schema_registry import SchemaRegistry
 
 SEVERITY_COLOR = {
     "Critical": "#b00020",
@@ -26,6 +31,7 @@ _REQUIRED = ("agent", "summary", "findings")
 _MAX_HEADING = 600
 _MAX_BODY = 4000
 DEFAULT_OUT = "outputs/seo-report.pdf"
+ROOT = Path(__file__).resolve().parents[1]
 DEPENDENCY_MISSING = "dependency_missing"
 RENDER_FAILED = "render_failed"
 
@@ -54,6 +60,23 @@ def _clamp(value: Any, maximum: int = _MAX_HEADING) -> str:
     return text if len(text) <= maximum else text[: maximum - 1] + "…"
 
 
+def _validated_scores(value: object) -> dict[str, float]:
+    if value in (None, {}):
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("scores must be a mapping of labels to finite values from 0 to 100")
+    scores: dict[str, float] = {}
+    for name, raw in value.items():
+        try:
+            score = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"score {name!r} must be numeric") from exc
+        if not math.isfinite(score) or not 0 <= score <= 100:
+            raise ValueError(f"score {name!r} must be finite and between 0 and 100")
+        scores[str(name)] = score
+    return scores
+
+
 def _score_chart(scores: dict[str, float], brand: str) -> str:
     if not scores:
         return ""
@@ -63,11 +86,8 @@ def _score_chart(scores: dict[str, float], brand: str) -> str:
         import matplotlib.pyplot as plt
     except Exception:  # noqa: BLE001
         return ""
-    try:
-        names = list(scores)
-        values = [float(scores[name]) for name in names]
-    except (TypeError, ValueError):
-        return ""
+    names = list(scores)
+    values = list(scores.values())
     figure, axis = plt.subplots(figsize=(5, 2.2))
     colors = ["#2e7d32" if value >= 90 else "#e0a800" if value >= 50 else "#b00020" for value in values]
     axis.barh(names, values, color=colors)
@@ -176,6 +196,53 @@ def _action_items(actions: list[Any]) -> list[str]:
     return result
 
 
+def _render_markup(
+    data: dict,
+    *,
+    brand: str,
+    report_state: str,
+    meta: str,
+    legacy_notice: str,
+    chart_html: str,
+    finding_html: str,
+    action_html: str,
+) -> str:
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>
+@page {{ size: A4; margin: 18mm 16mm; @bottom-center {{ content: "Confidential · " counter(page); font-size:8pt; color:#889; }} }}
+body {{ font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#1b2733; font-size:10.5pt; }}
+.band {{ border-left:6px solid {brand}; padding:2px 0 2px 12px; }}
+h1 {{ font-size:19pt; margin:0; }} .meta,.small {{ color:#5a6b7b; font-size:9pt; }}
+h2 {{ font-size:13pt; margin:16px 0 6px; border-bottom:1px solid #e6ebf0; padding-bottom:3px; }}
+h3 {{ font-size:11pt; margin:4px 0; word-break:break-word; }} img {{ max-width:100%; }}
+.finding {{ border:1px solid #e6ebf0; border-radius:6px; padding:10px 12px; margin:8px 0; }}
+.sev {{ display:inline-block; color:#fff; font-size:8pt; padding:1px 8px; border-radius:10px; }}
+</style></head><body>
+<div class="band" data-report-state="{report_state}"><h1>SEO Report</h1><div class="meta">{meta}</div></div>
+{legacy_notice}
+<h2>Summary</h2><p>{html.escape(_clamp(data.get('summary', ''), _MAX_BODY))}</p>
+{_evidence_block(data.get('evidence') or [])}
+{chart_html}
+<h2>Findings</h2>{finding_html}
+{action_html}
+{_listing('Dependencies', data.get('dependencies') or [])}
+{_listing('Acceptance criteria', data.get('acceptance_criteria') or [])}
+{_listing('Verification', _as_list(data.get('verification')))}
+{_listing('Risks', data.get('risks') or [])}
+<h2>Impact and follow-up</h2><p>{html.escape(_clamp(data.get('impact', 'Not recorded'), _MAX_BODY))}</p>
+<p><strong>Follow-up:</strong> {html.escape(_clamp(data.get('follow_up', 'Not recorded'), _MAX_BODY))}</p>
+</body></html>"""
+
+
+def _validate_canonical(data: dict) -> None:
+    if data.get("contract_version") != "2.0.0":
+        return
+    errors = SchemaRegistry(ROOT).errors("agent-output", data)
+    errors.extend(validate_evidence_binding(data))
+    if errors:
+        detail = "; ".join(sorted(set(errors))[:20])
+        raise ValueError(f"canonical agent output validation failed: {detail}")
+
+
 def build_html(data: dict, brand: str = "#0b5fff") -> str:
     if not isinstance(data, dict):
         raise TypeError("agent output must be a dict")
@@ -186,7 +253,10 @@ def build_html(data: dict, brand: str = "#0b5fff") -> str:
     if findings is not None and not isinstance(findings, list):
         raise ValueError("findings must be a list")
 
-    chart = _score_chart(data.get("scores") or {}, brand)
+    _validate_canonical(data)
+
+    scores = _validated_scores(data.get("scores"))
+    chart = _score_chart(scores, brand)
     finding_html = "".join(_finding_block(item) for item in findings or []) or "<p>No findings recorded.</p>"
     action_html = _listing("Recommended actions", _action_items(data.get("recommended_actions") or []))
     meta = " · ".join(
@@ -201,29 +271,27 @@ def build_html(data: dict, brand: str = "#0b5fff") -> str:
         )
     )
     chart_html = f'<h2>Scores</h2><img src="{chart}"/>' if chart else ""
-    return f"""<!doctype html><html><head><meta charset="utf-8"><style>
-@page {{ size: A4; margin: 18mm 16mm; @bottom-center {{ content: "Confidential · " counter(page); font-size:8pt; color:#889; }} }}
-body {{ font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#1b2733; font-size:10.5pt; }}
-.band {{ border-left:6px solid {brand}; padding:2px 0 2px 12px; }}
-h1 {{ font-size:19pt; margin:0; }} .meta,.small {{ color:#5a6b7b; font-size:9pt; }}
-h2 {{ font-size:13pt; margin:16px 0 6px; border-bottom:1px solid #e6ebf0; padding-bottom:3px; }}
-h3 {{ font-size:11pt; margin:4px 0; word-break:break-word; }} img {{ max-width:100%; }}
-.finding {{ border:1px solid #e6ebf0; border-radius:6px; padding:10px 12px; margin:8px 0; }}
-.sev {{ display:inline-block; color:#fff; font-size:8pt; padding:1px 8px; border-radius:10px; }}
-</style></head><body>
-<div class="band"><h1>SEO Report</h1><div class="meta">{meta}</div></div>
-<h2>Summary</h2><p>{html.escape(_clamp(data.get('summary', ''), _MAX_BODY))}</p>
-{_evidence_block(data.get('evidence') or [])}
-{chart_html}
-<h2>Findings</h2>{finding_html}
-{action_html}
-{_listing('Dependencies', data.get('dependencies') or [])}
-{_listing('Acceptance criteria', data.get('acceptance_criteria') or [])}
-{_listing('Verification', _as_list(data.get('verification')))}
-{_listing('Risks', data.get('risks') or [])}
-<h2>Impact and follow-up</h2><p>{html.escape(_clamp(data.get('impact', 'Not recorded'), _MAX_BODY))}</p>
-<p><strong>Follow-up:</strong> {html.escape(_clamp(data.get('follow_up', 'Not recorded'), _MAX_BODY))}</p>
-</body></html>"""
+    report_state = (
+        "CANONICAL_VALIDATED"
+        if data.get("contract_version") == "2.0.0" and not data.get("legacy_unverified")
+        else "LEGACY_UNVERIFIED"
+    )
+    legacy_notice = (
+        ""
+        if report_state == "CANONICAL_VALIDATED"
+        else '<p class="small"><strong>Legacy unverified input:</strong> this rendering is '
+        "compatibility output, not verified evidence or an SEO conclusion.</p>"
+    )
+    return _render_markup(
+        data,
+        brand=brand,
+        report_state=report_state,
+        meta=meta,
+        legacy_notice=legacy_notice,
+        chart_html=chart_html,
+        finding_html=finding_html,
+        action_html=action_html,
+    )
 
 
 def _weasyprint_renderer(markup: str, out: Path) -> None:

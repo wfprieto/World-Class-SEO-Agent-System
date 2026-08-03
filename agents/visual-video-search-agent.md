@@ -31,12 +31,11 @@ Optimize images, videos, visual SERP features, thumbnails, transcripts, media st
 
 - `image-seo-audit`
 - `video-seo-audit`
-- `schema-detect-validate-generate`
-- `accessibility-audit`
+- `rendered-visual-audit`
 
 ## Output
 
-Use `templates/media-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

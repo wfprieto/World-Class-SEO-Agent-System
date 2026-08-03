@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import socket
-import urllib.error
 from pathlib import Path
 
 import pytest
@@ -30,7 +29,13 @@ from scripts.validate_risk_coverage import validate
 
 def _resolver(addresses: list[str]):
     return lambda *_args, **_kwargs: [
-        (socket.AF_INET6 if ":" in address else socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, 443))
+        (
+            socket.AF_INET6 if ":" in address else socket.AF_INET,
+            socket.SOCK_STREAM,
+            6,
+            "",
+            (address, 443),
+        )
         for address in addresses
     ]
 
@@ -52,10 +57,13 @@ def test_url_safety_rejects_protocol_credentials_ports_secrets_and_private_ips(u
 
 
 def test_url_safety_normalizes_and_fails_closed_on_dns_anomalies():
-    assert validate_public_url(
-        "HTTPS://Example.COM.:443/path#fragment",
-        resolver=_resolver(["93.184.216.34"]),
-    ) == "https://example.com/path"
+    assert (
+        validate_public_url(
+            "HTTPS://Example.COM.:443/path#fragment",
+            resolver=_resolver(["93.184.216.34"]),
+        )
+        == "https://example.com/path"
+    )
     with pytest.raises(ValueError, match="no addresses"):
         validate_public_url("https://example.com", resolver=_resolver([]))
     with pytest.raises(ValueError, match="invalid address"):
@@ -94,7 +102,9 @@ class _PageSpeedClient:
 
 def test_pagespeed_live_adapter_exercises_credential_and_truth_state_boundaries():
     with pytest.raises(AdapterNotConfigured):
-        GooglePageSpeedLiveAdapter(api_key=None, client=_PageSpeedClient()).fetch("https://example.com")
+        GooglePageSpeedLiveAdapter(api_key=None, client=_PageSpeedClient()).fetch(
+            "https://example.com"
+        )
     client = _PageSpeedClient()
     result = GooglePageSpeedLiveAdapter(api_key="fixture-key", client=client).fetch(
         "https://example.com", strategy="desktop", include_crux=False
@@ -105,9 +115,13 @@ def test_pagespeed_live_adapter_exercises_credential_and_truth_state_boundaries(
     assert client.calls[0][1]["api_key"] == "fixture-key"
     assert "fixture-key" not in str(client.calls[0][1]["query"])
     with pytest.raises(ValueError, match="strategy"):
-        GooglePageSpeedLiveAdapter(api_key="x", client=client).fetch("https://example.com", strategy="tablet")
+        GooglePageSpeedLiveAdapter(api_key="x", client=client).fetch(
+            "https://example.com", strategy="tablet"
+        )
     with pytest.raises(TypeError, match="include_crux"):
-        GooglePageSpeedLiveAdapter(api_key="x", client=client).fetch("https://example.com", include_crux="yes")
+        GooglePageSpeedLiveAdapter(api_key="x", client=client).fetch(
+            "https://example.com", include_crux="yes"
+        )
 
 
 def test_pagespeed_live_adapter_preserves_crux_failures_without_faking_lab_failure():
@@ -115,7 +129,9 @@ def test_pagespeed_live_adapter_preserves_crux_failures_without_faking_lab_failu
     result = GooglePageSpeedLiveAdapter(api_key="x", client=missing).fetch("https://example.com")
     assert result.status == "partial"
     assert result.data["crux_status"] == "not_found"
-    malformed = _PageSpeedClient({"record": {"metrics": {"largest_contentful_paint": {"percentiles": {"p75": "bad"}}}}})
+    malformed = _PageSpeedClient(
+        {"record": {"metrics": {"largest_contentful_paint": {"percentiles": {"p75": "bad"}}}}}
+    )
     result = GooglePageSpeedLiveAdapter(api_key="x", client=malformed).fetch("https://example.com")
     assert result.data["crux_status"] == "invalid_response"
     adapter = GooglePageSpeedLiveAdapter(api_key="top-secret", client=malformed)
@@ -168,7 +184,9 @@ def test_bounded_http_transport_enforces_size_redirect_and_closure():
     assert hop.body == b"ok" and response.closed
     oversized = _Response(b"x", url="https://example.com", headers={"Content-Length": "99"})
     with pytest.raises(ValueError, match="maximum"):
-        BoundedHttpClient(max_response_bytes=2, opener=_Opener(oversized)).get("https://example.com")
+        BoundedHttpClient(max_response_bytes=2, opener=_Opener(oversized)).get(
+            "https://example.com"
+        )
     invalid = _Response(b"x", url="https://example.com", headers={"Content-Length": "invalid"})
     with pytest.raises(ValueError, match="invalid Content-Length"):
         BoundedHttpClient(opener=_Opener(invalid)).get("https://example.com")
@@ -183,7 +201,9 @@ def test_authority_transport_retries_safely_and_validates_payloads():
     assert transport.retry_count == 1 and sleeps
     with pytest.raises(ValueError, match="approved"):
         transport.get("https://evil.example/data")
-    invalid = BoundedTransport({"api.example.com"}, max_attempts=1, opener=_Opener(_Response(b"not-json")))
+    invalid = BoundedTransport(
+        {"api.example.com"}, max_attempts=1, opener=_Opener(_Response(b"not-json"))
+    )
     with pytest.raises(TransportError, match="invalid JSON"):
         invalid.get_json("https://api.example.com/data")
 
@@ -201,7 +221,9 @@ def test_llm_clients_cover_offline_dispatch_and_bounded_response(monkeypatch):
         AnthropicClient(api_key=None)
 
     client = OpenAICompatibleClient(api_key="x")
-    monkeypatch.setattr(client, "_post_json", lambda _url, _payload: {"choices": [{"message": {"content": "ok"}}]})
+    monkeypatch.setattr(
+        client, "_post_json", lambda _url, _payload: {"choices": [{"message": {"content": "ok"}}]}
+    )
     assert asyncio.run(client.complete([LLMMessage("user", "hi")])).content == "ok"
 
 
@@ -212,7 +234,9 @@ async def _collect(stream):
 def test_render_service_reports_renderer_failures_and_invalid_screenshots(tmp_path: Path):
     class Broken:
         def health(self):
-            return BrowserHealth("installed", "installed", "fixture", "AVAILABLE", "install", "uninstall")
+            return BrowserHealth(
+                "installed", "installed", "fixture", "AVAILABLE", "install", "uninstall"
+            )
 
         def render(self, *_args, **_kwargs):
             raise RuntimeError("renderer failed")
@@ -225,19 +249,45 @@ def test_render_service_reports_renderer_failures_and_invalid_screenshots(tmp_pa
         def render(self, *_args, **_kwargs):
             return {"screenshot_bytes": b"not-png"}
 
-    assert RenderedPageService(renderer=Invalid()).screenshot(
-        "https://example.com", output=tmp_path / "bad.png"
-    ).status == "invalid_response"
+    assert (
+        RenderedPageService(renderer=Invalid())
+        .screenshot("https://example.com", output=tmp_path / "bad.png")
+        .status
+        == "invalid_response"
+    )
 
 
 def test_risk_coverage_validator_fails_missing_and_undercovered_files(tmp_path: Path):
     coverage = tmp_path / "coverage.json"
     config = tmp_path / "pyproject.toml"
-    coverage.write_text(json.dumps({"files": {"runtime\\llm.py": {"summary": {"percent_covered": 79}}}}), encoding="utf-8")
-    config.write_text('[tool.wcseo.risk_coverage]\n"runtime/llm.py" = 80\n"adapters/url_safety.py" = 50\n', encoding="utf-8")
+    coverage.write_text(
+        json.dumps({"files": {"runtime\\llm.py": {"summary": {"percent_covered": 79}}}}),
+        encoding="utf-8",
+    )
+    config.write_text(
+        '[tool.wcseo.risk_coverage]\n"runtime/llm.py" = 80\n"adapters/url_safety.py" = 50\n',
+        encoding="utf-8",
+    )
     errors = validate(coverage, config)
     assert any("below required" in error for error in errors)
     assert any("missing from coverage" in error for error in errors)
+
+
+def test_risk_coverage_exact_floor_passes_and_one_hundredth_under_fails(tmp_path: Path):
+    config = tmp_path / "pyproject.toml"
+    config.write_text('[tool.wcseo.risk_coverage]\n"runtime/tools.py" = 83\n', encoding="utf-8")
+    coverage = tmp_path / "coverage.json"
+    coverage.write_text(
+        json.dumps({"files": {"runtime\\tools.py": {"summary": {"percent_covered": 83}}}}),
+        encoding="utf-8",
+    )
+    assert validate(coverage, config) == []
+
+    coverage.write_text(
+        json.dumps({"files": {"runtime/tools.py": {"summary": {"percent_covered": 82.99}}}}),
+        encoding="utf-8",
+    )
+    assert validate(coverage, config) == ["runtime/tools.py: 82.99% is below required 83.00%"]
 
 
 def test_dependency_lock_rejects_direct_pin_outside_canonical_constraint(tmp_path: Path):
@@ -245,7 +295,9 @@ def test_dependency_lock_rejects_direct_pin_outside_canonical_constraint(tmp_pat
     lock = tmp_path / "requirements-dev.txt"
     inputs.write_text("pytest>=8,<10\n", encoding="utf-8")
     lock.write_text(
-        "# This file is autogenerated by pip-compile\npytest==10.0.0\n",
+        "# This file is autogenerated by pip-compile\n"
+        "pytest==10.0.0 \\\n"
+        "    --hash=sha256:" + "a" * 64 + "\n",
         encoding="utf-8",
     )
 
@@ -254,6 +306,44 @@ def test_dependency_lock_rejects_direct_pin_outside_canonical_constraint(tmp_pat
     assert errors == [
         "direct requirement pin violates input constraint: pytest==10.0.0 not in <10,>=8"
     ]
+
+
+def test_dependency_lock_requires_a_hash_for_every_pin(tmp_path: Path):
+    inputs = tmp_path / "requirements-dev.in"
+    lock = tmp_path / "requirements-dev.txt"
+    inputs.write_text("pytest>=8,<10\n", encoding="utf-8")
+    lock.write_text(
+        "# This file is autogenerated by pip-compile\npytest==9.0.2\n",
+        encoding="utf-8",
+    )
+
+    assert validate_dependency_lock(inputs, lock) == ["lock entry is missing a sha256 hash: pytest"]
+
+
+def test_dependency_lock_requires_pip_tools_build_dependencies(tmp_path: Path):
+    inputs = tmp_path / "requirements-dev.in"
+    lock = tmp_path / "requirements-dev.txt"
+    inputs.write_text("pip-tools>=7,<8\n", encoding="utf-8")
+    lock.write_text(
+        "# This file is autogenerated by pip-compile\n"
+        "pip-tools==7.6.0 \\\n"
+        "    --hash=sha256:" + "a" * 64 + "\n",
+        encoding="utf-8",
+    )
+
+    assert validate_dependency_lock(inputs, lock) == [
+        "hash lock is missing required build dependency: pip",
+        "hash lock is missing required build dependency: setuptools",
+    ]
+
+    inputs.write_text("pytest>=8,<10\n", encoding="utf-8")
+    lock.write_text(
+        "# This file is autogenerated by pip-compile\n"
+        "pytest==9.0.2\n"
+        "    # --hash=sha256:" + "a" * 64 + "\n",
+        encoding="utf-8",
+    )
+    assert validate_dependency_lock(inputs, lock) == ["lock entry is missing a sha256 hash: pytest"]
 
 
 def test_release_workflow_fails_closed_before_publication():

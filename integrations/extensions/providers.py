@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from adapters.base import AdapterResult
 from adapters.mcp_extensions import (
     capability_report,
     estimate_cost,
     preflight,
     render_config,
 )
+from contracts.adapter import AdapterResult
 
 
 class ProviderService:

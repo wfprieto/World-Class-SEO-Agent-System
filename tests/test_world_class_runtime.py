@@ -51,6 +51,7 @@ class ValidStructuredClient:
         agent = match.group(1)
         slug = re.sub(r"[^a-z0-9]+", "-", agent.lower()).strip("-")
         payload = {
+            "contract_version": "2.0.0",
             "output_id": f"fixture-{slug}",
             "agent": agent,
             "summary": "Validated specialist output.",
@@ -60,6 +61,7 @@ class ValidStructuredClient:
                 "type": "test_fixture",
                 "date_checked": "2026-07-11",
                 "notes": "Deterministic fixture evidence.",
+                "state": "CURRENT",
             }],
             "confidence": "High",
             "findings": [{
@@ -212,13 +214,15 @@ def test_dependency_handoff_requires_referenced_evidence_before_consumption():
     )
     unconsumed = [
         handoff for handoff in result["handoffs"]
-        if handoff["status"] == "CREATED"
+        if handoff["status"] == "BLOCKED"
     ]
     assert result["handoffs_created"] > 0
     assert result["handoffs_consumed"] < result["handoffs_created"]
     assert unconsumed
     assert all(handoff["evidence_refs"] for handoff in unconsumed)
     assert all(not handoff["receiving_output_id"] for handoff in unconsumed)
+    assert all(handoff["unresolved_reason"] for handoff in unconsumed)
+    assert result["handoff_governance"]["status"] == "FAIL"
     assert result["workflow_status"] == "PARTIAL"
 
 

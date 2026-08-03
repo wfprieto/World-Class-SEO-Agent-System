@@ -2,7 +2,7 @@
 
 ## `product-proof-technical-audit`
 
-Purpose: Run one bounded, evidence-governed technical site audit that produces a reusable crawl dataset, consolidated findings, agent contribution records, client-ready reporting, and a verification plan.
+Purpose: Power the sole flagship command, `seoctl audit technical`, as bounded read-only diagnosis that produces a decision-ready technical SEO evidence package. The package contains reusable crawl evidence, consolidated findings, governance decisions, contribution records, qualified stakeholder and engineering reports, remediation work, verification work, a trust summary, and a hashed manifest.
 
 System prompt: Behave as a skeptical technical SEO team. Primary sources override secondary advice. Preserve missing evidence. Never describe a successful response as proof of indexing, a fixture as live proof, or a heuristic as a universal rule. Make no external change.
 
@@ -39,6 +39,8 @@ Output format:
 - `remediation-plan.csv`
 - `verification-plan.json`
 - `run-manifest.json`
+
+The ten names above are the exact flagship artifact contract. Fixture execution proves deterministic contract behavior only. A bounded live run reports observations from an authorized target at a stated time. Neither mode proves complete site coverage, search-engine indexing, ranking, traffic, conversion, production readiness, or comparative superiority. The audit makes no external change.
 
 Quality gate:
 

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wcseo.local/schemas/architecture-contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "layers", "allowed_layer_edges", "exceptions", "network_modules", "network_transports"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "layers": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+    },
+    "allowed_layer_edges": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "target"],
+        "properties": {"source": {"type": "string"}, "target": {"type": "string"}}
+      }
+    },
+    "exceptions": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "target", "owner", "rationale", "removal_phase"],
+        "properties": {
+          "source": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"},
+          "target": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"},
+          "owner": {"type": "string", "minLength": 3},
+          "rationale": {"type": "string", "minLength": 20},
+          "removal_phase": {"type": "string", "pattern": "^P[3-9]$"}
+        }
+      }
+    },
+    "network_modules": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^(runtime|adapters|integrations|security|seoctl)/[a-zA-Z0-9_/]+\\.py$"}
+    },
+    "network_transports": {
+      "type": "object",
+      "propertyNames": {"pattern": "^(runtime|adapters|integrations|security|seoctl)/[a-zA-Z0-9_/]+\\.py$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["policy", "delegates_to"],
+        "properties": {
+          "policy": {
+            "enum": [
+              "APPROVED_HOST_BOUNDED_HTTP",
+              "CONFIGURED_LLM_ENDPOINT_BOUNDED_HTTP",
+              "GOOGLE_API_BOUNDED_HTTP",
+              "LEGACY_GSC_EXAMPLE",
+              "NO_REDIRECT_PUBLIC_MUTATION",
+              "PUBLIC_BROWSER_REQUEST_GUARD",
+              "PUBLIC_RENDERED_PAGE",
+              "PUBLIC_URL_SAFETY",
+              "PUBLIC_WEB_EVERY_HOP"
+            ]
+          },
+          "delegates_to": {"type": "string", "minLength": 3}
+        }
+      }
+    }
+  }
+}

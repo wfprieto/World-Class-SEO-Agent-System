@@ -42,5 +42,5 @@ def test_tool_dispatcher_preserves_content_evidence_state():
         )
     )
     assert result.status == "needs-review"
-    assert result.evidence_state == "PARTIAL"
+    assert result.evidence_state == "BLOCKED"
     assert result.data["unsupported_claims"] == 2

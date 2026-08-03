@@ -1,0 +1,130 @@
+{
+  "schema_version": "comparative-source-authority-v1",
+  "scope": "REVIEWED_STATIC_SOURCE_IDENTITY",
+  "scorecards": {
+    "claude-seo-baseline.json": "a4c55e8a91cbfe67f8be656eb7ba2e3c1095aa0b6813a4c15a88e50e3e458a95",
+    "world-class-baseline.json": "8e2f0da81aa4a7ed3268c01865756d5d7c0fe4463fd9b72dc91b74f3a078ff5a"
+  },
+  "sources": {
+    "AgriciDaniel/claude-seo": {
+      ".github/workflows/ci.yml": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "9d13f4f75d29e15acc23b0c5eb8b590befc62028b3767724bccd43edfb7a4b4b"
+      },
+      "CHANGELOG.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "521c856be207d72bbc179543a65736231d520ac6a05cf2645ba679f018e22ea6"
+      },
+      "README.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "e37e58372dc1dac6f5f83e03708028a7ddc788b0de1e6b0bc05c88685fd983fa"
+      },
+      "docs/ARCHITECTURE.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "a59952b14025da7e26cd6596552f3e94c1e1bc8d2af77d8baf36010cfa43421e"
+      },
+      "docs/COMMANDS.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "6d3aa9b0606c514845a515506789068ddb71a1e0ce863e663bf49314d6bfabe6"
+      },
+      "docs/MCP-INTEGRATION.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "945b859733b8d48e368db67ce63727c1d83a61eef505b560759035c81a7300ca"
+      },
+      "skills": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "3ab2621873310745c81aad05c904351905d9c59d326649d197265026ec9726ca"
+      },
+      "skills/seo-flow/SKILL.md": {
+        "commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
+        "content_sha256": "44160d1e593d08cf286d4764d7945482a9c4d5c4a105462852ed5e5568f9f7ef"
+      }
+    },
+    "wfprieto/World-Class-SEO-Agent-System": {
+      ".github/": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "58dcda875b87c42ca1812bea3e0fc1a59540fdeb5082dac14adf5351fb3e9551"
+      },
+      ".github/workflows/validate.yml": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "845673e8a59c60d6ff1d79af7474978f02d0aae3f584c1258aa1d877c138bb41"
+      },
+      "CHANGELOG.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "0b29825d0ad6f597a1e817a0a1158908662340c61419dbd0ab245fdee547ff93"
+      },
+      "README.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "a7a53e6da1434aa11118846ccbe346968e8a5125626beb8350145744ae54f653"
+      },
+      "docs/20-PASS-WORLD-CLASS-RUNTIME-REVIEW.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "3b6efb9f1b8eabe43df16e777b1941c0f1133f6d1512a7f7de0f3f54e1eb87b2"
+      },
+      "docs/QUICKSTART.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "284d0390ca32869468b7ba17ab7adbc304734df06010f53b89ca3146e4a19c1f"
+      },
+      "integrations/authority_media/": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "324de3edebbcfb1de1d70a508eee2c16c36ce5459c20ef6eb3a7b6b193f3f3ff"
+      },
+      "integrations/content_intelligence/service.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "936ad964969ae0ac26a96ba71b5f805ac251f8df21c17c3577550608a33a35a7"
+      },
+      "integrations/google/": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "d2352ab3c9431173dcfa9dc18e093b2027dc7b4e3ee62ac1a0dc90cad78a0df2"
+      },
+      "knowledge/": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "ca02bd75c15bc2d51499fbfdf2c7dd32bb383aa59523bfacc1b105254b50a599"
+      },
+      "knowledge/knowledge-sources.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "f51d6df704bf1ca746bb3879644dd480bfad7e63bf2f4ab686499f9e9046a545"
+      },
+      "orchestration/capability-registry.json": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "d32394cc374f16e0ee319fdbae85feaf855a9c16be49d4df13eb664122379ae4"
+      },
+      "runtime/run_budget.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "95ff149331e7754325cd360b4162ba883002520c13887f31943a06d9fea207ca"
+      },
+      "runtime/structured_output.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "78347ca4fd5b0a84c50a7e3ecebbf293477ca3b48ab9b41d29800ab50567eae0"
+      },
+      "runtime/workflow_graph.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "18caa66691c80f608fc704259bb82b8f9828fa6dabe359ae6216d7cc6902c921"
+      },
+      "runtime/workflow_runner.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "d318a4d5bb3aeb33f5ce52d1d5deafbe1576223746cbf4c9250a5a0b1f217f75"
+      },
+      "seoctl/command-registry.json": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "518ce6bbf2d459472df4f058917df27836529b20a75945516a985d5725cfd5a9"
+      },
+      "seoctl/entrypoint.py": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "c23c93d259c0fc76aa8f62a6ead68bdc03b3087334083d6532d9b81f3d2ce670"
+      },
+      "skills/SKILL_INDEX.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "cb72e0397dcee06c52b025f4f25f1546ba1dd074640529aff4713e6ba085d685"
+      },
+      "skills/deep-skill-procedures.md": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "f4f1840f9da4c579625ccef01499f7ff3c4a3a22594dd24329d503a9cbf1f497"
+      },
+      "skills/flow-prompts/": {
+        "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+        "content_sha256": "e372d480e867e68e1edc6d94dda99c6dda2ec026c0b60cf23f0d68e3935202bc"
+      }
+    }
+  }
+}

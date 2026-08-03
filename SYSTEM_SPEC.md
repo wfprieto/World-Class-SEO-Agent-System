@@ -2,7 +2,11 @@
 
 ## Mission
 
-Create the most effective model-agnostic SEO agent system for senior SEO engineering teams. The system must improve organic visibility, qualified traffic, conversion quality, brand/entity trust, AI search visibility, accessibility, compliance, and long-term site resilience.
+Maintain a model-agnostic, evidence-governed SEO operating system for a technical SEO practitioner or SEO engineer accountable for an authorized audit and implementation handoff. The system structures diagnosis, evidence, decisions, implementation handoffs, and verification without claiming that repository behavior alone improves rankings, traffic, conversions, or other real-world outcomes.
+
+The canonical product contract is `governance/product-contract.json`. Knowledge, skills, evidence, and orchestration contracts are the primary documentation-first layer. The bounded CLI runtime and optional integration adapters are the executable layer.
+
+`seoctl audit technical` is the sole flagship command. Its bounded read-only diagnosis produces a decision-ready technical SEO evidence package. `system.run` and `full-site-audit` remain evidence-dependent orchestration capabilities and do not guarantee complete coverage.
 
 ## Design Philosophy
 
@@ -80,7 +84,7 @@ The diagnostic setup must:
 
 ## Runtime and Adapter Standard
 
-The system must be usable as both a documentation-first operating system and an executable integration layer.
+The system must preserve its documentation-first contract layer and its bounded executable CLI and adapter layer without allowing either layer to overstate the evidence obtained.
 
 The runtime layer must:
 
@@ -161,7 +165,9 @@ Debate Mode:
 
 - Scrummaster forces agents to defend assumptions before important decisions.
 
-## System Success Metrics
+## Downstream Measurement Targets
+
+These are operator-selected measures for evaluating approved work after implementation. They are not outcomes proven by the repository, a fixture audit, or a bounded live audit. Missing baselines and unavailable first-party evidence remain explicit.
 
 - Indexed valuable URLs
 - Reduced technical defects

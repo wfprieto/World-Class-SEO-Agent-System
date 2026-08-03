@@ -1,16 +1,4 @@
-"""Durable normalized SEO evidence snapshots and compatible drift comparison.
-
-Canonical target: ``adapters/evidence_store.py``. The store is consumed by
-adapters and drift-monitoring workflows under the rules in
-``docs/evidence-cache-contract.md``. It is intentionally dependency-free and
-provides additive schema migration, deterministic JSON, provenance, integrity
-verification, nested drift, retention, deletion, and safe lifecycle handling.
-
-The database is append-oriented: repeated captures may be valid observations,
-but callers must not present identical records as independent corroboration.
-Local digests detect accidental corruption and unsophisticated tampering; they
-are not encryption or a trust boundary against a writer that can recompute them.
-"""
+"""Durable SEO evidence snapshots; local digests detect corruption, not hostile writers."""
 
 from __future__ import annotations
 
@@ -21,17 +9,24 @@ import sqlite3
 import threading
 import time
 import urllib.parse
+from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import Any, Final, Iterator, Mapping
+from typing import Any, Final
 
 from adapters.evidence_integrity import (
     SnapshotIntegrityFailure,
-    canonical_json as _canonical_json,
     decode_verified_row,
+)
+from adapters.evidence_integrity import (
+    canonical_json as _canonical_json,
+)
+from adapters.evidence_integrity import (
     record_digest as _record_digest,
+)
+from adapters.evidence_integrity import (
     sha256_text as _sha256,
 )
-
+from sensitive_data import SENSITIVE_QUERY_KEYS, redact_evidence_fields
 
 __all__ = [
     "DEFAULT_DB",
@@ -48,23 +43,6 @@ DEFAULT_PAYLOAD_SCHEMA_VERSION: Final = "1"
 MAX_TEXT_LENGTH: Final = 2_048
 MAX_PAYLOAD_BYTES: Final = 2_000_000
 _SCHEMA_INIT_LOCK = threading.Lock()
-
-SENSITIVE_QUERY_KEYS: Final = frozenset(
-    {
-        "access_token",
-        "api_key",
-        "apikey",
-        "auth",
-        "authorization",
-        "code",
-        "password",
-        "passwd",
-        "session",
-        "sessionid",
-        "token",
-    }
-)
-
 
 class EvidenceStoreError(RuntimeError):
     """Base class for evidence-store failures."""
@@ -343,10 +321,13 @@ class EvidenceStore:
         metric_group = self._require_label(metric_group, "metric_group")
         schema_version = self._require_label(schema_version, "schema_version")
         status = self._require_label(status, "status")
+        source, run_id, sanitized_payload, sanitized_scope = redact_evidence_fields(
+            source, run_id, payload, dict(scope or {})
+        )
         source = None if source is None else self._require_label(source, "source")
         run_id = None if run_id is None else self._require_label(run_id, "run_id")
-        payload_json = _canonical_json(payload, "payload", self.max_payload_bytes)
-        scope_json = _canonical_json(dict(scope or {}), "scope", self.max_payload_bytes)
+        payload_json = _canonical_json(sanitized_payload, "payload", self.max_payload_bytes)
+        scope_json = _canonical_json(sanitized_scope, "scope", self.max_payload_bytes)
 
         timestamp = time.time() if captured_at is None else float(captured_at)
         if not math.isfinite(timestamp) or timestamp < 0:
@@ -648,7 +629,7 @@ class EvidenceStore:
                 self._conn.close()
                 self._closed = True
 
-    def __enter__(self) -> "EvidenceStore":
+    def __enter__(self) -> EvidenceStore:
         self._ensure_open()
         return self
 

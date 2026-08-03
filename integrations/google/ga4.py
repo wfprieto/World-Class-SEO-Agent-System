@@ -6,7 +6,7 @@ import re
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from adapters.base import AdapterResult
+from contracts.adapter import AdapterResult
 from integrations.google.client import (
     GoogleJsonClient,
     GoogleOAuthConfig,

@@ -1,0 +1,256 @@
+{
+  "version": "1.0.0",
+  "claim_boundary": "Bounded static differentiation: each retained agent owns a globally exclusive evidence anchor and deterministic artifact responsibility, and no two capability bundles may have the same functional signature. This does not claim semantic uniqueness beyond declared repository contracts.",
+  "agents": {
+    "SEO Technical Agent": {
+      "primary_responsibility": "Diagnose crawlability, rendering, indexation, schema, and page-performance defects.",
+      "evidence_anchor": "domain_or_urls",
+      "responsibility_id": "technical-diagnostic-record",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Diagnostic Infrastructure Agent"],
+      "consulted": ["Senior SEO Engineer Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    },
+    "SEO Copywriter/Content Agent": {
+      "primary_responsibility": "Turn observed audience and search evidence into governed briefs, copy, metadata, and refresh decisions.",
+      "evidence_anchor": "observed_serp_or_first_party_queries",
+      "responsibility_id": "content-production-brief",
+      "output_binding": "templates/content-brief.md",
+      "execution_class": "executable",
+      "contributors": ["Voice Search & Conversational Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "SEO Compliance & Legal Agent"
+    },
+    "SEO Information Architecture Agent": {
+      "primary_responsibility": "Design URL taxonomy, navigation, topic clusters, and internal-link relationships.",
+      "evidence_anchor": "url_inventory",
+      "responsibility_id": "information-architecture-map",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Technical Agent"],
+      "consulted": ["Senior SEO Strategist Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    },
+    "SEO Accessibility Agent": {
+      "primary_responsibility": "Evaluate rendered search experiences against accessibility structure and interaction requirements.",
+      "evidence_anchor": "accessibility_tree_or_manual_checks",
+      "responsibility_id": "accessibility-conformance-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "advisory",
+      "contributors": ["Visual & Video Search Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    },
+    "SEO CRO Agent": {
+      "primary_responsibility": "Translate organic intent and conversion evidence into bounded landing-page test hypotheses.",
+      "evidence_anchor": "conversion_goal",
+      "responsibility_id": "organic-conversion-test-brief",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "advisory",
+      "contributors": ["SEO Copywriter/Content Agent"],
+      "consulted": ["SEO Research and Development Agent"],
+      "handoff_to": "SEO Research and Development Agent"
+    },
+    "Local SEO Agent": {
+      "primary_responsibility": "Reconcile local business identity, listings, citations, reviews, and geographic visibility.",
+      "evidence_anchor": "resolved_business_identity",
+      "responsibility_id": "local-entity-consistency-report",
+      "output_binding": "templates/local-seo-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Knowledge Graph Sync Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "SEO Output Report Agent"
+    },
+    "Senior SEO Strategist Agent": {
+      "primary_responsibility": "Sequence accepted findings against business outcomes, constraints, capacity, and risk.",
+      "evidence_anchor": "capacity_and_constraints",
+      "responsibility_id": "prioritized-seo-roadmap",
+      "output_binding": "templates/seo-roadmap.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Full Audit/Analyst Agent"],
+      "consulted": ["SEO Scrummaster Agent"],
+      "handoff_to": "SEO Scrummaster Agent"
+    },
+    "Senior SEO Engineer Agent": {
+      "primary_responsibility": "Convert accepted technical findings into tested, reversible code and deployment changes.",
+      "evidence_anchor": "rollback_plan",
+      "responsibility_id": "seo-engineering-change-plan",
+      "output_binding": "templates/engineering-change-plan.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Technical Agent"],
+      "consulted": ["SEO Scrummaster Agent"],
+      "handoff_to": "SEO Full Audit/Analyst Agent"
+    },
+    "SEO Scrummaster Agent": {
+      "primary_responsibility": "Coordinate specialist debate, expose conflicts, and record bounded delivery decisions.",
+      "evidence_anchor": "conflicts",
+      "responsibility_id": "cross-agent-decision-record",
+      "output_binding": "templates/decision-record.md",
+      "execution_class": "governance",
+      "contributors": ["Senior SEO Strategist Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "SEO Full Audit/Analyst Agent"
+    },
+    "SEO Full Audit/Analyst Agent": {
+      "primary_responsibility": "Normalize specialist evidence into a traceable full-site audit and scorecard.",
+      "evidence_anchor": "specialist_outputs",
+      "responsibility_id": "normalized-full-audit",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Technical Agent", "SEO Copywriter/Content Agent"],
+      "consulted": ["SEO Scrummaster Agent"],
+      "handoff_to": "Senior SEO Strategist Agent"
+    },
+    "SEO Output Report Agent": {
+      "primary_responsibility": "Translate accepted decisions and verification state into non-technical stakeholder reporting.",
+      "evidence_anchor": "verification_status",
+      "responsibility_id": "plain-language-stakeholder-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Full Audit/Analyst Agent"],
+      "consulted": ["Senior SEO Strategist Agent"],
+      "handoff_to": "Senior SEO Strategist Agent"
+    },
+    "SEO Diagnostic Infrastructure Agent": {
+      "primary_responsibility": "Design the minimum sufficient diagnostic, monitoring, and reporting tool stack.",
+      "evidence_anchor": "reporting_needs",
+      "responsibility_id": "diagnostic-stack-plan",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Technical Agent"],
+      "consulted": ["SEO Full Audit/Analyst Agent"],
+      "handoff_to": "SEO Scrummaster Agent"
+    },
+    "GEO / AIO Optimization Agent": {
+      "primary_responsibility": "Assess dated AI-result citation observations, entity clarity, and passage citability.",
+      "evidence_anchor": "dated_ai_or_serp_observations",
+      "responsibility_id": "geo-aio-citation-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Knowledge Graph Sync Agent"],
+      "consulted": ["Competitive Intelligence Agent"],
+      "handoff_to": "SEO Copywriter/Content Agent"
+    },
+    "Visual & Video Search Agent": {
+      "primary_responsibility": "Evaluate image and video discovery using rendered assets, metadata, transcripts, and media schema.",
+      "evidence_anchor": "media_inventory",
+      "responsibility_id": "media-search-optimization-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Accessibility Agent"],
+      "consulted": ["SEO Technical Agent"],
+      "handoff_to": "SEO Copywriter/Content Agent"
+    },
+    "Voice Search & Conversational Agent": {
+      "primary_responsibility": "Map observed question demand to conversational answer structures and page coverage.",
+      "evidence_anchor": "question_data",
+      "responsibility_id": "conversational-query-plan",
+      "output_binding": "templates/content-brief.md",
+      "execution_class": "advisory",
+      "contributors": ["SEO Copywriter/Content Agent"],
+      "consulted": ["GEO / AIO Optimization Agent"],
+      "handoff_to": "SEO Copywriter/Content Agent"
+    },
+    "SEO Compliance & Legal Agent": {
+      "primary_responsibility": "Gate claims, disclosures, consent, spam-policy, privacy, and jurisdictional risks.",
+      "evidence_anchor": "jurisdiction",
+      "responsibility_id": "compliance-risk-review",
+      "output_binding": "templates/compliance-review.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Research and Development Agent"],
+      "consulted": ["SEO Scrummaster Agent"],
+      "handoff_to": "SEO Scrummaster Agent"
+    },
+    "Negative SEO & Security Agent": {
+      "primary_responsibility": "Assess hostile indexation, compromise, spam, scraping, and backlink threat signals.",
+      "evidence_anchor": "security_or_indexation_signals",
+      "responsibility_id": "negative-seo-threat-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Technical Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    },
+    "International & Multilingual SEO Agent": {
+      "primary_responsibility": "Validate market-locale architecture, hreflang, localization, and regional targeting.",
+      "evidence_anchor": "market_and_locale_inventory",
+      "responsibility_id": "international-targeting-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Information Architecture Agent"],
+      "consulted": ["SEO Copywriter/Content Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    },
+    "Digital PR & Programmatic Link Outreach Agent": {
+      "primary_responsibility": "Develop evidence-bound authority acquisition, mention recovery, and outreach programs.",
+      "evidence_anchor": "backlink_or_mention_data",
+      "responsibility_id": "authority-outreach-campaign",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["Competitive Intelligence Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "SEO Scrummaster Agent"
+    },
+    "Predictive SEO Trend Agent": {
+      "primary_responsibility": "Forecast dated demand and seasonality signals into timing-aware content opportunities.",
+      "evidence_anchor": "historical_demand",
+      "responsibility_id": "demand-forecast-brief",
+      "output_binding": "templates/seo-roadmap.md",
+      "execution_class": "executable",
+      "contributors": ["Competitive Intelligence Agent"],
+      "consulted": ["Senior SEO Strategist Agent"],
+      "handoff_to": "Senior SEO Strategist Agent"
+    },
+    "Competitive Intelligence Agent": {
+      "primary_responsibility": "Measure dated competitor, SERP, backlink, content, and citation changes.",
+      "evidence_anchor": "observed_competitors",
+      "responsibility_id": "competitor-change-brief",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["Digital PR & Programmatic Link Outreach Agent"],
+      "consulted": ["Predictive SEO Trend Agent"],
+      "handoff_to": "Senior SEO Strategist Agent"
+    },
+    "SEO Research and Development Agent": {
+      "primary_responsibility": "Design controlled SEO experiments with explicit hypotheses, measures, and guardrails.",
+      "evidence_anchor": "hypothesis",
+      "responsibility_id": "seo-experiment-protocol",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Full Audit/Analyst Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "AI Principal SEO Scientist"
+    },
+    "SEO Knowledge Graph Sync Agent": {
+      "primary_responsibility": "Reconcile canonical entity identity across schema, sameAs references, and brand surfaces.",
+      "evidence_anchor": "canonical_identity_sources",
+      "responsibility_id": "canonical-entity-sync-report",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["Local SEO Agent"],
+      "consulted": ["GEO / AIO Optimization Agent"],
+      "handoff_to": "SEO Technical Agent"
+    },
+    "AI Principal SEO Scientist": {
+      "primary_responsibility": "Validate primary-source search changes before governing shared rules and deprecations.",
+      "evidence_anchor": "primary_source",
+      "responsibility_id": "validated-rule-change",
+      "output_binding": "templates/audit-report.md",
+      "execution_class": "executable",
+      "contributors": ["SEO Research and Development Agent"],
+      "consulted": ["SEO Scrummaster Agent"],
+      "handoff_to": "SEO Scrummaster Agent"
+    },
+    "SEO E-commerce Agent": {
+      "primary_responsibility": "Govern product and category discoverability, commerce schema, feeds, facets, and marketplaces.",
+      "evidence_anchor": "page_schema_feed_identity",
+      "responsibility_id": "ecommerce-seo-report",
+      "output_binding": "templates/ecommerce-seo-report.md",
+      "execution_class": "advisory",
+      "contributors": ["SEO Technical Agent"],
+      "consulted": ["SEO Compliance & Legal Agent"],
+      "handoff_to": "Senior SEO Engineer Agent"
+    }
+  }
+}

@@ -10,8 +10,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from adapters.base import AdapterResult
-from adapters.url_safety import host_is_public, validate_public_url
+from contracts.adapter import AdapterResult
+from security.url_safety import host_is_public, validate_public_url
 
 _WAIT_UNTIL = {"commit", "domcontentloaded", "load", "networkidle"}
 _RESOURCE_TYPES = {

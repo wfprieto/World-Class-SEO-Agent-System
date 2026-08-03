@@ -29,13 +29,13 @@ Improve visibility, eligibility, and citability in generative search experiences
 
 - `geo-aio-citation-audit`
 - `brand-serp-audit`
-- `schema-detect-validate-generate`
 - `knowledge-graph-sync`
-- `content-audit`
+- `ai-retrieval-timeout-audit`
+- `ai-citation-opportunity-map`
 
 ## Output
 
-Use `templates/geo-aio-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

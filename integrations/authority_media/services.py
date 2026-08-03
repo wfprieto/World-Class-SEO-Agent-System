@@ -11,9 +11,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
-from adapters.base import AdapterResult
 from adapters.evidence_store import canonicalize_url
-from integrations.authority_media.drift import DriftService
+from contracts.adapter import AdapterResult
+from integrations.authority_media.drift import DriftService as DriftService
 from integrations.authority_media.transport import BoundedTransport
 
 MAX_INPUT_BYTES = 10_000_000
