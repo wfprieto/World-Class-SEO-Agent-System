@@ -48,6 +48,29 @@ def test_operations_docs_preserve_truthful_conduct_and_backup_status() -> None:
     assert "must not be represented as a completed conduct-reporting channel" in support
 
 
+def test_conduct_owner_checklist_preserves_owner_boundary_and_sensitive_data_rules() -> None:
+    runbook = " ".join(RUNBOOK.read_text(encoding="utf-8").split())
+    required = (
+        "Owner provisioning checklist",
+        "Select and provision one repository-controlled route",
+        "Explicitly authorize publication",
+        "Send a benign access test",
+        "provider-controlled, immutable verification",
+        "repository issue comment, repository commit, self-authored assertion",
+        "acknowledgement target, monitoring role, confidentiality limits, and conflict handling",
+        "restore `BLOCKED_OWNER_ACTION`",
+    )
+    assert all(text in runbook for text in required)
+    prohibited = (
+        "mailbox content",
+        "credentials",
+        "reporter identity",
+        "report content",
+        "private access URL",
+    )
+    assert all(text in runbook for text in prohibited)
+
+
 def test_yaml_issue_forms_require_operational_traceability_and_privacy() -> None:
     for name in ("bug_report.yml", "feature_request.yml", "support_request.yml"):
         path = ROOT / ".github/ISSUE_TEMPLATE" / name

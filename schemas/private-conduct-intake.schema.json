@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/private-conduct-intake.schema.json",
+  "title": "Private conduct intake control",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "state",
+    "accountable_role",
+    "destination",
+    "owner_authorized_publication",
+    "repository_controlled",
+    "distinct_from_security_intake",
+    "monitoring",
+    "access_test",
+    "acknowledgement_target_hours",
+    "activation_requirements",
+    "review_due",
+    "rollback_rule",
+    "prohibited_repository_data"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+    "state": {"const": "BLOCKED_OWNER_ACTION"},
+    "accountable_role": {"type": "string", "minLength": 1},
+    "destination": {"type": "null"},
+    "owner_authorized_publication": {"const": false},
+    "repository_controlled": {"const": false},
+    "distinct_from_security_intake": {"const": false},
+    "monitoring": {
+      "const": {
+        "status": "PENDING_OWNER_ACTION",
+        "monitor_role": null,
+        "attested_at": null,
+        "attestation_ref": null
+      }
+    },
+    "access_test": {
+      "const": {"status": "NOT_RUN", "tested_at": null, "method": null}
+    },
+    "acknowledgement_target_hours": {"type": "null"},
+    "activation_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "required_disclosures", "prohibited_evidence"],
+      "properties": {
+        "status": {"const": "PROVIDER_VERIFICATION_REQUIRED"},
+        "required_disclosures": {
+          "const": [
+            "acknowledgement target",
+            "monitoring role",
+            "confidentiality limits",
+            "conflict handling"
+          ]
+        },
+        "prohibited_evidence": {
+          "const": [
+            "repository issue comments",
+            "repository commits",
+            "self-authored assertions",
+            "example or test destinations"
+          ]
+        }
+      }
+    },
+    "review_due": {"type": "string", "format": "date"},
+    "rollback_rule": {"type": "string", "minLength": 1},
+    "prohibited_repository_data": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

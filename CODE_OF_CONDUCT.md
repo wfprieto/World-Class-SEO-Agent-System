@@ -36,3 +36,9 @@ public repository channel.
 The current status and transition requirements are documented in
 [`docs/OPEN-ISSUE-REMEDIATION.md`](docs/OPEN-ISSUE-REMEDIATION.md#private-conduct-prerequisite).
 
+Any future route must publish all four required disclosures: its acknowledgement target, the
+monitoring role, confidentiality limits, and conflict handling when the normal decision-maker is
+involved. Until provider-controlled evidence verifies the destination and access test, repository
+commits, issue comments, self-authored assertions, and example or test destinations cannot activate
+the route or change this status.
+

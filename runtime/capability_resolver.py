@@ -29,6 +29,24 @@ class CapabilityBundle:
 class CapabilityResolver:
     """Assemble canonical runtime context with a non-destructive product-proof overlay."""
 
+    _SPECIALIST_AGENTS = {
+        "Competitive Intelligence Agent",
+        "International & Multilingual SEO Agent",
+        "Local SEO Agent",
+        "Negative SEO & Security Agent",
+        "Predictive SEO Trend Agent",
+        "SEO Accessibility Agent",
+        "SEO Compliance & Legal Agent",
+        "Visual & Video Search Agent",
+    }
+    _SKILL_DEFINITION_EXCLUDES = {
+        "SKILL_INDEX.md",
+        "deep-skill-procedures.md",
+        "product-proof-procedures.md",
+        "specialist-decision-standard.md",
+        "specialist-depth-playbooks.md",
+    }
+
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = resolve_asset_root(repo_root)
         path = self.repo_root / "orchestration" / "capability-registry.json"
@@ -107,13 +125,16 @@ class CapabilityResolver:
 
     def load_context(self, agent_name: str) -> dict[str, Any]:
         bundle = self.bundle(agent_name)
+        skill_context = [
+            {"path": path, "content": self._read(path)}
+            for path in bundle.skill_files
+        ]
+        skill_context.extend(self._supplemental_skill_definitions(bundle))
+        skill_context.extend(self._specialist_decision_context(agent_name))
         return {
             "bundle": bundle,
             "agent_spec": self._read(bundle.agent_file),
-            "skill_context": [
-                {"path": path, "content": self._read(path)}
-                for path in bundle.skill_files
-            ],
+            "skill_context": skill_context,
             "deep_procedures": self._procedure_sections(bundle.skills),
             "knowledge_context": [
                 {"path": path, "content": self._read(path)}
@@ -156,6 +177,84 @@ class CapabilityResolver:
 
     def _read(self, relative: str) -> str:
         return (self.repo_root / relative).read_text(encoding="utf-8")
+
+    @staticmethod
+    def _definition_pattern(skill: str) -> re.Pattern[str]:
+        return re.compile(
+            rf"^## (?:Skill: )?`{re.escape(skill)}`\s*$",
+            re.MULTILINE,
+        )
+
+    @staticmethod
+    def _section(text: str, start: int) -> str:
+        next_heading = re.search(r"^## ", text[start + 1 :], re.MULTILINE)
+        end = start + 1 + next_heading.start() if next_heading else len(text)
+        return text[start:end].strip()
+
+    def _definition_candidates(self, skill: str) -> list[tuple[str, str]]:
+        candidates: list[tuple[str, str]] = []
+        for path in sorted((self.repo_root / "skills").glob("*.md")):
+            if path.name in self._SKILL_DEFINITION_EXCLUDES:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for match in self._definition_pattern(skill).finditer(text):
+                candidates.append(
+                    (
+                        path.relative_to(self.repo_root).as_posix(),
+                        self._section(text, match.start()),
+                    )
+                )
+        return candidates
+
+    def _supplemental_skill_definitions(
+        self, bundle: CapabilityBundle
+    ) -> list[dict[str, str]]:
+        """Load exact canonical sections omitted by an agent's grouped skill files."""
+        loaded = "\n".join(self._read(path) for path in bundle.skill_files)
+        supplemental: list[dict[str, str]] = []
+        for skill in bundle.skills:
+            if self._definition_pattern(skill).search(loaded):
+                continue
+            candidates = self._definition_candidates(skill)
+            if len(candidates) > 1:
+                paths = ", ".join(path for path, _content in candidates)
+                raise CapabilityResolutionError(
+                    f"ambiguous canonical skill definition for {skill}: {paths}"
+                )
+            if candidates:
+                path, content = candidates[0]
+                supplemental.append({"path": f"{path}#{skill}", "content": content})
+        return supplemental
+
+    def _specialist_decision_context(self, agent_name: str) -> list[dict[str, str]]:
+        if agent_name not in self._SPECIALIST_AGENTS:
+            return []
+        standard_path = "skills/specialist-decision-standard.md"
+        playbook_path = "skills/specialist-depth-playbooks.md"
+        integrity_path = "governance/specialist-playbook-integrity.json"
+        standard = self._read(standard_path)
+        playbooks = self._read(playbook_path)
+        integrity = self._read(integrity_path)
+        if not standard or not playbooks or not integrity:
+            raise CapabilityResolutionError(
+                f"specialist decision context missing for {agent_name}"
+            )
+        heading = re.compile(
+            rf"^## Agent: `{re.escape(agent_name)}`\s*$", re.MULTILINE
+        )
+        matches = list(heading.finditer(playbooks))
+        if len(matches) != 1:
+            raise CapabilityResolutionError(
+                f"specialist playbook must resolve exactly once: {agent_name}"
+            )
+        return [
+            {"path": integrity_path, "content": integrity},
+            {"path": standard_path, "content": standard},
+            {
+                "path": f"{playbook_path}#{agent_name}",
+                "content": self._section(playbooks, matches[0].start()),
+            },
+        ]
 
     def _procedure_sections(self, skills: tuple[str, ...]) -> list[dict[str, str]]:
         if not skills:

@@ -1332,14 +1332,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "scripts.generate_capability_evidence_registry::build": {
-      "max_span": 138,
-      "max_complexity": 32,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "scripts.run_improvement_cycle::evaluate_cycle": {
       "max_span": 89,
       "max_complexity": 23,
@@ -1448,14 +1440,6 @@
       "max_span": 2,
       "max_complexity": 3,
       "max_missing_annotations": 1,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "scripts.validate_product_contract::_validate_evidence_row": {
-      "max_span": 82,
-      "max_complexity": 37,
-      "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
@@ -1632,9 +1616,6 @@
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/consent_mode_diagnostic.py|C901|`diagnose` is too complex (25 > 10)": 1,
       "scripts/content_brief_evidence.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "scripts/generate_capability_evidence_registry.py|C901|`_effective_command_registry` is too complex (12 > 10)": 1,
-      "scripts/generate_capability_evidence_registry.py|C901|`build` is too complex (20 > 10)": 1,
-      "scripts/generate_capability_evidence_registry.py|E402|Module level import not at top of file": 2,
       "scripts/generate_command_docs.py|E402|Module level import not at top of file": 1,
       "scripts/plan_github_controls_rollback.py|C901|`restored_state_errors` is too complex (11 > 10)": 1,
       "scripts/plan_github_controls_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
@@ -1654,11 +1635,6 @@
       "scripts/validate_product_claims.py|E701|Multiple statements on one line (colon)": 6,
       "scripts/validate_product_claims.py|E702|Multiple statements on one line (semicolon)": 5,
       "scripts/validate_product_claims.py|I001|Import block is un-sorted or un-formatted": 1,
-      "scripts/validate_product_contract.py|C401|Unnecessary generator (rewrite as a set comprehension)": 2,
-      "scripts/validate_product_contract.py|C901|`_validate_evidence_row` is too complex (22 > 10)": 1,
-      "scripts/validate_product_contract.py|C901|`validate` is too complex (24 > 10)": 1,
-      "scripts/validate_product_contract.py|E402|Module level import not at top of file": 2,
-      "scripts/validate_product_contract.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_product_proof_program.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "scripts/validate_pytest_temp_isolation.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_release_artifacts.py|C901|`validate` is too complex (12 > 10)": 1,

@@ -147,7 +147,7 @@ class WorkflowRunner:
         _resolve_node_handoffs(session, node, output, output_id)
         outputs[node.id] = output
         session.agent_outputs.append(output)
-        state = node_result_state(result.status, result.synthetic)
+        state = node_result_state(result.status, result.synthetic, output)
         states[node.id] = state
         errors[node.id] = list(result.errors)
         session.add_event(node.id, node.agent, state, "; ".join(result.errors[:3]))

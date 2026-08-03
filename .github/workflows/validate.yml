@@ -190,6 +190,9 @@ jobs:
           python scripts/generate_command_docs.py --check
           python scripts/generate_skill_index.py --check
           python scripts/generate_capability_evidence_registry.py --check
+          python scripts/validate_capability_certification.py
+          python scripts/validate_private_conduct_intake.py
+          python scripts/validate_specialist_depth.py --mutations
           python scripts/validate_product_contract.py
           python scripts/validate_reference_freshness.py
           python scripts/validate_seo_claims.py

@@ -262,6 +262,19 @@
       "enum": ["COMPLETE", "PARTIAL", "BLOCKED", "FAILED", "SYNTHETIC"],
       "description": "Truthful execution state of the agent node."
     },
+    "specialist_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "mapped_execution_state", "rationale_code", "evidence_refs", "human_action_required"],
+      "properties": {
+        "state": {"enum": ["READY", "PARTIAL", "BLOCKED", "ABSTAIN", "ESCALATE"]},
+        "mapped_execution_state": {"enum": ["COMPLETE", "PARTIAL", "BLOCKED"]},
+        "rationale_code": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "human_action_required": {"type": "boolean"}
+      },
+      "description": "Required at runtime for priority specialists; mapping is enforced against execution_state by StructuredOutputService."
+    },
     "handoff_acknowledgements": {
       "type": "array",
       "description": "Explicit, per-handoff resolution records. Omission leaves an addressed required handoff unresolved.",

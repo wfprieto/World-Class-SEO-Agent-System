@@ -47,3 +47,16 @@ following:
 
 Until then, no personal address is invented or published and the private vulnerability form is
 not described as a conduct-reporting channel.
+
+The canonical state is `governance/private-conduct-intake.json`. This schema version permits only
+`BLOCKED_OWNER_ACTION`: it requires no destination, monitoring claim, access-test claim,
+acknowledgement target, or closure evidence. Repository commits, issue comments, self-authored
+assertions, and example or test destinations are not operational verification and cannot promote
+the control. A future schema may add an operational state only together with provider-controlled,
+immutable verification of the real destination and access test. Its public instructions must state
+the acknowledgement target, monitoring role, confidentiality limits, and conflict handling.
+
+Use the owner provisioning checklist in
+[`docs/REPOSITORY-OPERATIONS.md`](REPOSITORY-OPERATIONS.md#owner-provisioning-checklist). The
+repository may enforce the blocked-state checklist but cannot choose the destination, authorize
+its publication, prove mailbox or service access, or make the owner's monitoring commitment.

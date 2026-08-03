@@ -11,19 +11,30 @@ from pathlib import Path
 from scripts.validate_architecture_contract import validate as validate_architecture
 from scripts.validate_dependency_lock import validate as validate_dependency_lock
 from scripts.validate_open_issue_remediation import validate as validate_open_issues
+from scripts.validate_private_conduct_intake import validate as validate_conduct_intake
 from scripts.validate_reference_freshness import validate as validate_references
 from scripts.validate_repository_operations import validate as validate_operations
+from scripts.validate_specialist_depth import validate_repository as validate_specialist_depth
+from seoctl.capability_certification import validate as validate_certification
 from seoctl.registry import load_registry, validate_registry
 
 SUPPORTED_PYTHON = {(3, 11), (3, 12), (3, 13)}
 REQUIRED_ASSETS = (
+    "governance/capability-certification.json",
     "governance/architecture-contract.json",
     "governance/open-issue-remediation.json",
+    "governance/private-conduct-intake.json",
     "governance/repository-operations.json",
+    "governance/specialist-playbook-integrity.json",
     "knowledge/reference-registry.json",
     "requirements-dev.in",
     "requirements-dev.txt",
     "schemas/agent-output.schema.json",
+    "schemas/capability-certification-receipt.schema.json",
+    "schemas/capability-certification.schema.json",
+    "schemas/private-conduct-intake.schema.json",
+    "skills/specialist-decision-standard.md",
+    "skills/specialist-depth-playbooks.md",
     "seoctl/command-registry.json",
 )
 
@@ -63,6 +74,21 @@ def _repository_checks(root: Path, as_of: date | None) -> list[DoctorCheck]:
     )
     return [
         _check("commands.registry", registry_errors, "command registry is coherent"),
+        _check(
+            "capabilities.live_certification",
+            _validation_errors(
+                "capability certification validation",
+                lambda: validate_certification(root, as_of=as_of),
+            ),
+            "offline certification profiles and receipt freshness pass",
+        ),
+        _check(
+            "agents.specialist_depth",
+            _validation_errors(
+                "specialist depth validation", lambda: validate_specialist_depth(root)
+            ),
+            "priority specialist decision depth and runtime context pass",
+        ),
         _check(
             "architecture.static",
             _validation_errors(
@@ -106,6 +132,14 @@ def _repository_checks(root: Path, as_of: date | None) -> list[DoctorCheck]:
                 "open issue remediation validation", lambda: validate_open_issues(root)
             ),
             "open issue remediation contracts pass",
+        ),
+        _check(
+            "conduct.private_intake",
+            _validation_errors(
+                "private conduct intake validation",
+                lambda: validate_conduct_intake(root, as_of=as_of),
+            ),
+            "private conduct intake state is truthful and fail closed",
         ),
     ]
 

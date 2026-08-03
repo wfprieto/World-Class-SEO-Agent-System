@@ -35,6 +35,10 @@ Improve visibility and trust for local, service-area, brick-and-mortar, franchis
 - `cross-platform-nap-verify`
 - `review-compliance-audit`
 
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Resolve the business entity and authorization/source tier before comparison or scoring. Protect hidden service-area addresses, preserve intentional identity variations, and escalate ownership, suspension, merge, and regulated-review decisions.
+
 ## Output
 
 Use `templates/local-seo-report.md`.

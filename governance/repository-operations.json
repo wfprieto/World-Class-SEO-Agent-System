@@ -57,7 +57,7 @@
         "expected_state": "OPEN"
       },
       "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-network-provider-boundaries"},
-      "verification": ["python scripts/validate_product_contract.py"],
+      "verification": ["python scripts/validate_product_contract.py", "python scripts/validate_capability_certification.py"],
       "metric": "Comparative capability claims without executable evidence",
       "threshold": "Zero unsupported material comparative claims",
       "rollback_trigger": "A comparative claim exceeds the capability represented by executable repository evidence.",
@@ -99,7 +99,7 @@
         "expected_state": "OPEN"
       },
       "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-security-intake"},
-      "verification": ["python scripts/validate_repository_operations.py"],
+      "verification": ["python scripts/validate_repository_operations.py", "python scripts/validate_private_conduct_intake.py"],
       "metric": "Attested monitored private conduct-reporting destinations",
       "threshold": "Exactly one documented and monitored private destination",
       "rollback_trigger": "The private destination becomes public, unmonitored, or inaccessible.",

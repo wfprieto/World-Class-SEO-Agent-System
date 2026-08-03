@@ -187,3 +187,51 @@ regression. Neither failed run is accepted as evidence.
   scheduled-workflow, type, lint, quality-ratchet, and full repository validators passed
 - Owner: Repository maintainer
 - Due phase: complete in this remediation change
+
+## Critical-control remediation learning - 2026-08-03
+
+- Failure ID: `CRIT-CONTROL-001`
+- Phase: private conduct intake, specialist decision depth, and live-capability certification
+- Action: integrate the three critical controls and run focused plus repository quality gates
+- Expected result: fail-closed contracts, exact runtime context, and receipt validation without new
+  maintainability debt
+- Observed evidence: functional and mutation tests passed, but the first integrated quality gate
+  rejected complexity and span increases in the new receipt, conduct, registry, and product
+  validators
+- Learning status: confirmed
+- Learning: a security-oriented validator can still reduce system reliability when its fail-closed
+  branches accumulate in one function; functional tests are not permission to raise complexity
+  ceilings
+- Next-action improvement: decompose loading, binding, time, evidence, and transition checks before
+  full verification; remove obsolete ratchet exceptions after the refactor rather than preserving
+  stale debt or increasing limits
+- Observed result after improvement: the quality ratchet passed with two legacy function
+  exceptions and eight stale Ruff fingerprints removed; 150 focused tests and the full 1,019-test
+  suite passed from an isolated Python 3.13 system-temp root
+- Owner and due phase: Repository maintainer; complete in this critical-control change
+
+## Critical-control adversarial learning - 2026-08-03
+
+- Failure ID: `CRIT-CONTROL-002`
+- Phase: independent affected-control review
+- Action: attack the conduct transition, capability-receipt promotion, and specialist runtime with
+  locally fabricated or semantically empty evidence
+- Expected result: repository-authored evidence cannot prove an external fact, and a specialist
+  escalation cannot be reported as successful completion
+- Observed evidence: the first draft could promote self-digested receipts, could accept a
+  repository-only conduct attestation, accepted token-complete nonsense playbooks, evaluated
+  missing evidence before credible harm, and mapped `ESCALATE` to `COMPLETE`
+- Learning status: confirmed
+- Learning: schema validity and passing regression tests do not establish provenance, semantic
+  integrity, or safe workflow state; critical trust transitions require an independent authority,
+  and human escalation must stop dependent execution
+- Recurrence guardrail: conduct activation is statically impossible until a provider-controlled
+  verifier is reviewed; capability receipts remain non-promoting candidates while trusted issuers
+  are empty; exact commit, identity, evidence hashes, expiry, and demotion are enforced; specialist
+  playbooks are version/digest bound; the mutation suite preserves all required tokens while
+  replacing procedures with nonsense; mixed harm/missing-evidence and end-to-end escalation tests
+  require `ESCALATE`/`BLOCKED`, blocked dependents, and a non-complete run
+- Verification reference: both rejecting reviewers accepted their exact counterexamples after the
+  fixes; 21/21 specialist mutants were killed; the repository validator passed; and 1,029 tests
+  passed from an external temporary root
+- Owner and due phase: Repository maintainer; complete in this critical-control change

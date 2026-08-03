@@ -3923,7 +3923,8 @@
     "orchestration/capability-registry.json",
     "orchestration/product-proof-capability-overlay.json",
     "skills/skill-catalog.json",
-    "skills/package-registry.json"
+    "skills/package-registry.json",
+    "governance/capability-certification.json"
   ],
   "schema_version": "1.1.0",
   "skills": {

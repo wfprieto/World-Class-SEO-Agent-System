@@ -49,6 +49,12 @@ jobs:
         run: python scripts/validate_scheduled_maintenance.py
       - name: Validate issue remediation contracts
         run: python scripts/validate_open_issue_remediation.py
+      - name: Validate private conduct intake contract
+        run: python scripts/validate_private_conduct_intake.py
+      - name: Validate specialist decision depth
+        run: python scripts/validate_specialist_depth.py --mutations
+      - name: Validate live-capability certification receipts
+        run: python scripts/validate_capability_certification.py
       - name: Validate knowledge freshness
         run: python scripts/validate_reference_freshness.py
       - name: Validate dependency lock
@@ -65,7 +71,10 @@ jobs:
         run: >-
           pytest -q
           tests/test_open_issue_remediation.py
+          tests/test_private_conduct_intake.py
           tests/test_repository_operations.py
+          tests/test_specialist_depth.py
+          tests/test_capability_certification.py
           tests/test_comparative_rebaseline.py
           tests/test_phase_rollback.py
           tests/test_evidence_binding_hardening.py

@@ -16,13 +16,16 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.generate_capability_evidence_registry import (
+from scripts.generate_capability_evidence_registry import (  # noqa: E402
     NETWORK_EXECUTION_MODES,
     _effective_command_registry,
     _skill_ids,
+)
+from scripts.generate_capability_evidence_registry import (  # noqa: E402
     build as build_evidence_registry,
 )
-from seoctl.registry import command_specs
+from seoctl.capability_certification import RECEIPT_ROOT, validate_receipt  # noqa: E402
+from seoctl.registry import command_specs  # noqa: E402
 
 CONTRACT_PATH = Path("governance/product-contract.json")
 EVIDENCE_PATH = Path("orchestration/capability-evidence-registry.json")
@@ -44,7 +47,7 @@ CLAIM_CEILINGS = {
     "LIVE_CAPABLE_NOT_VERIFIED",
     "LIVE_VERIFIED",
 }
-PROVIDER_RECEIPT_ROOT = PurePosixPath("evaluation/provider-receipts")
+PROVIDER_RECEIPT_ROOT = PurePosixPath(RECEIPT_ROOT.as_posix())
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -95,32 +98,117 @@ def _safe_evidence_reference(root: Path, reference: object) -> str | None:
 
 
 def _provider_receipt_problem(
-    root: Path, reference: object, kind: str, item_id: str
+    root: Path,
+    reference: object,
+    kind: str,
+    item_id: str,
+    allowed_commands: set[str],
 ) -> str | None:
     if not isinstance(reference, str):
         return "provider receipt reference must be a string"
     relative = PurePosixPath(reference)
     if relative.suffix != ".json" or relative.parent != PROVIDER_RECEIPT_ROOT:
         return f"provider receipt must be a JSON file directly under {PROVIDER_RECEIPT_ROOT}"
-    try:
-        receipt = _json(root / Path(*relative.parts))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        return f"provider receipt could not be read: {exc}"
-    capability = receipt.get("capability")
-    required = {
-        "schema_version": "1.0.0",
-        "evidence_class": "PROVIDER",
-        "status": "PASS",
-    }
-    for field, expected in required.items():
-        if receipt.get(field) != expected:
-            return f"provider receipt {field} must equal {expected!r}"
-    for field in ("provider", "observed_at"):
-        if not isinstance(receipt.get(field), str) or not receipt[field].strip():
-            return f"provider receipt {field} must be a non-empty string"
-    if capability != {"kind": kind, "id": item_id}:
-        return "provider receipt capability binding does not match the classified capability"
+    receipt, errors = validate_receipt(root, root / Path(*relative.parts))
+    if errors:
+        return "; ".join(errors)
+    assert receipt is not None
+    capability_id = str(receipt["capability"]["id"])
+    if kind == "commands" and capability_id != item_id:
+        return "provider receipt capability binding does not match the classified command"
+    if kind == "skills" and capability_id not in allowed_commands:
+        return "provider receipt is not bound to a backing command for the classified skill"
     return None
+
+
+def _validate_evidence_record(
+    root: Path,
+    kind: str,
+    item_id: str,
+    evidence_class: str,
+    record: object,
+    errors: list[str],
+) -> None:
+    if not isinstance(record, dict) or set(record) != {"status", "refs"}:
+        errors.append(f"{kind} {item_id} {evidence_class} must contain only status and refs")
+        return
+    status = record["status"]
+    refs = record["refs"]
+    if status not in EVIDENCE_STATUSES:
+        errors.append(f"{kind} {item_id} {evidence_class} has invalid status {status!r}")
+    if not isinstance(refs, list):
+        errors.append(f"{kind} {item_id} {evidence_class} refs must be a list")
+        return
+    if len(refs) != len({str(reference) for reference in refs}):
+        errors.append(f"{kind} {item_id} {evidence_class} refs contain duplicates")
+    if status == "PASS" and not refs:
+        errors.append(f"{kind} {item_id} {evidence_class} PASS has no references")
+    if status != "PASS" and refs:
+        errors.append(f"{kind} {item_id} {evidence_class} {status} must not cite proof")
+    for reference in refs:
+        problem = _safe_evidence_reference(root, reference)
+        if problem:
+            errors.append(
+                f"{kind} {item_id} {evidence_class} invalid reference {reference!r}: {problem}"
+            )
+
+
+def _validate_evidence_map(
+    root: Path, kind: str, item_id: str, evidence_map: object, errors: list[str]
+) -> dict[str, Any] | None:
+    if not isinstance(evidence_map, dict) or set(evidence_map) != EVIDENCE_CLASSES:
+        actual = set(evidence_map) if isinstance(evidence_map, dict) else set()
+        errors.append(
+            f"{kind} {item_id} has incomplete evidence-class coverage; "
+            f"missing={sorted(EVIDENCE_CLASSES - actual)}; extra={sorted(actual - EVIDENCE_CLASSES)}"
+        )
+        return None
+    for evidence_class in sorted(EVIDENCE_CLASSES):
+        _validate_evidence_record(
+            root, kind, item_id, evidence_class, evidence_map[evidence_class], errors
+        )
+    return evidence_map
+
+
+def _validate_claim_proof(
+    root: Path,
+    kind: str,
+    item_id: str,
+    row: dict[str, Any],
+    evidence_map: dict[str, Any],
+    errors: list[str],
+) -> None:
+    claim_ceiling = row.get("claim_ceiling")
+    source_pass = evidence_map["SOURCE"].get("status") == "PASS"
+    automated_pass = evidence_map["AUTOMATED"].get("status") == "PASS"
+    if claim_ceiling in {"REGISTRY_VERIFIED", "FIXTURE_VERIFIED", "LIVE_VERIFIED"} and not (
+        source_pass and automated_pass
+    ):
+        errors.append(f"{kind} {item_id} {claim_ceiling} requires source and automated proof")
+    if claim_ceiling == "LIVE_VERIFIED":
+        provider_record = evidence_map["PROVIDER"]
+        if provider_record.get("status") != "PASS":
+            errors.append(f"{kind} {item_id} claims LIVE_VERIFIED without provider evidence")
+        else:
+            provider_refs = provider_record.get("refs", [])
+            receipt_problems = [
+                problem
+                for reference in provider_refs
+                if (
+                    problem := _provider_receipt_problem(
+                        root,
+                        reference,
+                        kind,
+                        item_id,
+                        {str(item) for item in row.get("backing_commands", [])},
+                    )
+                )
+            ]
+            if receipt_problems:
+                errors.extend(
+                    f"{kind} {item_id} LIVE_VERIFIED invalid PROVIDER provenance: {problem}"
+                    for problem in receipt_problems
+                )
 
 
 def _validate_evidence_row(
@@ -138,62 +226,10 @@ def _validate_evidence_row(
         errors.append(f"{kind} {item_id} has invalid execution_mode {execution_mode!r}")
     if claim_ceiling not in CLAIM_CEILINGS:
         errors.append(f"{kind} {item_id} has invalid claim_ceiling {claim_ceiling!r}")
-
-    evidence_map = row.get("evidence")
-    if not isinstance(evidence_map, dict) or set(evidence_map) != EVIDENCE_CLASSES:
-        actual = set(evidence_map) if isinstance(evidence_map, dict) else set()
-        errors.append(
-            f"{kind} {item_id} has incomplete evidence-class coverage; "
-            f"missing={sorted(EVIDENCE_CLASSES - actual)}; extra={sorted(actual - EVIDENCE_CLASSES)}"
-        )
+    evidence_map = _validate_evidence_map(root, kind, item_id, row.get("evidence"), errors)
+    if evidence_map is None:
         return
-    for evidence_class in sorted(EVIDENCE_CLASSES):
-        record = evidence_map[evidence_class]
-        if not isinstance(record, dict) or set(record) != {"status", "refs"}:
-            errors.append(f"{kind} {item_id} {evidence_class} must contain only status and refs")
-            continue
-        status = record["status"]
-        refs = record["refs"]
-        if status not in EVIDENCE_STATUSES:
-            errors.append(f"{kind} {item_id} {evidence_class} has invalid status {status!r}")
-        if not isinstance(refs, list):
-            errors.append(f"{kind} {item_id} {evidence_class} refs must be a list")
-            continue
-        if len(refs) != len(set(str(reference) for reference in refs)):
-            errors.append(f"{kind} {item_id} {evidence_class} refs contain duplicates")
-        if status == "PASS" and not refs:
-            errors.append(f"{kind} {item_id} {evidence_class} PASS has no references")
-        if status != "PASS" and refs:
-            errors.append(f"{kind} {item_id} {evidence_class} {status} must not cite proof")
-        for reference in refs:
-            problem = _safe_evidence_reference(root, reference)
-            if problem:
-                errors.append(
-                    f"{kind} {item_id} {evidence_class} invalid reference {reference!r}: {problem}"
-                )
-
-    source_pass = evidence_map["SOURCE"].get("status") == "PASS"
-    automated_pass = evidence_map["AUTOMATED"].get("status") == "PASS"
-    if claim_ceiling in {"REGISTRY_VERIFIED", "FIXTURE_VERIFIED", "LIVE_VERIFIED"} and not (
-        source_pass and automated_pass
-    ):
-        errors.append(f"{kind} {item_id} {claim_ceiling} requires source and automated proof")
-    if claim_ceiling == "LIVE_VERIFIED":
-        provider_record = evidence_map["PROVIDER"]
-        if provider_record.get("status") != "PASS":
-            errors.append(f"{kind} {item_id} claims LIVE_VERIFIED without provider evidence")
-        else:
-            provider_refs = provider_record.get("refs", [])
-            receipt_problems = [
-                problem
-                for reference in provider_refs
-                if (problem := _provider_receipt_problem(root, reference, kind, item_id))
-            ]
-            if receipt_problems:
-                errors.extend(
-                    f"{kind} {item_id} LIVE_VERIFIED invalid PROVIDER provenance: {problem}"
-                    for problem in receipt_problems
-                )
+    _validate_claim_proof(root, kind, item_id, row, evidence_map, errors)
     if delivery_state == "DOCUMENTED_ONLY" and (
         claim_ceiling != "DOCUMENTED_ONLY" or execution_mode != "ADVISORY"
     ):
@@ -207,7 +243,7 @@ def _validate_evidence_row(
         errors.append(f"{kind} {item_id} FIXTURE_VERIFIED has incompatible execution mode")
 
 
-def validate(root: Path = ROOT) -> list[str]:
+def validate(root: Path = ROOT) -> list[str]:  # noqa: C901 - canonical contract audit
     root = root.resolve()
     errors: list[str] = []
     try:
@@ -288,7 +324,7 @@ def validate(root: Path = ROOT) -> list[str]:
         if not isinstance(rows, dict):
             errors.append(f"capability evidence {kind} must be an object")
             continue
-        actual_ids = set(str(item_id) for item_id in rows)
+        actual_ids = {str(item_id) for item_id in rows}
         expected_ids = expected_inventories[kind]
         if actual_ids != expected_ids:
             errors.append(

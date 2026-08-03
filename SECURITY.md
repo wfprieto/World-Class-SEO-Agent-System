@@ -21,9 +21,7 @@ Do **not** disclose vulnerabilities, exploit details, credentials, client data, 
 2. Include the affected version or commit, affected files or workflow, safe reproduction steps, impact, and any suggested remediation.
 3. If that private-reporting option is temporarily unavailable, open a minimal public issue requesting private coordination. Do not include sensitive details.
 
-The maintainer will acknowledge reports and coordinate remediation privately. If the form is
-unavailable, open a minimal public issue requesting private coordination; never include the
-sensitive details in that issue.
+The maintainer will acknowledge reports and coordinate remediation privately.
 
 ## System boundary and threat model
 
