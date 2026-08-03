@@ -30,8 +30,8 @@
       "objective": "Resolve every repository-controllable comparative gap and classify non-code or excluded gaps without inflating capability claims.",
       "scope_boundary": "Code-verifiable behavior only; packaging/release maturity and demonstrated real-world effectiveness are explicitly excluded.",
       "deliverables": ["Typed gap disposition", "Executable acceptance evidence", "Truthful external-evidence boundary"],
-      "acceptance_commands": ["python scripts/inventory_comparator.py", "python scripts/validate_product_contract.py"],
-      "evidence_paths": ["evaluation/comparative/capability-parity.json", "seoctl/command-registry-overlay.json"],
+      "acceptance_commands": ["python scripts/inventory_comparator.py", "python scripts/validate_product_contract.py", "python scripts/validate_capability_certification.py"],
+      "evidence_paths": ["evaluation/comparative/capability-parity.json", "seoctl/command-registry-overlay.json", "governance/capability-certification.json"],
       "close_policy": "CLOSE_ON_ACCEPTANCE",
       "blocked_by": null,
       "rollback": "Revert unsupported code or claim changes together and restore the affected row to an explicit open disposition."
@@ -58,8 +58,8 @@
       "objective": "Provide and attest one monitored private conduct-reporting destination distinct from vulnerability intake.",
       "scope_boundary": "The repository can validate documentation and state transitions but cannot select, provision, or attest the owner's private destination.",
       "deliverables": ["Owner-designated private destination", "Monitoring attestation", "Truthful support and conduct documentation"],
-      "acceptance_commands": ["python scripts/validate_repository_operations.py", "python scripts/validate_open_issue_remediation.py"],
-      "evidence_paths": ["SUPPORT.md", "CODE_OF_CONDUCT.md", "governance/repository-operations.json"],
+      "acceptance_commands": ["python scripts/validate_repository_operations.py", "python scripts/validate_open_issue_remediation.py", "python scripts/validate_private_conduct_intake.py"],
+      "evidence_paths": ["SUPPORT.md", "CODE_OF_CONDUCT.md", "governance/repository-operations.json", "governance/private-conduct-intake.json"],
       "close_policy": "CLOSE_ON_ACCEPTANCE",
       "blocked_by": "Repository owner must designate and attest a monitored private conduct-reporting destination.",
       "rollback": "Remove an invalid destination and return the control to BLOCKED_OWNER_ACTION without exposing private reports."
@@ -86,8 +86,8 @@
       "objective": "Continuously preserve runtime, evidence binding, schema compatibility, generated reports, and certification receipts.",
       "scope_boundary": "Deterministic repository artifacts and schemas; external truth and provider outcomes require separate evidence.",
       "deliverables": ["Schema mutation coverage", "Evidence-binding mutation coverage", "Report and receipt reproducibility"],
-      "acceptance_commands": ["python scripts/validate_schema_examples.py", "python scripts/validate_evidence_binding.py", "python scripts/run_security_mutation_checks.py"],
-      "evidence_paths": ["schemas/agent-output.schema.json", "runtime/evidence_binding.py", "scripts/seo_pdf_report.py"],
+      "acceptance_commands": ["python scripts/validate_schema_examples.py", "python scripts/validate_evidence_binding.py", "python scripts/validate_specialist_depth.py --mutations", "python scripts/validate_capability_certification.py", "python scripts/run_security_mutation_checks.py"],
+      "evidence_paths": ["schemas/agent-output.schema.json", "runtime/evidence_binding.py", "scripts/seo_pdf_report.py", "skills/specialist-depth-playbooks.md", "schemas/capability-certification-receipt.schema.json"],
       "close_policy": "KEEP_OPEN_RECURRING",
       "blocked_by": null,
       "rollback": "Restore the last compatible schemas and evidence contract, regenerate only derived artifacts, and rerun exact-head certification."

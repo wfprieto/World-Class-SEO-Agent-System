@@ -82,6 +82,20 @@ def _identity_errors(paths: list[dict[str, Any]]) -> list[str]:
     return errors
 
 
+def _security_closure_errors(
+    identifier: object, status: object, closure_refs: object
+) -> list[str]:
+    if identifier != "security-intake" or status != "READY" or not closure_refs:
+        return []
+    if not isinstance(closure_refs, list):
+        return []
+    if len(closure_refs) == 1 and closure_refs != [
+        f"https://github.com/{REPOSITORY}/issues/30"
+    ]:
+        return []
+    return ["security-intake readiness requires one specific validated attestation reference"]
+
+
 def _closure_errors(identifier: object, status: object, closure: object) -> list[str]:
     errors: list[str] = []
     closure_status = closure.get("status") if isinstance(closure, dict) else None
@@ -94,6 +108,7 @@ def _closure_errors(identifier: object, status: object, closure: object) -> list
         closure_status != "VERIFIED" or not closure_refs
     ):
         errors.append(f"{identifier} readiness requires explicit verified closure evidence")
+    errors.extend(_security_closure_errors(identifier, status, closure_refs))
     if identifier not in OWNER_ACTION_PATHS and closure != {"status": "NOT_REQUIRED", "refs": []}:
         errors.append(f"{identifier} must not claim owner-action closure evidence")
     return errors

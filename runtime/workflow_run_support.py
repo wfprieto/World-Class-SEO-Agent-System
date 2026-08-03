@@ -73,9 +73,16 @@ def block_node(
     session.add_event(node.id, node.agent, "BLOCKED", detail)
 
 
-def node_result_state(status: str, synthetic: bool) -> str:
+def node_result_state(
+    status: str, synthetic: bool, output: dict[str, Any] | None = None
+) -> str:
     if status == "ok":
-        return "SYNTHETIC" if synthetic else "COMPLETE"
+        if synthetic:
+            return "SYNTHETIC"
+        declared = (output or {}).get("execution_state")
+        if declared in {"COMPLETE", "PARTIAL", "BLOCKED", "FAILED"}:
+            return str(declared)
+        return "COMPLETE"
     return "BLOCKED" if status == "blocked" else "FAILED"
 
 

@@ -122,12 +122,11 @@ def test_owner_prerequisites_cannot_be_reported_ready(tmp_path: Path, index: int
     assert any("readiness requires explicit verified closure evidence" in error for error in errors)
 
 
-@pytest.mark.parametrize("index", [1, 4])
-def test_owner_prerequisite_can_transition_with_explicit_closure_evidence(
-    tmp_path: Path, index: int
+def test_repository_governance_can_transition_with_explicit_closure_evidence(
+    tmp_path: Path,
 ) -> None:
     def close_control(contract: dict[str, Any]) -> None:
-        path = contract["critical_paths"][index]
+        path = contract["critical_paths"][1]
         path["status"] = "READY"
         path["blocker"] = None
         path["closure_evidence"] = {
@@ -136,6 +135,20 @@ def test_owner_prerequisite_can_transition_with_explicit_closure_evidence(
         }
 
     assert _mutate(tmp_path, close_control) == []
+
+
+def test_conduct_intake_rejects_bare_issue_url_as_closure_evidence(tmp_path: Path) -> None:
+    def false_attestation(contract: dict[str, Any]) -> None:
+        path = contract["critical_paths"][4]
+        path["status"] = "READY"
+        path["blocker"] = None
+        path["closure_evidence"] = {
+            "status": "VERIFIED",
+            "refs": [path["issue"]["url"]],
+        }
+
+    errors = _mutate(tmp_path, false_attestation)
+    assert any("specific validated attestation" in error for error in errors)
 
 
 def test_only_declared_owner_prerequisites_may_use_blocked_status(tmp_path: Path) -> None:

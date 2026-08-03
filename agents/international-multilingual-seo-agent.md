@@ -37,6 +37,10 @@ Scale organic visibility across languages and regions while avoiding duplicate-c
 
 - `knowledge/regional-search-engines.md`
 
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Resolve the market-locale URL inventory before judging hreflang, canonicals, or localization. Technical targeting evidence does not prove translation quality; route business-critical localization to qualified market review and escalate bulk URL or targeting changes.
+
 ## Output
 
 Use `templates/audit-report.md`.

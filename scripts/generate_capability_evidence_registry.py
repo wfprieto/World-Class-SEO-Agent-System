@@ -6,6 +6,7 @@ import argparse
 import copy
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -13,8 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from runtime.capability_resolver import CapabilityResolver
-from seoctl.registry import command_specs
+from runtime.capability_resolver import CapabilityResolver  # noqa: E402
+from seoctl.capability_certification import certification_state  # noqa: E402
+from seoctl.registry import command_specs  # noqa: E402
 
 NETWORK_EXECUTION_MODES = {
     "none": "DETERMINISTIC",
@@ -46,7 +48,7 @@ def _string_list(value: object, *, label: str) -> list[str]:
     return value
 
 
-def _effective_command_registry(root: Path) -> tuple[dict[str, Any], set[str]]:
+def _effective_command_registry(root: Path) -> tuple[dict[str, Any], set[str]]:  # noqa: C901
     """Load base plus overlay relative to *root*, never relative to this module."""
     base_path = root / "seoctl" / "command-registry.json"
     overlay_path = root / "seoctl" / "command-registry-overlay.json"
@@ -137,12 +139,125 @@ def _evidence(source_refs: list[str], automated_refs: list[str]) -> dict[str, An
     return result
 
 
-def build(root: Path = ROOT) -> dict[str, Any]:
-    root = root.resolve()
-    registry, overlay_ids = _effective_command_registry(root)
-    specs = command_specs(registry)
-    agents = _object(registry.get("agents"), label="effective command registry agents")
-    resolver = CapabilityResolver(root)
+def _command_rows(
+    specs: list[Any],
+    overlay_ids: set[str],
+    participants: dict[str, list[str]],
+    agent_skills: dict[str, set[str]],
+    current_receipts: dict[str, str],
+) -> dict[str, Any]:
+    commands: dict[str, Any] = {}
+    for spec in sorted(specs, key=lambda item: item.id):
+        source_registry = (
+            "seoctl/command-registry-overlay.json"
+            if spec.id in overlay_ids
+            else "seoctl/command-registry.json"
+        )
+        command_participants = sorted(participants[spec.id])
+        participant_alignment = {
+            agent: {
+                "declares_all_command_skills": set(spec.skills) <= agent_skills[agent],
+                "missing_skills": sorted(set(spec.skills) - agent_skills[agent]),
+            }
+            for agent in command_participants
+        }
+        automated_refs = ["tests/test_seoctl.py", "tests/test_seoctl_entrypoint.py"]
+        if spec.id == "audit.technical":
+            automated_refs.append("tests/test_product_proof_technical_audit.py")
+        evidence = _evidence(
+            [source_registry, "orchestration/capability-registry.json"], automated_refs
+        )
+        if spec.id in current_receipts:
+            evidence["PROVIDER"] = {"status": "PASS", "refs": [current_receipts[spec.id]]}
+        commands[spec.id] = {
+            "delivery_state": "COMMAND_BACKED",
+            "execution_mode": NETWORK_EXECUTION_MODES[spec.network],
+            "network_class": spec.network,
+            "owner": spec.owner,
+            "skills": list(spec.skills),
+            "participants": command_participants,
+            "owner_skill_alignment": participant_alignment[spec.owner],
+            "participant_skill_alignment": participant_alignment,
+            "evidence": evidence,
+            "claim_ceiling": (
+                "LIVE_VERIFIED"
+                if spec.id in current_receipts
+                else "FIXTURE_VERIFIED"
+                if spec.id == "audit.technical"
+                else "LIVE_CAPABLE_NOT_VERIFIED"
+                if spec.network != "none"
+                else "REGISTRY_VERIFIED"
+            ),
+        }
+    return commands
+
+
+def _skill_mode(skill: str, backing: list[Any], live_verified: bool) -> tuple[str, str]:
+    if live_verified:
+        return "LIVE_CAPABLE", "LIVE_VERIFIED"
+    if skill == "product-proof-technical-audit":
+        return "FIXTURE_CAPABLE", "FIXTURE_VERIFIED"
+    if {spec.network for spec in backing} - {"none"}:
+        return "LIVE_CAPABLE", "LIVE_CAPABLE_NOT_VERIFIED"
+    if backing:
+        return "DETERMINISTIC", "REGISTRY_VERIFIED"
+    return "ADVISORY", "DOCUMENTED_ONLY"
+
+
+def _skill_proof_refs(skill: str) -> tuple[list[str], list[str]]:
+    source_refs = ["skills/skill-catalog.json", "skills/deep-skill-procedures.md"]
+    automated_refs = ["tests/test_phase4_skills_and_references.py"]
+    if skill == "product-proof-technical-audit":
+        source_refs.extend([
+            "skills/product-proof-technical-audit.md",
+            "orchestration/product-proof-capability-overlay.json",
+        ])
+        automated_refs.append("tests/test_product_proof_technical_audit.py")
+    return source_refs, automated_refs
+
+
+def _skill_rows(
+    catalog_skills: list[str],
+    skill_commands: dict[str, list[Any]],
+    assigned_agents: dict[str, list[str]],
+    declared_owners: dict[str, list[str]],
+    current_receipts: dict[str, str],
+) -> dict[str, Any]:
+    skills: dict[str, Any] = {}
+    for skill in catalog_skills:
+        backing = sorted(skill_commands.get(skill, []), key=lambda item: item.id)
+        delivery = (
+            "COMMAND_BACKED" if backing else "RUNTIME_CONTEXT" if assigned_agents[skill]
+            else "DOCUMENTED_ONLY"
+        )
+        live_backing = [spec for spec in backing if spec.network != "none"]
+        live_verified = bool(live_backing) and all(
+            spec.id in current_receipts for spec in live_backing
+        )
+        mode, ceiling = _skill_mode(skill, backing, live_verified)
+        source_refs, automated_refs = _skill_proof_refs(skill)
+        evidence = _evidence(source_refs, automated_refs)
+        if live_verified:
+            evidence["PROVIDER"] = {
+                "status": "PASS",
+                "refs": sorted({current_receipts[spec.id] for spec in live_backing}),
+            }
+        skills[skill] = {
+            "delivery_state": delivery,
+            "execution_mode": mode,
+            "assigned_agents": assigned_agents[skill],
+            "declared_owners": declared_owners.get(skill, []),
+            "backing_commands": [spec.id for spec in backing],
+            "backing_command_owners": sorted({spec.owner for spec in backing}),
+            "evidence": evidence,
+            "claim_ceiling": ceiling,
+        }
+    return skills
+
+
+def _validated_agent_skills(
+    agents: dict[str, Any], resolver: CapabilityResolver
+) -> dict[str, set[str]]:
     agent_skills = {
         agent: set(resolver.bundle(agent).skills) for agent in sorted(resolver.registry)
     }
@@ -152,6 +267,24 @@ def build(root: Path = ROOT) -> dict[str, Any]:
             f"command_only={sorted(set(agents) - set(agent_skills))}; "
             f"capability_only={sorted(set(agent_skills) - set(agents))}"
         )
+    return agent_skills
+
+
+def build(
+    root: Path = ROOT, *, as_of: date | None = None
+) -> dict[str, Any]:
+    root = root.resolve()
+    registry, overlay_ids = _effective_command_registry(root)
+    specs = command_specs(registry)
+    agents = _object(registry.get("agents"), label="effective command registry agents")
+    resolver = CapabilityResolver(root)
+    certification = certification_state(root, as_of=as_of)
+    if certification["errors"]:
+        raise ValueError(
+            "capability certification is invalid: " + "; ".join(certification["errors"])
+        )
+    current_receipts = certification["current"]
+    agent_skills = _validated_agent_skills(agents, resolver)
 
     participants: dict[str, list[str]] = {spec.id: [] for spec in specs}
     for agent in sorted(agents):
@@ -182,85 +315,12 @@ def build(root: Path = ROOT) -> dict[str, Any]:
     }
     declared_owners = _package_owners(root)
 
-    commands: dict[str, Any] = {}
-    for spec in sorted(specs, key=lambda item: item.id):
-        source_registry = (
-            "seoctl/command-registry-overlay.json"
-            if spec.id in overlay_ids
-            else "seoctl/command-registry.json"
-        )
-        command_participants = sorted(participants[spec.id])
-        participant_alignment = {
-            agent: {
-                "declares_all_command_skills": set(spec.skills) <= agent_skills[agent],
-                "missing_skills": sorted(set(spec.skills) - agent_skills[agent]),
-            }
-            for agent in command_participants
-        }
-        automated_refs = ["tests/test_seoctl.py", "tests/test_seoctl_entrypoint.py"]
-        if spec.id == "audit.technical":
-            automated_refs.append("tests/test_product_proof_technical_audit.py")
-        commands[spec.id] = {
-            "delivery_state": "COMMAND_BACKED",
-            "execution_mode": NETWORK_EXECUTION_MODES[spec.network],
-            "network_class": spec.network,
-            "owner": spec.owner,
-            "skills": list(spec.skills),
-            "participants": command_participants,
-            "owner_skill_alignment": participant_alignment[spec.owner],
-            "participant_skill_alignment": participant_alignment,
-            "evidence": _evidence(
-                [source_registry, "orchestration/capability-registry.json"],
-                automated_refs,
-            ),
-            "claim_ceiling": (
-                "FIXTURE_VERIFIED"
-                if spec.id == "audit.technical"
-                else "LIVE_CAPABLE_NOT_VERIFIED"
-                if spec.network != "none"
-                else "REGISTRY_VERIFIED"
-            ),
-        }
-
-    skills: dict[str, Any] = {}
-    for skill in catalog_skills:
-        backing = sorted(skill_commands.get(skill, []), key=lambda item: item.id)
-        if backing:
-            delivery = "COMMAND_BACKED"
-        elif assigned_agents[skill]:
-            delivery = "RUNTIME_CONTEXT"
-        else:
-            delivery = "DOCUMENTED_ONLY"
-        network_classes = {spec.network for spec in backing}
-        if skill == "product-proof-technical-audit":
-            mode, ceiling = "FIXTURE_CAPABLE", "FIXTURE_VERIFIED"
-        elif network_classes - {"none"}:
-            mode, ceiling = "LIVE_CAPABLE", "LIVE_CAPABLE_NOT_VERIFIED"
-        elif backing:
-            mode, ceiling = "DETERMINISTIC", "REGISTRY_VERIFIED"
-        else:
-            mode, ceiling = "ADVISORY", "DOCUMENTED_ONLY"
-        source_refs = ["skills/skill-catalog.json", "skills/deep-skill-procedures.md"]
-        if skill == "product-proof-technical-audit":
-            source_refs.extend(
-                [
-                    "skills/product-proof-technical-audit.md",
-                    "orchestration/product-proof-capability-overlay.json",
-                ]
-            )
-        automated_refs = ["tests/test_phase4_skills_and_references.py"]
-        if skill == "product-proof-technical-audit":
-            automated_refs.append("tests/test_product_proof_technical_audit.py")
-        skills[skill] = {
-            "delivery_state": delivery,
-            "execution_mode": mode,
-            "assigned_agents": assigned_agents[skill],
-            "declared_owners": declared_owners.get(skill, []),
-            "backing_commands": [spec.id for spec in backing],
-            "backing_command_owners": sorted({spec.owner for spec in backing}),
-            "evidence": _evidence(source_refs, automated_refs),
-            "claim_ceiling": ceiling,
-        }
+    commands = _command_rows(
+        specs, overlay_ids, participants, agent_skills, current_receipts
+    )
+    skills = _skill_rows(
+        catalog_skills, skill_commands, assigned_agents, declared_owners, current_receipts
+    )
 
     return {
         "schema_version": "1.1.0",
@@ -271,6 +331,7 @@ def build(root: Path = ROOT) -> dict[str, Any]:
             "orchestration/product-proof-capability-overlay.json",
             "skills/skill-catalog.json",
             "skills/package-registry.json",
+            "governance/capability-certification.json",
         ],
         "commands": commands,
         "skills": skills,

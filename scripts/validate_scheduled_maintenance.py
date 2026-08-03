@@ -16,6 +16,9 @@ SHA = re.compile(r"^[^/@\s]+/[^/@\s]+@[0-9a-f]{40}$")
 REQUIRED_COMMANDS = {
     "python scripts/validate_scheduled_maintenance.py",
     "python scripts/validate_open_issue_remediation.py",
+    "python scripts/validate_private_conduct_intake.py",
+    "python scripts/validate_specialist_depth.py --mutations",
+    "python scripts/validate_capability_certification.py",
     "python scripts/validate_reference_freshness.py",
     "python scripts/validate_dependency_lock.py",
     "python scripts/validate_repository_operations.py",
@@ -84,7 +87,13 @@ def _step_errors(steps: object) -> list[str]:
     missing = sorted(REQUIRED_COMMANDS - commands)
     if missing:
         errors.append("scheduled maintenance commands are missing: " + ", ".join(missing))
-    if not any("tests/test_open_issue_remediation.py" in command for command in commands):
+    mutation_tests = {
+        "tests/test_open_issue_remediation.py",
+        "tests/test_private_conduct_intake.py",
+        "tests/test_specialist_depth.py",
+        "tests/test_capability_certification.py",
+    }
+    if not all(any(test in command for command in commands) for test in mutation_tests):
         errors.append("scheduled maintenance mutation suite is missing")
     return errors
 

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "hash_algorithm": "sha256-normalized-utf8",
+  "standard": {
+    "path": "skills/specialist-decision-standard.md",
+    "version": 1,
+    "sha256": "1778239df9b47b119fea835f6dfe4cfce04c69954f72b5464987d06497e94dce"
+  },
+  "playbook": {
+    "path": "skills/specialist-depth-playbooks.md",
+    "agents": {
+      "Competitive Intelligence Agent": {"version": 1, "sha256": "14584ece10811e5dc9e109d4f6f072a4927a3899d81c1f4059baf4a628f49b87"},
+      "International & Multilingual SEO Agent": {"version": 1, "sha256": "d820df71117321c8099c2939290ace5851662045f9325f2dddad1e30995b3680"},
+      "Local SEO Agent": {"version": 1, "sha256": "060fcd956c16395ae2c55c5de131eb27dd9566aa277ef57be9e95d1ac272d99e"},
+      "Negative SEO & Security Agent": {"version": 1, "sha256": "d5eb681debc122bdbcfd0fc988210434558efbad02c1b81bd72c029ec9f37c43"},
+      "Predictive SEO Trend Agent": {"version": 1, "sha256": "271aac85f0c97c1c3ea451770a0b385e5b9e9030b1baa5c251f5469b92eb26fa"},
+      "SEO Accessibility Agent": {"version": 1, "sha256": "cbfb0b08c455c51bed0c8298e30a578b01f8522b2d96da19dcceab3edf83788e"},
+      "SEO Compliance & Legal Agent": {"version": 1, "sha256": "1e2e6868c3c8959f835da0f84728e2cbd91153eaa38fc25b5475f8337b1f203b"},
+      "Visual & Video Search Agent": {"version": 1, "sha256": "4824ccbc619a2758e8119b439c3a5ea66ae3c584727855d659263720715bcbc7"}
+    }
+  }
+}

@@ -12,7 +12,6 @@ from integrations.product_proof.service import ARTIFACT_FILENAMES
 from scripts import validate_product_contract as validator
 from scripts.generate_capability_evidence_registry import build
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -42,6 +41,14 @@ def contract_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     shutil.copyfile(
         ROOT / "schemas/product-contract.schema.json",
         repo / "schemas/product-contract.schema.json",
+    )
+    shutil.copyfile(
+        ROOT / "schemas/capability-certification.schema.json",
+        repo / "schemas/capability-certification.schema.json",
+    )
+    shutil.copyfile(
+        ROOT / "schemas/capability-certification-receipt.schema.json",
+        repo / "schemas/capability-certification-receipt.schema.json",
     )
     (repo / "knowledge/seo-quality-gates.md").write_text("# Gates\n", encoding="utf-8")
     (repo / "integrations/product_proof/service.py").write_text(
@@ -146,6 +153,41 @@ def contract_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
                         "product-proof-technical-audit",
                         "documented-only",
                     ],
+                }
+            ],
+        },
+    )
+    _write_json(
+        repo / "governance/capability-certification.json",
+        {
+            "$schema": "../schemas/capability-certification.schema.json",
+            "schema_version": "1.0.0",
+            "max_receipt_age_days": 30,
+            "required_checks": [
+                "prerequisites", "auth_preflight", "fixture_replay",
+                "adverse_cases", "live_probe", "redaction",
+            ],
+            "trusted_issuers": [],
+            "profiles": [
+                {
+                    "id": "fixture-live-profile",
+                    "version": 1,
+                    "capabilities": ["system.run", "audit.technical"],
+                    "provider_id": "fixture-provider",
+                    "provider": "fixture provider",
+                    "transport": "bounded_https",
+                    "side_effect": "read_only",
+                    "owner": "Audit Agent",
+                    "relevant_sources": ["integrations/product_proof/service.py"],
+                    "credential_env_sets": [],
+                    "required_binaries": [],
+                    "live_authorization": {
+                        "execute_flag": "--execute-live",
+                        "confirmation": "LIVE_CERTIFY",
+                        "authorized_target_required": True,
+                        "cost_approval_required": False,
+                        "write_approval_required": False,
+                    },
                 }
             ],
         },
@@ -316,7 +358,11 @@ def test_overlay_command_is_part_of_effective_inventory(contract_repo: Path) -> 
 
     errors = validator.validate(contract_repo)
 
-    assert "capability evidence registry is stale or does not match effective base-plus-overlay inventories" in errors
+    assert any(
+        "capability evidence registry" in error
+        and ("stale" in error or "profile coverage mismatch" in error)
+        for error in errors
+    )
 
 
 def test_classification_requires_all_evidence_classes(
@@ -384,7 +430,7 @@ def test_local_test_reference_cannot_masquerade_as_live_provider_proof(
     )
 
 
-def test_live_verified_accepts_a_bound_canonical_provider_receipt(
+def test_legacy_five_field_provider_receipt_cannot_promote_live_verified(
     contract_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     receipt_path = contract_repo / "evaluation/provider-receipts/audit-technical.json"
@@ -408,7 +454,8 @@ def test_live_verified_accepts_a_bound_canonical_provider_receipt(
     }
     _write_self_consistent_evidence(contract_repo, monkeypatch, evidence)
 
-    assert validator.validate(contract_repo) == []
+    errors = validator.validate(contract_repo)
+    assert any("invalid PROVIDER provenance" in error for error in errors)
 
 
 def test_documented_only_capability_cannot_be_promoted(

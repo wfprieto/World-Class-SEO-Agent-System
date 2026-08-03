@@ -11,6 +11,7 @@ from runtime.evidence_binding import validate_evidence_binding
 from runtime.llm import LLMClient, LLMMessage, LLMResponse
 from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.schema_registry import SchemaRegistry
+from runtime.specialist_decision import SPECIALIST_AGENTS, specialist_output_errors
 
 
 @dataclass
@@ -45,6 +46,16 @@ def _slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
+def _synthetic_specialist_decision(evidence_id: str) -> dict[str, Any]:
+    return {
+        "state": "PARTIAL",
+        "mapped_execution_state": "PARTIAL",
+        "rationale_code": "SYNTHETIC_EVIDENCE_ONLY",
+        "evidence_refs": [evidence_id],
+        "human_action_required": False,
+    }
+
+
 def _echo_output(
     agent_name: str,
     request: str,
@@ -64,7 +75,7 @@ def _echo_output(
     evidence_source = prior_sources[0] if prior_sources else "runtime_request"
     evidence_id = "synthetic-runtime-context"
     slug = _slug(agent_name)
-    return {
+    output: dict[str, Any] = {
         "contract_version": "2.0.0",
         "output_id": f"synthetic-{slug}",
         "agent": agent_name,
@@ -114,6 +125,9 @@ def _echo_output(
         "execution_state": "SYNTHETIC",
         "handoff_acknowledgements": _echo_handoff_acknowledgements(required_handoffs),
     }
+    if agent_name in SPECIALIST_AGENTS:
+        output["specialist_decision"] = _synthetic_specialist_decision(evidence_id)
+    return output
 
 
 def _echo_handoff_acknowledgements(
@@ -145,6 +159,13 @@ def _canonical_instruction(agent_name: str, schema: dict[str, Any]) -> LLMMessag
         "only those ids. Downstream findings must explicitly reference or challenge the "
         "supplied dependency evidence.\n\n"
     )
+    if agent_name in SPECIALIST_AGENTS:
+        guidance += (
+            "As a priority specialist, include specialist_decision with one of READY, PARTIAL, "
+            "BLOCKED, ABSTAIN, or ESCALATE; its mapped_execution_state must follow the schema "
+            "contract and agree with execution_state. Cite only evidence ids present in this "
+            "output, and set human_action_required true exactly for ESCALATE. "
+        )
     return LLMMessage(
         role="system", content=guidance + json.dumps(schema, separators=(",", ":"))
     )
@@ -166,6 +187,7 @@ class StructuredOutputService:
             errors.append(
                 f"agent identity mismatch: expected {expected_agent!r}, got {output.get('agent')!r}"
             )
+        errors.extend(specialist_output_errors(output))
         errors.extend(validate_evidence_binding(output))
         return errors
 

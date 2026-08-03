@@ -95,16 +95,22 @@ def _owner_blocker_errors(
     owner_row = indexed.get(30, {})
     security = operation_index.get("security-intake", {})
     if owner_row.get("state") == "BLOCKED_OWNER_ACTION":
-        return (
-            ["issue 30 blocker must agree with repository operations"]
-            if security.get("status") != "BLOCKED_OWNER_ACTION"
-            else []
-        )
-    return (
-        ["issue 30 cannot claim remediation while repository operations remain blocked"]
-        if security.get("status") == "BLOCKED_OWNER_ACTION"
-        else []
-    )
+        errors = []
+        if security.get("status") != "BLOCKED_OWNER_ACTION":
+            errors.append("issue 30 blocker must agree with repository operations")
+        if not owner_row.get("blocked_by") or not security.get("blocker"):
+            errors.append("issue 30 blocked state requires explicit owner blockers")
+        return errors
+    errors = []
+    if security.get("status") == "BLOCKED_OWNER_ACTION":
+        errors.append("issue 30 cannot claim remediation while repository operations remain blocked")
+    if owner_row.get("blocked_by") is not None or security.get("blocker") is not None:
+        errors.append("issue 30 active state cannot retain an owner-action blocker")
+    closure = security.get("closure_evidence", {})
+    refs = closure.get("refs") if isinstance(closure, dict) else None
+    if closure.get("status") != "VERIFIED" or not isinstance(refs, list) or len(refs) != 1:
+        errors.append("issue 30 active state requires exactly one verified attestation reference")
+    return errors
 
 
 def validate(root: Path = ROOT) -> list[str]:

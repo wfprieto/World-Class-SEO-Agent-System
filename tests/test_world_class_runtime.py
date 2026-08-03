@@ -14,13 +14,13 @@ from runtime.llm import LLMMessage, LLMResponse
 from runtime.memory import InMemoryStore, JsonlMemoryStore
 from runtime.orchestrator import SEOOrchestrator
 from runtime.schema_registry import SchemaRegistry
+from runtime.specialist_decision import SPECIALIST_AGENTS
 from runtime.tools import ToolDispatcher, ToolRequest
 from runtime.workflow_graph import WorkflowGraph, WorkflowGraphError, WorkflowNode
-from scripts import content_brief_evidence as cbe
 from scripts import consent_mode_diagnostic as cmd
+from scripts import content_brief_evidence as cbe
 from scripts import seo_pdf_report
 from scripts.validate_evidence_binding import validate_output
-
 
 ROOT = Path(__file__).resolve().parents[1]
 FAST_RUNTIME_LIMITS = ExecutionLimits(
@@ -90,6 +90,14 @@ class ValidStructuredClient:
             "knowledge_used": [],
             "execution_state": "COMPLETE",
         }
+        if agent in SPECIALIST_AGENTS:
+            payload["specialist_decision"] = {
+                "state": "READY",
+                "mapped_execution_state": "COMPLETE",
+                "rationale_code": "FIXTURE_SUFFICIENT_BOUNDED_EVIDENCE",
+                "evidence_refs": ["fixture-evidence"],
+                "human_action_required": False,
+            }
         return LLMResponse(
             provider=self.provider,
             model=self.model,
@@ -142,6 +150,30 @@ class InvalidForAgentClient(ValidStructuredClient):
                 raw={"fixture": True},
             )
         return await super().complete(messages)
+
+
+class EscalatingSpecialistClient(ValidStructuredClient):
+    provider = "fixture-escalation"
+    model = "fixture-escalation"
+
+    async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
+        response = await super().complete(messages)
+        payload = json.loads(response.content)
+        if payload["agent"] == "SEO Compliance & Legal Agent":
+            payload["execution_state"] = "BLOCKED"
+            payload["specialist_decision"] = {
+                "state": "ESCALATE",
+                "mapped_execution_state": "BLOCKED",
+                "rationale_code": "MATERIAL_HARM_REQUIRES_HUMAN_OWNER",
+                "evidence_refs": ["fixture-evidence"],
+                "human_action_required": True,
+            }
+        return LLMResponse(
+            provider=self.provider,
+            model=self.model,
+            content=json.dumps(payload),
+            raw={"fixture": True},
+        )
 
 
 def _session(orchestrator: SEOOrchestrator, request: str = "Run a complete SEO audit"):
@@ -202,6 +234,25 @@ def test_non_audit_route_executes_support_agents_before_lead():
     assert "GEO / AIO Optimization Agent" in agents
     assert "SEO CRO Agent" in agents
     assert result["handoffs_consumed"] == result["handoffs_created"]
+
+
+def test_specialist_escalation_blocks_dependents_and_noncomplete_run() -> None:
+    orchestrator = SEOOrchestrator(ROOT, llm_client=EscalatingSpecialistClient())
+    session = _session(orchestrator, "Build an SEO content brief")
+    result = orchestrator.execute(
+        session,
+        orchestrator.route(session),
+        limits=FAST_RUNTIME_LIMITS,
+    )
+    nodes = result["workflow"]["nodes"]
+    escalation = next(
+        node for node in nodes if node["agent"] == "SEO Compliance & Legal Agent"
+    )
+    dependents = [node for node in nodes if escalation["id"] in node["depends_on"]]
+    assert result["node_states"][escalation["id"]] == "BLOCKED"
+    assert dependents
+    assert all(result["node_states"][node["id"]] == "BLOCKED" for node in dependents)
+    assert result["workflow_status"] != "COMPLETE"
 
 
 def test_dependency_handoff_requires_referenced_evidence_before_consumption():

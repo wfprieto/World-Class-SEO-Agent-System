@@ -49,11 +49,14 @@ def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path
         "python.supported",
         "assets.required",
         "commands.registry",
+        "capabilities.live_certification",
+        "agents.specialist_depth",
         "architecture.static",
         "knowledge.provenance",
         "dependencies.lock",
         "operations.contract",
         "remediation.open_issues",
+        "conduct.private_intake",
     }
     assert checks["python.supported"]["status"] == "PASS"
     assert all(
@@ -66,6 +69,16 @@ def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path
     ("target", "check_id", "failure"),
     [
         ("seoctl.doctor.load_registry", "commands.registry", OSError("registry unreadable")),
+        (
+            "seoctl.doctor.validate_certification",
+            "capabilities.live_certification",
+            ValueError("certification corrupt"),
+        ),
+        (
+            "seoctl.doctor.validate_specialist_depth",
+            "agents.specialist_depth",
+            ValueError("specialist depth corrupt"),
+        ),
         (
             "seoctl.doctor.validate_architecture",
             "architecture.static",
@@ -91,6 +104,11 @@ def test_system_doctor_reports_every_check_for_missing_repository(tmp_path: Path
             "remediation.open_issues",
             ValueError("remediation malformed"),
         ),
+        (
+            "seoctl.doctor.validate_conduct_intake",
+            "conduct.private_intake",
+            ValueError("conduct intake malformed"),
+        ),
     ],
 )
 def test_system_doctor_converts_validator_exceptions_to_structured_failures(
@@ -106,7 +124,7 @@ def test_system_doctor_converts_validator_exceptions_to_structured_failures(
     assert result["status"] == "FAIL"
     assert checks[check_id]["status"] == "FAIL"
     assert type(failure).__name__ in checks[check_id]["detail"]
-    assert len(checks) == 8
+    assert len(checks) == 11
 
 
 def test_system_doctor_cli_uses_canonical_json_envelope(monkeypatch) -> None:

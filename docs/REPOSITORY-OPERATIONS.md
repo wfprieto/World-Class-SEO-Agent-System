@@ -62,7 +62,8 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Owner:** Repository maintainer, with capability and evidence owners responsible for individual
   claims.
 - **Verify:** Run `python scripts/validate_product_contract.py`,
-  `python scripts/inventory_comparator.py`, schema/evidence validators, and focused runtime tests.
+  `python scripts/validate_capability_certification.py`, `python scripts/inventory_comparator.py`,
+  schema/evidence validators, and focused runtime tests.
   Reconcile results with issue #28.
 - **Fail:** Fail on invented capability, duplicate authority, unbound evidence, stale target
   inventory, maturity inflation, or a score changed without a separately reviewed package.
@@ -97,7 +98,9 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Owner:** Repository maintainer. A monitored private conduct destination remains
   `OWNER_ACTION_REQUIRED`; issue #30 tracks the blocker.
 - **Verify:** Run `python scripts/validate_repository_operations.py`. Provider verification must
-  attest the destination separately before this control can pass.
+  attest the destination separately before this control can pass. Then run
+  `python scripts/validate_private_conduct_intake.py`; a closure URL alone is not proof of a
+  destination, access, or monitoring.
 - **Fail:** Treat a missing, public-only, unmonitored, inaccessible, or security-only destination
   as failure. The private vulnerability route does not complete conduct intake.
 - **Recover:** Remove an invalid destination, mark the control blocked, preserve non-sensitive
@@ -106,6 +109,32 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
   private vulnerability route; public support continues through Discussions or the support form.
 - **Stop:** Never request or publish identifying conduct details publicly. Do not publish a personal
   email without explicit owner authorization.
+
+### Owner provisioning checklist
+
+The following actions require the repository owner and cannot be inferred or performed by a
+repository validator:
+
+1. Select and provision one repository-controlled route whose submissions are private. Do not use
+   a public issue, Discussion, or the security-advisory route.
+2. Decide the accountable monitoring role, acknowledgement target, confidentiality limits, and
+   conflict-handling route. Explicitly authorize publication of the public contact instructions.
+3. Send a benign access test, confirm receipt by the monitoring role, and record only the method,
+   UTC time, and result. Never commit the test message, mailbox content, credentials, reporter
+   identity, report content, or a private access URL.
+4. Obtain provider-controlled, immutable verification of the actual destination and benign access
+   test. A repository issue comment, repository commit, self-authored assertion, or example/test
+   destination is not verification. The evidence must identify the provider, destination by a
+   non-sensitive stable digest, access-test result and UTC time, monitoring role, and evidence
+   digest without exposing mailbox content or a private URL.
+5. Add and review a new schema version that explicitly validates that provider evidence before it
+   permits an operational state. In the same reviewed change, update the issue #30 and
+   repository-operations states, `SUPPORT.md`, and `CODE_OF_CONDUCT.md`; publish the acknowledgement
+   target, monitoring role, confidentiality limits, and conflict handling. Run both operations
+   validators and exact-head repository certification before closing issue #30.
+6. If access, monitoring, or repository control later fails, remove the invalid public
+   instructions, restore `BLOCKED_OWNER_ACTION`, preserve no report contents in the repository,
+   and reopen issue #30.
 
 <a id="ops-certification-supply-chain"></a>
 ## certification-supply-chain
