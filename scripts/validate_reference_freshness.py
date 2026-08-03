@@ -29,6 +29,21 @@ def _source_errors(pack_id: str, sources: object) -> list[str]:
     ]
 
 
+def _content_errors(pack_id: str, pack: dict, root: Path) -> list[str]:
+    expected_digest = str(pack.get("content_sha256", ""))
+    digest_is_valid = (
+        len(expected_digest) == 64
+        and all(character in "0123456789abcdef" for character in expected_digest)
+    )
+    failures = [] if digest_is_valid else [f"{pack_id} has invalid content_sha256"]
+    path = root / str(pack.get("path", ""))
+    if not path.is_file():
+        failures.append(f"{pack_id} path is missing")
+    elif digest_is_valid and _content_sha256(path) != expected_digest:
+        failures.append(f"{pack_id} content digest does not match its pack")
+    return failures
+
+
 def _pack_errors(pack_id: str, pack: dict, *, today: date, root: Path) -> list[str]:
     failures: list[str] = []
     freshness_class = str(pack.get("freshness_class", ""))
@@ -49,13 +64,7 @@ def _pack_errors(pack_id: str, pack: dict, *, today: date, root: Path) -> list[s
                 failures.append(f"{pack_id} is stale by freshness policy ({age} days)")
     if not str(pack.get("owner", "")).strip():
         failures.append(f"{pack_id} requires an owner")
-    path = root / str(pack.get("path", ""))
-    if not path.is_file():
-        failures.append(f"{pack_id} path is missing")
-    else:
-        expected_digest = str(pack.get("content_sha256", ""))
-        if len(expected_digest) != 64 or _content_sha256(path) != expected_digest:
-            failures.append(f"{pack_id} content digest does not match its pack")
+    failures.extend(_content_errors(pack_id, pack, root))
     failures.extend(_source_errors(pack_id, pack.get("primary_sources", [])))
     return failures
 
