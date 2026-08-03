@@ -61,6 +61,8 @@ def rehearse(root: Path, receipt_path: Path) -> dict[str, Any]:
         cwd=root,
         check=True,
     )
+    if _git(root, "rev-parse", "HEAD") != candidate:
+        subprocess.run(["git", "checkout", "--detach", candidate], cwd=root, check=True)
     subprocess.run(["git", "revert", "--no-commit", *commits], cwd=root, check=True)
     baseline_tree = _git(root, "rev-parse", f"{baseline}^{{tree}}")
     post_revert_tree = _git(root, "write-tree")
