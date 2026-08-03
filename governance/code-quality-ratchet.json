@@ -1293,7 +1293,7 @@
       "removal_phase": "P7"
     },
     "scripts.capture_github_controls::capture": {
-      "max_span": 79,
+      "max_span": 77,
       "max_complexity": 9,
       "max_missing_annotations": 0,
       "owner": "Quality owner",

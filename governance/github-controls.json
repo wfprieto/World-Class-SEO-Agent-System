@@ -41,6 +41,6 @@
     "number": 24,
     "base": "main",
     "head": "agent/owner-controlled-remediation-loop",
-    "allowed_states": ["OPEN", "MERGED"]
+    "allowed_states": ["OPEN", "CLOSED"]
   }
 }

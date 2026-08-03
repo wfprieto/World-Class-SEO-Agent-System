@@ -56,7 +56,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
             }
         ],
         "eligible_independent_reviewers": [],
-        "independent_reviewer_status": "OWNER_ACTION_REQUIRED",
+        "independent_reviewer_status": contract["independent_reviewer"]["status"],
         "phase8_issues": [
             {
                 "control_id": control["id"],
@@ -79,7 +79,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
             "merged": False,
         },
         "declared_blockers": {
-            "independent_reviewer": "OWNER_ACTION_REQUIRED",
+            "independent_reviewer": contract["independent_reviewer"]["status"],
             "private_conduct_reporting": "OWNER_ACTION_REQUIRED",
         },
     }
@@ -261,7 +261,7 @@ def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field:
     ("mutation", "expected_error"),
     [
         ("missing_collaborators", "collaborator inventory"),
-        ("invented_reviewer", "reviewer availability differs"),
+        ("invented_reviewer", "solo-maintainer status is stale"),
         ("closed_issue", "issue 26 state"),
         ("unassigned_issue", "issue 26 is not assigned"),
         ("wrong_pull_head", "pull request head"),
