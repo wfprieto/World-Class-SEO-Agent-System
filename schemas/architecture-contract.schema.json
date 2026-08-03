@@ -36,11 +36,11 @@
     },
     "network_modules": {
       "type": "array", "uniqueItems": true,
-      "items": {"type": "string", "pattern": "^(runtime|adapters|integrations|seoctl)/[a-zA-Z0-9_/]+\\.py$"}
+      "items": {"type": "string", "pattern": "^(runtime|adapters|integrations|security|seoctl)/[a-zA-Z0-9_/]+\\.py$"}
     },
     "network_transports": {
       "type": "object",
-      "propertyNames": {"pattern": "^(runtime|adapters|integrations|seoctl)/[a-zA-Z0-9_/]+\\.py$"},
+      "propertyNames": {"pattern": "^(runtime|adapters|integrations|security|seoctl)/[a-zA-Z0-9_/]+\\.py$"},
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,

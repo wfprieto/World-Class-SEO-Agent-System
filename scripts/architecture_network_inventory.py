@@ -12,12 +12,12 @@ EXPECTED_NETWORK_TRANSPORTS: dict[str, dict[str, str]] = {
         "policy": "PUBLIC_RENDERED_PAGE",
         "delegates_to": (
             "integrations.technical.http.BoundedHttpClient + "
-            "adapters.url_safety.validate_public_url"
+            "security.url_safety.validate_public_url"
         ),
     },
-    "adapters/url_safety.py": {
+    "security/url_safety.py": {
         "policy": "PUBLIC_URL_SAFETY",
-        "delegates_to": "adapters.url_safety.validate_public_url",
+        "delegates_to": "security.url_safety.validate_public_url",
     },
     "integrations/authority_media/transport.py": {
         "policy": "APPROVED_HOST_BOUNDED_HTTP",

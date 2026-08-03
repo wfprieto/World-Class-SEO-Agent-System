@@ -14,9 +14,9 @@ from collections import deque
 from html.parser import HTMLParser
 from typing import Any, Callable
 
-from adapters.url_safety import validate_public_url
 from integrations.product_proof.models import CrawlConfig, PageRecord, RobotsRecord
 from integrations.technical.http import BoundedHttpClient, HttpHop
+from security.url_safety import validate_public_url
 
 _SOFT_404 = re.compile(r"\b(?:page\s+not\s+found|not\s+found|no\s+results|nothing\s+here|does\s+not\s+exist|404)\b", re.IGNORECASE)
 _QUERY_PAGE_KEYS = {"page", "paged", "pagenum", "page_num", "pg"}

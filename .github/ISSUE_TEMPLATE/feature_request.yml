@@ -2,6 +2,20 @@ name: Feature request
 description: Propose an evidence-backed capability
 title: "[Feature]: "
 body:
+  - type: input
+    id: control_id
+    attributes:
+      label: Operations control ID
+      description: "Registry IDs are defined in governance/repository-operations.json; use the applicable ID or UNMAPPED."
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Accountable owner and backup status
+      description: Name the owner role and verified backup, or state OWNER_ACTION_REQUIRED.
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
@@ -20,3 +34,31 @@ body:
       label: Canonical authority and duplication risk
     validations:
       required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Identify the evidence class and exact source supporting the request.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification and acceptance
+      description: State the command or review method and measurable expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback trigger and recovery
+      description: State the trigger, recovery procedure, and stop condition.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive data
+      options:
+        - label: I removed credentials, tokens, private URLs, client data, vulnerability details, and private conduct reports
+          required: true

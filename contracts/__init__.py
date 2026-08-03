@@ -1,6 +1,4 @@
-"""Compatibility imports for the canonical implementation-neutral adapter contracts."""
-
-from __future__ import annotations
+"""Stable, implementation-neutral contracts shared across executable layers."""
 
 from contracts.adapter import (
     BLOCKING_ADAPTER_STATUSES,

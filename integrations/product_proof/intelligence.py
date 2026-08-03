@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from adapters.base import AdapterResult
+from contracts.adapter import AdapterResult
 
 _COMMON_LOG = re.compile(r'^(?P<ip>\S+)\s+\S+\s+\S+\s+\[[^\]]+\]\s+"(?P<method>\S+)\s+(?P<path>\S+)\s+[^\"]+"\s+(?P<status>\d{3})\s+(?P<bytes>\S+)(?:\s+"[^\"]*"\s+"(?P<ua>[^\"]*)")?')
 _RESPONSE_TIME = re.compile(r'(?:request_time|rt|response_time)[=:](?P<seconds>\d+(?:\.\d+)?)')

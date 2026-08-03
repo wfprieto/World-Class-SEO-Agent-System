@@ -1,16 +1,89 @@
 from __future__ import annotations
 
+import copy
+import datetime as dt
 import json
 import shutil
-import datetime as dt
 from pathlib import Path
 
 import pytest
 
-from scripts.validate_repository_governance import local_errors, provider_errors
-
+from scripts.validate_repository_governance import (
+    local_errors,
+    provider_errors,
+    provider_state_errors,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    contract = json.loads(
+        (ROOT / "governance/github-controls.json").read_text(encoding="utf-8")
+    )
+    operations = json.loads(
+        (ROOT / "governance/repository-operations.json").read_text(encoding="utf-8")
+    )
+    owner = contract["repository"].partition("/")[0]
+    snapshot: dict[str, object] = {
+        "schema_version": "3.0.0",
+        "repository": contract["repository"],
+        "default_branch": contract["default_branch"],
+        "private_vulnerability_reporting": True,
+        "discussions": True,
+        "vulnerability_alerts": True,
+        "dependabot_security_updates": True,
+        "secret_scanning": True,
+        "secret_scanning_push_protection": True,
+        "authenticated": True,
+        "authenticated_actor": owner,
+        "capture_method": "gh-api-live",
+        "captured_at": dt.datetime.now(dt.UTC).replace(microsecond=0).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        ),
+        "ruleset": dict(contract["ruleset"]),
+        "collaborators": [
+            {
+                "login": owner,
+                "role_name": "admin",
+                "permissions": {
+                    "pull": True,
+                    "triage": True,
+                    "push": True,
+                    "maintain": True,
+                    "admin": True,
+                },
+            }
+        ],
+        "eligible_independent_reviewers": [],
+        "independent_reviewer_status": "OWNER_ACTION_REQUIRED",
+        "phase8_issues": [
+            {
+                "control_id": control["id"],
+                "number": control["issue"]["number"],
+                "url": control["issue"]["url"],
+                "title": control["title"],
+                "state": control["issue"]["expected_state"],
+                "assignees": [owner],
+                "locked": False,
+            }
+            for control in operations["critical_paths"]
+        ],
+        "phase8_pull_request": {
+            "number": 24,
+            "url": f"https://github.com/{contract['repository']}/pull/24",
+            "base": "main",
+            "head": "agent/owner-controlled-remediation-loop",
+            "state": "OPEN",
+            "draft": True,
+            "merged": False,
+        },
+        "declared_blockers": {
+            "independent_reviewer": "OWNER_ACTION_REQUIRED",
+            "private_conduct_reporting": "OWNER_ACTION_REQUIRED",
+        },
+    }
+    return snapshot, contract, operations
 
 
 def _copy_repository_surface(tmp_path: Path) -> Path:
@@ -113,6 +186,7 @@ def test_mutable_action_and_persisted_checkout_credentials_are_rejected(tmp_path
 def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Path) -> None:
     contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
     snapshot = {
+        "schema_version": "2.0.0",
         "repository": contract["repository"],
         "default_branch": "main",
         "private_vulnerability_reporting": True,
@@ -144,6 +218,7 @@ def test_provider_snapshot_fails_closed_on_missing_and_weaker_state(tmp_path: Pa
 def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field: str) -> None:
     contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
     snapshot = {
+        "schema_version": "2.0.0",
         "repository": contract["repository"],
         "default_branch": "main",
         "private_vulnerability_reporting": True,
@@ -169,6 +244,54 @@ def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field:
     del missing[field]
     path.write_text(json.dumps(missing), encoding="utf-8")
     assert any(field in error for error in provider_errors(path))
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    [
+        ("missing_collaborators", "collaborator inventory"),
+        ("invented_reviewer", "reviewer availability differs"),
+        ("closed_issue", "issue 26 state"),
+        ("unassigned_issue", "issue 26 is not assigned"),
+        ("wrong_pull_head", "pull request head"),
+        ("false_conduct_ready", "declared blockers"),
+    ],
+)
+def test_phase8_provider_evidence_fails_closed(
+    mutation: str, expected_error: str
+) -> None:
+    snapshot, contract, operations = _phase8_snapshot()
+    candidate = copy.deepcopy(snapshot)
+    if mutation == "missing_collaborators":
+        candidate["collaborators"] = []
+    elif mutation == "invented_reviewer":
+        candidate["collaborators"].append(
+            {
+                "login": "invented-reviewer",
+                "role_name": "write",
+                "permissions": {
+                    "pull": True,
+                    "triage": True,
+                    "push": True,
+                    "maintain": False,
+                    "admin": False,
+                },
+            }
+        )
+        candidate["collaborators"].sort(key=lambda row: row["login"])
+        candidate["eligible_independent_reviewers"] = ["invented-reviewer"]
+        candidate["independent_reviewer_status"] = "VERIFIED"
+    elif mutation == "closed_issue":
+        candidate["phase8_issues"][0]["state"] = "CLOSED"
+    elif mutation == "unassigned_issue":
+        candidate["phase8_issues"][0]["assignees"] = []
+    elif mutation == "wrong_pull_head":
+        candidate["phase8_pull_request"]["head"] = "unreviewed"
+    else:
+        candidate["declared_blockers"]["private_conduct_reporting"] = "VERIFIED"
+
+    errors = provider_state_errors(candidate, contract, operations=operations)
+    assert any(expected_error in error for error in errors)
 
 
 def test_repository_validator_enumerates_only_tracked_documents() -> None:

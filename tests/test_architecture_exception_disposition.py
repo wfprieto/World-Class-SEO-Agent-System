@@ -24,7 +24,7 @@ def test_edge_set_change_invalidates_overdue_disposition() -> None:
 
 def test_disposition_cannot_hide_an_incomplete_count_or_earlier_target() -> None:
     disposition = copy.deepcopy(_disposition())
-    disposition["expected_exception_count"] = 34
+    disposition["expected_exception_count"] -= 1
     disposition["target_phase"] = "P7"
     errors = validate(disposition=disposition)
     assert "overdue architecture exception count does not match disposition" in errors

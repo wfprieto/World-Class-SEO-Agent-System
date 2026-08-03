@@ -6,8 +6,20 @@ Use [GitHub Discussions](https://github.com/wfprieto/World-Class-SEO-Agent-Syste
 
 ## Bugs and documentation problems
 
-Open a GitHub issue using the appropriate issue form. Please include a minimal, non-sensitive reproduction or a specific documentation location.
+Open a GitHub issue using the appropriate issue form. Include the applicable operations control
+ID, accountable owner or `Unassigned`, non-sensitive evidence, verification attempted, and a
+rollback or containment position when the report concerns a change.
 
 ## Security issues
 
 Do not include vulnerability details, credentials, client data, or exploit code in a public issue. Use the [private vulnerability report form](https://github.com/wfprieto/World-Class-SEO-Agent-System/security/advisories/new) and follow [SECURITY.md](SECURITY.md).
+
+## Conduct concerns
+
+A repository-controlled private conduct channel has not yet been designated. Its status is
+`OWNER_ACTION_REQUIRED`. Do not publish private conduct reports, identifying details, or safety
+information in an issue, pull request, or Discussion. The private vulnerability form is for
+security vulnerabilities and must not be represented as a completed conduct-reporting channel.
+
+Operational intake and escalation procedures are documented in
+[`docs/REPOSITORY-OPERATIONS.md`](docs/REPOSITORY-OPERATIONS.md#ops-security-intake).

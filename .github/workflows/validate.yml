@@ -276,6 +276,8 @@ jobs:
     name: provider-authentication
     permissions:
       contents: read
+      issues: read
+      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -574,7 +576,7 @@ jobs:
           $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: quality-security-release
       - name: Prove exact source integrity

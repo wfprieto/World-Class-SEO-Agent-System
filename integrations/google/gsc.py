@@ -11,13 +11,13 @@ import urllib.parse
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from adapters.base import AdapterResult
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterResult
 from integrations.google.client import (
     GoogleJsonClient,
     GoogleOAuthConfig,
     GoogleOAuthProvider,
 )
+from security.url_safety import validate_public_url
 
 SEARCH_ANALYTICS = (
     "https://www.googleapis.com/webmasters/v3/sites/{site}/searchAnalytics/query"

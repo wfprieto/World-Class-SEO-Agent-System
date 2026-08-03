@@ -5,14 +5,14 @@ from __future__ import annotations
 import urllib.parse
 from typing import Any
 
-from adapters.base import AdapterResult
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterResult
 from integrations.google.client import (
     GoogleJsonClient,
     GoogleOAuthConfig,
     GoogleOAuthProvider,
 )
 from integrations.google.gsc import GoogleSearchConsoleAdapter
+from security.url_safety import validate_public_url
 
 _SITEMAPS = "https://www.googleapis.com/webmasters/v3/sites/{site}/sitemaps"
 

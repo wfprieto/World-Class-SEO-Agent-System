@@ -9,8 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from adapters.base import AdapterResult
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterResult
 from integrations.product_proof.crawler import SiteCrawler
 from integrations.product_proof.models import CrawlConfig
 from integrations.product_proof.report import (
@@ -22,6 +21,7 @@ from integrations.product_proof.report import (
 from integrations.product_proof.rules import ClaimPolicy, TechnicalAuditRules, build_contributions
 from integrations.technical.http import HttpHop
 from runtime.assets import resolve_asset_root
+from security.url_safety import validate_public_url
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[2])
 

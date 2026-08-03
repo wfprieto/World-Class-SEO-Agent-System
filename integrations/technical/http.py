@@ -13,7 +13,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-from adapters.url_safety import validate_public_url
+from security.url_safety import validate_public_url
 
 
 _REDIRECTS = {301, 302, 303, 307, 308}

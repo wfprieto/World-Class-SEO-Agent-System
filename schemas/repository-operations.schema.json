@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/repository-operations.schema.json",
+  "title": "Repository operations contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "scope", "critical_paths"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+    "scope": {"const": "STATIC_REPOSITORY_OPERATIONS"},
+    "critical_paths": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {"$ref": "#/$defs/critical_path"}
+    }
+  },
+  "$defs": {
+    "non_empty": {"type": "string", "minLength": 1},
+    "critical_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "status",
+        "owner",
+        "backup_status",
+        "issue",
+        "runbook",
+        "verification",
+        "metric",
+        "threshold",
+        "rollback_trigger",
+        "rollback_procedure",
+        "blocker"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "title": {"$ref": "#/$defs/non_empty"},
+        "status": {
+          "enum": ["READY", "IN_PROGRESS", "BLOCKED_OWNER_ACTION"]
+        },
+        "owner": {"$ref": "#/$defs/non_empty"},
+        "backup_status": {"enum": ["VERIFIED", "OWNER_ACTION_REQUIRED"]},
+        "issue": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["number", "url", "expected_state"],
+          "properties": {
+            "number": {"type": "integer", "minimum": 1},
+            "url": {"type": "string", "format": "uri"},
+            "expected_state": {"const": "OPEN"}
+          }
+        },
+        "runbook": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "anchor"],
+          "properties": {
+            "path": {"type": "string", "pattern": "^(?:docs/.+|CODE_OF_CONDUCT\\.md)$"},
+            "anchor": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}
+          }
+        },
+        "verification": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/non_empty"}
+        },
+        "metric": {"$ref": "#/$defs/non_empty"},
+        "threshold": {"$ref": "#/$defs/non_empty"},
+        "rollback_trigger": {"$ref": "#/$defs/non_empty"},
+        "rollback_procedure": {"$ref": "#/$defs/non_empty"},
+        "blocker": {"type": ["string", "null"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "BLOCKED_OWNER_ACTION"}}},
+          "then": {"properties": {"blocker": {"type": "string", "minLength": 1}}},
+          "else": {"properties": {"blocker": {"type": "null"}}}
+        }
+      ]
+    }
+  }
+}

@@ -1,18 +1,25 @@
 from __future__ import annotations
 
+import ast
 import asyncio
 import threading
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from adapters.base import AdapterResult as CompatibilityAdapterResult
+from adapters.url_safety import validate_public_url as compatibility_validate_public_url
+from contracts.adapter import AdapterResult as CanonicalAdapterResult
 from runtime.adapter_contracts import (
     CANONICAL_ADAPTER_STATUSES,
     AdapterResult,
     validate_adapter_result,
 )
 from runtime.tools import REQUIRED_TOOL_FAILURE_STATES, ToolDispatcher, ToolRequest
+from security.url_safety import validate_public_url as canonical_validate_public_url
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class _ReturningAdapter:
@@ -37,7 +44,38 @@ class _ThreadBackedSideEffectAdapter:
 
 
 def test_adapter_result_has_one_canonical_runtime_identity() -> None:
-    assert CompatibilityAdapterResult is AdapterResult
+    assert CanonicalAdapterResult is AdapterResult
+    assert CompatibilityAdapterResult is CanonicalAdapterResult
+
+
+def test_url_safety_facade_preserves_canonical_policy_identity() -> None:
+    assert compatibility_validate_public_url is canonical_validate_public_url
+
+
+def test_integrations_do_not_import_the_adapter_compatibility_facade() -> None:
+    offenders = []
+    for path in sorted((ROOT / "integrations").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        if any(
+            isinstance(node, ast.ImportFrom) and node.module == "adapters.base"
+            for node in ast.walk(tree)
+        ):
+            offenders.append(path.relative_to(ROOT).as_posix())
+
+    assert offenders == []
+
+
+def test_integrations_do_not_import_the_url_safety_compatibility_facade() -> None:
+    offenders = []
+    for path in sorted((ROOT / "integrations").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        if any(
+            isinstance(node, ast.ImportFrom) and node.module == "adapters.url_safety"
+            for node in ast.walk(tree)
+        ):
+            offenders.append(path.relative_to(ROOT).as_posix())
+
+    assert offenders == []
 
 
 @pytest.mark.parametrize(

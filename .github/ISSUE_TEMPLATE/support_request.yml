@@ -6,6 +6,20 @@ body:
   - type: markdown
     attributes:
       value: Do not submit vulnerabilities, credentials, private URLs, or client data here. Use the private security report form for security issues.
+  - type: input
+    id: control_id
+    attributes:
+      label: Operations control ID
+      description: "Registry IDs are defined in governance/repository-operations.json; use the applicable ID or UNMAPPED."
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Accountable owner and backup status
+      description: Name the expected owner role and backup, or state Unassigned / OWNER_ACTION_REQUIRED.
+    validations:
+      required: true
   - type: textarea
     id: objective
     attributes:
@@ -34,9 +48,30 @@ body:
     validations:
       required: true
   - type: textarea
+    id: evidence
+    attributes:
+      label: Non-sensitive evidence
+      description: Include sanitized output, source locations, and the exact commit where possible.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification attempted
+      description: Include the command or review method and observed result.
+    validations:
+      required: true
+  - type: textarea
     id: expected
     attributes:
       label: Expected outcome
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback trigger and containment
+      description: State the trigger and recovery or containment; use not applicable only with a reason.
     validations:
       required: true
   - type: checkboxes
@@ -44,5 +79,5 @@ body:
     attributes:
       label: Privacy and security
       options:
-        - label: I removed credentials, private URLs, client data, and vulnerability details.
+        - label: I removed credentials, private URLs, client data, tokens, vulnerability details, and private conduct reports.
           required: true

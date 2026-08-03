@@ -1,8 +1,8 @@
-"""Compatibility imports for the canonical runtime adapter contracts."""
+"""Compatibility imports for the canonical implementation-neutral adapter contracts."""
 
 from __future__ import annotations
 
-from runtime.adapter_contracts import (
+from contracts.adapter import (
     AdapterNotConfigured,
     AdapterResult,
     RuntimeAdapter,

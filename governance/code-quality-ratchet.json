@@ -308,14 +308,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "adapters.url_safety::validate_public_url": {
-      "max_span": 59,
-      "max_complexity": 29,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.authority_media.services::CommonCrawlService.search": {
       "max_span": 81,
       "max_complexity": 20,
@@ -1301,8 +1293,8 @@
       "removal_phase": "P7"
     },
     "scripts.capture_github_controls::capture": {
-      "max_span": 121,
-      "max_complexity": 15,
+      "max_span": 79,
+      "max_complexity": 9,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1593,12 +1585,10 @@
       "adapters/rank_tracking.py|SIM115|Use a context manager for opening files": 1,
       "adapters/redirect_chain.py|SIM115|Use a context manager for opening files": 1,
       "adapters/registry.py|I001|Import block is un-sorted or un-formatted": 1,
-      "adapters/url_safety.py|C901|`validate_public_url` is too complex (16 > 10)": 1,
       "integrations/authority_media/services.py|C901|`history` is too complex (11 > 10)": 1,
       "integrations/authority_media/services.py|C901|`inspect` is too complex (12 > 10)": 1,
       "integrations/authority_media/services.py|C901|`search` is too complex (11 > 10)": 1,
       "integrations/authority_media/services.py|C901|`search` is too complex (14 > 10)": 1,
-      "integrations/authority_media/services.py|F401|`integrations.authority_media.drift.DriftService` imported but unused": 1,
       "integrations/authority_media/services.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
       "integrations/authority_media/transport.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
       "integrations/content_intelligence/service.py|C901|`decay` is too complex (12 > 10)": 1,
@@ -1609,7 +1599,6 @@
       "integrations/google/client.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/google/client.py|UP037|Remove quotes from type annotation": 1,
       "integrations/google/gsc.py|C901|`query` is too complex (19 > 10)": 1,
-      "integrations/product_proof/adapters.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/product_proof/crawler.py|C901|`_page` is too complex (13 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`allowed` is too complex (11 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`handle_starttag` is too complex (16 > 10)": 1,
@@ -1641,7 +1630,6 @@
       "runtime/state.py|UP037|Remove quotes from type annotation": 1,
       "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "scripts/capture_github_controls.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/consent_mode_diagnostic.py|C901|`diagnose` is too complex (25 > 10)": 1,
       "scripts/content_brief_evidence.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/generate_capability_evidence_registry.py|C901|`_effective_command_registry` is too complex (12 > 10)": 1,
@@ -1683,7 +1671,6 @@
       "scripts/validate_remediation_program.py|F401|`sys` imported but unused": 1,
       "scripts/validate_remediation_program.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_repository_governance.py|C901|`local_errors` is too complex (41 > 10)": 1,
-      "scripts/validate_repository_governance.py|C901|`provider_state_errors` is too complex (14 > 10)": 1,
       "scripts/validate_schema_examples.py|I001|Import block is un-sorted or un-formatted": 1,
       "scripts/validate_seo_claims.py|C901|`validate` is too complex (17 > 10)": 1,
       "scripts/validate_seo_claims.py|E401|Multiple imports on one line": 1,

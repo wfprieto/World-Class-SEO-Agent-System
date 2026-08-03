@@ -1,6 +1,4 @@
-"""Compatibility re-exports for the canonical shared URL-security policy."""
-
-from __future__ import annotations
+"""Fail-closed security policies shared by executable layers."""
 
 from security.url_safety import (
     ALLOWED_SCHEMES,

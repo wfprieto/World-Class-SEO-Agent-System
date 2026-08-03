@@ -6,9 +6,9 @@ import os
 from typing import Any
 from urllib.parse import urlsplit
 
-from adapters.base import AdapterNotConfigured, AdapterResult
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterNotConfigured, AdapterResult
 from integrations.google.client import GoogleAPIError, GoogleJsonClient
+from security.url_safety import validate_public_url
 
 CRUX_CURRENT_ENDPOINT = (
     "https://chromeuxreport.googleapis.com/v1/records:queryRecord"

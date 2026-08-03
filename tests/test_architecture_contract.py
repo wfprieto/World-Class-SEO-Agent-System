@@ -17,11 +17,15 @@ def _contract() -> dict:
             "adapters": "adapters",
             "integrations": "integrations",
             "composition": "seoctl",
+            "contracts": "contracts",
         },
         "allowed_layer_edges": [
             {"source": "composition", "target": "runtime"},
             {"source": "composition", "target": "adapters"},
             {"source": "composition", "target": "integrations"},
+            {"source": "runtime", "target": "contracts"},
+            {"source": "adapters", "target": "contracts"},
+            {"source": "integrations", "target": "contracts"},
         ],
         "exceptions": [],
         "network_modules": [],
@@ -30,7 +34,7 @@ def _contract() -> dict:
 
 
 def _fixture(tmp_path: Path, contract: dict, sources: dict[str, str]) -> tuple[Path, Path]:
-    for package in ("runtime", "adapters", "integrations", "seoctl"):
+    for package in contract["layers"].values():
         package_path = tmp_path / package
         package_path.mkdir(parents=True)
         (package_path / "__init__.py").write_text("", encoding="utf-8")
@@ -59,6 +63,34 @@ def test_forbidden_runtime_to_integration_import_fails(tmp_path: Path) -> None:
     )
     errors = validate(tmp_path, contract_path, schema_path)
     assert "forbidden dependency edge: runtime.new_boundary -> integrations.provider" in errors
+
+
+def test_contracts_layer_cannot_import_an_executable_layer(tmp_path: Path) -> None:
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        _contract(),
+        {"contracts/bad_contract.py": "from runtime.tools import ToolDispatcher\n"},
+    )
+
+    errors = validate(tmp_path, contract_path, schema_path)
+
+    assert "forbidden dependency edge: contracts.bad_contract -> runtime.tools" in errors
+
+
+def test_security_layer_cannot_import_an_executable_layer(tmp_path: Path) -> None:
+    contract = _contract()
+    contract["layers"]["security"] = "security"
+    contract_path, schema_path = _fixture(
+        tmp_path,
+        contract,
+        {"security/bad_policy.py": "from integrations.technical.http import BoundedHttpClient\n"},
+    )
+
+    errors = validate(tmp_path, contract_path, schema_path)
+    assert (
+        "forbidden dependency edge: security.bad_policy -> integrations.technical.http"
+        in errors
+    )
 
 
 def test_new_internal_cycle_fails_even_with_exact_exceptions(tmp_path: Path) -> None:

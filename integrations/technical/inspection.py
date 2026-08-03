@@ -10,9 +10,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from adapters.base import AdapterResult
 from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterResult
 from integrations.technical.http import BoundedHttpClient, HttpHop
 from integrations.technical.parsing import (
     SUPPORTED_SCHEMA,
@@ -30,6 +29,7 @@ from integrations.technical.parsing import (
     tokens,
     type_values,
 )
+from security.url_safety import validate_public_url
 
 _BCP47 = re.compile(
     r"^(?:[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?"

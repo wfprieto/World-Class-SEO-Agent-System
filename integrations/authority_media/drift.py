@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adapters.base import AdapterResult
 from adapters.evidence_store import canonicalize_url
 from adapters.page_drift import PageDrift
+from contracts.adapter import AdapterResult
 
 MAX_STATE_BYTES = 10_000_000
 

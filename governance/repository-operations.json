@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "scope": "STATIC_REPOSITORY_OPERATIONS",
+  "critical_paths": [
+    {
+      "id": "architecture-quality-debt",
+      "title": "Retire bounded architecture exceptions",
+      "status": "IN_PROGRESS",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 26,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/26",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-architecture-quality-debt"},
+      "verification": ["python scripts/validate_architecture_exception_disposition.py"],
+      "metric": "Unretired bounded architecture exceptions",
+      "threshold": "No new exception and every retained exception has exact issue-backed disposition",
+      "rollback_trigger": "An exception is removed without passing its recorded retirement criteria.",
+      "rollback_procedure": "Restore the last valid disposition and reopen issue #26 before merge.",
+      "blocker": null
+    },
+    {
+      "id": "repository-governance",
+      "title": "Onboard an eligible independent main-branch reviewer",
+      "status": "BLOCKED_OWNER_ACTION",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 27,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/27",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-repository-governance"},
+      "verification": ["python scripts/validate_repository_governance.py"],
+      "metric": "Provider-verified eligible independent reviewers",
+      "threshold": "At least one distinct eligible non-last-pusher reviewer",
+      "rollback_trigger": "The eligible reviewer loses access or independence, or protection permits self-approval.",
+      "rollback_procedure": "Restore fail-closed merge blocking and reopen issue #27 until a replacement is verified.",
+      "blocker": "Only the repository owner is currently available; the owner must invite and verify a distinct eligible reviewer."
+    },
+    {
+      "id": "network-provider-boundaries",
+      "title": "Resolve code-verifiable comparative capability gaps",
+      "status": "IN_PROGRESS",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 28,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/28",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-network-provider-boundaries"},
+      "verification": ["python scripts/validate_product_contract.py"],
+      "metric": "Comparative capability claims without executable evidence",
+      "threshold": "Zero unsupported material comparative claims",
+      "rollback_trigger": "A comparative claim exceeds the capability represented by executable repository evidence.",
+      "rollback_procedure": "Revert the unsupported claim or capability change and reopen issue #28.",
+      "blocker": null
+    },
+    {
+      "id": "documentation-knowledge-truth",
+      "title": "Keep knowledge, dependencies, and governance evidence current",
+      "status": "IN_PROGRESS",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 29,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/29",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-documentation-knowledge-truth"},
+      "verification": ["python scripts/validate_repository_governance.py"],
+      "metric": "Overdue knowledge, dependency, or governance evidence",
+      "threshold": "Zero overdue repository-controlled freshness obligations",
+      "rollback_trigger": "A freshness, dependency, or governance check regresses after maintenance.",
+      "rollback_procedure": "Revert the maintenance change, preserve the failing evidence, and reopen issue #29.",
+      "blocker": null
+    },
+    {
+      "id": "security-intake",
+      "title": "Provide a monitored private conduct-reporting channel",
+      "status": "BLOCKED_OWNER_ACTION",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 30,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/30",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-security-intake"},
+      "verification": ["python scripts/validate_repository_operations.py"],
+      "metric": "Attested monitored private conduct-reporting destinations",
+      "threshold": "Exactly one documented and monitored private destination",
+      "rollback_trigger": "The private destination becomes public, unmonitored, or inaccessible.",
+      "rollback_procedure": "Mark the control blocked, remove the invalid destination, and reopen issue #30.",
+      "blocker": "No monitored private conduct-reporting destination is configured; the owner must provision and attest one."
+    },
+    {
+      "id": "certification-supply-chain",
+      "title": "Maintain incident, recovery, and rollback runbooks",
+      "status": "IN_PROGRESS",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 31,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/31",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-certification-supply-chain"},
+      "verification": ["pwsh -File scripts/validate-repository.ps1"],
+      "metric": "Critical operational paths without rehearsable recovery guidance",
+      "threshold": "Zero uncovered critical paths",
+      "rollback_trigger": "A documented recovery action is destructive, incomplete, or cannot restore the last good state.",
+      "rollback_procedure": "Revert the runbook change and keep issue #31 open until a safe recovery rehearsal passes.",
+      "blocker": null
+    },
+    {
+      "id": "runtime-evidence-integrity",
+      "title": "Keep integrated certification and governance metrics enforceable",
+      "status": "IN_PROGRESS",
+      "owner": "Repository maintainer",
+      "backup_status": "OWNER_ACTION_REQUIRED",
+      "issue": {
+        "number": 32,
+        "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/32",
+        "expected_state": "OPEN"
+      },
+      "runbook": {"path": "docs/REPOSITORY-OPERATIONS.md", "anchor": "ops-runtime-evidence-integrity"},
+      "verification": ["python scripts/validate_repository_operations.py"],
+      "metric": "Required certification paths bypassed or non-reproducible",
+      "threshold": "Zero bypassed required paths at the exact reviewed commit",
+      "rollback_trigger": "A required certification path is bypassed or its evidence becomes non-reproducible.",
+      "rollback_procedure": "Restore the last passing certification contract and reopen issue #32.",
+      "blocker": null
+    }
+  ]
+}

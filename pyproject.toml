@@ -26,7 +26,7 @@ include-package-data = true
 py-modules = ["main", "sensitive_data"]
 
 [tool.setuptools.packages.find]
-include = ["adapters*", "evaluation*", "integrations*", "runtime*", "scripts*", "seoctl*"]
+include = ["adapters*", "contracts*", "evaluation*", "integrations*", "runtime*", "scripts*", "security*", "seoctl*"]
 
 [tool.setuptools.package-data]
 seoctl = ["*.json"]
@@ -72,7 +72,7 @@ show_error_codes = true
 
 [tool.coverage.run]
 branch = true
-source = ["runtime", "seoctl", "integrations", "adapters"]
+source = ["runtime", "seoctl", "integrations", "adapters", "contracts", "security"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
