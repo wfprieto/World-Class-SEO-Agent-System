@@ -12,7 +12,7 @@ from typing import Any
 try:
     from scripts.remediation_squash_integration import rollback_history_head
 except ModuleNotFoundError:
-    from remediation_squash_integration import rollback_history_head
+    from remediation_squash_integration import rollback_history_head  # type: ignore[no-redef]
 
 
 ROOT = Path(__file__).resolve().parents[1]

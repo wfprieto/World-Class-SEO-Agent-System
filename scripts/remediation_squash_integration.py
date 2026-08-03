@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator
-
 RECEIPT_PATH = Path("evaluation/remediation/squash-integration-receipt.json")
 SCHEMA_PATH = Path("schemas/squash-integration-receipt.schema.json")
 
@@ -49,6 +47,8 @@ def _is_ancestor(root: Path, ancestor: str, descendant: str) -> bool:
 def _validated_payload(
     root: Path, payload: dict[str, Any] | None
 ) -> tuple[dict[str, Any] | None, list[str]]:
+    from jsonschema import Draft202012Validator
+
     try:
         receipt = payload or json.loads((root / RECEIPT_PATH).read_text(encoding="utf-8"))
         schema = json.loads((root / SCHEMA_PATH).read_text(encoding="utf-8"))
@@ -173,7 +173,20 @@ def rollback_history_head(root: Path, baseline: str) -> str:
 
     if _is_ancestor(root, baseline, "HEAD"):
         return _git(root, "rev-parse", "HEAD")
-    integration, errors = validate_squash_integration(root, baseline)
-    if errors or integration is None:
-        raise ValueError("; ".join(errors) or "authenticated rollback source is unavailable")
-    return integration.source_closure
+    try:
+        receipt = json.loads((root / RECEIPT_PATH).read_text(encoding="utf-8"))
+        if not isinstance(receipt, dict):
+            raise ValueError("receipt must contain an object")
+        if (
+            receipt.get("schema_version") != "1.0.0"
+            or receipt.get("integration_kind") != "GITHUB_SQUASH_PULL_REQUEST"
+        ):
+            raise ValueError("receipt identity is invalid")
+        identities, errors = _resolved_identities(root, receipt)
+        if identities:
+            errors.extend(_binding_errors(root, receipt, identities, baseline))
+        if errors:
+            raise ValueError("; ".join(errors))
+        return str(receipt["source"]["closure_commit"])
+    except (KeyError, OSError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"authenticated rollback source is unavailable: {exc}") from exc

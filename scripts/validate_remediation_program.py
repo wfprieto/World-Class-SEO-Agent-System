@@ -22,7 +22,7 @@ try:
         closure_history_head,
     )
 except ModuleNotFoundError:
-    from remediation_squash_integration import accepted_history_errors, closure_history_head
+    from remediation_squash_integration import accepted_history_errors, closure_history_head  # type: ignore[no-redef]  # noqa: I001
 
 
 ROOT = Path(__file__).resolve().parents[1]

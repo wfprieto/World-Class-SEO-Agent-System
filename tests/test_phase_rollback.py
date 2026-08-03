@@ -2,13 +2,28 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 from scripts.rehearse_phase_rollback import rehearse
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
+
+
+def test_rollback_cli_bootstraps_before_third_party_dependencies_are_installed() -> None:
+    result = subprocess.run(
+        [sys.executable, "-S", "scripts/rehearse_phase_rollback.py", "--help"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_rehearsal_preserves_candidate_and_restores_clean_baseline(tmp_path: Path) -> None:
