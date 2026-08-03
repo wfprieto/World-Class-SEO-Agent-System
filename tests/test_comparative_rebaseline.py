@@ -175,6 +175,39 @@ def test_every_open_capability_has_owner_pr_and_acceptance_criteria():
         assert row["acceptance"]
         if row["status"] == "GAP_OPEN":
             assert row["target_pr"].startswith("PR")
+            assert row["gap_disposition"] in ledger["allowed_gap_dispositions"]
+            assert row["owner"]
+            assert row["next_action"]
+
+
+def test_open_gap_requires_typed_disposition_owner_and_next_action():
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    for field in ("gap_disposition", "owner", "next_action"):
+        broken = copy.deepcopy(ledger)
+        row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
+        row.pop(field)
+        assert validate_parity_ledger(broken), field
+
+
+def test_gap_disposition_vocabulary_is_fail_closed():
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    broken["allowed_gap_dispositions"].append("PRETEND_COMPLETE")
+    row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
+    row["gap_disposition"] = "PRETEND_COMPLETE"
+    errors = validate_parity_ledger(broken)
+    assert any("canonical bounded set" in error for error in errors)
+    assert any("invalid or missing gap disposition" in error for error in errors)
+
+
+def test_closed_capability_cannot_retain_open_gap_disposition():
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(item for item in broken["capabilities"] if item["status"] != "GAP_OPEN")
+    row["gap_disposition"] = "CODE_REMEDIATION"
+    row["next_action"] = "Pretend this verified row is open."
+    errors = validate_parity_ledger(broken)
+    assert any("must not retain open-gap disposition" in error for error in errors)
 
 
 def test_closed_capability_requires_evidence():

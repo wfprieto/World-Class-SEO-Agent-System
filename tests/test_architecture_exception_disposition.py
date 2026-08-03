@@ -29,3 +29,19 @@ def test_disposition_cannot_hide_an_incomplete_count_or_earlier_target() -> None
     errors = validate(disposition=disposition)
     assert "overdue architecture exception count does not match disposition" in errors
     assert "remaining P8 architecture exceptions require explicit dated P9 reauthorization" in errors
+
+
+def test_every_reauthorized_edge_requires_one_retirement_plan() -> None:
+    disposition = copy.deepcopy(_disposition())
+    disposition["retirement_plans"][0]["edges"] = []
+    errors = validate(disposition=disposition)
+    assert any("requires edges" in error for error in errors)
+    assert any("cover every exact reauthorized edge" in error for error in errors)
+
+
+def test_retirement_plans_cannot_duplicate_an_edge() -> None:
+    disposition = copy.deepcopy(_disposition())
+    edge = disposition["retirement_plans"][0]["edges"][0]
+    disposition["retirement_plans"][1]["edges"].append(edge)
+    errors = validate(disposition=disposition)
+    assert any("must not duplicate edges" in error for error in errors)

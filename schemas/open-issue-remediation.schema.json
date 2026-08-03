@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/open-issue-remediation.schema.json",
+  "title": "Open issue remediation program",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "scope", "review_policy", "issues"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+    "scope": {"const": "CODE_AND_REPOSITORY_CONTROLLED_REMEDIATION"},
+    "review_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cadence_days", "evidence_branch", "close_only_when"],
+      "properties": {
+        "cadence_days": {"type": "integer", "minimum": 1, "maximum": 90},
+        "evidence_branch": {"const": "main"},
+        "close_only_when": {"type": "string", "minLength": 1}
+      }
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/issue"}
+    }
+  },
+  "$defs": {
+    "non_empty": {"type": "string", "minLength": 1},
+    "non_empty_unique_strings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/non_empty"}
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "number", "control_id", "classification", "state", "objective",
+        "scope_boundary", "deliverables", "acceptance_commands", "evidence_paths",
+        "close_policy", "blocked_by", "rollback"
+      ],
+      "properties": {
+        "number": {"type": "integer", "minimum": 1},
+        "control_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "classification": {
+          "enum": ["BOUNDED_DEBT", "CODE_CAPABILITY", "RECURRING_CONTROL", "OWNER_ACTION"]
+        },
+        "state": {"enum": ["ACTIVE", "BLOCKED_OWNER_ACTION"]},
+        "objective": {"$ref": "#/$defs/non_empty"},
+        "scope_boundary": {"$ref": "#/$defs/non_empty"},
+        "deliverables": {"$ref": "#/$defs/non_empty_unique_strings"},
+        "acceptance_commands": {"$ref": "#/$defs/non_empty_unique_strings"},
+        "evidence_paths": {"$ref": "#/$defs/non_empty_unique_strings"},
+        "close_policy": {"enum": ["CLOSE_ON_ACCEPTANCE", "KEEP_OPEN_RECURRING"]},
+        "blocked_by": {"type": ["string", "null"]},
+        "rollback": {"$ref": "#/$defs/non_empty"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"state": {"const": "BLOCKED_OWNER_ACTION"}}},
+          "then": {"properties": {"blocked_by": {"type": "string", "minLength": 1}}},
+          "else": {"properties": {"blocked_by": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"classification": {"const": "RECURRING_CONTROL"}}},
+          "then": {"properties": {"close_policy": {"const": "KEEP_OPEN_RECURRING"}}}
+        }
+      ]
+    }
+  }
+}

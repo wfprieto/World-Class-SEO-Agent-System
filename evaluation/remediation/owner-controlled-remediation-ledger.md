@@ -167,3 +167,23 @@ digest defect: Git converted text line endings at checkout, so logically identic
 evidence had different hashes. The final executable commit `79f0908bccb271f10b464dd8816f4440347efd04`
 canonicalizes CRLF to LF before hashing repository text and includes a direct equivalence
 regression. Neither failed run is accepted as evidence.
+
+## Open-issue remediation learning - 2026-08-03
+
+- Failure ID: `OPS-OPEN-001`
+- Phase: open issues #26, #28-#32
+- Action: run the combined mutation and full test suites on Windows
+- Expected result: isolated fixtures and an unchanged zero-debt quality ratchet
+- Observed evidence: pytest roots under the repository inherited the enclosing Git index, and
+  newly expanded validator functions exceeded the repository's complexity ceiling
+- Root cause: the local invocation violated the existing out-of-worktree temporary-root contract;
+  new validation branches were initially added before checking the function-span and Ruff ratchets
+- Learning status: confirmed
+- Learning: local failures must be classified against executable environment contracts before
+  changing product code, and control validators must be decomposed before they exceed ratchets
+- Recurrence guardrail: full tests use a dedicated system-temp root; scheduled CI uses runner temp;
+  Ruff, mypy, and `validate_quality_ratchets.py` run before repository-wide certification
+- Verification reference: 975 tests passed from the isolated system-temp root; focused remediation,
+  scheduled-workflow, type, lint, quality-ratchet, and full repository validators passed
+- Owner: Repository maintainer
+- Due phase: complete in this remediation change

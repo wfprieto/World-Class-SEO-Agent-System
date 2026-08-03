@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "scope": "CODE_AND_REPOSITORY_CONTROLLED_REMEDIATION",
+  "review_policy": {
+    "cadence_days": 30,
+    "evidence_branch": "main",
+    "close_only_when": "Every acceptance command passes at the exact main commit and all non-code prerequisites are independently attested."
+  },
+  "issues": [
+    {
+      "number": 26,
+      "control_id": "architecture-quality-debt",
+      "classification": "BOUNDED_DEBT",
+      "state": "ACTIVE",
+      "objective": "Retire each remaining exact architecture exception or reauthorize it without broadening the static-analysis boundary.",
+      "scope_boundary": "Python import edges represented by governance/architecture-contract.json; dynamic imports and whole-program data flow are not claimed.",
+      "deliverables": ["Exact edge inventory", "Per-edge retirement decision", "Non-increasing exception ratchet"],
+      "acceptance_commands": ["python scripts/validate_architecture_contract.py", "python scripts/validate_architecture_exception_disposition.py"],
+      "evidence_paths": ["governance/architecture-contract.json", "governance/architecture-exception-disposition.json"],
+      "close_policy": "CLOSE_ON_ACCEPTANCE",
+      "blocked_by": null,
+      "rollback": "Restore the last passing exact edge set and its disposition; never widen an allowlist to make validation pass."
+    },
+    {
+      "number": 28,
+      "control_id": "network-provider-boundaries",
+      "classification": "CODE_CAPABILITY",
+      "state": "ACTIVE",
+      "objective": "Resolve every repository-controllable comparative gap and classify non-code or excluded gaps without inflating capability claims.",
+      "scope_boundary": "Code-verifiable behavior only; packaging/release maturity and demonstrated real-world effectiveness are explicitly excluded.",
+      "deliverables": ["Typed gap disposition", "Executable acceptance evidence", "Truthful external-evidence boundary"],
+      "acceptance_commands": ["python scripts/inventory_comparator.py", "python scripts/validate_product_contract.py"],
+      "evidence_paths": ["evaluation/comparative/capability-parity.json", "seoctl/command-registry-overlay.json"],
+      "close_policy": "CLOSE_ON_ACCEPTANCE",
+      "blocked_by": null,
+      "rollback": "Revert unsupported code or claim changes together and restore the affected row to an explicit open disposition."
+    },
+    {
+      "number": 29,
+      "control_id": "documentation-knowledge-truth",
+      "classification": "RECURRING_CONTROL",
+      "state": "ACTIVE",
+      "objective": "Continuously detect stale knowledge, dependency-lock drift, generated-document drift, and governance-evidence drift.",
+      "scope_boundary": "Repository-controlled static evidence; provider freshness requires separate authenticated capture.",
+      "deliverables": ["Scheduled maintenance gate", "Per-pack freshness enforcement", "Dependency and governance verification"],
+      "acceptance_commands": ["python scripts/validate_reference_freshness.py", "python scripts/validate_dependency_lock.py", "python scripts/validate_repository_governance.py"],
+      "evidence_paths": [".github/workflows/maintenance.yml", "knowledge/reference-registry.json", "governance/github-controls.json"],
+      "close_policy": "KEEP_OPEN_RECURRING",
+      "blocked_by": null,
+      "rollback": "Revert the maintenance change, retain the failing evidence, and restore the last verified registry or lock."
+    },
+    {
+      "number": 30,
+      "control_id": "security-intake",
+      "classification": "OWNER_ACTION",
+      "state": "BLOCKED_OWNER_ACTION",
+      "objective": "Provide and attest one monitored private conduct-reporting destination distinct from vulnerability intake.",
+      "scope_boundary": "The repository can validate documentation and state transitions but cannot select, provision, or attest the owner's private destination.",
+      "deliverables": ["Owner-designated private destination", "Monitoring attestation", "Truthful support and conduct documentation"],
+      "acceptance_commands": ["python scripts/validate_repository_operations.py", "python scripts/validate_open_issue_remediation.py"],
+      "evidence_paths": ["SUPPORT.md", "CODE_OF_CONDUCT.md", "governance/repository-operations.json"],
+      "close_policy": "CLOSE_ON_ACCEPTANCE",
+      "blocked_by": "Repository owner must designate and attest a monitored private conduct-reporting destination.",
+      "rollback": "Remove an invalid destination and return the control to BLOCKED_OWNER_ACTION without exposing private reports."
+    },
+    {
+      "number": 31,
+      "control_id": "certification-supply-chain",
+      "classification": "RECURRING_CONTROL",
+      "state": "ACTIVE",
+      "objective": "Continuously certify CI, locked dependencies, immutable actions, source integrity, and rehearsable rollback.",
+      "scope_boundary": "Repository and GitHub control-plane evidence only; publication and downstream installation are separate release decisions.",
+      "deliverables": ["Exact-head certification", "Supply-chain validation", "Disposable rollback rehearsal"],
+      "acceptance_commands": ["python scripts/validate_dependency_lock.py", "python -m pytest -q tests/test_source_integrity.py", "python -m pytest -q tests/test_phase_rollback.py"],
+      "evidence_paths": [".github/workflows/validate.yml", ".github/workflows/release.yml", "scripts/rehearse_phase_rollback.py"],
+      "close_policy": "KEEP_OPEN_RECURRING",
+      "blocked_by": null,
+      "rollback": "Restore the last certified workflow and dependency lock, then rehearse rollback in a disposable checkout before retrying."
+    },
+    {
+      "number": 32,
+      "control_id": "runtime-evidence-integrity",
+      "classification": "RECURRING_CONTROL",
+      "state": "ACTIVE",
+      "objective": "Continuously preserve runtime, evidence binding, schema compatibility, generated reports, and certification receipts.",
+      "scope_boundary": "Deterministic repository artifacts and schemas; external truth and provider outcomes require separate evidence.",
+      "deliverables": ["Schema mutation coverage", "Evidence-binding mutation coverage", "Report and receipt reproducibility"],
+      "acceptance_commands": ["python scripts/validate_schema_examples.py", "python scripts/validate_evidence_binding.py", "python scripts/run_security_mutation_checks.py"],
+      "evidence_paths": ["schemas/agent-output.schema.json", "runtime/evidence_binding.py", "scripts/seo_pdf_report.py"],
+      "close_policy": "KEEP_OPEN_RECURRING",
+      "blocked_by": null,
+      "rollback": "Restore the last compatible schemas and evidence contract, regenerate only derived artifacts, and rerun exact-head certification."
+    }
+  ]
+}
