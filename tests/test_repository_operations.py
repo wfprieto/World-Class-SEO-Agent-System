@@ -118,7 +118,23 @@ def test_owner_prerequisites_cannot_be_reported_ready(tmp_path: Path, index: int
         path["blocker"] = None
 
     errors = _mutate(tmp_path, false_ready)
-    assert any("must remain BLOCKED_OWNER_ACTION" in error for error in errors)
+    assert any("readiness requires explicit verified closure evidence" in error for error in errors)
+
+
+@pytest.mark.parametrize("index", [1, 4])
+def test_owner_prerequisite_can_transition_with_explicit_closure_evidence(
+    tmp_path: Path, index: int
+) -> None:
+    def close_control(contract: dict[str, Any]) -> None:
+        path = contract["critical_paths"][index]
+        path["status"] = "READY"
+        path["blocker"] = None
+        path["closure_evidence"] = {
+            "status": "VERIFIED",
+            "refs": [path["issue"]["url"]],
+        }
+
+    assert _mutate(tmp_path, close_control) == []
 
 
 def test_only_declared_owner_prerequisites_may_use_blocked_status(tmp_path: Path) -> None:

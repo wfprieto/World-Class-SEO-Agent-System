@@ -82,6 +82,23 @@ def _identity_errors(paths: list[dict[str, Any]]) -> list[str]:
     return errors
 
 
+def _closure_errors(identifier: object, status: object, closure: object) -> list[str]:
+    errors: list[str] = []
+    closure_status = closure.get("status") if isinstance(closure, dict) else None
+    closure_refs = closure.get("refs") if isinstance(closure, dict) else None
+    if identifier in OWNER_ACTION_PATHS and status == "BLOCKED_OWNER_ACTION" and (
+        closure_status != "PENDING_OWNER_ACTION" or closure_refs != []
+    ):
+        errors.append(f"{identifier} blocked state requires pending empty closure evidence")
+    if identifier in OWNER_ACTION_PATHS and status != "BLOCKED_OWNER_ACTION" and (
+        closure_status != "VERIFIED" or not closure_refs
+    ):
+        errors.append(f"{identifier} readiness requires explicit verified closure evidence")
+    if identifier not in OWNER_ACTION_PATHS and closure != {"status": "NOT_REQUIRED", "refs": []}:
+        errors.append(f"{identifier} must not claim owner-action closure evidence")
+    return errors
+
+
 def _issue_and_status_errors(path: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     identifier = path.get("id")
@@ -96,8 +113,8 @@ def _issue_and_status_errors(path: dict[str, Any]) -> list[str]:
             errors.append(f"{identifier} issue URL must be {expected_url}")
 
     status = path.get("status")
-    if identifier in OWNER_ACTION_PATHS and status != "BLOCKED_OWNER_ACTION":
-        errors.append(f"{identifier} must remain BLOCKED_OWNER_ACTION until owner evidence exists")
+    closure = path.get("closure_evidence")
+    errors.extend(_closure_errors(identifier, status, closure))
     if identifier not in OWNER_ACTION_PATHS and status == "BLOCKED_OWNER_ACTION":
         errors.append(f"{identifier} has no declared owner-only prerequisite")
     return errors

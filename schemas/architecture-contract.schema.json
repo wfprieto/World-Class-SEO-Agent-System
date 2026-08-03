@@ -30,7 +30,7 @@
           "target": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"},
           "owner": {"type": "string", "minLength": 3},
           "rationale": {"type": "string", "minLength": 20},
-          "removal_phase": {"type": "string", "pattern": "^P[3-8]$"}
+          "removal_phase": {"type": "string", "pattern": "^P[3-9]$"}
         }
       }
     },

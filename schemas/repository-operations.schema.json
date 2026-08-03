@@ -34,6 +34,8 @@
         "threshold",
         "rollback_trigger",
         "rollback_procedure",
+        "next_action_due",
+        "closure_evidence",
         "blocker"
       ],
       "properties": {
@@ -72,6 +74,16 @@
         "threshold": {"$ref": "#/$defs/non_empty"},
         "rollback_trigger": {"$ref": "#/$defs/non_empty"},
         "rollback_procedure": {"$ref": "#/$defs/non_empty"},
+        "next_action_due": {"type": "string", "format": "date"},
+        "closure_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "refs"],
+          "properties": {
+            "status": {"enum": ["NOT_REQUIRED", "PENDING_OWNER_ACTION", "VERIFIED"]},
+            "refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "uri"}}
+          }
+        },
         "blocker": {"type": ["string", "null"]}
       },
       "allOf": [

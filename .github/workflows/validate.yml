@@ -331,6 +331,24 @@ jobs:
         run: python scripts/capture_github_controls.py --ci-observable
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Reject provider-unverifiable fork pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        shell: pwsh
+        run: throw 'Provider authentication is unavailable for fork pull requests; repository certification fails closed.'
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
 
   validate:
     name: validate

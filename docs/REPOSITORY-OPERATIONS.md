@@ -29,7 +29,7 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Verify:** Run `python scripts/validate_architecture_contract.py`,
   `python scripts/validate_architecture_exception_disposition.py`, and
   `python scripts/validate_quality_ratchets.py`. Compare exact counts and digests with issue #26.
-- **Fail:** Fail on a new edge or fingerprint, raised ceiling, unowned overdue exception,
+- **Fail:** Fail on a new edge or fingerprint, raised ceiling, unowned or overdue exception,
   count/digest drift, or phase change without issue-backed acceptance criteria.
 - **Recover:** Revert the unauthorized edge or ceiling. If immediate removal is unsafe, restore
   the last non-regressing disposition and keep issue #26 open with exact scope and verification.

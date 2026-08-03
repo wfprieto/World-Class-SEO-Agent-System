@@ -165,6 +165,17 @@ def test_provider_authentication_cannot_fan_out_across_runtime_matrix(tmp_path: 
     assert any("provider-offline" in error for error in local_errors(root))
 
 
+def test_fork_pull_request_provider_skip_cannot_certify(tmp_path: Path) -> None:
+    root = _copy_repository_surface(tmp_path)
+    workflow = root / ".github/workflows/validate.yml"
+    text = workflow.read_text(encoding="utf-8")
+    start = text.index("      - name: Reject provider-unverifiable fork pull requests")
+    end = text.index("\n\n  validate:", start)
+    workflow.write_text(text[:start] + text[end:], encoding="utf-8")
+
+    assert any("Reject provider-unverifiable fork pull requests" in error for error in local_errors(root))
+
+
 def test_mutable_action_and_persisted_checkout_credentials_are_rejected(tmp_path: Path) -> None:
     root = _copy_repository_surface(tmp_path)
     workflow = root / ".github/workflows/validate.yml"

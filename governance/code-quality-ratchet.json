@@ -1533,7 +1533,7 @@
       "removal_phase": "P7"
     },
     "scripts.validate_repository_governance::local_errors": {
-      "max_span": 140,
+      "max_span": 136,
       "max_complexity": 53,
       "max_missing_annotations": 0,
       "owner": "Quality owner",

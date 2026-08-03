@@ -24,6 +24,7 @@ CERTIFICATION_NEEDS = {
     "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification",
 }
 COLLABORATOR_PERMISSIONS = {"pull", "triage", "push", "maintain", "admin"}
+PROVIDER_JOB_MARKERS = ("WCSEO_AUTHENTICATE_CI_RECEIPTS", "GITHUB_TOKEN", "capture_github_controls.py --ci-observable", "Reject provider-unverifiable fork pull requests", "head.repo.full_name != github.repository", "repository certification fails closed")
 
 def _load_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -169,11 +170,7 @@ def local_errors(root: Path = ROOT) -> list[str]:
         errors.append("one centralized provider-authentication job is required")
     else:
         provider_text = json.dumps(provider_job, sort_keys=True)
-        for required_text in (
-            "WCSEO_AUTHENTICATE_CI_RECEIPTS",
-            "GITHUB_TOKEN",
-            "capture_github_controls.py --ci-observable",
-        ):
+        for required_text in PROVIDER_JOB_MARKERS:
             if required_text not in provider_text:
                 errors.append(f"provider-authentication job is missing {required_text}")
     errors.extend(_phase8_local_errors(contract, provider_job))

@@ -3631,7 +3631,7 @@
         "adoption target",
         "real-world result claim"
       ],
-      "rollback": "Revert repository-operation documents and settings individually while preserving the verified source improvements.",
+      "rollback": "Revert the complete baseline-to-review-snapshot commit range newest-first in a clean disposable checkout; this restores the exact pre-P8 tree and does not preserve P8 source improvements.",
       "acceptance_criteria": [
         {
           "id": "P8-AC-01",
@@ -3670,7 +3670,7 @@
         },
         {
           "id": "P8-AC-02",
-          "description": "The integrated source passes full certification and two independent fresh-context reviews.",
+          "description": "The integrated source passes full certification and is frozen for two independent fresh-context closure reviews.",
           "horizon": "IMMEDIATE",
           "status": "PASS",
           "evidence_refs": [
@@ -3819,7 +3819,7 @@
         ]
       },
       "review": {
-        "evidence_package_hash": "f9b54fc70cc669030a87bb291d777c066dde4bdd817a3d84065a256ea35ec1b7",
+        "evidence_package_hash": "d23bed0194944dbd1bdf85dc47ba3ff9d7d667521715ba184a4f338a1505824e",
         "verdicts": []
       }
     }

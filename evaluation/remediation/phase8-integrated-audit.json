@@ -7,8 +7,9 @@
     "initial_exception_count": 45,
     "retired_exception_count": 26,
     "remaining_exception_count": 19,
-    "remaining_overdue_p5_count": 17,
-    "remaining_p8_count": 2,
+    "overdue_exception_count": 0,
+    "reauthorized_p9_count": 19,
+    "reauthorization_review_due": "2026-09-01",
     "new_exception_count": 0,
     "canonical_contract_layer": "contracts",
     "canonical_url_policy_layer": "security"

@@ -36,17 +36,21 @@ def validate(root: Path = ROOT, disposition: dict[str, Any] | None = None) -> li
     if source != "governance/architecture-contract.json":
         return ["architecture exception disposition must bind the canonical contract"]
     contract = _load(root / source)
-    overdue_phase = active["overdue_phase"]
+    target_phase = active["target_phase"]
     edges = sorted(
         f"{item['source']}->{item['target']}"
         for item in contract.get("exceptions", [])
-        if item.get("removal_phase") == overdue_phase
+        if item.get("removal_phase") == target_phase
     )
     digest = hashlib.sha256(("\n".join(edges) + "\n").encode()).hexdigest()
     if active["schema_version"] != "1.0.0":
         errors.append("architecture exception disposition schema version must be 1.0.0")
-    if active["disposition"] != "REPLAN" or active["target_phase"] != "P8":
-        errors.append("overdue P5 architecture exceptions must be explicitly replanned to P8")
+    if (
+        active["disposition"] != "REAUTHORIZE"
+        or active["overdue_phase"] != "P8"
+        or target_phase != "P9"
+    ):
+        errors.append("remaining P8 architecture exceptions require explicit dated P9 reauthorization")
     if active["expected_exception_count"] != len(edges):
         errors.append("overdue architecture exception count does not match disposition")
     if active["expected_edges_sha256"] != digest:

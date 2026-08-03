@@ -20,6 +20,8 @@
       "threshold": "No new exception and every retained exception has exact issue-backed disposition",
       "rollback_trigger": "An exception is removed without passing its recorded retirement criteria.",
       "rollback_procedure": "Restore the last valid disposition and reopen issue #26 before merge.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "NOT_REQUIRED", "refs": []},
       "blocker": null
     },
     {
@@ -39,6 +41,8 @@
       "threshold": "At least one distinct eligible non-last-pusher reviewer",
       "rollback_trigger": "The eligible reviewer loses access or independence, or protection permits self-approval.",
       "rollback_procedure": "Restore fail-closed merge blocking and reopen issue #27 until a replacement is verified.",
+      "next_action_due": "2026-08-10",
+      "closure_evidence": {"status": "PENDING_OWNER_ACTION", "refs": []},
       "blocker": "Only the repository owner is currently available; the owner must invite and verify a distinct eligible reviewer."
     },
     {
@@ -58,6 +62,8 @@
       "threshold": "Zero unsupported material comparative claims",
       "rollback_trigger": "A comparative claim exceeds the capability represented by executable repository evidence.",
       "rollback_procedure": "Revert the unsupported claim or capability change and reopen issue #28.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "NOT_REQUIRED", "refs": []},
       "blocker": null
     },
     {
@@ -77,6 +83,8 @@
       "threshold": "Zero overdue repository-controlled freshness obligations",
       "rollback_trigger": "A freshness, dependency, or governance check regresses after maintenance.",
       "rollback_procedure": "Revert the maintenance change, preserve the failing evidence, and reopen issue #29.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "NOT_REQUIRED", "refs": []},
       "blocker": null
     },
     {
@@ -96,6 +104,8 @@
       "threshold": "Exactly one documented and monitored private destination",
       "rollback_trigger": "The private destination becomes public, unmonitored, or inaccessible.",
       "rollback_procedure": "Mark the control blocked, remove the invalid destination, and reopen issue #30.",
+      "next_action_due": "2026-08-10",
+      "closure_evidence": {"status": "PENDING_OWNER_ACTION", "refs": []},
       "blocker": "No monitored private conduct-reporting destination is configured; the owner must provision and attest one."
     },
     {
@@ -115,6 +125,8 @@
       "threshold": "Zero uncovered critical paths",
       "rollback_trigger": "A documented recovery action is destructive, incomplete, or cannot restore the last good state.",
       "rollback_procedure": "Revert the runbook change and keep issue #31 open until a safe recovery rehearsal passes.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "NOT_REQUIRED", "refs": []},
       "blocker": null
     },
     {
@@ -134,6 +146,8 @@
       "threshold": "Zero bypassed required paths at the exact reviewed commit",
       "rollback_trigger": "A required certification path is bypassed or its evidence becomes non-reproducible.",
       "rollback_procedure": "Restore the last passing certification contract and reopen issue #32.",
+      "next_action_due": "2026-09-01",
+      "closure_evidence": {"status": "NOT_REQUIRED", "refs": []},
       "blocker": null
     }
   ]

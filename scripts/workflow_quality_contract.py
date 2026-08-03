@@ -36,7 +36,7 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "db932bd3c28d150af901ac9ddaaddce3d222d79626eef088c6f5d8e530346b72"
+WORKFLOW_CONTRACT_SHA = "10d185a81cf4c6e33b1c32eebd28103db89f75b398499d35b9f1623e0fbecf06"
 RELEASE_CONTRACT_SHA = "d80134087c20294c3c39464880f4d03b7a85cb5eb96afa19c830e93a0946d5a3"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",

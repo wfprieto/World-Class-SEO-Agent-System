@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
   "source_contract": "governance/architecture-contract.json",
-  "overdue_phase": "P5",
-  "disposition": "REPLAN",
-  "target_phase": "P8",
-  "expected_exception_count": 17,
-  "expected_edges_sha256": "482efbd9d9e4672f0c6d04e4bf86a9be0265503a44f7da9b6ce68b8372fc7690",
-  "rationale": "The 17 remaining exact-edge exceptions are observed composition, persistence, provider, asset, and PageSpeed boundaries. Removing them safely requires coordinated port migration and regression proof; they remain explicitly replanned to P8 without broadening an existing executable layer."
+  "overdue_phase": "P8",
+  "disposition": "REAUTHORIZE",
+  "target_phase": "P9",
+  "expected_exception_count": 19,
+  "expected_edges_sha256": "70be8c39971031351c0d340dc17b3a4120bae7ce1ad8a93a94cd7538f37f0eb4",
+  "rationale": "Issue #26 reauthorizes 19 exact observed composition, persistence, provider, asset, PageSpeed, and transport-delegation edges through P9, owned by the Runtime architecture and Security owners with the next review due 2026-09-01; no allowed edge or static-analysis scope is broadened."
 }
