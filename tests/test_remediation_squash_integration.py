@@ -6,6 +6,7 @@ from pathlib import Path
 
 from scripts.remediation_squash_integration import (
     RECEIPT_PATH,
+    rollback_history_head,
     validate_squash_integration,
 )
 
@@ -54,3 +55,24 @@ def test_wrong_program_baseline_is_rejected() -> None:
 
     assert context is None
     assert any("baseline" in error for error in errors)
+
+
+def test_phase_rollback_baseline_resolves_through_authenticated_source() -> None:
+    rollback = json.loads(
+        (ROOT / "evaluation/remediation/phase8-rollback-evidence.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert rollback_history_head(ROOT, rollback["baseline_commit"]) == (
+        "0db24cfffb8d1af5d946f564762ed6126bab5ad4"
+    )
+
+
+def test_phase_rollback_baseline_outside_source_is_rejected() -> None:
+    try:
+        rollback_history_head(ROOT, "f" * 40)
+    except ValueError as exc:
+        assert "outside the authenticated squash source" in str(exc)
+    else:
+        raise AssertionError("unauthenticated phase baseline was accepted")

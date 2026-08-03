@@ -183,10 +183,14 @@ def rollback_history_head(root: Path, baseline: str) -> str:
         ):
             raise ValueError("receipt identity is invalid")
         identities, errors = _resolved_identities(root, receipt)
+        source_closure = str(receipt["source"]["closure_commit"])
+        integration_baseline = str(receipt["source"]["baseline_commit"])
         if identities:
-            errors.extend(_binding_errors(root, receipt, identities, baseline))
+            errors.extend(_binding_errors(root, receipt, identities, integration_baseline))
+        if not _is_ancestor(root, baseline, source_closure):
+            errors.append("phase rollback baseline is outside the authenticated squash source")
         if errors:
             raise ValueError("; ".join(errors))
-        return str(receipt["source"]["closure_commit"])
+        return source_closure
     except (KeyError, OSError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError(f"authenticated rollback source is unavailable: {exc}") from exc
