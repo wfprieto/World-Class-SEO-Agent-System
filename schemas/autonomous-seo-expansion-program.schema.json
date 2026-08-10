@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-expansion-program.schema.json",
+  "title": "WCSEO Autonomous SEO Expansion Program",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "program_id",
+    "objective",
+    "baseline",
+    "apivr_tier",
+    "current_phase",
+    "direct_merge_permitted",
+    "capability_maturity_order",
+    "phase_close_requires",
+    "scope",
+    "exclusions",
+    "phases",
+    "extension_lanes",
+    "program_evidence_state"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "program_id": {"const": "autonomous-seo-expansion"},
+    "objective": {"type": "string", "minLength": 40},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "branch", "working_branch", "captured_at"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "branch": {"const": "main"},
+        "working_branch": {"type": "string", "minLength": 3},
+        "captured_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "apivr_tier": {"enum": ["COMPREHENSIVE", "FORENSIC"]},
+    "current_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "direct_merge_permitted": {"const": false},
+    "capability_maturity_order": {
+      "type": "array",
+      "prefixItems": [
+        {"const": "G0_DOCUMENTED"},
+        {"const": "G1_FIXTURE_VERIFIED"},
+        {"const": "G2_SHADOW_VERIFIED"},
+        {"const": "G3_LIVE_READ_VERIFIED"},
+        {"const": "G4_DRAFT_WRITE_VERIFIED"},
+        {"const": "G5_CANARY_WRITE_VERIFIED"},
+        {"const": "G6_BOUNDED_AUTONOMOUS"}
+      ],
+      "items": false,
+      "minItems": 7,
+      "maxItems": 7
+    },
+    "phase_close_requires": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 3}
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 5}
+    },
+    "exclusions": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 5}
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "items": {"$ref": "#/$defs/phase"}
+    },
+    "extension_lanes": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"$ref": "#/$defs/lane"}
+    },
+    "program_evidence_state": {
+      "enum": ["NOT_RUN", "PARTIAL", "VERIFIED", "BLOCKED"]
+    }
+  },
+  "$defs": {
+    "owner_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lead", "scrummaster", "independent_reviewer"],
+      "properties": {
+        "lead": {"type": "string", "minLength": 3},
+        "scrummaster": {"const": "Senior ScrumMaster 3"},
+        "independent_reviewer": {"const": "VP Engineering"}
+      }
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "status",
+        "apivr_tier",
+        "objective",
+        "depends_on",
+        "owners",
+        "scope",
+        "non_goals",
+        "maturity_target",
+        "acceptance_criteria",
+        "rollback",
+        "stop_conditions",
+        "technical_verification",
+        "outcome_verification"
+      ],
+      "properties": {
+        "id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+        "title": {"type": "string", "minLength": 8},
+        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE"]},
+        "apivr_tier": {"enum": ["COMPREHENSIVE", "FORENSIC"]},
+        "objective": {"type": "string", "minLength": 20},
+        "depends_on": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}
+        },
+        "owners": {"$ref": "#/$defs/owner_set"},
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "non_goals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "maturity_target": {
+          "enum": [
+            "G0_DOCUMENTED",
+            "G1_FIXTURE_VERIFIED",
+            "G2_SHADOW_VERIFIED",
+            "G3_LIVE_READ_VERIFIED",
+            "G4_DRAFT_WRITE_VERIFIED",
+            "G5_CANARY_WRITE_VERIFIED",
+            "G6_BOUNDED_AUTONOMOUS"
+          ]
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 8}
+        },
+        "rollback": {"type": "string", "minLength": 12},
+        "stop_conditions": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 8}
+        },
+        "technical_verification": {"enum": ["NOT_RUN", "PARTIAL", "PASS", "FAIL", "BLOCKED"]},
+        "outcome_verification": {"enum": ["NOT_RUN", "PENDING", "PARTIAL", "PASS", "FAIL", "BLOCKED"]}
+      }
+    },
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "status", "depends_on", "owner", "maturity_ceiling_without_separate_authorization", "scope"],
+      "properties": {
+        "id": {"pattern": "^L-[A-D]$"},
+        "title": {"type": "string", "minLength": 5},
+        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE", "DEFERRED"]},
+        "depends_on": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}
+        },
+        "owner": {"type": "string", "minLength": 3},
+        "maturity_ceiling_without_separate_authorization": {
+          "enum": ["G2_SHADOW_VERIFIED", "G3_LIVE_READ_VERIFIED", "G4_DRAFT_WRITE_VERIFIED"]
+        },
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        }
+      }
+    }
+  }
+}
