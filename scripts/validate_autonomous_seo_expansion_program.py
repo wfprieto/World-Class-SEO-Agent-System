@@ -7,6 +7,7 @@ local, or AI-search outcome proof.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -83,21 +84,27 @@ def _schema_errors(
 ) -> list[str]:
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
+    errors = sorted(
+        validator.iter_errors(payload),
+        key=lambda item: tuple(str(part) for part in item.absolute_path),
+    )
     return [
         f"{label} {'.'.join(str(part) for part in error.absolute_path) or '<root>'}: "
         f"{error.message}"
-        for error in sorted(
-            validator.iter_errors(payload), key=lambda item: list(item.absolute_path)
-        )
+        for error in errors
     ]
 
 
 def _git_head(root: Path) -> str | None:
+    return _git_stdout(root, ["rev-parse", "HEAD"])
+
+
+def _git_stdout(root: Path, arguments: list[str]) -> str | None:
     if not (root / ".git").exists():
         return None
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
+            ["git", *arguments],
             cwd=root,
             check=True,
             capture_output=True,
@@ -107,7 +114,7 @@ def _git_head(root: Path) -> str | None:
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
     value = result.stdout.strip()
-    return value if len(value) == 40 else None
+    return value or None
 
 
 def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
@@ -309,6 +316,37 @@ def _reviewer_independence_errors(
     return errors
 
 
+def _canonical_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _closure_evidence_payload(closure: dict[str, Any]) -> dict[str, Any]:
+    included = (
+        "program_id",
+        "phase_id",
+        "candidate_commit",
+        "builder_context_id",
+        "apivr",
+        "twenty_pass",
+        "rollback",
+        "technical_verification",
+        "outcome_verification",
+        "unexpected_change_scan",
+        "security_review",
+        "documentation_review",
+        "evidence_refs",
+    )
+    return {key: closure[key] for key in included}
+
+
+def _closure_hash_errors(closure: dict[str, Any]) -> list[str]:
+    expected = _canonical_hash(_closure_evidence_payload(closure))
+    if closure.get("evidence_package_hash") == expected:
+        return []
+    return ["phase closure evidence_package_hash does not match its canonical evidence payload"]
+
+
 def _closure_path(root: Path, phase_id: str) -> Path:
     name = f"autonomous-seo-expansion-{phase_id.lower()}-closure.json"
     return root / "evaluation" / "remediation" / name
@@ -323,6 +361,7 @@ def _phase_closure_errors(phase: dict[str, Any], root: Path) -> list[str]:
     errors = _schema_errors(closure, _load(CLOSURE_SCHEMA_PATH), f"{phase_id} closure")
     if errors:
         return errors
+    errors.extend(_closure_hash_errors(closure))
     errors.extend(_closure_identity_errors(phase, closure, root))
     errors.extend(_reviewer_file_errors(closure, root, _load(REVIEWER_SCHEMA_PATH)))
     return errors
@@ -333,15 +372,39 @@ def _closure_identity_errors(
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
+    candidate = str(closure.get("candidate_commit"))
     if closure.get("phase_id") != phase_id:
         errors.append(f"{phase_id} closure phase_id does not match")
-    head = _git_head(root)
-    if head and closure.get("candidate_commit") != head:
-        errors.append(f"{phase_id} closure must be bound to exact candidate HEAD {head}")
+    if (root / ".git").exists():
+        errors.extend(_reviewed_candidate_errors(root, phase_id, candidate, closure))
     closure_outcome = closure.get("outcome_verification", {}).get("state")
     if phase_id in REQUIRED_OUTCOME_PASS_PHASES and closure_outcome != "PASS":
         errors.append(f"{phase_id} requires outcome_verification PASS before closure")
     return errors
+
+
+def _reviewed_candidate_errors(
+    root: Path, phase_id: str, candidate: str, closure: dict[str, Any]
+) -> list[str]:
+    if len(candidate) != 40 or _git_stdout(root, ["merge-base", "--is-ancestor", candidate, "HEAD"]) is None:
+        return [f"{phase_id} closure candidate_commit must be an ancestor of final HEAD"]
+    changed = _git_stdout(root, ["diff", "--name-only", f"{candidate}..HEAD"])
+    paths = [] if not changed else changed.splitlines()
+    allowed = _allowed_finalization_paths(phase_id, closure)
+    unexpected = sorted(path for path in paths if path not in allowed)
+    if unexpected:
+        return [f"{phase_id} has post-review source drift outside closure evidence: {unexpected}"]
+    return []
+
+
+def _allowed_finalization_paths(phase_id: str, closure: dict[str, Any]) -> set[str]:
+    allowed = {
+        "evaluation/remediation/autonomous-seo-expansion-program.json",
+        "evaluation/remediation/autonomous-seo-expansion-ledger.md",
+        f"evaluation/remediation/autonomous-seo-expansion-{phase_id.lower()}-closure.json",
+    }
+    allowed.update(str(item) for item in closure.get("reviewer_verdict_files", []))
+    return allowed
 
 
 def _completed_phase_errors(phase: dict[str, Any], root: Path) -> list[str]:
@@ -398,15 +461,23 @@ def _governance_errors(program: dict[str, Any]) -> list[str]:
     if program.get("direct_merge_permitted") is not False:
         errors.append("direct merge is forbidden for the autonomous expansion program")
     close_blob = "\n".join(str(item) for item in program.get("phase_close_requires", [])).lower()
-    errors.extend(_required_marker_errors(close_blob, ESSENTIAL_CLOSE_CONTROLS, "phase_close_requires"))
+    errors.extend(
+        _required_marker_errors(close_blob, ESSENTIAL_CLOSE_CONTROLS, "phase_close_requires")
+    )
     exclusion_blob = "\n".join(str(item) for item in program.get("exclusions", [])).lower()
     required_boundaries = ("read-only flagship", "ranking", "pbn", "global autonomy")
-    errors.extend(_required_marker_errors(exclusion_blob, required_boundaries, "program exclusions"))
+    errors.extend(
+        _required_marker_errors(exclusion_blob, required_boundaries, "program exclusions")
+    )
     return errors
 
 
 def _required_marker_errors(blob: str, markers: tuple[str, ...], label: str) -> list[str]:
-    return [f"{label} is missing essential control: {marker}" for marker in markers if marker.lower() not in blob]
+    return [
+        f"{label} is missing essential control: {marker}"
+        for marker in markers
+        if marker.lower() not in blob
+    ]
 
 
 def _lane_errors(program: dict[str, Any]) -> list[str]:
