@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import pathlib
 import subprocess
-from pathlib import Path
-from typing import Any
+import typing
 
-from jsonschema import Draft202012Validator
+import jsonschema
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLOSURE_SCHEMA_PATH = ROOT / "schemas" / "autonomous-seo-phase-closure.schema.json"
 REVIEWER_SCHEMA_PATH = ROOT / "schemas" / "reviewer-verdict.schema.json"
 REQUIRED_OUTCOME_PASS_PHASES = {"P12", "P13"}
@@ -21,7 +21,7 @@ REQUIRED_REVIEWERS = {
 }
 
 
-def load_object(path: Path) -> dict[str, Any]:
+def load_object(path: pathlib.Path) -> dict[str, typing.Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError(f"{path.relative_to(ROOT)} must contain a JSON object")
@@ -29,10 +29,12 @@ def load_object(path: Path) -> dict[str, Any]:
 
 
 def schema_errors(
-    payload: dict[str, Any], schema: dict[str, Any], label: str = "schema"
+    payload: dict[str, typing.Any],
+    schema: dict[str, typing.Any],
+    label: str = "schema",
 ) -> list[str]:
-    Draft202012Validator.check_schema(schema)
-    validator = Draft202012Validator(schema)
+    jsonschema.Draft202012Validator.check_schema(schema)
+    validator = jsonschema.Draft202012Validator(schema)
     errors = sorted(
         validator.iter_errors(payload),
         key=lambda item: tuple(str(part) for part in item.absolute_path),
@@ -44,7 +46,7 @@ def schema_errors(
     ]
 
 
-def git_stdout(root: Path, arguments: list[str]) -> str | None:
+def git_stdout(root: pathlib.Path, arguments: list[str]) -> str | None:
     result = _run_git(root, arguments)
     if result is None:
         return None
@@ -52,11 +54,14 @@ def git_stdout(root: Path, arguments: list[str]) -> str | None:
     return value or None
 
 
-def git_command_ok(root: Path, arguments: list[str]) -> bool:
+def git_command_ok(root: pathlib.Path, arguments: list[str]) -> bool:
     return _run_git(root, arguments) is not None
 
 
-def _run_git(root: Path, arguments: list[str]) -> subprocess.CompletedProcess[str] | None:
+def _run_git(
+    root: pathlib.Path,
+    arguments: list[str],
+) -> subprocess.CompletedProcess[str] | None:
     if not (root / ".git").exists():
         return None
     try:
@@ -72,7 +77,7 @@ def _run_git(root: Path, arguments: list[str]) -> subprocess.CompletedProcess[st
         return None
 
 
-def safe_repo_path(root: Path, relative: str) -> Path | None:
+def safe_repo_path(root: pathlib.Path, relative: str) -> pathlib.Path | None:
     candidate = (root / relative).resolve()
     try:
         candidate.relative_to(root.resolve())
@@ -82,9 +87,11 @@ def safe_repo_path(root: Path, relative: str) -> Path | None:
 
 
 def reviewer_file_errors(
-    closure: dict[str, Any], root: Path, reviewer_schema: dict[str, Any]
+    closure: dict[str, typing.Any],
+    root: pathlib.Path,
+    reviewer_schema: dict[str, typing.Any],
 ) -> list[str]:
-    verdicts: list[dict[str, Any]] = []
+    verdicts: list[dict[str, typing.Any]] = []
     errors: list[str] = []
     for relative in closure.get("reviewer_verdict_files", []):
         path = safe_repo_path(root, str(relative))
@@ -100,7 +107,8 @@ def reviewer_file_errors(
 
 
 def reviewer_independence_errors(
-    closure: dict[str, Any], verdicts: list[dict[str, Any]]
+    closure: dict[str, typing.Any],
+    verdicts: list[dict[str, typing.Any]],
 ) -> list[str]:
     errors: list[str] = []
     if len(verdicts) != 2:
@@ -119,12 +127,14 @@ def reviewer_independence_errors(
     return errors
 
 
-def canonical_hash(payload: Any) -> str:
+def canonical_hash(payload: typing.Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
-def closure_evidence_payload(closure: dict[str, Any]) -> dict[str, Any]:
+def closure_evidence_payload(
+    closure: dict[str, typing.Any],
+) -> dict[str, typing.Any]:
     included = (
         "program_id",
         "phase_id",
@@ -143,19 +153,22 @@ def closure_evidence_payload(closure: dict[str, Any]) -> dict[str, Any]:
     return {key: closure[key] for key in included}
 
 
-def closure_hash_errors(closure: dict[str, Any]) -> list[str]:
+def closure_hash_errors(closure: dict[str, typing.Any]) -> list[str]:
     expected = canonical_hash(closure_evidence_payload(closure))
     if closure.get("evidence_package_hash") == expected:
         return []
     return ["phase closure evidence_package_hash does not match its canonical evidence payload"]
 
 
-def closure_path(root: Path, phase_id: str) -> Path:
+def closure_path(root: pathlib.Path, phase_id: str) -> pathlib.Path:
     name = f"autonomous-seo-expansion-{phase_id.lower()}-closure.json"
     return root / "evaluation" / "remediation" / name
 
 
-def phase_closure_errors(phase: dict[str, Any], root: Path) -> list[str]:
+def phase_closure_errors(
+    phase: dict[str, typing.Any],
+    root: pathlib.Path,
+) -> list[str]:
     phase_id = str(phase.get("id"))
     path = closure_path(root, phase_id)
     if not path.is_file():
@@ -171,7 +184,9 @@ def phase_closure_errors(phase: dict[str, Any], root: Path) -> list[str]:
 
 
 def _closure_identity_errors(
-    phase: dict[str, Any], closure: dict[str, Any], root: Path
+    phase: dict[str, typing.Any],
+    closure: dict[str, typing.Any],
+    root: pathlib.Path,
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
@@ -187,7 +202,10 @@ def _closure_identity_errors(
 
 
 def _reviewed_candidate_errors(
-    root: Path, phase_id: str, candidate: str, closure: dict[str, Any]
+    root: pathlib.Path,
+    phase_id: str,
+    candidate: str,
+    closure: dict[str, typing.Any],
 ) -> list[str]:
     if len(candidate) != 40:
         return [f"{phase_id} closure candidate_commit must be a 40-character SHA"]
@@ -202,7 +220,10 @@ def _reviewed_candidate_errors(
     return []
 
 
-def allowed_finalization_paths(phase_id: str, closure: dict[str, Any]) -> set[str]:
+def allowed_finalization_paths(
+    phase_id: str,
+    closure: dict[str, typing.Any],
+) -> set[str]:
     allowed = {
         "evaluation/remediation/autonomous-seo-expansion-program.json",
         "evaluation/remediation/autonomous-seo-expansion-ledger.md",
