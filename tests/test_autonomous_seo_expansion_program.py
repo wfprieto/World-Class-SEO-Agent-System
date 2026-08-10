@@ -4,15 +4,17 @@ import copy
 import json
 from pathlib import Path
 
+from scripts.autonomous_seo_expansion_closure import (
+    closure_hash_errors,
+    git_command_ok,
+    reviewer_independence_errors,
+)
 from scripts.validate_autonomous_seo_expansion_program import (
     PROGRAM_PATH,
     ROOT,
     SCHEMA_PATH,
-    _closure_hash_errors,
     _completed_program_phase_state_errors,
-    _git_command_ok,
     _program_terminal_errors,
-    _reviewer_independence_errors,
     validate_program,
 )
 
@@ -137,7 +139,7 @@ def test_phase_complete_requires_closure_artifact() -> None:
 
 def test_git_ancestor_success_is_not_confused_with_empty_stdout() -> None:
     baseline = _load(PROGRAM_PATH)["baseline"]["commit"]
-    assert _git_command_ok(ROOT, ["merge-base", "--is-ancestor", baseline, "HEAD"])
+    assert git_command_ok(ROOT, ["merge-base", "--is-ancestor", baseline, "HEAD"])
 
 
 def test_closure_hash_must_be_computed_from_evidence_payload() -> None:
@@ -154,17 +156,24 @@ def test_closure_hash_must_be_computed_from_evidence_payload() -> None:
             "verify": "PASS",
             "re_audit": "PASS",
         },
-        "twenty_pass": {"passes_completed": 20, "improvements": [f"improvement {i}" for i in range(20)]},
+        "twenty_pass": {
+            "passes_completed": 20,
+            "improvements": [f"improvement {i}" for i in range(20)],
+        },
         "rollback": {"state": "PASS", "evidence_ref": "rollback"},
         "technical_verification": {"state": "PASS", "evidence_refs": ["ci"]},
-        "outcome_verification": {"state": "NOT_REQUIRED", "reason": "P0 is governance only", "evidence_refs": []},
+        "outcome_verification": {
+            "state": "NOT_REQUIRED",
+            "reason": "P0 is governance only",
+            "evidence_refs": [],
+        },
         "unexpected_change_scan": "PASS",
         "security_review": "PASS",
         "documentation_review": "PASS",
         "evidence_refs": ["ci", "diff", "ledger"],
         "evidence_package_hash": "0" * 64,
     }
-    assert _closure_hash_errors(closure)
+    assert closure_hash_errors(closure)
 
 
 def test_reviewer_contexts_must_be_independent() -> None:
@@ -188,7 +197,7 @@ def test_reviewer_contexts_must_be_independent() -> None:
             "verdict": "APPROVE_GREAT",
         },
     ]
-    errors = _reviewer_independence_errors(closure, verdicts)
+    errors = reviewer_independence_errors(closure, verdicts)
     assert any("reviewer contexts" in error for error in errors)
 
 
@@ -213,7 +222,7 @@ def test_both_reviewers_must_approve_exact_evidence() -> None:
             "verdict": "REWORK_GOOD",
         },
     ]
-    errors = _reviewer_independence_errors(closure, verdicts)
+    errors = reviewer_independence_errors(closure, verdicts)
     assert any("exact phase evidence" in error for error in errors)
     assert any("both independent reviewers" in error for error in errors)
 
