@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-phase-closure.schema.json",
+  "title": "WCSEO Autonomous SEO Phase Closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "program_id",
+    "phase_id",
+    "candidate_commit",
+    "apivr",
+    "twenty_pass",
+    "reviewer_verdict_files",
+    "rollback",
+    "technical_verification",
+    "outcome_verification",
+    "unexpected_change_scan",
+    "security_review",
+    "documentation_review",
+    "evidence_package_hash",
+    "evidence_refs",
+    "closure_state"
+  ],
+  "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-phase-closure.schema.json"},
+    "schema_version": {"const": "1.0.0"},
+    "program_id": {"const": "autonomous-seo-expansion"},
+    "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "apivr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audit", "plan", "implement", "audit_implementation", "verify", "re_audit"],
+      "properties": {
+        "audit": {"const": "PASS"},
+        "plan": {"const": "PASS"},
+        "implement": {"const": "PASS"},
+        "audit_implementation": {"const": "PASS"},
+        "verify": {"const": "PASS"},
+        "re_audit": {"const": "PASS"}
+      }
+    },
+    "twenty_pass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passes_completed", "improvements"],
+      "properties": {
+        "passes_completed": {"const": 20},
+        "improvements": {
+          "type": "array",
+          "minItems": 20,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 12}
+        }
+      }
+    },
+    "reviewer_verdict_files": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_ref"],
+      "properties": {
+        "state": {"const": "PASS"},
+        "evidence_ref": {"type": "string", "minLength": 5}
+      }
+    },
+    "technical_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_refs"],
+      "properties": {
+        "state": {"const": "PASS"},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 5}
+        }
+      }
+    },
+    "outcome_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reason", "evidence_refs"],
+      "properties": {
+        "state": {"enum": ["PASS", "NOT_REQUIRED", "PENDING"]},
+        "reason": {"type": "string", "minLength": 12},
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 5}
+        }
+      }
+    },
+    "unexpected_change_scan": {"const": "PASS"},
+    "security_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
+    "documentation_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
+    "evidence_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 5}
+    },
+    "closure_state": {"const": "APPROVED_GREAT"}
+  }
+}
