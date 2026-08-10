@@ -8,7 +8,9 @@ from scripts.validate_autonomous_seo_expansion_program import (
     PROGRAM_PATH,
     ROOT,
     SCHEMA_PATH,
+    _closure_hash_errors,
     _completed_program_phase_state_errors,
+    _git_command_ok,
     _program_terminal_errors,
     _reviewer_independence_errors,
     validate_program,
@@ -131,6 +133,38 @@ def test_phase_complete_requires_closure_artifact() -> None:
     program["phases"][1]["status"] = "IN_PROGRESS"
     errors = _errors(program)
     assert any("P0 cannot be COMPLETE without" in error for error in errors)
+
+
+def test_git_ancestor_success_is_not_confused_with_empty_stdout() -> None:
+    baseline = _load(PROGRAM_PATH)["baseline"]["commit"]
+    assert _git_command_ok(ROOT, ["merge-base", "--is-ancestor", baseline, "HEAD"])
+
+
+def test_closure_hash_must_be_computed_from_evidence_payload() -> None:
+    closure = {
+        "program_id": "autonomous-seo-expansion",
+        "phase_id": "P0",
+        "candidate_commit": "a" * 40,
+        "builder_context_id": "builder-0001",
+        "apivr": {
+            "audit": "PASS",
+            "plan": "PASS",
+            "implement": "PASS",
+            "audit_implementation": "PASS",
+            "verify": "PASS",
+            "re_audit": "PASS",
+        },
+        "twenty_pass": {"passes_completed": 20, "improvements": [f"improvement {i}" for i in range(20)]},
+        "rollback": {"state": "PASS", "evidence_ref": "rollback"},
+        "technical_verification": {"state": "PASS", "evidence_refs": ["ci"]},
+        "outcome_verification": {"state": "NOT_REQUIRED", "reason": "P0 is governance only", "evidence_refs": []},
+        "unexpected_change_scan": "PASS",
+        "security_review": "PASS",
+        "documentation_review": "PASS",
+        "evidence_refs": ["ci", "diff", "ledger"],
+        "evidence_package_hash": "0" * 64,
+    }
+    assert _closure_hash_errors(closure)
 
 
 def test_reviewer_contexts_must_be_independent() -> None:
