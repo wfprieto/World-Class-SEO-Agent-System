@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "$schema",
     "schema_version",
     "program_id",
     "objective",
@@ -21,6 +22,7 @@
     "program_evidence_state"
   ],
   "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-expansion-program.schema.json"},
     "schema_version": {"const": "1.0.0"},
     "program_id": {"const": "autonomous-seo-expansion"},
     "objective": {"type": "string", "minLength": 40},
@@ -35,7 +37,7 @@
         "captured_at": {"type": "string", "format": "date-time"}
       }
     },
-    "apivr_tier": {"enum": ["COMPREHENSIVE", "FORENSIC"]},
+    "apivr_tier": {"const": "COMPREHENSIVE"},
     "current_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "direct_merge_permitted": {"const": false},
     "capability_maturity_order": {
@@ -80,6 +82,7 @@
     "extension_lanes": {
       "type": "array",
       "minItems": 4,
+      "maxItems": 4,
       "items": {"$ref": "#/$defs/lane"}
     },
     "program_evidence_state": {
