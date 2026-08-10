@@ -10,6 +10,7 @@
     "program_id",
     "phase_id",
     "candidate_commit",
+    "builder_context_id",
     "apivr",
     "twenty_pass",
     "reviewer_verdict_files",
@@ -29,6 +30,7 @@
     "program_id": {"const": "autonomous-seo-expansion"},
     "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "builder_context_id": {"type": "string", "minLength": 8},
     "apivr": {
       "type": "object",
       "additionalProperties": false,
