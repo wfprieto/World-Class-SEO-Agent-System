@@ -7,7 +7,6 @@ from typing import Any
 
 from scripts import autonomous_seo_expansion_closure as closure
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAM_PATH = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json"
 SCHEMA_PATH = ROOT / "schemas" / "autonomous-seo-expansion-program.schema.json"
