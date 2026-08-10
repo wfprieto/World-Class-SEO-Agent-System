@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+import pathlib
+import typing
 
-from scripts.autonomous_seo_expansion_closure import (
-    git_command_ok,
-    load_object,
-    phase_closure_errors,
-    schema_errors,
-)
+import scripts.autonomous_seo_expansion_closure as closure
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROGRAM_PATH = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json"
 SCHEMA_PATH = ROOT / "schemas" / "autonomous-seo-expansion-program.schema.json"
 PHASE_IDS = [f"P{index}" for index in range(14)]
@@ -62,7 +57,10 @@ ESSENTIAL_CLOSE_CONTROLS = (
 )
 
 
-def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
+def _baseline_errors(
+    program: dict[str, typing.Any],
+    root: pathlib.Path,
+) -> list[str]:
     errors: list[str] = []
     baseline = program.get("baseline", {})
     commit = str(baseline.get("commit", ""))
@@ -70,20 +68,26 @@ def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
         errors.append("baseline branch must remain main")
     if baseline.get("working_branch") == "main":
         errors.append("working_branch must not be main")
-    if (root / ".git").exists() and len(commit) == 40:
-        if not git_command_ok(root, ["merge-base", "--is-ancestor", commit, "HEAD"]):
-            errors.append("baseline commit must be an immutable ancestor of the candidate HEAD")
+    if (
+        (root / ".git").exists()
+        and len(commit) == 40
+        and not closure.git_command_ok(root, ["merge-base", "--is-ancestor", commit, "HEAD"])
+    ):
+        errors.append("baseline commit must be an immutable ancestor of the candidate HEAD")
     return errors
 
 
-def _phase_order_errors(phases: list[dict[str, Any]]) -> list[str]:
+def _phase_order_errors(phases: list[dict[str, typing.Any]]) -> list[str]:
     ids = [phase.get("id") for phase in phases]
     if ids == PHASE_IDS:
         return []
     return [f"phase order must be {PHASE_IDS}; found {ids}"]
 
 
-def _active_phase_errors(program: dict[str, Any], phases: list[dict[str, Any]]) -> list[str]:
+def _active_phase_errors(
+    program: dict[str, typing.Any],
+    phases: list[dict[str, typing.Any]],
+) -> list[str]:
     current = str(program.get("current_phase", ""))
     if current not in PHASE_IDS:
         return ["current_phase is not a canonical phase id"]
@@ -95,7 +99,8 @@ def _active_phase_errors(program: dict[str, Any], phases: list[dict[str, Any]]) 
 
 
 def _completed_program_phase_state_errors(
-    current: str, active: list[dict[str, Any]]
+    current: str,
+    active: list[dict[str, typing.Any]],
 ) -> list[str]:
     errors: list[str] = []
     if active:
@@ -107,8 +112,8 @@ def _completed_program_phase_state_errors(
 
 def _in_progress_phase_state_errors(
     current: str,
-    active: list[dict[str, Any]],
-    phases: list[dict[str, Any]],
+    active: list[dict[str, typing.Any]],
+    phases: list[dict[str, typing.Any]],
 ) -> list[str]:
     errors: list[str] = []
     if len(active) != 1:
@@ -122,7 +127,9 @@ def _in_progress_phase_state_errors(
 
 
 def _relative_phase_state_errors(
-    phase: dict[str, Any], index: int, current_index: int
+    phase: dict[str, typing.Any],
+    index: int,
+    current_index: int,
 ) -> list[str]:
     phase_id = str(phase.get("id"))
     status = phase.get("status")
@@ -135,7 +142,7 @@ def _relative_phase_state_errors(
     return []
 
 
-def _dependency_errors(phases: list[dict[str, Any]]) -> list[str]:
+def _dependency_errors(phases: list[dict[str, typing.Any]]) -> list[str]:
     errors: list[str] = []
     phase_index = {phase_id: index for index, phase_id in enumerate(PHASE_IDS)}
     status_by_id = {str(phase.get("id")): str(phase.get("status")) for phase in phases}
@@ -145,7 +152,9 @@ def _dependency_errors(phases: list[dict[str, Any]]) -> list[str]:
 
 
 def _one_phase_dependency_errors(
-    phase: dict[str, Any], phase_index: dict[str, int], status_by_id: dict[str, str]
+    phase: dict[str, typing.Any],
+    phase_index: dict[str, int],
+    status_by_id: dict[str, str],
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
@@ -161,13 +170,15 @@ def _one_phase_dependency_errors(
 
 
 def _dependency_must_be_complete(
-    phase: dict[str, Any], status_by_id: dict[str, str], dependency: str
+    phase: dict[str, typing.Any],
+    status_by_id: dict[str, str],
+    dependency: str,
 ) -> bool:
     active_states = {"IN_PROGRESS", "BLOCKED", "COMPLETE"}
     return phase.get("status") in active_states and status_by_id.get(dependency) != "COMPLETE"
 
 
-def _sequence_errors(program: dict[str, Any]) -> list[str]:
+def _sequence_errors(program: dict[str, typing.Any]) -> list[str]:
     phases = [phase for phase in program.get("phases", []) if isinstance(phase, dict)]
     errors = _phase_order_errors(phases)
     if errors:
@@ -175,7 +186,7 @@ def _sequence_errors(program: dict[str, Any]) -> list[str]:
     return _active_phase_errors(program, phases) + _dependency_errors(phases)
 
 
-def _maturity_errors(program: dict[str, Any]) -> list[str]:
+def _maturity_errors(program: dict[str, typing.Any]) -> list[str]:
     errors: list[str] = []
     if program.get("capability_maturity_order") != MATURITY_ORDER:
         errors.append("capability maturity order must remain the canonical G0 through G6 sequence")
@@ -185,7 +196,7 @@ def _maturity_errors(program: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _one_phase_maturity_errors(phase: dict[str, Any]) -> list[str]:
+def _one_phase_maturity_errors(phase: dict[str, typing.Any]) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
     maturity = str(phase.get("maturity_target"))
@@ -201,7 +212,10 @@ def _one_phase_maturity_errors(phase: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _completed_phase_errors(phase: dict[str, Any], root: Path) -> list[str]:
+def _completed_phase_errors(
+    phase: dict[str, typing.Any],
+    root: pathlib.Path,
+) -> list[str]:
     if phase.get("status") != "COMPLETE":
         return []
     phase_id = str(phase.get("id"))
@@ -210,11 +224,11 @@ def _completed_phase_errors(phase: dict[str, Any], root: Path) -> list[str]:
         errors.append(f"{phase_id} cannot be COMPLETE without technical_verification PASS")
     if phase.get("outcome_verification") in {"FAIL", "BLOCKED", "PARTIAL"}:
         errors.append(f"{phase_id} cannot be COMPLETE with unresolved outcome_verification")
-    errors.extend(phase_closure_errors(phase, root))
+    errors.extend(closure.phase_closure_errors(phase, root))
     return errors
 
 
-def _program_terminal_errors(program: dict[str, Any]) -> list[str]:
+def _program_terminal_errors(program: dict[str, typing.Any]) -> list[str]:
     phases = program.get("phases", [])
     all_complete = all(
         isinstance(phase, dict) and phase.get("status") == "COMPLETE" for phase in phases
@@ -230,7 +244,7 @@ def _program_terminal_errors(program: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _terminal_lane_errors(program: dict[str, Any]) -> list[str]:
+def _terminal_lane_errors(program: dict[str, typing.Any]) -> list[str]:
     unresolved = [
         str(lane.get("id"))
         for lane in program.get("extension_lanes", [])
@@ -241,7 +255,10 @@ def _terminal_lane_errors(program: dict[str, Any]) -> list[str]:
     return []
 
 
-def _completion_errors(program: dict[str, Any], root: Path) -> list[str]:
+def _completion_errors(
+    program: dict[str, typing.Any],
+    root: pathlib.Path,
+) -> list[str]:
     errors: list[str] = []
     for phase in program.get("phases", []):
         if isinstance(phase, dict):
@@ -250,7 +267,7 @@ def _completion_errors(program: dict[str, Any], root: Path) -> list[str]:
     return errors
 
 
-def _governance_errors(program: dict[str, Any]) -> list[str]:
+def _governance_errors(program: dict[str, typing.Any]) -> list[str]:
     errors: list[str] = []
     if program.get("direct_merge_permitted") is not False:
         errors.append("direct merge is forbidden for the autonomous expansion program")
@@ -274,7 +291,7 @@ def _required_marker_errors(blob: str, markers: tuple[str, ...], label: str) -> 
     ]
 
 
-def _lane_errors(program: dict[str, Any]) -> list[str]:
+def _lane_errors(program: dict[str, typing.Any]) -> list[str]:
     lanes = [lane for lane in program.get("extension_lanes", []) if isinstance(lane, dict)]
     ids = [lane.get("id") for lane in lanes]
     if ids != LANE_IDS:
@@ -291,7 +308,8 @@ def _lane_errors(program: dict[str, Any]) -> list[str]:
 
 
 def _one_lane_dependency_errors(
-    lane: dict[str, Any], phase_status: dict[str, str]
+    lane: dict[str, typing.Any],
+    phase_status: dict[str, str],
 ) -> list[str]:
     if lane.get("status") not in {"IN_PROGRESS", "COMPLETE"}:
         return []
@@ -303,9 +321,11 @@ def _one_lane_dependency_errors(
 
 
 def validate_program(
-    program: dict[str, Any], schema: dict[str, Any], root: Path = ROOT
+    program: dict[str, typing.Any],
+    schema: dict[str, typing.Any],
+    root: pathlib.Path = ROOT,
 ) -> list[str]:
-    errors = schema_errors(program, schema)
+    errors = closure.schema_errors(program, schema)
     if errors:
         return errors
     errors = _baseline_errors(program, root)
@@ -318,8 +338,8 @@ def validate_program(
 
 
 def main() -> int:
-    program = load_object(PROGRAM_PATH)
-    errors = validate_program(program, load_object(SCHEMA_PATH))
+    program = closure.load_object(PROGRAM_PATH)
+    errors = validate_program(program, closure.load_object(SCHEMA_PATH))
     if errors:
         print("Autonomous SEO expansion program validation failed:")
         for error in errors:
