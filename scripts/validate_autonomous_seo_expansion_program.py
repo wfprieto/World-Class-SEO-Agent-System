@@ -95,15 +95,23 @@ def _schema_errors(
     ]
 
 
-def _git_head(root: Path) -> str | None:
-    return _git_stdout(root, ["rev-parse", "HEAD"])
-
-
 def _git_stdout(root: Path, arguments: list[str]) -> str | None:
+    result = _run_git(root, arguments)
+    if result is None:
+        return None
+    value = result.stdout.strip()
+    return value or None
+
+
+def _git_command_ok(root: Path, arguments: list[str]) -> bool:
+    return _run_git(root, arguments) is not None
+
+
+def _run_git(root: Path, arguments: list[str]) -> subprocess.CompletedProcess[str] | None:
     if not (root / ".git").exists():
         return None
     try:
-        result = subprocess.run(
+        return subprocess.run(
             ["git", *arguments],
             cwd=root,
             check=True,
@@ -113,8 +121,6 @@ def _git_stdout(root: Path, arguments: list[str]) -> str | None:
         )
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-    value = result.stdout.strip()
-    return value or None
 
 
 def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
@@ -131,17 +137,9 @@ def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
 
 
 def _ancestor_errors(root: Path, commit: str) -> list[str]:
-    try:
-        subprocess.run(
-            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            timeout=20,
-        )
-    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        return ["baseline commit must be an immutable ancestor of the candidate HEAD"]
-    return []
+    if _git_command_ok(root, ["merge-base", "--is-ancestor", commit, "HEAD"]):
+        return []
+    return ["baseline commit must be an immutable ancestor of the candidate HEAD"]
 
 
 def _phase_order_errors(phases: list[dict[str, Any]]) -> list[str]:
@@ -386,7 +384,9 @@ def _closure_identity_errors(
 def _reviewed_candidate_errors(
     root: Path, phase_id: str, candidate: str, closure: dict[str, Any]
 ) -> list[str]:
-    if len(candidate) != 40 or _git_stdout(root, ["merge-base", "--is-ancestor", candidate, "HEAD"]) is None:
+    if len(candidate) != 40:
+        return [f"{phase_id} closure candidate_commit must be a 40-character SHA"]
+    if not _git_command_ok(root, ["merge-base", "--is-ancestor", candidate, "HEAD"]):
         return [f"{phase_id} closure candidate_commit must be an ancestor of final HEAD"]
     changed = _git_stdout(root, ["diff", "--name-only", f"{candidate}..HEAD"])
     paths = [] if not changed else changed.splitlines()
