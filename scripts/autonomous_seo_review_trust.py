@@ -66,28 +66,31 @@ def candidate_blob_sha256(root: Path, commit: str, relative: str) -> str | None:
 def candidate_evidence_ref_errors(
     refs: list[dict[str, Any]], root: Path, candidate_commit: str
 ) -> list[str]:
-    errors: list[str] = []
     if not git_commit_exists(root, candidate_commit):
-        errors.append(f"candidate commit does not exist: {candidate_commit}")
-        return errors
+        return [f"candidate commit does not exist: {candidate_commit}"]
+    errors: list[str] = []
     for ref in refs:
-        relative = str(ref.get("path", ""))
-        path = _safe_path(root, relative)
-        if path is None or not path.is_file():
-            errors.append(f"evidence path is missing or unsafe: {relative}")
-            continue
-        if ref.get("bound_commit") != candidate_commit:
-            errors.append(f"evidence {relative} is not bound to candidate {candidate_commit}")
-            continue
-        candidate_hash = candidate_blob_sha256(root, candidate_commit, relative)
-        if candidate_hash is None:
-            errors.append(f"evidence {relative} does not exist at candidate {candidate_commit}")
-            continue
-        if ref.get("sha256") != candidate_hash:
-            errors.append(f"candidate evidence hash mismatch: {relative}")
-        current_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-        if current_hash != candidate_hash:
-            errors.append(f"evidence changed after candidate freeze: {relative}")
+        errors.extend(_one_candidate_evidence_error(ref, root, candidate_commit))
+    return errors
+
+
+def _one_candidate_evidence_error(
+    ref: dict[str, Any], root: Path, candidate_commit: str
+) -> list[str]:
+    relative = str(ref.get("path", ""))
+    path = _safe_path(root, relative)
+    if path is None or not path.is_file():
+        return [f"evidence path is missing or unsafe: {relative}"]
+    if ref.get("bound_commit") != candidate_commit:
+        return [f"evidence {relative} is not bound to candidate {candidate_commit}"]
+    candidate_hash = candidate_blob_sha256(root, candidate_commit, relative)
+    if candidate_hash is None:
+        return [f"evidence {relative} does not exist at candidate {candidate_commit}"]
+    errors: list[str] = []
+    if ref.get("sha256") != candidate_hash:
+        errors.append(f"candidate evidence hash mismatch: {relative}")
+    if hashlib.sha256(path.read_bytes()).hexdigest() != candidate_hash:
+        errors.append(f"evidence changed after candidate freeze: {relative}")
     return errors
 
 
@@ -117,6 +120,15 @@ def reviewer_provenance_errors(
     if len(files) != 2:
         return ["closure requires exactly two authenticated reviewer provenance files"]
     schema = _load(root / "schemas" / "autonomous-seo-reviewer-provenance.schema.json")
+    receipts, errors = _load_provenance_files(files, schema, root)
+    if errors:
+        return errors
+    return _provenance_identity_errors(closure, verdicts, receipts)
+
+
+def _load_provenance_files(
+    files: list[Any], schema: dict[str, Any], root: Path
+) -> tuple[list[dict[str, Any]], list[str]]:
     receipts: list[dict[str, Any]] = []
     errors: list[str] = []
     for relative in files:
@@ -127,40 +139,54 @@ def reviewer_provenance_errors(
         receipt = _load(path)
         errors.extend(_schema_errors(receipt, schema, f"review provenance {relative}"))
         receipts.append(receipt)
-    if errors:
-        return errors
-    return _provenance_identity_errors(closure, verdicts, receipts)
+    return receipts, errors
 
 
 def _provenance_identity_errors(
     closure: dict[str, Any], verdicts: list[dict[str, Any]], receipts: list[dict[str, Any]]
 ) -> list[str]:
-    errors: list[str] = []
     verdict_map = {str(item.get("reviewer_id")): item for item in verdicts}
     receipt_map = {str(item.get("reviewer_id")): item for item in receipts}
     if set(receipt_map) != set(REQUIRED_REVIEWERS):
-        errors.append("review provenance must cover both canonical reviewer identities")
-        return errors
-    if len({str(item.get("execution_id")) for item in receipts}) != 2:
-        errors.append("review provenance execution IDs must be distinct")
-    candidate = str(closure.get("candidate_commit", ""))
-    evidence_hash = str(closure.get("evidence_package_hash", ""))
-    builder_context = str(closure.get("builder_context_id", ""))
+        return ["review provenance must cover both canonical reviewer identities"]
+    errors = _execution_identity_errors(receipts)
     for reviewer_id, receipt in receipt_map.items():
-        verdict = verdict_map.get(reviewer_id, {})
-        if receipt.get("role") != REQUIRED_REVIEWERS[reviewer_id]:
-            errors.append(f"review provenance role mismatch: {reviewer_id}")
-        for field in ("context_id", "provider", "model"):
-            if receipt.get(field) != verdict.get(field):
-                errors.append(f"review provenance {field} mismatch: {reviewer_id}")
-        if receipt.get("candidate_commit") != candidate:
-            errors.append(f"review provenance candidate mismatch: {reviewer_id}")
-        if receipt.get("evidence_package_hash") != evidence_hash:
-            errors.append(f"review provenance evidence hash mismatch: {reviewer_id}")
-        if receipt.get("context_id") == builder_context:
-            errors.append(f"review provenance reuses builder context: {reviewer_id}")
-        if receipt.get("builder_controlled") is not False:
-            errors.append(f"review provenance is builder-controlled: {reviewer_id}")
-        if receipt.get("verification_state") != "VERIFIED":
-            errors.append(f"review provenance is not externally VERIFIED: {reviewer_id}")
+        errors.extend(_receipt_identity_errors(reviewer_id, receipt, verdict_map.get(reviewer_id, {})))
+        errors.extend(_receipt_binding_errors(reviewer_id, receipt, closure))
+    return errors
+
+
+def _execution_identity_errors(receipts: list[dict[str, Any]]) -> list[str]:
+    executions = {str(item.get("execution_id")) for item in receipts}
+    if len(executions) == 2:
+        return []
+    return ["review provenance execution IDs must be distinct"]
+
+
+def _receipt_identity_errors(
+    reviewer_id: str, receipt: dict[str, Any], verdict: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    if receipt.get("role") != REQUIRED_REVIEWERS[reviewer_id]:
+        errors.append(f"review provenance role mismatch: {reviewer_id}")
+    for field in ("context_id", "provider", "model"):
+        if receipt.get(field) != verdict.get(field):
+            errors.append(f"review provenance {field} mismatch: {reviewer_id}")
+    return errors
+
+
+def _receipt_binding_errors(
+    reviewer_id: str, receipt: dict[str, Any], closure: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    if receipt.get("candidate_commit") != closure.get("candidate_commit"):
+        errors.append(f"review provenance candidate mismatch: {reviewer_id}")
+    if receipt.get("evidence_package_hash") != closure.get("evidence_package_hash"):
+        errors.append(f"review provenance evidence hash mismatch: {reviewer_id}")
+    if receipt.get("context_id") == closure.get("builder_context_id"):
+        errors.append(f"review provenance reuses builder context: {reviewer_id}")
+    if receipt.get("builder_controlled") is not False:
+        errors.append(f"review provenance is builder-controlled: {reviewer_id}")
+    if receipt.get("verification_state") != "VERIFIED":
+        errors.append(f"review provenance is not externally VERIFIED: {reviewer_id}")
     return errors
