@@ -11,9 +11,9 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
-CLOSURE_SCHEMA_PATH = ROOT / "schemas" / "autonomous-seo-phase-closure.schema.json"
-REVIEWER_SCHEMA_PATH = ROOT / "schemas" / "reviewer-verdict.schema.json"
-REQUIRED_OUTCOME_PASS_PHASES = {"P12", "P13"}
+PROGRAM_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-program.json"
+POLICY_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-policy.json"
+PROGRAM_CLOSURE_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-program-closure.json"
 REQUIRED_REVIEWERS = {
     "senior-scrummaster-3": "SENIOR_SCRUMMASTER_3",
     "vp-engineering": "VP_ENGINEERING",
@@ -23,7 +23,7 @@ REQUIRED_REVIEWERS = {
 def load_object(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
-        raise ValueError(f"{path.relative_to(ROOT)} must contain a JSON object")
+        raise ValueError(f"{path} must contain a JSON object")
     return payload
 
 
@@ -41,6 +41,15 @@ def schema_errors(
         f"{error.message}"
         for error in errors
     ]
+
+
+def canonical_hash(payload: Any) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def git_stdout(root: Path, arguments: list[str]) -> str | None:
@@ -80,9 +89,24 @@ def safe_repo_path(root: Path, relative: str) -> Path | None:
     return candidate
 
 
-def reviewer_file_errors(
-    closure: dict[str, Any], root: Path, reviewer_schema: dict[str, Any]
+def evidence_ref_errors(
+    refs: list[dict[str, Any]], root: Path, candidate_commit: str
 ) -> list[str]:
+    errors: list[str] = []
+    for ref in refs:
+        path = safe_repo_path(root, str(ref.get("path", "")))
+        if path is None or not path.is_file():
+            errors.append(f"evidence path is missing or unsafe: {ref.get('path')}")
+            continue
+        if ref.get("bound_commit") != candidate_commit:
+            errors.append(f"evidence {ref.get('path')} is not bound to candidate {candidate_commit}")
+        if ref.get("sha256") != file_sha256(path):
+            errors.append(f"evidence hash mismatch: {ref.get('path')}")
+    return errors
+
+
+def reviewer_file_errors(closure: dict[str, Any], root: Path) -> list[str]:
+    reviewer_schema = load_object(root / "schemas" / "reviewer-verdict.schema.json")
     verdicts: list[dict[str, Any]] = []
     errors: list[str] = []
     for relative in closure.get("reviewer_verdict_files", []):
@@ -118,11 +142,6 @@ def reviewer_independence_errors(
     return errors
 
 
-def canonical_hash(payload: Any) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def closure_evidence_payload(closure: dict[str, Any]) -> dict[str, Any]:
     included = (
         "program_id",
@@ -154,23 +173,41 @@ def closure_path(root: Path, phase_id: str) -> Path:
     return root / "evaluation" / "remediation" / name
 
 
-def phase_closure_errors(phase: dict[str, Any], root: Path) -> list[str]:
+def phase_closure_errors(
+    phase: dict[str, Any], root: Path, policy: dict[str, Any]
+) -> list[str]:
     phase_id = str(phase.get("id"))
     path = closure_path(root, phase_id)
     if not path.is_file():
         return [f"{phase_id} cannot be COMPLETE without {path.relative_to(root)}"]
     closure = load_object(path)
-    errors = schema_errors(closure, load_object(CLOSURE_SCHEMA_PATH), f"{phase_id} closure")
+    schema = load_object(root / "schemas" / "autonomous-seo-phase-closure.schema.json")
+    errors = schema_errors(closure, schema, f"{phase_id} closure")
     if errors:
         return errors
+    candidate = str(closure.get("candidate_commit"))
     errors.extend(closure_hash_errors(closure))
-    errors.extend(_closure_identity_errors(phase, closure, root))
-    errors.extend(reviewer_file_errors(closure, root, load_object(REVIEWER_SCHEMA_PATH)))
+    errors.extend(_all_evidence_errors(closure, root, candidate))
+    errors.extend(_closure_identity_errors(phase, closure, root, policy))
+    errors.extend(reviewer_file_errors(closure, root))
     return errors
 
 
+def _all_evidence_errors(
+    closure: dict[str, Any], root: Path, candidate: str
+) -> list[str]:
+    refs = list(closure.get("evidence_refs", []))
+    refs.extend(closure.get("rollback", {}).get("evidence_refs", []))
+    refs.extend(closure.get("technical_verification", {}).get("evidence_refs", []))
+    refs.extend(closure.get("outcome_verification", {}).get("evidence_refs", []))
+    return evidence_ref_errors(refs, root, candidate)
+
+
 def _closure_identity_errors(
-    phase: dict[str, Any], closure: dict[str, Any], root: Path
+    phase: dict[str, Any],
+    closure: dict[str, Any],
+    root: Path,
+    policy: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
@@ -178,34 +215,168 @@ def _closure_identity_errors(
     if closure.get("phase_id") != phase_id:
         errors.append(f"{phase_id} closure phase_id does not match")
     if (root / ".git").exists():
-        errors.extend(_reviewed_candidate_errors(root, phase_id, candidate, closure))
-    closure_outcome = closure.get("outcome_verification", {}).get("state")
-    if phase_id in REQUIRED_OUTCOME_PASS_PHASES and closure_outcome != "PASS":
+        errors.extend(_reviewed_candidate_errors(root, phase_id, candidate, closure, policy))
+    required = set(policy.get("outcome_pass_required_phases", []))
+    if phase_id in required and closure.get("outcome_verification", {}).get("state") != "PASS":
         errors.append(f"{phase_id} requires outcome_verification PASS before closure")
     return errors
 
 
 def _reviewed_candidate_errors(
-    root: Path, phase_id: str, candidate: str, closure: dict[str, Any]
+    root: Path,
+    phase_id: str,
+    candidate: str,
+    closure: dict[str, Any],
+    policy: dict[str, Any],
 ) -> list[str]:
     if len(candidate) != 40:
         return [f"{phase_id} closure candidate_commit must be a 40-character SHA"]
     if not git_command_ok(root, ["merge-base", "--is-ancestor", candidate, "HEAD"]):
         return [f"{phase_id} closure candidate_commit must be an ancestor of final HEAD"]
+    errors = _post_review_file_errors(root, phase_id, candidate, closure)
+    errors.extend(_program_transition_errors(root, phase_id, candidate, policy))
+    return errors
+
+
+def _post_review_file_errors(
+    root: Path, phase_id: str, candidate: str, closure: dict[str, Any]
+) -> list[str]:
     changed = git_stdout(root, ["diff", "--name-only", f"{candidate}..HEAD"])
     paths = [] if not changed else changed.splitlines()
-    allowed = allowed_finalization_paths(phase_id, closure)
-    unexpected = sorted(path for path in paths if path not in allowed)
-    if unexpected:
-        return [f"{phase_id} has post-review source drift outside closure evidence: {unexpected}"]
-    return []
-
-
-def allowed_finalization_paths(phase_id: str, closure: dict[str, Any]) -> set[str]:
     allowed = {
-        "evaluation/remediation/autonomous-seo-expansion-program.json",
+        PROGRAM_RELATIVE,
         "evaluation/remediation/autonomous-seo-expansion-ledger.md",
         f"evaluation/remediation/autonomous-seo-expansion-{phase_id.lower()}-closure.json",
     }
     allowed.update(str(item) for item in closure.get("reviewer_verdict_files", []))
-    return allowed
+    unexpected = sorted(path for path in paths if path not in allowed)
+    return [] if not unexpected else [f"{phase_id} has post-review source drift: {unexpected}"]
+
+
+def _program_at_commit(root: Path, commit: str) -> dict[str, Any] | None:
+    content = git_stdout(root, ["show", f"{commit}:{PROGRAM_RELATIVE}"])
+    if content is None:
+        return None
+    payload = json.loads(content)
+    return payload if isinstance(payload, dict) else None
+
+
+def _program_transition_errors(
+    root: Path, phase_id: str, candidate: str, policy: dict[str, Any]
+) -> list[str]:
+    before = _program_at_commit(root, candidate)
+    after_path = root / PROGRAM_RELATIVE
+    if before is None or not after_path.is_file():
+        return ["cannot compare reviewed and final program state"]
+    after = load_object(after_path)
+    return field_bounded_transition_errors(before, after, phase_id, policy)
+
+
+def field_bounded_transition_errors(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    phase_id: str,
+    policy: dict[str, Any],
+) -> list[str]:
+    transition = policy["post_review_program_transition"]
+    errors: list[str] = []
+    for field in transition["immutable_fields"]:
+        if before.get(field) != after.get(field):
+            errors.append(f"post-review immutable program field changed: {field}")
+    errors.extend(_phase_transition_errors(before, after, phase_id, policy))
+    errors.extend(_lane_transition_errors(before, after, transition))
+    return errors
+
+
+def _phase_transition_errors(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    phase_id: str,
+    policy: dict[str, Any],
+) -> list[str]:
+    transition = policy["post_review_program_transition"]
+    order = policy["phase_order"]
+    before_map = {item["id"]: item for item in before["phases"]}
+    after_map = {item["id"]: item for item in after["phases"]}
+    errors: list[str] = []
+    if set(before_map) != set(after_map):
+        return ["post-review phase set changed"]
+    for pid in order:
+        for field in transition["immutable_phase_fields"]:
+            if before_map[pid].get(field) != after_map[pid].get(field):
+                errors.append(f"post-review immutable phase field changed: {pid}.{field}")
+    index = order.index(phase_id)
+    errors.extend(_reviewed_phase_state_errors(before_map[phase_id], after_map[phase_id], transition))
+    if index + 1 < len(order):
+        next_id = order[index + 1]
+        if after.get("current_phase") != next_id:
+            errors.append(f"current_phase must advance only to {next_id}")
+        if before_map[next_id]["status"] != transition["next_phase_status_from"] or after_map[next_id]["status"] != transition["next_phase_status_to"]:
+            errors.append(f"next phase {next_id} must transition NOT_STARTED -> IN_PROGRESS")
+    elif after.get("current_phase") != phase_id:
+        errors.append("terminal phase must remain current_phase")
+    for pid in order:
+        if pid not in {phase_id, order[index + 1] if index + 1 < len(order) else phase_id} and before_map[pid] != after_map[pid]:
+            errors.append(f"unreviewed phase changed after review: {pid}")
+    return errors
+
+
+def _reviewed_phase_state_errors(
+    before: dict[str, Any], after: dict[str, Any], transition: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    if before.get("status") not in transition["reviewed_phase_status_from"] or after.get("status") != transition["reviewed_phase_status_to"]:
+        errors.append("reviewed phase must transition IN_PROGRESS|BLOCKED -> COMPLETE")
+    if after.get("technical_verification") != transition["technical_verification_to"]:
+        errors.append("reviewed phase technical_verification must become PASS")
+    allowed_outcomes = {"PASS", "NOT_REQUIRED", "PENDING"}
+    if after.get("outcome_verification") not in allowed_outcomes:
+        errors.append("reviewed phase outcome_verification must be explicit at closure")
+    return errors
+
+
+def _lane_transition_errors(
+    before: dict[str, Any], after: dict[str, Any], transition: dict[str, Any]
+) -> list[str]:
+    before_map = {item["id"]: item for item in before["extension_lanes"]}
+    after_map = {item["id"]: item for item in after["extension_lanes"]}
+    if set(before_map) != set(after_map):
+        return ["post-review extension lane set changed"]
+    errors: list[str] = []
+    for lane_id, lane in before_map.items():
+        for field in transition["immutable_lane_fields"]:
+            if lane.get(field) != after_map[lane_id].get(field):
+                errors.append(f"post-review immutable lane field changed: {lane_id}.{field}")
+        if lane != after_map[lane_id]:
+            errors.append(f"extension lane changed during phase finalization: {lane_id}")
+    return errors
+
+
+def program_closure_errors(
+    program: dict[str, Any], root: Path, policy: dict[str, Any]
+) -> list[str]:
+    if program.get("program_evidence_state") != "VERIFIED":
+        return []
+    path = root / PROGRAM_CLOSURE_RELATIVE
+    if not path.is_file():
+        return ["program VERIFIED requires autonomous-seo-expansion-program-closure.json"]
+    closure = load_object(path)
+    schema = load_object(root / "schemas" / "autonomous-seo-program-closure.schema.json")
+    errors = schema_errors(closure, schema, "program closure")
+    if errors:
+        return errors
+    expected_phase_files = {str(closure_path(root, pid).relative_to(root)) for pid in policy["phase_order"]}
+    if set(closure.get("phase_closure_files", [])) != expected_phase_files:
+        errors.append("program closure must reference every canonical phase closure exactly once")
+    candidate = str(closure.get("candidate_commit"))
+    errors.extend(evidence_ref_errors(closure.get("evidence_refs", []), root, candidate))
+    errors.extend(evidence_ref_errors(closure.get("rollback_summary", {}).get("evidence_refs", []), root, candidate))
+    errors.extend(reviewer_file_errors(closure, root))
+    if closure.get("evidence_package_hash") != canonical_hash(_program_closure_payload(closure)):
+        errors.append("program closure evidence_package_hash is invalid")
+    return errors
+
+
+def _program_closure_payload(closure: dict[str, Any]) -> dict[str, Any]:
+    excluded = {"reviewer_verdict_files", "evidence_package_hash", "closure_state", "$schema", "schema_version"}
+    return {key: value for key, value in closure.items() if key not in excluded}
