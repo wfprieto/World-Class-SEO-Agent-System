@@ -260,10 +260,14 @@ def _one_lane_errors(
     return errors
 
 
+def _critical_governance_errors(program: dict[str, Any]) -> list[str]:
+    if program.get("direct_merge_permitted") is not False:
+        return ["direct merge is forbidden for the autonomous expansion program"]
+    return []
+
+
 def _governance_errors(program: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if program.get("direct_merge_permitted") is not False:
-        errors.append("direct merge is forbidden for the autonomous expansion program")
     close_blob = "\n".join(str(item) for item in program.get("phase_close_requires", [])).lower()
     for marker in ESSENTIAL_CLOSE_CONTROLS:
         if marker.lower() not in close_blob:
@@ -282,11 +286,13 @@ def validate_program(
     policy: dict[str, Any] | None = None,
 ) -> list[str]:
     policy = policy or closure.load_object(root / POLICY_PATH.relative_to(ROOT))
-    errors = closure.schema_errors(program, schema)
+    critical_errors = _critical_governance_errors(program)
+    schema_errors = closure.schema_errors(program, schema)
     policy_schema = closure.load_object(root / POLICY_SCHEMA_PATH.relative_to(ROOT))
-    errors.extend(closure.schema_errors(policy, policy_schema, "lifecycle policy"))
-    if errors:
-        return errors
+    schema_errors.extend(closure.schema_errors(policy, policy_schema, "lifecycle policy"))
+    if schema_errors:
+        return critical_errors + schema_errors
+    errors = critical_errors
     errors.extend(_baseline_errors(program, root))
     errors.extend(_sequence_errors(program, policy))
     errors.extend(_maturity_errors(program, policy))
