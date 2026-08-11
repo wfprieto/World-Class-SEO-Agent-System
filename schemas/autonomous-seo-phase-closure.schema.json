@@ -14,6 +14,7 @@
     "apivr",
     "twenty_pass",
     "reviewer_verdict_files",
+    "reviewer_provenance_files",
     "rollback",
     "technical_verification",
     "outcome_verification",
@@ -26,7 +27,7 @@
   ],
   "properties": {
     "$schema": {"const": "../../schemas/autonomous-seo-phase-closure.schema.json"},
-    "schema_version": {"const": "1.1.0"},
+    "schema_version": {"const": "1.2.0"},
     "program_id": {"const": "autonomous-seo-expansion"},
     "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
@@ -54,6 +55,7 @@
       }
     },
     "reviewer_verdict_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "reviewer_provenance_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
     "rollback": {"$ref": "#/$defs/verification_block"},
     "technical_verification": {"$ref": "#/$defs/verification_block"},
     "outcome_verification": {
