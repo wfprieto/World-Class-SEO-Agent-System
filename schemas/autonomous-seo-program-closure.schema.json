@@ -18,13 +18,14 @@
     "rollback_summary",
     "phase_closure_files",
     "reviewer_verdict_files",
+    "reviewer_provenance_files",
     "evidence_package_hash",
     "evidence_refs",
     "closure_state"
   ],
   "properties": {
     "$schema": {"const": "../../schemas/autonomous-seo-program-closure.schema.json"},
-    "schema_version": {"const": "1.0.0"},
+    "schema_version": {"const": "1.1.0"},
     "program_id": {"const": "autonomous-seo-expansion"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "builder_context_id": {"type": "string", "minLength": 8},
@@ -36,6 +37,7 @@
     "rollback_summary": {"$ref": "#/$defs/verification_block"},
     "phase_closure_files": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/autonomous-seo-expansion-p(?:[0-9]|1[0-3])-closure\\.json$"}},
     "reviewer_verdict_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "reviewer_provenance_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
     "evidence_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "evidence_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}},
     "closure_state": {"const": "APPROVED_GREAT"}
