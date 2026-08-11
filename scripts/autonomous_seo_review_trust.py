@@ -10,9 +10,19 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+REPOSITORY_FULL_NAME = "wfprieto/World-Class-SEO-Agent-System"
+PULL_REQUEST_NUMBER = 37
 REQUIRED_REVIEWERS = {
     "senior-scrummaster-3": "SENIOR_SCRUMMASTER_3",
     "vp-engineering": "VP_ENGINEERING",
+}
+EXPECTED_ACTORS = {
+    "senior-scrummaster-3": "claude[bot]",
+    "vp-engineering": "chatgpt-codex-connector[bot]",
+}
+EXPECTED_PROVIDERS = {
+    "senior-scrummaster-3": "GITHUB_CLAUDE_AGENT",
+    "vp-engineering": "GITHUB_CODEX_AGENT",
 }
 
 
@@ -43,14 +53,7 @@ def _git_bytes(root: Path, arguments: list[str]) -> bytes | None:
 
 def _working_tree_matches_candidate(root: Path, commit: str, relative: str) -> bool:
     if not (root / ".git").exists():
-        candidate_hash = candidate_blob_sha256(root, commit, relative)
-        path = _safe_path(root, relative)
-        return bool(
-            candidate_hash
-            and path
-            and path.is_file()
-            and hashlib.sha256(path.read_bytes()).hexdigest() == candidate_hash
-        )
+        return False
     try:
         result = subprocess.run(
             ["git", "diff", "--quiet", commit, "--", relative],
@@ -65,30 +68,43 @@ def _working_tree_matches_candidate(root: Path, commit: str, relative: str) -> b
 
 
 def git_commit_exists(root: Path, commit: str) -> bool:
-    if len(commit) != 40:
+    if len(commit) != 40 or not (root / ".git").exists():
         return False
-    if not (root / ".git").exists():
-        return True
     return _git_bytes(root, ["cat-file", "-e", f"{commit}^{{commit}}"] ) is not None
 
 
 def candidate_blob_sha256(root: Path, commit: str, relative: str) -> str | None:
     if not git_commit_exists(root, commit):
         return None
-    if (root / ".git").exists():
-        payload = _git_bytes(root, ["show", f"{commit}:{relative}"])
-        if payload is None:
-            return None
-        return hashlib.sha256(payload).hexdigest()
-    path = _safe_path(root, relative)
-    if path is None or not path.is_file():
+    payload = _git_bytes(root, ["show", f"{commit}:{relative}"])
+    if payload is None:
         return None
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def review_subject_hash(
+    repository_full_name: str,
+    pull_request_number: int,
+    base_commit: str,
+    candidate_commit: str,
+    canonical_ci_run_id: int,
+) -> str:
+    payload = {
+        "base_commit": base_commit,
+        "candidate_commit": candidate_commit,
+        "canonical_ci_run_id": canonical_ci_run_id,
+        "pull_request_number": pull_request_number,
+        "repository_full_name": repository_full_name,
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def candidate_evidence_ref_errors(
     refs: list[dict[str, Any]], root: Path, candidate_commit: str
 ) -> list[str]:
+    if not (root / ".git").exists():
+        return ["candidate-bound evidence requires Git history"]
     if not git_commit_exists(root, candidate_commit):
         return [f"candidate commit does not exist: {candidate_commit}"]
     errors: list[str] = []
@@ -141,7 +157,7 @@ def reviewer_provenance_errors(
 ) -> list[str]:
     files = closure.get("reviewer_provenance_files", [])
     if len(files) != 2:
-        return ["closure requires exactly two authenticated reviewer provenance files"]
+        return ["closure requires exactly two live-authentication provenance manifests"]
     schema = _load(root / "schemas" / "autonomous-seo-reviewer-provenance.schema.json")
     receipts, errors = _load_provenance_files(files, schema, root)
     if errors:
@@ -181,9 +197,16 @@ def _provenance_identity_errors(
 
 def _execution_identity_errors(receipts: list[dict[str, Any]]) -> list[str]:
     executions = {str(item.get("execution_id")) for item in receipts}
-    if len(executions) == 2:
-        return []
-    return ["review provenance execution IDs must be distinct"]
+    triggers = {int(item.get("trigger_comment_id", 0)) for item in receipts}
+    results = {(str(item.get("result_kind")), int(item.get("result_id", 0))) for item in receipts}
+    errors: list[str] = []
+    if len(executions) != 2:
+        errors.append("review provenance execution IDs must be distinct")
+    if len(triggers) != 2:
+        errors.append("review provenance trigger comments must be distinct")
+    if len(results) != 2:
+        errors.append("review provenance result identities must be distinct")
+    return errors
 
 
 def _receipt_identity_errors(
@@ -192,6 +215,10 @@ def _receipt_identity_errors(
     errors: list[str] = []
     if receipt.get("role") != REQUIRED_REVIEWERS[reviewer_id]:
         errors.append(f"review provenance role mismatch: {reviewer_id}")
+    if receipt.get("provider") != EXPECTED_PROVIDERS[reviewer_id]:
+        errors.append(f"review provenance provider mismatch: {reviewer_id}")
+    if receipt.get("result_actor_login") != EXPECTED_ACTORS[reviewer_id]:
+        errors.append(f"review provenance actor mismatch: {reviewer_id}")
     for field in ("context_id", "provider", "model"):
         if receipt.get(field) != verdict.get(field):
             errors.append(f"review provenance {field} mismatch: {reviewer_id}")
@@ -202,14 +229,16 @@ def _receipt_binding_errors(
     reviewer_id: str, receipt: dict[str, Any], closure: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
+    if receipt.get("repository_full_name") != REPOSITORY_FULL_NAME:
+        errors.append(f"review provenance repository mismatch: {reviewer_id}")
+    if receipt.get("pull_request_number") != PULL_REQUEST_NUMBER:
+        errors.append(f"review provenance PR mismatch: {reviewer_id}")
     if receipt.get("candidate_commit") != closure.get("candidate_commit"):
         errors.append(f"review provenance candidate mismatch: {reviewer_id}")
     if receipt.get("evidence_package_hash") != closure.get("evidence_package_hash"):
         errors.append(f"review provenance evidence hash mismatch: {reviewer_id}")
     if receipt.get("context_id") == closure.get("builder_context_id"):
         errors.append(f"review provenance reuses builder context: {reviewer_id}")
-    if receipt.get("builder_controlled") is not False:
-        errors.append(f"review provenance is builder-controlled: {reviewer_id}")
-    if receipt.get("verification_state") != "VERIFIED":
-        errors.append(f"review provenance is not externally VERIFIED: {reviewer_id}")
+    if receipt.get("verification_state") != "REQUIRES_LIVE_VERIFICATION":
+        errors.append(f"review provenance may not self-assert VERIFIED: {reviewer_id}")
     return errors
