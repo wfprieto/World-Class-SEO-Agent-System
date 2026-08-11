@@ -279,13 +279,20 @@ def field_bounded_transition_errors(
     policy: dict[str, Any],
 ) -> list[str]:
     transition = policy["post_review_program_transition"]
-    errors: list[str] = []
-    for field in transition["immutable_fields"]:
-        if before.get(field) != after.get(field):
-            errors.append(f"post-review immutable program field changed: {field}")
+    errors = _immutable_program_errors(before, after, transition)
     errors.extend(_phase_transition_errors(before, after, phase_id, policy))
     errors.extend(_lane_transition_errors(before, after, transition))
     return errors
+
+
+def _immutable_program_errors(
+    before: dict[str, Any], after: dict[str, Any], transition: dict[str, Any]
+) -> list[str]:
+    return [
+        f"post-review immutable program field changed: {field}"
+        for field in transition["immutable_fields"]
+        if before.get(field) != after.get(field)
+    ]
 
 
 def _phase_transition_errors(
@@ -294,43 +301,85 @@ def _phase_transition_errors(
     phase_id: str,
     policy: dict[str, Any],
 ) -> list[str]:
-    transition = policy["post_review_program_transition"]
-    order = policy["phase_order"]
+    order = list(policy["phase_order"])
     before_map = {item["id"]: item for item in before["phases"]}
     after_map = {item["id"]: item for item in after["phases"]}
-    errors: list[str] = []
     if set(before_map) != set(after_map):
         return ["post-review phase set changed"]
-    for pid in order:
-        for field in transition["immutable_phase_fields"]:
-            if before_map[pid].get(field) != after_map[pid].get(field):
-                errors.append(f"post-review immutable phase field changed: {pid}.{field}")
-    index = order.index(phase_id)
-    errors.extend(_reviewed_phase_state_errors(before_map[phase_id], after_map[phase_id], transition))
-    if index + 1 < len(order):
-        next_id = order[index + 1]
-        if after.get("current_phase") != next_id:
-            errors.append(f"current_phase must advance only to {next_id}")
-        if before_map[next_id]["status"] != transition["next_phase_status_from"] or after_map[next_id]["status"] != transition["next_phase_status_to"]:
-            errors.append(f"next phase {next_id} must transition NOT_STARTED -> IN_PROGRESS")
-    elif after.get("current_phase") != phase_id:
-        errors.append("terminal phase must remain current_phase")
-    for pid in order:
-        if pid not in {phase_id, order[index + 1] if index + 1 < len(order) else phase_id} and before_map[pid] != after_map[pid]:
-            errors.append(f"unreviewed phase changed after review: {pid}")
+    errors = _immutable_phase_errors(before_map, after_map, policy)
+    errors.extend(_reviewed_and_next_phase_errors(before, after, before_map, after_map, phase_id, policy))
+    errors.extend(_unreviewed_phase_errors(before_map, after_map, phase_id, order))
     return errors
+
+
+def _immutable_phase_errors(
+    before_map: dict[str, dict[str, Any]],
+    after_map: dict[str, dict[str, Any]],
+    policy: dict[str, Any],
+) -> list[str]:
+    fields = policy["post_review_program_transition"]["immutable_phase_fields"]
+    return [
+        f"post-review immutable phase field changed: {phase_id}.{field}"
+        for phase_id, before_phase in before_map.items()
+        for field in fields
+        if before_phase.get(field) != after_map[phase_id].get(field)
+    ]
+
+
+def _reviewed_and_next_phase_errors(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    before_map: dict[str, dict[str, Any]],
+    after_map: dict[str, dict[str, Any]],
+    phase_id: str,
+    policy: dict[str, Any],
+) -> list[str]:
+    order = list(policy["phase_order"])
+    transition = policy["post_review_program_transition"]
+    index = order.index(phase_id)
+    errors = _reviewed_phase_state_errors(before_map[phase_id], after_map[phase_id], transition)
+    if index + 1 >= len(order):
+        if after.get("current_phase") != phase_id:
+            errors.append("terminal phase must remain current_phase")
+        return errors
+    next_id = order[index + 1]
+    if after.get("current_phase") != next_id:
+        errors.append(f"current_phase must advance only to {next_id}")
+    if before_map[next_id]["status"] != transition["next_phase_status_from"]:
+        errors.append(f"next phase {next_id} must start from NOT_STARTED")
+    if after_map[next_id]["status"] != transition["next_phase_status_to"]:
+        errors.append(f"next phase {next_id} must advance to IN_PROGRESS")
+    return errors
+
+
+def _unreviewed_phase_errors(
+    before_map: dict[str, dict[str, Any]],
+    after_map: dict[str, dict[str, Any]],
+    phase_id: str,
+    order: list[str],
+) -> list[str]:
+    index = order.index(phase_id)
+    allowed = {phase_id}
+    if index + 1 < len(order):
+        allowed.add(order[index + 1])
+    return [
+        f"unreviewed phase changed after review: {pid}"
+        for pid in order
+        if pid not in allowed and before_map[pid] != after_map[pid]
+    ]
 
 
 def _reviewed_phase_state_errors(
     before: dict[str, Any], after: dict[str, Any], transition: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
-    if before.get("status") not in transition["reviewed_phase_status_from"] or after.get("status") != transition["reviewed_phase_status_to"]:
-        errors.append("reviewed phase must transition IN_PROGRESS|BLOCKED -> COMPLETE")
+    if before.get("status") not in transition["reviewed_phase_status_from"]:
+        errors.append("reviewed phase must start IN_PROGRESS or BLOCKED")
+    if after.get("status") != transition["reviewed_phase_status_to"]:
+        errors.append("reviewed phase must finish COMPLETE")
     if after.get("technical_verification") != transition["technical_verification_to"]:
         errors.append("reviewed phase technical_verification must become PASS")
-    allowed_outcomes = {"PASS", "NOT_REQUIRED", "PENDING"}
-    if after.get("outcome_verification") not in allowed_outcomes:
+    if after.get("outcome_verification") not in {"PASS", "NOT_REQUIRED", "PENDING"}:
         errors.append("reviewed phase outcome_verification must be explicit at closure")
     return errors
 
