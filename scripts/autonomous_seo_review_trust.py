@@ -41,6 +41,29 @@ def _git_bytes(root: Path, arguments: list[str]) -> bytes | None:
     return result.stdout
 
 
+def _working_tree_matches_candidate(root: Path, commit: str, relative: str) -> bool:
+    if not (root / ".git").exists():
+        candidate_hash = candidate_blob_sha256(root, commit, relative)
+        path = _safe_path(root, relative)
+        return bool(
+            candidate_hash
+            and path
+            and path.is_file()
+            and hashlib.sha256(path.read_bytes()).hexdigest() == candidate_hash
+        )
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--quiet", commit, "--", relative],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
+
+
 def git_commit_exists(root: Path, commit: str) -> bool:
     if len(commit) != 40:
         return False
@@ -89,7 +112,7 @@ def _one_candidate_evidence_error(
     errors: list[str] = []
     if ref.get("sha256") != candidate_hash:
         errors.append(f"candidate evidence hash mismatch: {relative}")
-    if hashlib.sha256(path.read_bytes()).hexdigest() != candidate_hash:
+    if not _working_tree_matches_candidate(root, candidate_commit, relative):
         errors.append(f"evidence changed after candidate freeze: {relative}")
     return errors
 
