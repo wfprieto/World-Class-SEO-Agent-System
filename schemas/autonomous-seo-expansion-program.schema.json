@@ -42,18 +42,9 @@
     "direct_merge_permitted": {"const": false},
     "capability_maturity_order": {
       "type": "array",
-      "prefixItems": [
-        {"const": "G0_DOCUMENTED"},
-        {"const": "G1_FIXTURE_VERIFIED"},
-        {"const": "G2_SHADOW_VERIFIED"},
-        {"const": "G3_LIVE_READ_VERIFIED"},
-        {"const": "G4_DRAFT_WRITE_VERIFIED"},
-        {"const": "G5_CANARY_WRITE_VERIFIED"},
-        {"const": "G6_BOUNDED_AUTONOMOUS"}
-      ],
-      "items": false,
-      "minItems": 7,
-      "maxItems": 7
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 3}
     },
     "phase_close_requires": {
       "type": "array",
@@ -61,35 +52,24 @@
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 3}
     },
-    "scope": {
-      "type": "array",
-      "minItems": 4,
-      "uniqueItems": true,
-      "items": {"type": "string", "minLength": 5}
-    },
-    "exclusions": {
-      "type": "array",
-      "minItems": 3,
-      "uniqueItems": true,
-      "items": {"type": "string", "minLength": 5}
-    },
-    "phases": {
-      "type": "array",
-      "minItems": 14,
-      "maxItems": 14,
-      "items": {"$ref": "#/$defs/phase"}
-    },
-    "extension_lanes": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "items": {"$ref": "#/$defs/lane"}
-    },
-    "program_evidence_state": {
-      "enum": ["NOT_RUN", "PARTIAL", "VERIFIED", "BLOCKED"]
-    }
+    "scope": {"type": "array", "minItems": 4, "uniqueItems": true, "items": {"type": "string", "minLength": 5}},
+    "exclusions": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 5}},
+    "phases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/phase"}},
+    "extension_lanes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/lane"}},
+    "program_evidence_state": {"enum": ["NOT_RUN", "PARTIAL", "VERIFIED", "BLOCKED"]}
   },
   "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "bound_commit"],
+      "properties": {
+        "kind": {"const": "repository_file"},
+        "path": {"type": "string", "minLength": 3, "not": {"pattern": "(^/|(^|/)\\.\\.(/|$))"}},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bound_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
     "owner_set": {
       "type": "object",
       "additionalProperties": false,
@@ -103,73 +83,35 @@
     "phase": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "title",
-        "status",
-        "apivr_tier",
-        "objective",
-        "depends_on",
-        "owners",
-        "scope",
-        "non_goals",
-        "maturity_target",
-        "acceptance_criteria",
-        "rollback",
-        "stop_conditions",
-        "technical_verification",
-        "outcome_verification"
-      ],
+      "required": ["id", "title", "status", "apivr_tier", "objective", "depends_on", "owners", "scope", "non_goals", "maturity_target", "acceptance_criteria", "rollback", "stop_conditions", "technical_verification", "outcome_verification"],
       "properties": {
         "id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
         "title": {"type": "string", "minLength": 8},
         "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE"]},
         "apivr_tier": {"enum": ["COMPREHENSIVE", "FORENSIC"]},
         "objective": {"type": "string", "minLength": 20},
-        "depends_on": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}
-        },
+        "depends_on": {"type": "array", "uniqueItems": true, "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}},
         "owners": {"$ref": "#/$defs/owner_set"},
-        "scope": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 3}
-        },
-        "non_goals": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 3}
-        },
-        "maturity_target": {
-          "enum": [
-            "G0_DOCUMENTED",
-            "G1_FIXTURE_VERIFIED",
-            "G2_SHADOW_VERIFIED",
-            "G3_LIVE_READ_VERIFIED",
-            "G4_DRAFT_WRITE_VERIFIED",
-            "G5_CANARY_WRITE_VERIFIED",
-            "G6_BOUNDED_AUTONOMOUS"
-          ]
-        },
-        "acceptance_criteria": {
-          "type": "array",
-          "minItems": 2,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 8}
-        },
+        "scope": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "non_goals": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "maturity_target": {"type": "string", "minLength": 3},
+        "acceptance_criteria": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
         "rollback": {"type": "string", "minLength": 12},
-        "stop_conditions": {
-          "type": "array",
-          "minItems": 2,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 8}
-        },
+        "stop_conditions": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
         "technical_verification": {"enum": ["NOT_RUN", "PARTIAL", "PASS", "FAIL", "BLOCKED"]},
-        "outcome_verification": {"enum": ["NOT_RUN", "PENDING", "PARTIAL", "PASS", "FAIL", "BLOCKED"]}
+        "outcome_verification": {"enum": ["NOT_RUN", "PENDING", "PARTIAL", "PASS", "NOT_REQUIRED", "FAIL", "BLOCKED"]}
+      }
+    },
+    "deferral": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "decision_date", "decided_by", "evidence_refs", "revisit_trigger"],
+      "properties": {
+        "reason": {"type": "string", "minLength": 12},
+        "decision_date": {"type": "string", "format": "date"},
+        "decided_by": {"type": "string", "minLength": 3},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence_ref"}},
+        "revisit_trigger": {"type": "string", "minLength": 12}
       }
     },
     "lane": {
@@ -180,23 +122,19 @@
         "id": {"pattern": "^L-[A-D]$"},
         "title": {"type": "string", "minLength": 5},
         "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE", "DEFERRED"]},
-        "depends_on": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}
-        },
+        "depends_on": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}},
         "owner": {"type": "string", "minLength": 3},
-        "maturity_ceiling_without_separate_authorization": {
-          "enum": ["G2_SHADOW_VERIFIED", "G3_LIVE_READ_VERIFIED", "G4_DRAFT_WRITE_VERIFIED"]
-        },
-        "scope": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 3}
+        "maturity_ceiling_without_separate_authorization": {"type": "string", "minLength": 3},
+        "scope": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "deferral": {"$ref": "#/$defs/deferral"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "DEFERRED"}}, "required": ["status"]},
+          "then": {"required": ["deferral"]},
+          "else": {"not": {"required": ["deferral"]}}
         }
-      }
+      ]
     }
   }
 }
