@@ -59,28 +59,52 @@ def _active_phase_errors(
     current = str(program.get("current_phase", ""))
     if current not in order:
         return ["current_phase is not a canonical phase id"]
-    all_complete = all(phase.get("status") == "COMPLETE" for phase in phases)
-    active = [phase for phase in phases if phase.get("status") in {"IN_PROGRESS", "BLOCKED"}]
-    if all_complete:
-        errors = [] if not active else ["a completed program cannot retain an active phase"]
-        if current != order[-1]:
-            errors.append(f"a completed program must leave current_phase at {order[-1]}")
-        return errors
+    if all(phase.get("status") == "COMPLETE" for phase in phases):
+        return _terminal_phase_state_errors(current, phases, order)
+    return _nonterminal_phase_state_errors(current, phases, order)
+
+
+def _terminal_phase_state_errors(
+    current: str, phases: list[dict[str, Any]], order: list[str]
+) -> list[str]:
     errors: list[str] = []
-    if len(active) != 1:
-        errors.append("exactly one phase must be IN_PROGRESS or BLOCKED before completion")
-    elif active[0].get("id") != current:
-        errors.append("current_phase must identify the sole active or blocked phase")
+    if any(phase.get("status") in {"IN_PROGRESS", "BLOCKED"} for phase in phases):
+        errors.append("a completed program cannot retain an active phase")
+    if current != order[-1]:
+        errors.append(f"a completed program must leave current_phase at {order[-1]}")
+    return errors
+
+
+def _nonterminal_phase_state_errors(
+    current: str, phases: list[dict[str, Any]], order: list[str]
+) -> list[str]:
+    active = [phase for phase in phases if phase.get("status") in {"IN_PROGRESS", "BLOCKED"}]
+    errors = _active_identity_errors(current, active)
     current_index = order.index(current)
     for index, phase in enumerate(phases):
-        status = phase.get("status")
-        if index < current_index and status != "COMPLETE":
-            errors.append(f"{phase['id']} precedes current_phase and must be COMPLETE")
-        elif index == current_index and status not in {"IN_PROGRESS", "BLOCKED"}:
-            errors.append(f"{phase['id']} is current_phase and must be IN_PROGRESS or BLOCKED")
-        elif index > current_index and status != "NOT_STARTED":
-            errors.append(f"{phase['id']} follows current_phase and must be NOT_STARTED")
+        errors.extend(_relative_phase_state_errors(phase, index, current_index))
     return errors
+
+
+def _active_identity_errors(current: str, active: list[dict[str, Any]]) -> list[str]:
+    if len(active) != 1:
+        return ["exactly one phase must be IN_PROGRESS or BLOCKED before completion"]
+    if active[0].get("id") != current:
+        return ["current_phase must identify the sole active or blocked phase"]
+    return []
+
+
+def _relative_phase_state_errors(
+    phase: dict[str, Any], index: int, current_index: int
+) -> list[str]:
+    status = phase.get("status")
+    if index < current_index and status != "COMPLETE":
+        return [f"{phase['id']} precedes current_phase and must be COMPLETE"]
+    if index == current_index and status not in {"IN_PROGRESS", "BLOCKED"}:
+        return [f"{phase['id']} is current_phase and must be IN_PROGRESS or BLOCKED"]
+    if index > current_index and status != "NOT_STARTED":
+        return [f"{phase['id']} follows current_phase and must be NOT_STARTED"]
+    return []
 
 
 def _dependency_errors(phases: list[dict[str, Any]], order: list[str]) -> list[str]:
@@ -88,15 +112,23 @@ def _dependency_errors(phases: list[dict[str, Any]], order: list[str]) -> list[s
     statuses = {str(phase.get("id")): str(phase.get("status")) for phase in phases}
     errors: list[str] = []
     for phase in phases:
-        phase_id = str(phase.get("id"))
-        for dependency in phase.get("depends_on", []):
-            if dependency not in index:
-                errors.append(f"{phase_id} depends on unknown phase {dependency}")
-                continue
-            if index[dependency] >= index[phase_id]:
-                errors.append(f"{phase_id} dependency {dependency} must precede the phase")
-            if phase.get("status") in {"IN_PROGRESS", "BLOCKED", "COMPLETE"} and statuses.get(dependency) != "COMPLETE":
-                errors.append(f"{phase_id} cannot advance before dependency {dependency} is COMPLETE")
+        errors.extend(_one_phase_dependency_errors(phase, index, statuses))
+    return errors
+
+
+def _one_phase_dependency_errors(
+    phase: dict[str, Any], index: dict[str, int], statuses: dict[str, str]
+) -> list[str]:
+    phase_id = str(phase.get("id"))
+    errors: list[str] = []
+    for dependency in phase.get("depends_on", []):
+        if dependency not in index:
+            errors.append(f"{phase_id} depends on unknown phase {dependency}")
+            continue
+        if index[dependency] >= index[phase_id]:
+            errors.append(f"{phase_id} dependency {dependency} must precede the phase")
+        if phase.get("status") in {"IN_PROGRESS", "BLOCKED", "COMPLETE"} and statuses.get(dependency) != "COMPLETE":
+            errors.append(f"{phase_id} cannot advance before dependency {dependency} is COMPLETE")
     return errors
 
 
@@ -104,43 +136,61 @@ def _maturity_errors(program: dict[str, Any], policy: dict[str, Any]) -> list[st
     errors: list[str] = []
     if program.get("capability_maturity_order") != policy.get("maturity_order"):
         errors.append("program maturity order must mirror the canonical lifecycle policy")
-    targets = policy["phase_maturity_targets"]
-    forensic = set(policy["forensic_phases"])
-    write_index = policy["phase_order"].index(policy["write_safety_phase"])
-    maturity_order = list(policy["maturity_order"])
-    draft_index = maturity_order.index("G4_DRAFT_WRITE_VERIFIED")
     for phase in program.get("phases", []):
-        if not isinstance(phase, dict):
-            continue
-        phase_id = str(phase.get("id"))
-        maturity = str(phase.get("maturity_target"))
-        if targets.get(phase_id) != maturity:
-            errors.append(f"{phase_id} maturity_target must match canonical lifecycle policy")
-        if phase_id in forensic and phase.get("apivr_tier") != "FORENSIC":
-            errors.append(f"{phase_id} must use FORENSIC APIVR")
-        phase_index = policy["phase_order"].index(phase_id)
-        if phase_index < write_index and maturity_order.index(maturity) >= draft_index:
-            errors.append(f"{phase_id} cannot target write maturity before write-safety phase")
+        if isinstance(phase, dict):
+            errors.extend(_one_phase_maturity_errors(phase, policy))
     return errors
+
+
+def _one_phase_maturity_errors(
+    phase: dict[str, Any], policy: dict[str, Any]
+) -> list[str]:
+    phase_id = str(phase.get("id"))
+    maturity = str(phase.get("maturity_target"))
+    errors: list[str] = []
+    if policy["phase_maturity_targets"].get(phase_id) != maturity:
+        errors.append(f"{phase_id} maturity_target must match canonical lifecycle policy")
+    if phase_id in set(policy["forensic_phases"]) and phase.get("apivr_tier") != "FORENSIC":
+        errors.append(f"{phase_id} must use FORENSIC APIVR")
+    errors.extend(_premature_write_maturity_errors(phase_id, maturity, policy))
+    return errors
+
+
+def _premature_write_maturity_errors(
+    phase_id: str, maturity: str, policy: dict[str, Any]
+) -> list[str]:
+    order = list(policy["phase_order"])
+    maturity_order = list(policy["maturity_order"])
+    write_index = order.index(policy["write_safety_phase"])
+    draft_index = maturity_order.index("G4_DRAFT_WRITE_VERIFIED")
+    if order.index(phase_id) < write_index and maturity_order.index(maturity) >= draft_index:
+        return [f"{phase_id} cannot target write maturity before write-safety phase"]
+    return []
 
 
 def _completion_errors(
     program: dict[str, Any], root: Path, policy: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
-    allowed_outcomes = set(policy["complete_phase_allowed_outcomes"])
     for phase in program.get("phases", []):
-        if not isinstance(phase, dict) or phase.get("status") != "COMPLETE":
-            continue
-        phase_id = str(phase.get("id"))
-        if phase.get("technical_verification") != "PASS":
-            errors.append(f"{phase_id} cannot be COMPLETE without technical_verification PASS")
-        if phase.get("outcome_verification") not in allowed_outcomes:
-            errors.append(f"{phase_id} COMPLETE requires explicit PASS, NOT_REQUIRED, or PENDING outcome state")
-        if phase_id in set(policy["outcome_pass_required_phases"]) and phase.get("outcome_verification") != "PASS":
-            errors.append(f"{phase_id} requires outcome_verification PASS")
-        errors.extend(closure.phase_closure_errors(phase, root, policy))
+        if isinstance(phase, dict) and phase.get("status") == "COMPLETE":
+            errors.extend(_one_completed_phase_errors(phase, root, policy))
     errors.extend(_program_terminal_errors(program, root, policy))
+    return errors
+
+
+def _one_completed_phase_errors(
+    phase: dict[str, Any], root: Path, policy: dict[str, Any]
+) -> list[str]:
+    phase_id = str(phase.get("id"))
+    errors: list[str] = []
+    if phase.get("technical_verification") != "PASS":
+        errors.append(f"{phase_id} cannot be COMPLETE without technical_verification PASS")
+    if phase.get("outcome_verification") not in set(policy["complete_phase_allowed_outcomes"]):
+        errors.append(f"{phase_id} COMPLETE requires explicit PASS, NOT_REQUIRED, or PENDING outcome state")
+    if phase_id in set(policy["outcome_pass_required_phases"]) and phase.get("outcome_verification") != "PASS":
+        errors.append(f"{phase_id} requires outcome_verification PASS")
+    errors.extend(closure.phase_closure_errors(phase, root, policy))
     return errors
 
 
@@ -156,14 +206,20 @@ def _program_terminal_errors(
     if all_complete and evidence_state != "VERIFIED":
         errors.append("all core phases COMPLETE requires program_evidence_state VERIFIED")
     if evidence_state == "VERIFIED":
-        unresolved = [
-            str(lane.get("id"))
-            for lane in program.get("extension_lanes", [])
-            if isinstance(lane, dict) and lane.get("status") not in {"COMPLETE", "DEFERRED"}
-        ]
-        if unresolved:
-            errors.append(f"program VERIFIED requires every extension lane COMPLETE or DEFERRED: {unresolved}")
-        errors.extend(closure.program_closure_errors(program, root, policy))
+        errors.extend(_verified_program_errors(program, root, policy))
+    return errors
+
+
+def _verified_program_errors(
+    program: dict[str, Any], root: Path, policy: dict[str, Any]
+) -> list[str]:
+    unresolved = [
+        str(lane.get("id"))
+        for lane in program.get("extension_lanes", [])
+        if isinstance(lane, dict) and lane.get("status") not in {"COMPLETE", "DEFERRED"}
+    ]
+    errors = [] if not unresolved else [f"program VERIFIED requires every extension lane COMPLETE or DEFERRED: {unresolved}"]
+    errors.extend(closure.program_closure_errors(program, root, policy))
     return errors
 
 
@@ -182,14 +238,25 @@ def _lane_errors(
     }
     errors: list[str] = []
     for lane in lanes:
-        if lane.get("status") in {"IN_PROGRESS", "COMPLETE"}:
-            for dependency in lane.get("depends_on", []):
-                if phase_status.get(dependency) != "COMPLETE":
-                    errors.append(f"{lane['id']} cannot advance before dependency {dependency} is COMPLETE")
-        if lane.get("status") == "DEFERRED":
-            deferral = lane.get("deferral", {})
-            candidate = str(deferral.get("evidence_refs", [{}])[0].get("bound_commit", "")) if deferral.get("evidence_refs") else ""
-            errors.extend(closure.evidence_ref_errors(deferral.get("evidence_refs", []), root, candidate))
+        errors.extend(_one_lane_errors(lane, phase_status, root))
+    return errors
+
+
+def _one_lane_errors(
+    lane: dict[str, Any], phase_status: dict[str, str], root: Path
+) -> list[str]:
+    errors: list[str] = []
+    if lane.get("status") in {"IN_PROGRESS", "COMPLETE"}:
+        errors.extend(
+            f"{lane['id']} cannot advance before dependency {dependency} is COMPLETE"
+            for dependency in lane.get("depends_on", [])
+            if phase_status.get(dependency) != "COMPLETE"
+        )
+    if lane.get("status") == "DEFERRED":
+        deferral = lane.get("deferral", {})
+        refs = deferral.get("evidence_refs", [])
+        candidate = str(refs[0].get("bound_commit", "")) if refs else ""
+        errors.extend(closure.evidence_ref_errors(refs, root, candidate))
     return errors
 
 
@@ -216,7 +283,8 @@ def validate_program(
 ) -> list[str]:
     policy = policy or closure.load_object(root / POLICY_PATH.relative_to(ROOT))
     errors = closure.schema_errors(program, schema)
-    errors.extend(closure.schema_errors(policy, closure.load_object(root / POLICY_SCHEMA_PATH.relative_to(ROOT)), "lifecycle policy"))
+    policy_schema = closure.load_object(root / POLICY_SCHEMA_PATH.relative_to(ROOT))
+    errors.extend(closure.schema_errors(policy, policy_schema, "lifecycle policy"))
     if errors:
         return errors
     errors.extend(_baseline_errors(program, root))
