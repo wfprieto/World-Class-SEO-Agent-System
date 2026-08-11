@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 import shutil
 import subprocess
@@ -39,10 +38,6 @@ def _copy_contracts(root: Path) -> None:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / relative, target)
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _reviewer(reviewer_id: str, role: str, context: str, evidence_hash: str) -> dict:
@@ -122,15 +117,19 @@ def _prepare_candidate(root: Path) -> tuple[dict, str, list[dict]]:
     _git(root, "add", ".")
     _git(root, "commit", "-m", "candidate")
     candidate = _git(root, "rev-parse", "HEAD")
-    refs = [
-        {
-            "kind": "repository_file",
-            "path": str(path.relative_to(root)).replace("\\", "/"),
-            "sha256": _sha256(path),
-            "bound_commit": candidate,
-        }
-        for path in evidence_paths
-    ]
+    refs = []
+    for path in evidence_paths:
+        relative = str(path.relative_to(root)).replace("\\", "/")
+        candidate_hash = trust.candidate_blob_sha256(root, candidate, relative)
+        assert candidate_hash is not None
+        refs.append(
+            {
+                "kind": "repository_file",
+                "path": relative,
+                "sha256": candidate_hash,
+                "bound_commit": candidate,
+            }
+        )
     return program, candidate, refs
 
 
