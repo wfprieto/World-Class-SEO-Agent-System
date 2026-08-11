@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from scripts import autonomous_seo_expansion_closure as phase_closure
+from scripts import autonomous_seo_phase_closure as phase_closure
 
 PROGRAM_CLOSURE_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-program-closure.json"
 
