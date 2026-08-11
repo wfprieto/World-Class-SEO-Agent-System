@@ -1,0 +1,79 @@
+{
+  "$schema": "../../schemas/autonomous-seo-expansion-policy.schema.json",
+  "schema_version": "1.0.0",
+  "policy_id": "autonomous-seo-expansion-lifecycle",
+  "phase_order": ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13"],
+  "extension_lane_order": ["L-A", "L-B", "L-C", "L-D"],
+  "maturity_order": [
+    "G0_DOCUMENTED",
+    "G1_FIXTURE_VERIFIED",
+    "G2_SHADOW_VERIFIED",
+    "G3_LIVE_READ_VERIFIED",
+    "G4_DRAFT_WRITE_VERIFIED",
+    "G5_CANARY_WRITE_VERIFIED",
+    "G6_BOUNDED_AUTONOMOUS"
+  ],
+  "phase_maturity_targets": {
+    "P0": "G0_DOCUMENTED",
+    "P1": "G1_FIXTURE_VERIFIED",
+    "P2": "G1_FIXTURE_VERIFIED",
+    "P3": "G1_FIXTURE_VERIFIED",
+    "P4": "G3_LIVE_READ_VERIFIED",
+    "P5": "G3_LIVE_READ_VERIFIED",
+    "P6": "G2_SHADOW_VERIFIED",
+    "P7": "G2_SHADOW_VERIFIED",
+    "P8": "G2_SHADOW_VERIFIED",
+    "P9": "G2_SHADOW_VERIFIED",
+    "P10": "G1_FIXTURE_VERIFIED",
+    "P11": "G4_DRAFT_WRITE_VERIFIED",
+    "P12": "G5_CANARY_WRITE_VERIFIED",
+    "P13": "G6_BOUNDED_AUTONOMOUS"
+  },
+  "forensic_phases": ["P10", "P11", "P12", "P13"],
+  "write_safety_phase": "P10",
+  "outcome_pass_required_phases": ["P12", "P13"],
+  "complete_phase_allowed_outcomes": ["PASS", "NOT_REQUIRED", "PENDING"],
+  "final_program_closure_required": true,
+  "final_program_reviewer_roles": ["SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"],
+  "post_review_program_transition": {
+    "reviewed_phase_status_from": ["IN_PROGRESS", "BLOCKED"],
+    "reviewed_phase_status_to": "COMPLETE",
+    "technical_verification_to": "PASS",
+    "next_phase_status_from": "NOT_STARTED",
+    "next_phase_status_to": "IN_PROGRESS",
+    "immutable_fields": [
+      "schema_version",
+      "program_id",
+      "objective",
+      "baseline",
+      "apivr_tier",
+      "direct_merge_permitted",
+      "capability_maturity_order",
+      "phase_close_requires",
+      "scope",
+      "exclusions"
+    ],
+    "immutable_phase_fields": [
+      "id",
+      "title",
+      "apivr_tier",
+      "objective",
+      "depends_on",
+      "owners",
+      "scope",
+      "non_goals",
+      "maturity_target",
+      "acceptance_criteria",
+      "rollback",
+      "stop_conditions"
+    ],
+    "immutable_lane_fields": [
+      "id",
+      "title",
+      "depends_on",
+      "owner",
+      "maturity_ceiling_without_separate_authorization",
+      "scope"
+    ]
+  }
+}
