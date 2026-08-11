@@ -10,7 +10,6 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-ROOT = Path(__file__).resolve().parents[1]
 PROGRAM_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-program.json"
 REQUIRED_REVIEWERS = {
     "senior-scrummaster-3": "SENIOR_SCRUMMASTER_3",
@@ -25,9 +24,7 @@ def load_object(path: Path) -> dict[str, Any]:
     return payload
 
 
-def schema_errors(
-    payload: dict[str, Any], schema: dict[str, Any], label: str = "schema"
-) -> list[str]:
+def schema_errors(payload: dict[str, Any], schema: dict[str, Any], label: str = "schema") -> list[str]:
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
     errors = sorted(
@@ -87,9 +84,7 @@ def safe_repo_path(root: Path, relative: str) -> Path | None:
     return candidate
 
 
-def evidence_ref_errors(
-    refs: list[dict[str, Any]], root: Path, candidate_commit: str
-) -> list[str]:
+def evidence_ref_errors(refs: list[dict[str, Any]], root: Path, candidate_commit: str) -> list[str]:
     errors: list[str] = []
     for ref in refs:
         path = safe_repo_path(root, str(ref.get("path", "")))
@@ -120,9 +115,7 @@ def reviewer_file_errors(closure: dict[str, Any], root: Path) -> list[str]:
     return reviewer_independence_errors(closure, verdicts)
 
 
-def reviewer_independence_errors(
-    closure: dict[str, Any], verdicts: list[dict[str, Any]]
-) -> list[str]:
+def reviewer_independence_errors(closure: dict[str, Any], verdicts: list[dict[str, Any]]) -> list[str]:
     errors: list[str] = []
     if len(verdicts) != 2:
         return ["phase closure requires exactly two reviewer verdicts"]
@@ -171,9 +164,7 @@ def closure_path(root: Path, phase_id: str) -> Path:
     return root / "evaluation" / "remediation" / name
 
 
-def phase_closure_errors(
-    phase: dict[str, Any], root: Path, policy: dict[str, Any]
-) -> list[str]:
+def phase_closure_errors(phase: dict[str, Any], root: Path, policy: dict[str, Any]) -> list[str]:
     phase_id = str(phase.get("id"))
     path = closure_path(root, phase_id)
     if not path.is_file():
@@ -191,9 +182,7 @@ def phase_closure_errors(
     return errors
 
 
-def _all_evidence_errors(
-    closure: dict[str, Any], root: Path, candidate: str
-) -> list[str]:
+def _all_evidence_errors(closure: dict[str, Any], root: Path, candidate: str) -> list[str]:
     refs = list(closure.get("evidence_refs", []))
     refs.extend(closure.get("rollback", {}).get("evidence_refs", []))
     refs.extend(closure.get("technical_verification", {}).get("evidence_refs", []))
@@ -202,10 +191,7 @@ def _all_evidence_errors(
 
 
 def _closure_identity_errors(
-    phase: dict[str, Any],
-    closure: dict[str, Any],
-    root: Path,
-    policy: dict[str, Any],
+    phase: dict[str, Any], closure: dict[str, Any], root: Path, policy: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
     phase_id = str(phase.get("id"))
@@ -221,11 +207,7 @@ def _closure_identity_errors(
 
 
 def _reviewed_candidate_errors(
-    root: Path,
-    phase_id: str,
-    candidate: str,
-    closure: dict[str, Any],
-    policy: dict[str, Any],
+    root: Path, phase_id: str, candidate: str, closure: dict[str, Any], policy: dict[str, Any]
 ) -> list[str]:
     if len(candidate) != 40:
         return [f"{phase_id} closure candidate_commit must be a 40-character SHA"]
@@ -271,10 +253,7 @@ def _program_transition_errors(
 
 
 def field_bounded_transition_errors(
-    before: dict[str, Any],
-    after: dict[str, Any],
-    phase_id: str,
-    policy: dict[str, Any],
+    before: dict[str, Any], after: dict[str, Any], phase_id: str, policy: dict[str, Any]
 ) -> list[str]:
     transition = policy["post_review_program_transition"]
     errors = _immutable_program_errors(before, after, transition)
@@ -294,10 +273,7 @@ def _immutable_program_errors(
 
 
 def _phase_transition_errors(
-    before: dict[str, Any],
-    after: dict[str, Any],
-    phase_id: str,
-    policy: dict[str, Any],
+    before: dict[str, Any], after: dict[str, Any], phase_id: str, policy: dict[str, Any]
 ) -> list[str]:
     order = list(policy["phase_order"])
     before_map = {item["id"]: item for item in before["phases"]}
@@ -305,11 +281,7 @@ def _phase_transition_errors(
     if set(before_map) != set(after_map):
         return ["post-review phase set changed"]
     errors = _immutable_phase_errors(before_map, after_map, policy)
-    errors.extend(
-        _reviewed_and_next_phase_errors(
-            before, after, before_map, after_map, phase_id, policy
-        )
-    )
+    errors.extend(_reviewed_and_next_phase_errors(before, after, before_map, after_map, phase_id, policy))
     errors.extend(_unreviewed_phase_errors(before_map, after_map, phase_id, order))
     return errors
 
@@ -339,9 +311,7 @@ def _reviewed_and_next_phase_errors(
     order = list(policy["phase_order"])
     transition = policy["post_review_program_transition"]
     index = order.index(phase_id)
-    errors = _reviewed_phase_state_errors(
-        before_map[phase_id], after_map[phase_id], transition
-    )
+    errors = _reviewed_phase_state_errors(before_map[phase_id], after_map[phase_id], transition)
     if index + 1 >= len(order):
         if after.get("current_phase") != phase_id:
             errors.append("terminal phase must remain current_phase")
@@ -399,9 +369,7 @@ def _lane_transition_errors(
     for lane_id, lane in before_map.items():
         for field in transition["immutable_lane_fields"]:
             if lane.get(field) != after_map[lane_id].get(field):
-                errors.append(
-                    f"post-review immutable lane field changed: {lane_id}.{field}"
-                )
+                errors.append(f"post-review immutable lane field changed: {lane_id}.{field}")
         if lane != after_map[lane_id]:
             errors.append(f"extension lane changed during phase finalization: {lane_id}")
     return errors
