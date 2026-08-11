@@ -42,7 +42,7 @@ def _candidate_freeze_errors(
     program: dict[str, Any], closure: dict[str, Any], root: Path
 ) -> list[str]:
     if not (root / ".git").exists():
-        return []
+        return ["program closure requires Git history or an authenticated immutable manifest"]
     candidate = str(closure.get("candidate_commit", ""))
     if not trust.git_commit_exists(root, candidate):
         return ["program closure candidate_commit must identify an existing commit"]
