@@ -8,6 +8,8 @@ import subprocess
 from pathlib import Path
 
 from scripts import autonomous_seo_expansion_closure as closure
+from scripts import autonomous_seo_program_closure as program_closure
+from scripts import autonomous_seo_review_trust as trust
 from scripts.validate_autonomous_seo_expansion_program import validate_program
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -246,7 +248,45 @@ def test_reviewer_provenance_is_mandatory(tmp_path: Path) -> None:
         {"reviewer_id": "senior-scrummaster-3"},
         {"reviewer_id": "vp-engineering"},
     ]
-    from scripts import autonomous_seo_review_trust as trust
-
     errors = trust.reviewer_provenance_errors(closure_payload, verdicts, tmp_path)
     assert any("authenticated reviewer provenance" in error for error in errors)
+
+
+def test_program_closure_rejects_nonexistent_candidate(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    _git(root, "config", "user.email", "fixture@example.com")
+    _git(root, "config", "user.name", "fixture")
+    (root / "seed.txt").write_text("seed\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "seed")
+    program = {"program_evidence_state": "VERIFIED"}
+    closure_payload = {"candidate_commit": "a" * 40}
+    errors = program_closure._candidate_freeze_errors(program, closure_payload, root)
+    assert any("existing commit" in error for error in errors)
+
+
+def test_program_closure_rejects_post_review_source_drift(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    _git(root, "config", "user.email", "fixture@example.com")
+    _git(root, "config", "user.name", "fixture")
+    program_path = root / closure.PROGRAM_RELATIVE
+    _write(program_path, {"program_evidence_state": "PARTIAL", "stable": True})
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "review freeze")
+    candidate = _git(root, "rev-parse", "HEAD")
+    (root / "source.py").write_text("material source drift\n", encoding="utf-8")
+    final_program = {"program_evidence_state": "VERIFIED", "stable": True}
+    _write(program_path, final_program)
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "illegal finalization")
+    closure_payload = {
+        "candidate_commit": candidate,
+        "reviewer_verdict_files": [],
+        "reviewer_provenance_files": [],
+    }
+    errors = program_closure._candidate_freeze_errors(final_program, closure_payload, root)
+    assert any("post-review source drift" in error for error in errors)
