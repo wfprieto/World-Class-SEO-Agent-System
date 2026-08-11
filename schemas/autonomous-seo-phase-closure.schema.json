@@ -26,7 +26,7 @@
   ],
   "properties": {
     "$schema": {"const": "../../schemas/autonomous-seo-phase-closure.schema.json"},
-    "schema_version": {"const": "1.0.0"},
+    "schema_version": {"const": "1.1.0"},
     "program_id": {"const": "autonomous-seo-expansion"},
     "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
@@ -50,45 +50,12 @@
       "required": ["passes_completed", "improvements"],
       "properties": {
         "passes_completed": {"const": 20},
-        "improvements": {
-          "type": "array",
-          "minItems": 20,
-          "maxItems": 20,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 12}
-        }
+        "improvements": {"type": "array", "minItems": 20, "maxItems": 20, "uniqueItems": true, "items": {"type": "string", "minLength": 12}}
       }
     },
-    "reviewer_verdict_files": {
-      "type": "array",
-      "minItems": 2,
-      "maxItems": 2,
-      "uniqueItems": true,
-      "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}
-    },
-    "rollback": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["state", "evidence_ref"],
-      "properties": {
-        "state": {"const": "PASS"},
-        "evidence_ref": {"type": "string", "minLength": 5}
-      }
-    },
-    "technical_verification": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["state", "evidence_refs"],
-      "properties": {
-        "state": {"const": "PASS"},
-        "evidence_refs": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 5}
-        }
-      }
-    },
+    "reviewer_verdict_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "rollback": {"$ref": "#/$defs/verification_block"},
+    "technical_verification": {"$ref": "#/$defs/verification_block"},
     "outcome_verification": {
       "type": "object",
       "additionalProperties": false,
@@ -96,23 +63,36 @@
       "properties": {
         "state": {"enum": ["PASS", "NOT_REQUIRED", "PENDING"]},
         "reason": {"type": "string", "minLength": 12},
-        "evidence_refs": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {"type": "string", "minLength": 5}
-        }
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidence_ref"}}
       }
     },
     "unexpected_change_scan": {"const": "PASS"},
     "security_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
     "documentation_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
     "evidence_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "evidence_refs": {
-      "type": "array",
-      "minItems": 3,
-      "uniqueItems": true,
-      "items": {"type": "string", "minLength": 5}
-    },
+    "evidence_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}},
     "closure_state": {"const": "APPROVED_GREAT"}
+  },
+  "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "bound_commit"],
+      "properties": {
+        "kind": {"const": "repository_file"},
+        "path": {"type": "string", "minLength": 3, "not": {"pattern": "(^/|(^|/)\\.\\.(/|$))"}},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bound_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "verification_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_refs"],
+      "properties": {
+        "state": {"const": "PASS"},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}}
+      }
+    }
   }
 }
