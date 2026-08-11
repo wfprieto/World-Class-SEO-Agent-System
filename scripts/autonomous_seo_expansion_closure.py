@@ -1,4 +1,4 @@
-"""Compatibility facade for autonomous SEO phase-closure validation."""
+"""Compatibility facade for autonomous SEO closure validation."""
 
 from scripts.autonomous_seo_phase_closure import (
     PROGRAM_RELATIVE,
@@ -18,6 +18,7 @@ from scripts.autonomous_seo_phase_closure import (
     safe_repo_path,
     schema_errors,
 )
+from scripts.autonomous_seo_program_closure import program_closure_errors
 
 __all__ = [
     "PROGRAM_RELATIVE",
@@ -32,6 +33,7 @@ __all__ = [
     "git_stdout",
     "load_object",
     "phase_closure_errors",
+    "program_closure_errors",
     "reviewer_file_errors",
     "reviewer_independence_errors",
     "safe_repo_path",
