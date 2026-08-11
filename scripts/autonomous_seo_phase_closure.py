@@ -10,11 +10,10 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from scripts import autonomous_seo_review_trust as trust
+
 PROGRAM_RELATIVE = "evaluation/remediation/autonomous-seo-expansion-program.json"
-REQUIRED_REVIEWERS = {
-    "senior-scrummaster-3": "SENIOR_SCRUMMASTER_3",
-    "vp-engineering": "VP_ENGINEERING",
-}
+REQUIRED_REVIEWERS = trust.REQUIRED_REVIEWERS
 
 
 def load_object(path: Path) -> dict[str, Any]:
@@ -85,17 +84,7 @@ def safe_repo_path(root: Path, relative: str) -> Path | None:
 
 
 def evidence_ref_errors(refs: list[dict[str, Any]], root: Path, candidate_commit: str) -> list[str]:
-    errors: list[str] = []
-    for ref in refs:
-        path = safe_repo_path(root, str(ref.get("path", "")))
-        if path is None or not path.is_file():
-            errors.append(f"evidence path is missing or unsafe: {ref.get('path')}")
-            continue
-        if ref.get("bound_commit") != candidate_commit:
-            errors.append(f"evidence {ref.get('path')} is not bound to candidate {candidate_commit}")
-        if ref.get("sha256") != file_sha256(path):
-            errors.append(f"evidence hash mismatch: {ref.get('path')}")
-    return errors
+    return trust.candidate_evidence_ref_errors(refs, root, candidate_commit)
 
 
 def reviewer_file_errors(closure: dict[str, Any], root: Path) -> list[str]:
@@ -112,7 +101,9 @@ def reviewer_file_errors(closure: dict[str, Any], root: Path) -> list[str]:
         verdicts.append(verdict)
     if errors:
         return errors
-    return reviewer_independence_errors(closure, verdicts)
+    errors.extend(reviewer_independence_errors(closure, verdicts))
+    errors.extend(trust.reviewer_provenance_errors(closure, verdicts, root))
+    return errors
 
 
 def reviewer_independence_errors(closure: dict[str, Any], verdicts: list[dict[str, Any]]) -> list[str]:
@@ -209,8 +200,8 @@ def _closure_identity_errors(
 def _reviewed_candidate_errors(
     root: Path, phase_id: str, candidate: str, closure: dict[str, Any], policy: dict[str, Any]
 ) -> list[str]:
-    if len(candidate) != 40:
-        return [f"{phase_id} closure candidate_commit must be a 40-character SHA"]
+    if not trust.git_commit_exists(root, candidate):
+        return [f"{phase_id} closure candidate_commit must identify an existing commit"]
     if not git_command_ok(root, ["merge-base", "--is-ancestor", candidate, "HEAD"]):
         return [f"{phase_id} closure candidate_commit must be an ancestor of final HEAD"]
     errors = _post_review_file_errors(root, phase_id, candidate, closure)
@@ -229,6 +220,7 @@ def _post_review_file_errors(
         f"evaluation/remediation/autonomous-seo-expansion-{phase_id.lower()}-closure.json",
     }
     allowed.update(str(item) for item in closure.get("reviewer_verdict_files", []))
+    allowed.update(str(item) for item in closure.get("reviewer_provenance_files", []))
     unexpected = sorted(path for path in paths if path not in allowed)
     return [] if not unexpected else [f"{phase_id} has post-review source drift: {unexpected}"]
 
