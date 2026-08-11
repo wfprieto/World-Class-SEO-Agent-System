@@ -166,6 +166,7 @@ def _copy_schemas(root: Path) -> None:
         "autonomous-seo-expansion-program.schema.json",
         "autonomous-seo-expansion-policy.schema.json",
         "autonomous-seo-phase-closure.schema.json",
+        "autonomous-seo-reviewer-provenance.schema.json",
         "reviewer-verdict.schema.json",
     ):
         target = root / "schemas" / name
@@ -194,7 +195,12 @@ def _setup_candidate(tmp_path: Path) -> tuple[Path, str, dict, dict, list[dict]]
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"immutable evidence {index}\n", encoding="utf-8")
-        evidence_refs.append({"kind": "repository_file", "path": relative, "sha256": "pending", "bound_commit": "pending"})
+        evidence_refs.append({
+            "kind": "repository_file",
+            "path": relative,
+            "sha256": "pending",
+            "bound_commit": "pending",
+        })
     _git(root, "add", ".")
     _git(root, "commit", "-m", "candidate")
     candidate = _git(root, "rev-parse", "HEAD")
@@ -202,6 +208,58 @@ def _setup_candidate(tmp_path: Path) -> tuple[Path, str, dict, dict, list[dict]]
         ref["sha256"] = closure.file_sha256(root / ref["path"])
         ref["bound_commit"] = candidate
     return root, candidate, program, policy, evidence_refs
+
+
+def _reviewer_verdict(
+    reviewer_id: str, role: str, context: str, evidence_hash: str
+) -> dict:
+    return {
+        "review_id": f"P0-{reviewer_id}",
+        "reviewer_id": reviewer_id,
+        "role": role,
+        "context_id": context,
+        "provider": "test-provider",
+        "model": "test-model",
+        "evidence_package_hash": evidence_hash,
+        "verdict": "APPROVE_GREAT",
+        "strongest_objections": [
+            "objection one resolved",
+            "objection two resolved",
+            "objection three resolved",
+        ],
+        "evidence_refs": ["candidate diff", "canonical tests"],
+        "submitted_at": "2026-08-11T12:30:00Z",
+        "saw_other_reviewer_verdict": False,
+        "is_builder": False,
+    }
+
+
+def _reviewer_provenance(
+    reviewer_id: str,
+    role: str,
+    context: str,
+    candidate: str,
+    evidence_hash: str,
+    execution_id: str,
+) -> dict:
+    return {
+        "$schema": "../../schemas/autonomous-seo-reviewer-provenance.schema.json",
+        "schema_version": "1.0.0",
+        "receipt_id": f"receipt-{reviewer_id}",
+        "reviewer_id": reviewer_id,
+        "role": role,
+        "context_id": context,
+        "provider": "test-provider",
+        "model": "test-model",
+        "candidate_commit": candidate,
+        "evidence_package_hash": evidence_hash,
+        "execution_id": execution_id,
+        "verification_method": "CI_AUTHENTICATED_EXTERNAL_EXECUTION",
+        "verification_state": "VERIFIED",
+        "issuer": "trusted-test-review-executor",
+        "builder_controlled": False,
+        "submitted_at": "2026-08-11T12:30:00Z",
+    }
 
 
 def _finalize(root: Path, candidate: str, program: dict, evidence_refs: list[dict]) -> None:
@@ -212,23 +270,46 @@ def _finalize(root: Path, candidate: str, program: dict, evidence_refs: list[dic
     final_program["current_phase"] = "P1"
     final_program["phases"][1]["status"] = "IN_PROGRESS"
     _write_json(root / closure.PROGRAM_RELATIVE, final_program)
-    (root / "evaluation/remediation/autonomous-seo-expansion-ledger.md").write_text("P0 closed\n", encoding="utf-8")
+    (root / "evaluation/remediation/autonomous-seo-expansion-ledger.md").write_text(
+        "P0 closed\n", encoding="utf-8"
+    )
     closure_payload = {
         "$schema": "../../schemas/autonomous-seo-phase-closure.schema.json",
-        "schema_version": "1.1.0",
+        "schema_version": "1.2.0",
         "program_id": "autonomous-seo-expansion",
         "phase_id": "P0",
         "candidate_commit": candidate,
         "builder_context_id": "builder-0001",
-        "apivr": {key: "PASS" for key in ("audit", "plan", "implement", "audit_implementation", "verify", "re_audit")},
-        "twenty_pass": {"passes_completed": 20, "improvements": [f"material improvement number {i:02d}" for i in range(20)]},
+        "apivr": {
+            key: "PASS"
+            for key in (
+                "audit",
+                "plan",
+                "implement",
+                "audit_implementation",
+                "verify",
+                "re_audit",
+            )
+        },
+        "twenty_pass": {
+            "passes_completed": 20,
+            "improvements": [f"material improvement number {i:02d}" for i in range(20)],
+        },
         "reviewer_verdict_files": [
             "evaluation/remediation/p0-scrummaster.json",
             "evaluation/remediation/p0-vp.json",
         ],
+        "reviewer_provenance_files": [
+            "evaluation/remediation/p0-scrummaster-provenance.json",
+            "evaluation/remediation/p0-vp-provenance.json",
+        ],
         "rollback": {"state": "PASS", "evidence_refs": [evidence_refs[0]]},
         "technical_verification": {"state": "PASS", "evidence_refs": [evidence_refs[1]]},
-        "outcome_verification": {"state": "NOT_REQUIRED", "reason": "P0 is a governance-only phase", "evidence_refs": []},
+        "outcome_verification": {
+            "state": "NOT_REQUIRED",
+            "reason": "P0 is a governance-only phase",
+            "evidence_refs": [],
+        },
         "unexpected_change_scan": "PASS",
         "security_review": "PASS",
         "documentation_review": "PASS",
@@ -236,28 +317,48 @@ def _finalize(root: Path, candidate: str, program: dict, evidence_refs: list[dic
         "evidence_package_hash": "pending",
         "closure_state": "APPROVED_GREAT",
     }
-    closure_payload["evidence_package_hash"] = closure.canonical_hash(closure.closure_evidence_payload(closure_payload))
-    for reviewer_id, role, context, filename in (
-        ("senior-scrummaster-3", "SENIOR_SCRUMMASTER_3", "review-0001", "p0-scrummaster.json"),
-        ("vp-engineering", "VP_ENGINEERING", "review-0002", "p0-vp.json"),
-    ):
-        verdict = {
-            "review_id": f"P0-{reviewer_id}",
-            "reviewer_id": reviewer_id,
-            "role": role,
-            "context_id": context,
-            "provider": "test-provider",
-            "model": "test-model",
-            "evidence_package_hash": closure_payload["evidence_package_hash"],
-            "verdict": "APPROVE_GREAT",
-            "strongest_objections": ["objection one resolved", "objection two resolved", "objection three resolved"],
-            "evidence_refs": ["candidate diff", "canonical tests"],
-            "submitted_at": "2026-08-11T12:30:00Z",
-            "saw_other_reviewer_verdict": False,
-            "is_builder": False,
-        }
-        _write_json(root / "evaluation/remediation" / filename, verdict)
-    _write_json(root / "evaluation/remediation/autonomous-seo-expansion-p0-closure.json", closure_payload)
+    closure_payload["evidence_package_hash"] = closure.canonical_hash(
+        closure.closure_evidence_payload(closure_payload)
+    )
+    evidence_hash = closure_payload["evidence_package_hash"]
+    reviewers = (
+        (
+            "senior-scrummaster-3",
+            "SENIOR_SCRUMMASTER_3",
+            "review-0001",
+            "p0-scrummaster.json",
+            "p0-scrummaster-provenance.json",
+            "external-exec-0001",
+        ),
+        (
+            "vp-engineering",
+            "VP_ENGINEERING",
+            "review-0002",
+            "p0-vp.json",
+            "p0-vp-provenance.json",
+            "external-exec-0002",
+        ),
+    )
+    for reviewer_id, role, context, verdict_name, provenance_name, execution_id in reviewers:
+        _write_json(
+            root / "evaluation/remediation" / verdict_name,
+            _reviewer_verdict(reviewer_id, role, context, evidence_hash),
+        )
+        _write_json(
+            root / "evaluation/remediation" / provenance_name,
+            _reviewer_provenance(
+                reviewer_id,
+                role,
+                context,
+                candidate,
+                evidence_hash,
+                execution_id,
+            ),
+        )
+    _write_json(
+        root / "evaluation/remediation/autonomous-seo-expansion-p0-closure.json",
+        closure_payload,
+    )
     _git(root, "add", ".")
     _git(root, "commit", "-m", "finalize p0")
 
@@ -274,13 +375,18 @@ def test_real_validator_rejects_post_review_future_phase_drift(tmp_path: Path) -
     root, candidate, program, policy, evidence_refs = _setup_candidate(tmp_path)
     _finalize(root, candidate, program, evidence_refs)
     final_program = closure.load_object(root / closure.PROGRAM_RELATIVE)
-    final_program["phases"][1]["objective"] = "Unreviewed objective mutation after the candidate review."
+    final_program["phases"][1]["objective"] = (
+        "Unreviewed objective mutation after the candidate review."
+    )
     _write_json(root / closure.PROGRAM_RELATIVE, final_program)
     _git(root, "add", ".")
     _git(root, "commit", "-m", "spoof future phase")
     schema = closure.load_object(root / "schemas/autonomous-seo-expansion-program.schema.json")
     errors = validate_program(final_program, schema, root, policy)
-    assert any("immutable phase field changed" in error or "unreviewed phase changed" in error for error in errors)
+    assert any(
+        "immutable phase field changed" in error or "unreviewed phase changed" in error
+        for error in errors
+    )
 
 
 def test_real_validator_rejects_evidence_content_spoof(tmp_path: Path) -> None:
@@ -293,4 +399,9 @@ def test_real_validator_rejects_evidence_content_spoof(tmp_path: Path) -> None:
     final_program = closure.load_object(root / closure.PROGRAM_RELATIVE)
     schema = closure.load_object(root / "schemas/autonomous-seo-expansion-program.schema.json")
     errors = validate_program(final_program, schema, root, policy)
-    assert any("hash mismatch" in error or "post-review source drift" in error for error in errors)
+    assert any(
+        "hash mismatch" in error
+        or "post-review source drift" in error
+        or "changed after candidate freeze" in error
+        for error in errors
+    )
