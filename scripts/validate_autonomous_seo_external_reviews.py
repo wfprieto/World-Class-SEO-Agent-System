@@ -63,6 +63,12 @@ def _expected_execution_id(receipt: dict[str, Any]) -> str:
     return f"github:{kind}:{int(receipt['result_id'])}"
 
 
+def _issue_url_matches_pr(item: dict[str, Any], repository: str, pr_number: int) -> bool:
+    return str(item.get("issue_url", "")).rstrip("/") == (
+        f"{API_ROOT}/repos/{repository}/issues/{pr_number}"
+    )
+
+
 def _subject_errors(
     receipt: dict[str, Any], verdict: dict[str, Any], closure: dict[str, Any]
 ) -> list[str]:
@@ -95,8 +101,12 @@ def _pr_and_run_errors(receipt: dict[str, Any], token: str) -> tuple[list[str], 
     pr = _api_json(f"/repos/{repository}/pulls/{pr_number}", token)
     run = _api_json(f"/repos/{repository}/actions/runs/{run_id}", token)
     errors: list[str] = []
+    if pr.get("number") != pr_number:
+        errors.append("external review PR number does not match receipt")
     if pr.get("base", {}).get("sha") != receipt["base_commit"]:
         errors.append("external review PR base does not match receipt")
+    if pr.get("head", {}).get("sha") != candidate:
+        errors.append("external review PR head is not the reviewed candidate")
     if run.get("head_sha") != candidate:
         errors.append("external review canonical CI run is not bound to candidate")
     if run.get("status") != "completed" or run.get("conclusion") != "success":
@@ -110,10 +120,13 @@ def _trigger_errors(
     receipt: dict[str, Any], token: str, run: dict[str, Any]
 ) -> tuple[list[str], dict[str, Any]]:
     repository = str(receipt["repository_full_name"])
+    pr_number = int(receipt["pull_request_number"])
     trigger_id = int(receipt["trigger_comment_id"])
     trigger = _api_json(f"/repos/{repository}/issues/comments/{trigger_id}", token)
     body = str(trigger.get("body", ""))
     errors: list[str] = []
+    if not _issue_url_matches_pr(trigger, repository, pr_number):
+        errors.append("external review trigger does not belong to declared pull request")
     if trigger.get("user", {}).get("login") != "wfprieto":
         errors.append("external review trigger is not owned by repository owner")
     for required in (
@@ -151,9 +164,12 @@ def _issue_comment_result(
     receipt: dict[str, Any], verdict: dict[str, Any], token: str
 ) -> tuple[list[str], dict[str, Any]]:
     repository = str(receipt["repository_full_name"])
+    pr_number = int(receipt["pull_request_number"])
     result = _api_json(f"/repos/{repository}/issues/comments/{int(receipt['result_id'])}", token)
     body = str(result.get("body", ""))
     errors = _provider_actor_errors(receipt, result)
+    if not _issue_url_matches_pr(result, repository, pr_number):
+        errors.append("external review result does not belong to declared pull request")
     for required in (
         str(receipt["candidate_commit"]),
         str(receipt["canonical_ci_run_id"]),
