@@ -37,7 +37,7 @@ VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "qu
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
 WORKFLOW_CONTRACT_SHA = "4034fbf4017e40480d25327b90d7dc391c2acfe2ff351a7e4986cdcc1cf647be"
-RELEASE_CONTRACT_SHA = "5ef5ff61423430c2bb55974eb6c1feea3e9e4978c3372e0d2c8f5ba16b3588e9"
+RELEASE_CONTRACT_SHA = "0bbd415a39319a18621ee5bf726e7771afbd3fd92049013d3a23af7ea5596056"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
