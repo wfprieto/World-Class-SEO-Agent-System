@@ -11,7 +11,6 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 REPOSITORY_FULL_NAME = "wfprieto/World-Class-SEO-Agent-System"
-PULL_REQUEST_NUMBER = 37
 REQUIRED_REVIEWERS = {
     "senior-scrummaster-3": "SENIOR_SCRUMMASTER_3",
     "vp-engineering": "VP_ENGINEERING",
@@ -199,6 +198,7 @@ def _execution_identity_errors(receipts: list[dict[str, Any]]) -> list[str]:
     executions = {str(item.get("execution_id")) for item in receipts}
     triggers = {int(item.get("trigger_comment_id", 0)) for item in receipts}
     results = {(str(item.get("result_kind")), int(item.get("result_id", 0))) for item in receipts}
+    pull_requests = {int(item.get("pull_request_number", 0)) for item in receipts}
     errors: list[str] = []
     if len(executions) != 2:
         errors.append("review provenance execution IDs must be distinct")
@@ -206,6 +206,8 @@ def _execution_identity_errors(receipts: list[dict[str, Any]]) -> list[str]:
         errors.append("review provenance trigger comments must be distinct")
     if len(results) != 2:
         errors.append("review provenance result identities must be distinct")
+    if len(pull_requests) != 1 or next(iter(pull_requests), 0) < 1:
+        errors.append("review provenance must bind both reviewers to one positive pull request number")
     return errors
 
 
@@ -231,8 +233,8 @@ def _receipt_binding_errors(
     errors: list[str] = []
     if receipt.get("repository_full_name") != REPOSITORY_FULL_NAME:
         errors.append(f"review provenance repository mismatch: {reviewer_id}")
-    if receipt.get("pull_request_number") != PULL_REQUEST_NUMBER:
-        errors.append(f"review provenance PR mismatch: {reviewer_id}")
+    if int(receipt.get("pull_request_number", 0)) < 1:
+        errors.append(f"review provenance PR must be positive: {reviewer_id}")
     if receipt.get("candidate_commit") != closure.get("candidate_commit"):
         errors.append(f"review provenance candidate mismatch: {reviewer_id}")
     if receipt.get("evidence_package_hash") != closure.get("evidence_package_hash"):
