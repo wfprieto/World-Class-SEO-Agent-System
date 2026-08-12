@@ -88,7 +88,7 @@ def _provenance(
     kind = result_kind.lower().replace("_", "-")
     return {
         "$schema": "../../schemas/autonomous-seo-reviewer-provenance.schema.json",
-        "schema_version": "1.1.0",
+        "schema_version": "1.1.1",
         "receipt_id": f"receipt-{reviewer_id}",
         "reviewer_id": reviewer_id,
         "role": role,
