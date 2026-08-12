@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts import autonomous_seo_phase_closure as phase_closure
+from scripts import autonomous_seo_review_trust as trust
 
 ROOT = Path(__file__).resolve().parents[1]
 API_ROOT = "https://api.github.com"
@@ -73,6 +74,8 @@ def _subject_errors(
         errors.append(f"external review context is not provider-derived: {reviewer_id}")
     if receipt["model"] != EXPECTED_MODELS[reviewer_id]:
         errors.append(f"external review model identifier mismatch: {reviewer_id}")
+    if receipt["result_actor_login"] != trust.EXPECTED_ACTORS[reviewer_id]:
+        errors.append(f"external review receipt actor is not an approved independent identity: {reviewer_id}")
     if receipt["base_commit"] != closure["base_commit"]:
         errors.append(f"external review base mismatch: {reviewer_id}")
     if receipt["canonical_ci_run_id"] != closure["canonical_ci_run_id"]:
@@ -132,15 +135,25 @@ def _trigger_errors(
     return errors, trigger
 
 
+def _provider_actor_errors(receipt: dict[str, Any], result: dict[str, Any]) -> list[str]:
+    reviewer_id = str(receipt["reviewer_id"])
+    expected_actor = trust.EXPECTED_ACTORS[reviewer_id]
+    actual_actor = result.get("user", {}).get("login")
+    errors: list[str] = []
+    if actual_actor != expected_actor:
+        errors.append(f"external review result is not owned by approved reviewer actor: {reviewer_id}")
+    if receipt.get("result_actor_login") != expected_actor:
+        errors.append(f"external review receipt actor does not match approved reviewer actor: {reviewer_id}")
+    return errors
+
+
 def _issue_comment_result(
     receipt: dict[str, Any], verdict: dict[str, Any], token: str
 ) -> tuple[list[str], dict[str, Any]]:
     repository = str(receipt["repository_full_name"])
     result = _api_json(f"/repos/{repository}/issues/comments/{int(receipt['result_id'])}", token)
     body = str(result.get("body", ""))
-    errors: list[str] = []
-    if result.get("user", {}).get("login") != receipt["result_actor_login"]:
-        errors.append("external review result actor mismatch")
+    errors = _provider_actor_errors(receipt, result)
     for required in (
         str(receipt["candidate_commit"]),
         str(receipt["canonical_ci_run_id"]),
@@ -160,9 +173,7 @@ def _review_result(
     result = _api_json(
         f"/repos/{repository}/pulls/{pr_number}/reviews/{int(receipt['result_id'])}", token
     )
-    errors: list[str] = []
-    if result.get("user", {}).get("login") != receipt["result_actor_login"]:
-        errors.append("external review result actor mismatch")
+    errors = _provider_actor_errors(receipt, result)
     if result.get("commit_id") != receipt["candidate_commit"]:
         errors.append("external pull-request review is not bound to candidate")
     if verdict["verdict"] != "APPROVE_GREAT" or result.get("state") != "APPROVED":
@@ -182,9 +193,7 @@ def _reaction_result(
         (item for item in reactions if int(item.get("id", 0)) == int(receipt["result_id"])),
         {},
     )
-    errors: list[str] = []
-    if result.get("user", {}).get("login") != receipt["result_actor_login"]:
-        errors.append("external review reaction actor mismatch")
+    errors = _provider_actor_errors(receipt, result)
     if result.get("content") != "+1" or verdict["verdict"] != "APPROVE_GREAT":
         errors.append("external review reaction is not an authenticated approval")
     return errors, result
@@ -229,12 +238,16 @@ def _authenticate_one(
     return errors
 
 
-def validate_live_external_reviews(root: Path, token: str) -> list[str]:
+def _completed_phases(root: Path) -> list[dict[str, Any]]:
     program_path = root / phase_closure.PROGRAM_RELATIVE
     if not program_path.is_file():
-        return ["autonomous SEO program is missing"]
+        raise ValueError("autonomous SEO program is missing")
     program = _load(program_path)
-    completed = [phase for phase in program.get("phases", []) if phase.get("status") == "COMPLETE"]
+    return [phase for phase in program.get("phases", []) if phase.get("status") == "COMPLETE"]
+
+
+def validate_live_external_reviews(root: Path, token: str) -> list[str]:
+    completed = _completed_phases(root)
     if not completed:
         return []
     errors: list[str] = []
@@ -260,6 +273,19 @@ def main() -> int:
         print(json.dumps({"status": "FAIL", "errors": ["GITHUB_TOKEN is required"]}))
         return 1
     try:
+        completed = _completed_phases(ROOT)
+        if not completed:
+            print(
+                json.dumps(
+                    {
+                        "status": "NOT_APPLICABLE",
+                        "authenticated_reviews": 0,
+                        "reason": "No autonomous SEO phase is COMPLETE; there are no external review receipts to authenticate yet.",
+                    },
+                    indent=2,
+                )
+            )
+            return 0
         errors = validate_live_external_reviews(ROOT, token)
     except (KeyError, ValueError, RuntimeError) as exc:
         errors = [str(exc)]
