@@ -100,6 +100,22 @@ jobs:
           python-version: "3.13"
       - name: Prove exact source integrity
         run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install trust-root validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity after dependency installation
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Lint autonomous trust root
+        run: >-
+          ruff check scripts/autonomous_seo_review_trust.py
+          scripts/validate_autonomous_seo_external_reviews.py
+          scripts/rehearse_autonomous_seo_rollback.py
+          tests/test_autonomous_seo_phase_closure_e2e.py
+      - name: Type-check autonomous trust root
+        run: >-
+          mypy scripts/autonomous_seo_review_trust.py
+          scripts/validate_autonomous_seo_external_reviews.py
+          scripts/rehearse_autonomous_seo_rollback.py
+          --ignore-missing-imports --check-untyped-defs
       - name: Authenticate GitHub agent reviewer executions
         run: python -m scripts.validate_autonomous_seo_external_reviews
         env:
