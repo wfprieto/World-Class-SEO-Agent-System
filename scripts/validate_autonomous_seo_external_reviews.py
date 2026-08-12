@@ -178,7 +178,7 @@ def _reaction_result(
     reactions = _api_json(
         f"/repos/{repository}/issues/comments/{trigger_id}/reactions?per_page=100", token
     )
-    result = next(
+    result: dict[str, Any] = next(
         (item for item in reactions if int(item.get("id", 0)) == int(receipt["result_id"])),
         {},
     )
