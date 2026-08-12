@@ -12,7 +12,6 @@
     "base_commit",
     "candidate_commit",
     "canonical_ci_run_id",
-    "review_package_hash",
     "builder_context_id",
     "apivr",
     "twenty_pass",
@@ -36,7 +35,6 @@
     "base_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "canonical_ci_run_id": {"type": "integer", "minimum": 1},
-    "review_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "builder_context_id": {"type": "string", "minLength": 8},
     "apivr": {
       "type": "object",
