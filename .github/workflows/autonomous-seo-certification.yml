@@ -1,9 +1,8 @@
 name: Autonomous SEO certification
 
 on:
-  workflow_run:
-    workflows: ["Validate repository"]
-    types: [completed]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,13 +15,35 @@ jobs:
     name: canonical-validation-prerequisite
     runs-on: ubuntu-latest
     steps:
-      - name: Require successful canonical validation
-        shell: bash
-        run: |
-          test "${{ github.event.workflow_run.name }}" = "Validate repository"
-          test "${{ github.event.workflow_run.status }}" = "completed"
-          test "${{ github.event.workflow_run.conclusion }}" = "success"
-          test -n "${{ github.event.workflow_run.head_sha }}"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Prove exact source before canonical prerequisite lookup
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Wait for authenticated exact-head canonical validation
+        run: >-
+          python scripts/wait_for_canonical_validation.py
+          --repository "${{ github.repository }}"
+          --head-sha "${{ github.event.pull_request.head.sha || github.sha }}"
+          --receipt canonical-validation-prerequisite.json
+          --timeout-seconds 1800
+          --poll-seconds 10
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Prove exact source after canonical prerequisite lookup
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Upload canonical prerequisite receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: canonical-validation-prerequisite
+          path: canonical-validation-prerequisite.json
+          if-no-files-found: error
 
   autonomous-seo-p0-rollback-certification:
     name: autonomous-seo-p0-rollback-certification
@@ -34,7 +55,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
@@ -52,7 +73,7 @@ jobs:
         shell: pwsh
         run: >-
           $env:PATH = Split-Path -Parent '${{ steps.trusted.outputs.git }}';
-          $raw = & '${{ steps.trusted.outputs.python }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.workflow_run.head_sha }};
+          $raw = & '${{ steps.trusted.outputs.python }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof failed' }
       - name: Preserve trusted source-integrity validator
@@ -107,35 +128,38 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - name: Prove exact source integrity
-        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install trust-root validation dependencies
         run: python -m pip install -r requirements-dev.txt
       - name: Prove exact source integrity after dependency installation
-        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Lint autonomous trust root
         run: >-
           ruff check scripts/autonomous_seo_review_trust.py
           scripts/validate_autonomous_seo_external_reviews.py
           scripts/rehearse_autonomous_seo_rollback.py
+          scripts/wait_for_canonical_validation.py
           tests/test_autonomous_seo_phase_closure_e2e.py
           tests/test_autonomous_seo_expansion_program.py
+          tests/test_autonomous_seo_external_review_trust.py
       - name: Type-check autonomous trust root
         run: >-
           mypy scripts/autonomous_seo_review_trust.py
           scripts/validate_autonomous_seo_external_reviews.py
           scripts/rehearse_autonomous_seo_rollback.py
+          scripts/wait_for_canonical_validation.py
           --ignore-missing-imports --check-untyped-defs
       - name: Authenticate reviews or report NOT_APPLICABLE before closure
         run: python -m scripts.validate_autonomous_seo_external_reviews
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Prove exact source integrity after provider lookup
-        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
 
   autonomous-seo-certification:
     name: autonomous-seo-certification
