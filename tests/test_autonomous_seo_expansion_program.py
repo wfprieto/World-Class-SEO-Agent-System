@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 from pathlib import Path
 
 from scripts import autonomous_seo_expansion_closure as closure
@@ -24,6 +25,23 @@ def _policy() -> dict:
 
 def _errors(program: dict) -> list[str]:
     return validate_program(program, _load(SCHEMA_PATH), ROOT, _policy())
+
+
+def _git(root: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=root, check=True, capture_output=True, text=True
+    ).stdout.strip()
+
+
+def _git_evidence_fixture(root: Path) -> tuple[str, Path]:
+    _git(root, "init")
+    _git(root, "config", "user.email", "evidence-fixture@example.com")
+    _git(root, "config", "user.name", "evidence fixture")
+    evidence = root / "evidence.txt"
+    evidence.write_text("real evidence\n", encoding="utf-8")
+    _git(root, "add", "evidence.txt")
+    _git(root, "commit", "-m", "candidate evidence")
+    return _git(root, "rev-parse", "HEAD"), evidence
 
 
 def test_canonical_program_passes_while_p0_is_in_progress() -> None:
@@ -129,28 +147,26 @@ def test_field_bounded_transition_rejects_program_policy_change() -> None:
 
 
 def test_evidence_ref_rejects_hash_spoof(tmp_path: Path) -> None:
-    evidence = tmp_path / "evidence.txt"
-    evidence.write_text("real evidence", encoding="utf-8")
+    candidate, _ = _git_evidence_fixture(tmp_path)
     ref = {
         "kind": "repository_file",
         "path": "evidence.txt",
         "sha256": "0" * 64,
-        "bound_commit": "a" * 40,
+        "bound_commit": candidate,
     }
-    errors = closure.evidence_ref_errors([ref], tmp_path, "a" * 40)
+    errors = closure.evidence_ref_errors([ref], tmp_path, candidate)
     assert any("hash mismatch" in error for error in errors)
 
 
 def test_evidence_ref_rejects_candidate_mismatch(tmp_path: Path) -> None:
-    evidence = tmp_path / "evidence.txt"
-    evidence.write_text("real evidence", encoding="utf-8")
+    candidate, evidence = _git_evidence_fixture(tmp_path)
     ref = {
         "kind": "repository_file",
         "path": "evidence.txt",
         "sha256": closure.file_sha256(evidence),
         "bound_commit": "b" * 40,
     }
-    errors = closure.evidence_ref_errors([ref], tmp_path, "a" * 40)
+    errors = closure.evidence_ref_errors([ref], tmp_path, candidate)
     assert any("not bound to candidate" in error for error in errors)
 
 
