@@ -32,7 +32,7 @@
   ],
   "properties": {
     "$schema": {"const": "../../schemas/autonomous-seo-reviewer-provenance.schema.json"},
-    "schema_version": {"const": "1.1.0"},
+    "schema_version": {"const": "1.1.1"},
     "receipt_id": {"type": "string", "minLength": 8},
     "reviewer_id": {"enum": ["senior-scrummaster-3", "vp-engineering"]},
     "role": {"enum": ["SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"]},
@@ -40,7 +40,7 @@
     "provider": {"enum": ["GITHUB_CLAUDE_AGENT", "GITHUB_CODEX_AGENT"]},
     "model": {"type": "string", "minLength": 2},
     "repository_full_name": {"const": "wfprieto/World-Class-SEO-Agent-System"},
-    "pull_request_number": {"const": 37},
+    "pull_request_number": {"type": "integer", "minimum": 1},
     "base_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "canonical_ci_run_id": {"type": "integer", "minimum": 1},
