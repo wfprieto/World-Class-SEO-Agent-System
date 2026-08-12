@@ -40,14 +40,21 @@ def _copy_contracts(root: Path) -> None:
         shutil.copy2(ROOT / relative, target)
 
 
-def _reviewer(reviewer_id: str, role: str, context: str, evidence_hash: str) -> dict:
+def _reviewer(
+    reviewer_id: str,
+    role: str,
+    context: str,
+    provider: str,
+    model: str,
+    evidence_hash: str,
+) -> dict:
     return {
         "review_id": f"review-{reviewer_id}",
         "reviewer_id": reviewer_id,
         "role": role,
         "context_id": context,
-        "provider": "external-provider",
-        "model": "independent-model",
+        "provider": provider,
+        "model": model,
         "evidence_package_hash": evidence_hash,
         "verdict": "APPROVE_GREAT",
         "strongest_objections": [
@@ -68,31 +75,46 @@ def _provenance(
     reviewer_id: str,
     role: str,
     context: str,
+    provider: str,
+    model: str,
+    actor: str,
+    base: str,
     candidate: str,
     evidence_hash: str,
-    execution_id: str,
+    trigger_id: int,
+    result_kind: str,
+    result_id: int,
 ) -> dict:
+    kind = result_kind.lower().replace("_", "-")
     return {
         "$schema": "../../schemas/autonomous-seo-reviewer-provenance.schema.json",
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "receipt_id": f"receipt-{reviewer_id}",
         "reviewer_id": reviewer_id,
         "role": role,
         "context_id": context,
-        "provider": "external-provider",
-        "model": "independent-model",
+        "provider": provider,
+        "model": model,
+        "repository_full_name": "wfprieto/World-Class-SEO-Agent-System",
+        "pull_request_number": 37,
+        "base_commit": base,
         "candidate_commit": candidate,
+        "canonical_ci_run_id": 999,
         "evidence_package_hash": evidence_hash,
-        "execution_id": execution_id,
-        "verification_method": "CI_AUTHENTICATED_EXTERNAL_EXECUTION",
-        "verification_state": "VERIFIED",
-        "issuer": "trusted-review-executor",
+        "trigger_comment_id": trigger_id,
+        "result_kind": result_kind,
+        "result_id": result_id,
+        "result_actor_login": actor,
+        "execution_id": f"github:{kind}:{result_id}",
+        "verification_method": "CI_AUTHENTICATED_GITHUB_AGENT",
+        "verification_state": "REQUIRES_LIVE_VERIFICATION",
+        "issuer": "github-actions-provider-authentication",
         "builder_controlled": False,
         "submitted_at": "2026-08-11T17:00:00Z",
     }
 
 
-def _prepare_candidate(root: Path) -> tuple[dict, str, list[dict]]:
+def _prepare_candidate(root: Path) -> tuple[dict, str, str, list[dict]]:
     _git(root, "init")
     _git(root, "config", "user.email", "fixture@example.com")
     _git(root, "config", "user.name", "fixture")
@@ -130,13 +152,13 @@ def _prepare_candidate(root: Path) -> tuple[dict, str, list[dict]]:
                 "bound_commit": candidate,
             }
         )
-    return program, candidate, refs
+    return program, baseline, candidate, refs
 
 
 def test_full_phase_closure_advances_program_end_to_end(tmp_path: Path) -> None:
     root = tmp_path / "repo"
     root.mkdir()
-    program, candidate, refs = _prepare_candidate(root)
+    program, baseline, candidate, refs = _prepare_candidate(root)
     final_program = copy.deepcopy(program)
     final_program["phases"][0]["status"] = "COMPLETE"
     final_program["phases"][0]["technical_verification"] = "PASS"
@@ -145,10 +167,12 @@ def test_full_phase_closure_advances_program_end_to_end(tmp_path: Path) -> None:
     final_program["phases"][1]["status"] = "IN_PROGRESS"
     closure_payload = {
         "$schema": "../../schemas/autonomous-seo-phase-closure.schema.json",
-        "schema_version": "1.2.0",
+        "schema_version": "1.3.0",
         "program_id": "autonomous-seo-expansion",
         "phase_id": "P0",
+        "base_commit": baseline,
         "candidate_commit": candidate,
+        "canonical_ci_run_id": 999,
         "builder_context_id": "builder-fixture-01",
         "apivr": {
             "audit": "PASS",
@@ -192,26 +216,49 @@ def test_full_phase_closure_advances_program_end_to_end(tmp_path: Path) -> None:
         (
             "senior-scrummaster-3",
             "SENIOR_SCRUMMASTER_3",
-            "review-context-01",
-            "external-execution-01",
+            "github:issue-comment:101",
+            "GITHUB_CLAUDE_AGENT",
+            "github-claude-agent",
+            "claude[bot]",
+            11,
+            "ISSUE_COMMENT",
+            101,
             "p0-scrummaster",
         ),
         (
             "vp-engineering",
             "VP_ENGINEERING",
-            "review-context-02",
-            "external-execution-02",
+            "github:trigger-reaction:202",
+            "GITHUB_CODEX_AGENT",
+            "github-codex-agent",
+            "chatgpt-codex-connector[bot]",
+            12,
+            "TRIGGER_REACTION",
+            202,
             "p0-vp",
         ),
     ]
-    for reviewer_id, role, context, execution_id, prefix in reviewers:
+    for reviewer_id, role, context, provider, model, actor, trigger, kind, result, prefix in reviewers:
         _write(
             root / f"evaluation/remediation/{prefix}-verdict.json",
-            _reviewer(reviewer_id, role, context, evidence_hash),
+            _reviewer(reviewer_id, role, context, provider, model, evidence_hash),
         )
         _write(
             root / f"evaluation/remediation/{prefix}-provenance.json",
-            _provenance(reviewer_id, role, context, candidate, evidence_hash, execution_id),
+            _provenance(
+                reviewer_id,
+                role,
+                context,
+                provider,
+                model,
+                actor,
+                baseline,
+                candidate,
+                evidence_hash,
+                trigger,
+                kind,
+                result,
+            ),
         )
     _write(root / "evaluation/remediation/autonomous-seo-expansion-p0-closure.json", closure_payload)
     _write(root / "evaluation/remediation/autonomous-seo-expansion-program.json", final_program)
@@ -229,11 +276,26 @@ def test_full_phase_closure_advances_program_end_to_end(tmp_path: Path) -> None:
 def test_candidate_evidence_detects_post_freeze_mutation(tmp_path: Path) -> None:
     root = tmp_path / "repo"
     root.mkdir()
-    _, candidate, refs = _prepare_candidate(root)
+    _, _, candidate, refs = _prepare_candidate(root)
     evidence = root / refs[0]["path"]
     evidence.write_text("tampered after candidate\n", encoding="utf-8")
     errors = closure.evidence_ref_errors([refs[0]], root, candidate)
     assert any("changed after candidate freeze" in error for error in errors)
+
+
+def test_candidate_evidence_fails_closed_without_git(tmp_path: Path) -> None:
+    evidence = tmp_path / "evidence.txt"
+    evidence.write_text("unverifiable\n", encoding="utf-8")
+    refs = [
+        {
+            "kind": "repository_file",
+            "path": "evidence.txt",
+            "sha256": "0" * 64,
+            "bound_commit": "a" * 40,
+        }
+    ]
+    errors = trust.candidate_evidence_ref_errors(refs, tmp_path, "a" * 40)
+    assert any("requires Git history" in error for error in errors)
 
 
 def test_reviewer_provenance_is_mandatory(tmp_path: Path) -> None:
@@ -248,7 +310,7 @@ def test_reviewer_provenance_is_mandatory(tmp_path: Path) -> None:
         {"reviewer_id": "vp-engineering"},
     ]
     errors = trust.reviewer_provenance_errors(closure_payload, verdicts, tmp_path)
-    assert any("authenticated reviewer provenance" in error for error in errors)
+    assert any("live-authentication provenance" in error for error in errors)
 
 
 def test_program_closure_rejects_nonexistent_candidate(tmp_path: Path) -> None:
@@ -264,6 +326,15 @@ def test_program_closure_rejects_nonexistent_candidate(tmp_path: Path) -> None:
     closure_payload = {"candidate_commit": "a" * 40}
     errors = program_closure._candidate_freeze_errors(program, closure_payload, root)
     assert any("existing commit" in error for error in errors)
+
+
+def test_program_closure_fails_closed_without_git(tmp_path: Path) -> None:
+    errors = program_closure._candidate_freeze_errors(
+        {"program_evidence_state": "VERIFIED"},
+        {"candidate_commit": "a" * 40},
+        tmp_path,
+    )
+    assert any("requires Git history" in error for error in errors)
 
 
 def test_program_closure_rejects_post_review_source_drift(tmp_path: Path) -> None:
