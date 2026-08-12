@@ -101,7 +101,7 @@ jobs:
       - name: Prove exact source integrity
         run: python scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Authenticate GitHub agent reviewer executions
-        run: python scripts/validate_autonomous_seo_external_reviews.py
+        run: python -m scripts.validate_autonomous_seo_external_reviews
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Prove exact source integrity after provider lookup
