@@ -12,7 +12,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,8 +53,8 @@ def _api_json(path: str, token: str) -> Any:
 def _iso(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _expected_execution_id(receipt: dict[str, Any]) -> str:
@@ -123,9 +123,12 @@ def _trigger_errors(
     agent = "@claude" if receipt["reviewer_id"] == "senior-scrummaster-3" else "@codex"
     if agent not in body.lower():
         errors.append(f"external review trigger omits expected agent: {agent}")
-    if run.get("updated_at") and trigger.get("created_at"):
-        if _iso(str(trigger["created_at"])) < _iso(str(run["updated_at"])):
-            errors.append("external review was triggered before canonical CI completed")
+    if (
+        run.get("updated_at")
+        and trigger.get("created_at")
+        and _iso(str(trigger["created_at"])) < _iso(str(run["updated_at"]))
+    ):
+        errors.append("external review was triggered before canonical CI completed")
     return errors, trigger
 
 
