@@ -2,8 +2,7 @@
 
 Repository provenance manifests are pointers to external evidence. They never
 self-authorize a reviewer. This validator is the trust root and must run with a
-GitHub token in the provider-authentication CI job before repository
-certification can pass a completed phase.
+GitHub token before repository certification can pass a completed phase.
 """
 
 from __future__ import annotations
@@ -18,7 +17,6 @@ from pathlib import Path
 from typing import Any
 
 from scripts import autonomous_seo_phase_closure as phase_closure
-from scripts import autonomous_seo_review_trust as trust
 
 ROOT = Path(__file__).resolve().parents[1]
 API_ROOT = "https://api.github.com"
@@ -64,27 +62,23 @@ def _expected_execution_id(receipt: dict[str, Any]) -> str:
     return f"github:{kind}:{int(receipt['result_id'])}"
 
 
-def _review_package_hash(receipt: dict[str, Any]) -> str:
-    return trust.review_subject_hash(
-        str(receipt["repository_full_name"]),
-        int(receipt["pull_request_number"]),
-        str(receipt["base_commit"]),
-        str(receipt["candidate_commit"]),
-        int(receipt["canonical_ci_run_id"]),
-    )
-
-
-def _subject_errors(receipt: dict[str, Any], verdict: dict[str, Any]) -> list[str]:
+def _subject_errors(
+    receipt: dict[str, Any], verdict: dict[str, Any], closure: dict[str, Any]
+) -> list[str]:
     reviewer_id = str(receipt["reviewer_id"])
     errors: list[str] = []
-    if receipt["evidence_package_hash"] != _review_package_hash(receipt):
-        errors.append(f"external review package hash mismatch: {reviewer_id}")
     if receipt["execution_id"] != _expected_execution_id(receipt):
         errors.append(f"external review execution ID is not provider-derived: {reviewer_id}")
     if receipt["context_id"] != receipt["execution_id"]:
         errors.append(f"external review context is not provider-derived: {reviewer_id}")
     if receipt["model"] != EXPECTED_MODELS[reviewer_id]:
         errors.append(f"external review model identifier mismatch: {reviewer_id}")
+    if receipt["base_commit"] != closure["base_commit"]:
+        errors.append(f"external review base mismatch: {reviewer_id}")
+    if receipt["canonical_ci_run_id"] != closure["canonical_ci_run_id"]:
+        errors.append(f"external review CI run mismatch: {reviewer_id}")
+    if receipt["evidence_package_hash"] != closure["evidence_package_hash"]:
+        errors.append(f"external review evidence package mismatch: {reviewer_id}")
     if verdict.get("verdict") != "APPROVE_GREAT":
         errors.append(f"external reviewer did not APPROVE_GREAT: {reviewer_id}")
     return errors
@@ -219,9 +213,9 @@ def _time_errors(
 
 
 def _authenticate_one(
-    receipt: dict[str, Any], verdict: dict[str, Any], token: str
+    receipt: dict[str, Any], verdict: dict[str, Any], closure: dict[str, Any], token: str
 ) -> list[str]:
-    errors = _subject_errors(receipt, verdict)
+    errors = _subject_errors(receipt, verdict, closure)
     pr_errors, run = _pr_and_run_errors(receipt, token)
     trigger_errors, trigger = _trigger_errors(receipt, token, run)
     result_errors, result = _result_errors(receipt, verdict, token)
@@ -253,7 +247,7 @@ def validate_live_external_reviews(root: Path, token: str) -> list[str]:
         verdict_map = {str(item["reviewer_id"]): item for item in verdicts}
         for receipt in receipts:
             reviewer_id = str(receipt["reviewer_id"])
-            errors.extend(_authenticate_one(receipt, verdict_map[reviewer_id], token))
+            errors.extend(_authenticate_one(receipt, verdict_map[reviewer_id], closure, token))
     return errors
 
 
