@@ -8,9 +8,9 @@
     {
       "id": "working-tree-reconciliation",
       "severity": "High",
-      "reason": "The local upgrade work has been moved from main onto release/v1.7.0-final-certification and staged with a clean whitespace check, but it still must be committed, pushed, and merged through a protected pull request before release.",
+      "reason": "The local upgrade work has been moved from main onto release/v1.7.0-final-certification, staged, verified, and committed locally at 26d3bc9, but it still must be pushed and merged through a protected pull request before release.",
       "owner": "Repository owner / release engineer",
-      "required_next_action": "Commit the staged release branch, push release/v1.7.0-final-certification, open a protected pull request, and require GitHub status checks/review before merge."
+      "required_next_action": "Push release/v1.7.0-final-certification, open a protected pull request, and require GitHub status checks/review before merge."
     },
     {
       "id": "external-live-proof",
@@ -70,5 +70,5 @@
     "seo_claims": "38 claims passed"
   },
   "scrummaster_decision": "ACCEPT_WITH_EXPLICIT_RISK",
-  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_COMMITTED_PUSHED_AND_PR_GATED"
+  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_PUSHED_AND_PR_GATED"
 }

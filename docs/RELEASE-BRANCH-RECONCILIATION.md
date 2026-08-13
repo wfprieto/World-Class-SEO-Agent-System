@@ -8,20 +8,19 @@ The final local certification work has been moved off `main` and onto:
 
 `release/v1.7.0-final-certification`
 
-The branch contains the verified repository upgrade set. The intended files have been staged and the staged whitespace check passed. The release is not merge-ready until the branch is committed, pushed, and merged through the protected pull request process.
+The branch contains the verified repository upgrade set. The intended files have been staged, the staged whitespace check passed, and the release branch has been committed locally at `26d3bc9`. The release is not merge-ready until the branch is pushed and merged through the protected pull request process.
 
 ## Release Decision
 
-`BLOCKED_FOR_MERGE_UNTIL_COMMITTED_PUSHED_AND_PR_GATED`
+`BLOCKED_FOR_MERGE_UNTIL_PUSHED_AND_PR_GATED`
 
 This is a process blocker, not a failing-test blocker.
 
 ## Required Next Actions
 
-1. Commit the reviewed release branch.
-2. Push `release/v1.7.0-final-certification`.
-3. Open a pull request into `main`.
-4. Require GitHub status checks and review before merge.
+1. Push `release/v1.7.0-final-certification`.
+2. Open a pull request into `main`.
+3. Require GitHub status checks and review before merge.
 
 ## Do Not Do
 
@@ -48,11 +47,11 @@ Evidence verdict: Local technical evidence is green. Review/PR evidence is not y
 
 Counterexample tested: The staged branch is locally green, but no commit, pushed branch, pull request, or GitHub status-check evidence exists yet.
 
-Unmet acceptance criteria: Commit, push, PR, and GitHub checks.
+Unmet acceptance criteria: Push, PR, and GitHub checks.
 
 Risk owner and deadline: Repository owner / release engineer before merge.
 
-Required next action: Commit the reviewed release branch.
+Required next action: Push the reviewed release branch.
 
 ## Learning Agent Record
 
