@@ -160,6 +160,38 @@ def _indeterminate_timeout_message(tool: str, timeout: float) -> str:
     )
 
 
+def _credential_query_keys(query: str) -> set[str]:
+    return {
+        query_key.lower()
+        for query_key, _ in urllib.parse.parse_qsl(query, keep_blank_values=True)
+    } & SENSITIVE_QUERY_KEYS
+
+
+def _unsafe_host_reason(key: str, host: str) -> str | None:
+    normalized_host = host.rstrip(".").lower()
+    if normalized_host in {"localhost", "local"}:
+        return f"{key} points to a local host"
+    try:
+        ip = ipaddress.ip_address(normalized_host)
+    except ValueError:
+        return None
+    return f"{key} points to a non-public address" if not ip.is_global else None
+
+
+def _unsafe_url_reason(key: str, value: str) -> str | None:
+    try:
+        parsed = urllib.parse.urlsplit(value)
+    except ValueError:
+        return f"{key} contains an invalid URL"
+    if parsed.scheme and parsed.scheme.lower() not in {"http", "https"}:
+        return f"{key} must use http or https"
+    if parsed.username or parsed.password:
+        return f"{key} must not contain credentials"
+    if _credential_query_keys(parsed.query):
+        return f"{key} contains credential-like query parameters"
+    return _unsafe_host_reason(key, parsed.hostname) if parsed.hostname else None
+
+
 class ToolDispatcher:
     def __init__(
         self,
@@ -255,37 +287,34 @@ class ToolDispatcher:
 
     def _first_unsafe_url_argument(self, arguments: dict[str, Any]) -> str | None:
         for key, value in arguments.items():
-            if not isinstance(value, str):
+            if not isinstance(value, str) or key.lower() not in {
+                "url",
+                "target_url",
+                "origin",
+                "site_url",
+            }:
                 continue
-            if key.lower() not in {"url", "target_url", "origin", "site_url"}:
-                continue
-            try:
-                parsed = urllib.parse.urlsplit(value)
-            except ValueError:
-                return f"{key} contains an invalid URL"
-            if parsed.scheme and parsed.scheme.lower() not in {"http", "https"}:
-                return f"{key} must use http or https"
-            if parsed.username or parsed.password:
-                return f"{key} must not contain credentials"
-            query_keys = {
-                query_key.lower()
-                for query_key, _ in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-            }
-            if query_keys & SENSITIVE_QUERY_KEYS:
-                return f"{key} contains credential-like query parameters"
-            host = parsed.hostname
-            if not host:
-                continue
-            normalized_host = host.rstrip(".").lower()
-            if normalized_host in {"localhost", "local"}:
-                return f"{key} points to a local host"
-            try:
-                ip = ipaddress.ip_address(normalized_host)
-            except ValueError:
-                continue
-            if not ip.is_global:
-                return f"{key} points to a non-public address"
+            if reason := _unsafe_url_reason(key, value):
+                return reason
         return None
+
+    def _timeout_for(self, request: ToolRequest) -> float:
+        timeout = (
+            self.default_timeout_seconds
+            if request.timeout_seconds is None
+            else float(request.timeout_seconds)
+        )
+        if not 0.1 <= timeout <= 600:
+            raise ValueError("Tool timeout must be from 0.1 to 600 seconds.")
+        return timeout
+
+    async def _fetch_result(self, adapter: RuntimeAdapter, request: ToolRequest, timeout: float) -> Any:
+        return validate_adapter_result(
+            await asyncio.wait_for(
+                asyncio.to_thread(adapter.fetch, **request.arguments),
+                timeout=timeout,
+            )
+        )
 
     async def dispatch(self, request: ToolRequest) -> ToolDispatchResult:
         trace = OperationTelemetry(operation=request.tool)
@@ -304,27 +333,20 @@ class ToolDispatcher:
         blocked = self._preflight_access(request, trace)
         if blocked is not None:
             return blocked
-        timeout = (
-            self.default_timeout_seconds
-            if request.timeout_seconds is None
-            else float(request.timeout_seconds)
-        )
-        if not 0.1 <= timeout <= 600:
+        try:
+            timeout = self._timeout_for(request)
+        except ValueError as exc:
             return self._failure(
                 request,
                 trace,
                 status="FAILED",
                 error_type="InvalidTimeout",
-                message="Tool timeout must be from 0.1 to 600 seconds.",
+                message=str(exc),
                 evidence_state="BLOCKED" if request.required else "INVALID",
             )
 
         try:
-            raw_result = await asyncio.wait_for(
-                asyncio.to_thread(adapter.fetch, **request.arguments),
-                timeout=timeout,
-            )
-            result = validate_adapter_result(raw_result)
+            result = await self._fetch_result(adapter, request, timeout)
         except AdapterNotConfigured as exc:
             return self._failure(
                 request,

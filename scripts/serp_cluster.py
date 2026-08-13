@@ -82,7 +82,7 @@ def cluster(serps: dict[str, list[str]], volumes: dict[str, float] | None = None
                 "internal_links": _link_matrix(hub, spokes),
             }
         )
-    clusters.sort(key=_cluster_sort_key)
+    clusters.sort(key=lambda c: (-c["size"], -(c["hub_volume"] or 0), c["hub"]))
     return {
         "cluster_count": len(clusters),
         "keyword_count": len(keywords),
@@ -97,10 +97,6 @@ def _link_matrix(hub: str, spokes: list[str]) -> list[dict[str, str]]:
     links = [{"from": s, "to": hub, "type": "spoke->hub"} for s in spokes]
     links += [{"from": hub, "to": s, "type": "hub->spoke"} for s in spokes]
     return links
-
-
-def _cluster_sort_key(item: dict[str, Any]) -> tuple[int, float, str]:
-    return (-int(item["size"]), -float(item.get("hub_volume") or 0), str(item["hub"]))
 
 
 def to_markdown(result: dict) -> str:

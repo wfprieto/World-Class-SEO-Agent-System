@@ -5,7 +5,7 @@
   "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
   "canonical_inventory_sha256": {
     "effective_command_registry": "a58b188399897a5c016bbf60c73d2a7b89968bcc51b574cd7ae2cd1fb07c5014",
-    "effective_capability_registry": "021600095dad93faf31ef66484ee602997237b867af93705948be580ad4276f4"
+    "effective_capability_registry": "cd3253962b338ae57350dfeec5791467ac718e0f9c52c3b2c349e1df164bfd9f"
   },
   "verification_state": {
     "code_verified": "PASS",
@@ -36,8 +36,14 @@
       "owner": "Runtime architecture owner",
       "next_action": "Complete validated command metadata for every executable agent and label advisory-only agents.",
       "target_pr": "PR2",
-      "acceptance": ["All executable agents expose validated entrypoints.", "Advisory agents are explicitly labeled.", "No command path is missing."],
-      "evidence": ["orchestration/capability-registry.json"]
+      "acceptance": [
+        "All executable agents expose validated entrypoints.",
+        "Advisory agents are explicitly labeled.",
+        "No command path is missing."
+      ],
+      "evidence": [
+        "orchestration/capability-registry.json"
+      ]
     },
     {
       "id": "skills-self-contained-packages",
@@ -49,8 +55,15 @@
       "owner": "Skill system owner",
       "next_action": "Migrate the remaining high-value executable skills to canonical self-contained packages without duplicating policy.",
       "target_pr": "PR8",
-      "acceptance": ["High-value executable skills have canonical packages.", "Skill index is generated.", "No duplicate rulebook is created."],
-      "evidence": ["skills/SKILL_INDEX.md", "skills/deep-skill-procedures.md"]
+      "acceptance": [
+        "High-value executable skills have canonical packages.",
+        "Skill index is generated.",
+        "No duplicate rulebook is created."
+      ],
+      "evidence": [
+        "skills/SKILL_INDEX.md",
+        "skills/deep-skill-procedures.md"
+      ]
     },
     {
       "id": "runtime-governance",
@@ -59,8 +72,15 @@
       "target_capability": "Schema-valid bounded DAG, evidence binding, budgets, decisions and consumed handoffs.",
       "status": "VERIFIED_SUPERIOR",
       "target_pr": "COMPLETE",
-      "acceptance": ["Four-cell CI remains green.", "No new tool bypasses runtime contracts."],
-      "evidence": ["runtime/workflow_runner.py", "runtime/structured_output.py", "runtime/run_budget.py"]
+      "acceptance": [
+        "Four-cell CI remains green.",
+        "No new tool bypasses runtime contracts."
+      ],
+      "evidence": [
+        "runtime/workflow_runner.py",
+        "runtime/structured_output.py",
+        "runtime/run_budget.py"
+      ]
     },
     {
       "id": "unified-command-surface",
@@ -69,10 +89,25 @@
       "target_capability": "Canonical seoctl registry exposes 67 governed commands, and root help derives all 21 families from that canonical metadata.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["system.run", "content.quality", "google.gsc-query", "technical.robots", "drift.baseline"],
+      "required_command_ids": [
+        "system.run",
+        "content.quality",
+        "google.gsc-query",
+        "technical.robots",
+        "drift.baseline"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["seoctl command family exists.", "Every command supports help, JSON and stable exit codes.", "Command docs are generated from metadata."],
-      "evidence": ["seoctl/command-registry.json", "seoctl/entrypoint.py", "tests/test_seoctl_entrypoint.py", "docs/COMMANDS.md"]
+      "acceptance": [
+        "seoctl command family exists.",
+        "Every command supports help, JSON and stable exit codes.",
+        "Command docs are generated from metadata."
+      ],
+      "evidence": [
+        "seoctl/command-registry.json",
+        "seoctl/entrypoint.py",
+        "tests/test_seoctl_entrypoint.py",
+        "docs/COMMANDS.md"
+      ]
     },
     {
       "id": "gsc-live",
@@ -84,10 +119,20 @@
       "owner": "Google integrations owner",
       "next_action": "Run the authorized redacted GSC smoke contract with owner-supplied credentials; do not change code-verified status without that evidence.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["google.gsc-query", "google.gsc-aggregate"],
+      "required_command_ids": [
+        "google.gsc-query",
+        "google.gsc-aggregate"
+      ],
       "target_pr": "PR3",
-      "acceptance": ["Production connector with scoped auth.", "Dimensionless totals avoid anonymized-query undercount.", "Fixtures and authorized smoke test."],
-      "evidence": ["integrations/google/gsc.py", "seoctl/command-registry.json"]
+      "acceptance": [
+        "Production connector with scoped auth.",
+        "Dimensionless totals avoid anonymized-query undercount.",
+        "Fixtures and authorized smoke test."
+      ],
+      "evidence": [
+        "integrations/google/gsc.py",
+        "seoctl/command-registry.json"
+      ]
     },
     {
       "id": "ga4-live",
@@ -99,10 +144,19 @@
       "owner": "Google integrations owner",
       "next_action": "Run the authorized redacted GA4 smoke contract with a test property and owner-supplied credentials.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["google.ga4-report"],
+      "required_command_ids": [
+        "google.ga4-report"
+      ],
       "target_pr": "PR3",
-      "acceptance": ["Production GA4 Data API connector.", "Property and metric validation.", "Redacted errors and fixture tests."],
-      "evidence": ["integrations/google/ga4.py", "seoctl/command-registry.json"]
+      "acceptance": [
+        "Production GA4 Data API connector.",
+        "Property and metric validation.",
+        "Redacted errors and fixture tests."
+      ],
+      "evidence": [
+        "integrations/google/ga4.py",
+        "seoctl/command-registry.json"
+      ]
     },
     {
       "id": "pagespeed-live",
@@ -111,8 +165,15 @@
       "target_capability": "Live PageSpeed adapter with shared URL safety.",
       "status": "VERIFIED_PARITY",
       "target_pr": "PR3-HARDEN",
-      "acceptance": ["CLI entrypoint.", "API key header handling.", "Smoke-test contract."],
-      "evidence": ["adapters/google_pagespeed_live.py", "adapters/url_safety.py"]
+      "acceptance": [
+        "CLI entrypoint.",
+        "API key header handling.",
+        "Smoke-test contract."
+      ],
+      "evidence": [
+        "adapters/google_pagespeed_live.py",
+        "adapters/url_safety.py"
+      ]
     },
     {
       "id": "crux-history",
@@ -121,10 +182,19 @@
       "target_capability": "Current and historical CrUX commands are code verified; authorized live history evidence remains incomplete.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["google.crux-current", "google.crux-history"],
+      "required_command_ids": [
+        "google.crux-current",
+        "google.crux-history"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Twenty-five-week history retrieval.", "Mobile and desktop separation.", "Missing-field truthfulness."],
-      "evidence": ["adapters/google_pagespeed_live.py"]
+      "acceptance": [
+        "Twenty-five-week history retrieval.",
+        "Mobile and desktop separation.",
+        "Missing-field truthfulness."
+      ],
+      "evidence": [
+        "adapters/google_pagespeed_live.py"
+      ]
     },
     {
       "id": "lcp-subparts",
@@ -133,10 +203,18 @@
       "target_capability": "Dedicated field-evidence LCP subparts command is implemented with missing-data truthfulness.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["google.lcp-subparts"],
+      "required_command_ids": [
+        "google.lcp-subparts"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["TTFB, load delay, load duration and render delay output.", "Field/lab distinction.", "Tests for missing data."],
-      "evidence": ["knowledge/core-web-vitals-gates.md"]
+      "acceptance": [
+        "TTFB, load delay, load duration and render delay output.",
+        "Field/lab distinction.",
+        "Tests for missing data."
+      ],
+      "evidence": [
+        "knowledge/core-web-vitals-gates.md"
+      ]
     },
     {
       "id": "render-installable",
@@ -148,10 +226,21 @@
       "owner": "Technical integrations owner",
       "next_action": "Capture a cross-platform Chromium install and bounded-render smoke result in an authorized environment.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["render.health", "render.page", "render.screenshot"],
+      "required_command_ids": [
+        "render.health",
+        "render.page",
+        "render.screenshot"
+      ],
       "target_pr": "PR4",
-      "acceptance": ["Browser install command.", "Availability diagnostic.", "Safe subresource routing.", "Cross-platform smoke tests."],
-      "evidence": ["adapters/rendered_page.py"]
+      "acceptance": [
+        "Browser install command.",
+        "Availability diagnostic.",
+        "Safe subresource routing.",
+        "Cross-platform smoke tests."
+      ],
+      "evidence": [
+        "adapters/rendered_page.py"
+      ]
     },
     {
       "id": "technical-command-pack",
@@ -160,10 +249,25 @@
       "target_capability": "Robots, sitemap, hreflang, preload, redirects, indexability and schema operator commands are implemented.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["technical.robots", "technical.sitemap", "technical.hreflang", "technical.preload", "technical.redirect-chain", "technical.indexability", "schema.validate"],
+      "required_command_ids": [
+        "technical.robots",
+        "technical.sitemap",
+        "technical.hreflang",
+        "technical.preload",
+        "technical.redirect-chain",
+        "technical.indexability",
+        "schema.validate"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Commands normalize outputs into AdapterResult/evidence.", "All use shared URL safety.", "No duplicated crawler."],
-      "evidence": ["adapters/", "skills/core-skills.md"]
+      "acceptance": [
+        "Commands normalize outputs into AdapterResult/evidence.",
+        "All use shared URL safety.",
+        "No duplicated crawler."
+      ],
+      "evidence": [
+        "adapters/",
+        "skills/core-skills.md"
+      ]
     },
     {
       "id": "content-quality",
@@ -172,10 +276,18 @@
       "target_capability": "Deterministic explainable content-quality command is implemented; controlled human-usefulness benchmarking remains incomplete.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["content.quality"],
+      "required_command_ids": [
+        "content.quality"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Explainable quality signals.", "No AI-detector evasion framing.", "Evidence-backed suggestions."],
-      "evidence": ["knowledge/eeat-quality-rubric.md"]
+      "acceptance": [
+        "Explainable quality signals.",
+        "No AI-detector evasion framing.",
+        "Evidence-backed suggestions."
+      ],
+      "evidence": [
+        "knowledge/eeat-quality-rubric.md"
+      ]
     },
     {
       "id": "content-verify",
@@ -187,10 +299,18 @@
       "owner": "Content intelligence owner",
       "next_action": "Add independent source-retrieval and semantic-verification capability only with bounded evidence and explicit uncertainty.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["content.verify"],
+      "required_command_ids": [
+        "content.verify"
+      ],
       "target_pr": "PR5",
-      "acceptance": ["Extract material claims from content.", "Map claims to supplied sources.", "Flag unsupported claims deterministically."],
-      "evidence": ["runtime/evidence_binding.py"]
+      "acceptance": [
+        "Extract material claims from content.",
+        "Map claims to supplied sources.",
+        "Flag unsupported claims deterministically."
+      ],
+      "evidence": [
+        "runtime/evidence_binding.py"
+      ]
     },
     {
       "id": "content-humanize",
@@ -199,10 +319,18 @@
       "target_capability": "Callable clarity transformation is implemented with fact-preservation checks and explicit prohibition on detector evasion.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["content.humanize"],
+      "required_command_ids": [
+        "content.humanize"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Improve clarity and naturalness.", "Do not claim AI detector evasion.", "Preserve facts and brand constraints."],
-      "evidence": ["skills/public-facing-writing-skills.md"]
+      "acceptance": [
+        "Improve clarity and naturalness.",
+        "Do not claim AI detector evasion.",
+        "Preserve facts and brand constraints."
+      ],
+      "evidence": [
+        "skills/public-facing-writing-skills.md"
+      ]
     },
     {
       "id": "nlp-entity-analysis",
@@ -214,10 +342,18 @@
       "owner": "Content intelligence owner",
       "next_action": "Implement the optional provider path with cost, credential, provenance, and fallback controls.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["content.entities"],
+      "required_command_ids": [
+        "content.entities"
+      ],
       "target_pr": "PR5",
-      "acceptance": ["Local fallback plus optional provider path.", "Entity, salience and source metadata.", "Cost and credential controls."],
-      "evidence": ["knowledge/geo-readiness-rubric.md"]
+      "acceptance": [
+        "Local fallback plus optional provider path.",
+        "Entity, salience and source metadata.",
+        "Cost and credential controls."
+      ],
+      "evidence": [
+        "knowledge/geo-readiness-rubric.md"
+      ]
     },
     {
       "id": "commoncrawl-authority",
@@ -229,10 +365,18 @@
       "owner": "Authority integrations owner",
       "next_action": "Execute the bounded live Common Crawl retrieval smoke and preserve redacted provenance.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["links.commoncrawl"],
+      "required_command_ids": [
+        "links.commoncrawl"
+      ],
       "target_pr": "PR6",
-      "acceptance": ["Public Common Crawl retrieval.", "Canonical URL normalization.", "Bounded traversal and caching."],
-      "evidence": ["adapters/backlink_export.py"]
+      "acceptance": [
+        "Public Common Crawl retrieval.",
+        "Canonical URL normalization.",
+        "Bounded traversal and caching."
+      ],
+      "evidence": [
+        "adapters/backlink_export.py"
+      ]
     },
     {
       "id": "domain-history",
@@ -244,10 +388,18 @@
       "owner": "Authority integrations owner",
       "next_action": "Run an authorized domain-history provider smoke while preserving uncertainty and privacy constraints.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["domain.history"],
+      "required_command_ids": [
+        "domain.history"
+      ],
       "target_pr": "PR6",
-      "acceptance": ["History evidence with uncertainty.", "No unsupported ownership inference.", "Rate-limit and privacy controls."],
-      "evidence": ["knowledge/parasite-seo-expired-domain-checks.md"]
+      "acceptance": [
+        "History evidence with uncertainty.",
+        "No unsupported ownership inference.",
+        "Rate-limit and privacy controls."
+      ],
+      "evidence": [
+        "knowledge/parasite-seo-expired-domain-checks.md"
+      ]
     },
     {
       "id": "youtube-search",
@@ -259,10 +411,18 @@
       "owner": "Media integrations owner",
       "next_action": "Run an authorized quota-bounded YouTube Data API smoke and retain normalized redacted evidence.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["media.youtube-search"],
+      "required_command_ids": [
+        "media.youtube-search"
+      ],
       "target_pr": "PR6",
-      "acceptance": ["YouTube Data API connector.", "Quota estimate.", "Normalized media evidence."],
-      "evidence": ["skills/specialist-skills.md"]
+      "acceptance": [
+        "YouTube Data API connector.",
+        "Quota estimate.",
+        "Normalized media evidence."
+      ],
+      "evidence": [
+        "skills/specialist-skills.md"
+      ]
     },
     {
       "id": "iptc-ai-labeling",
@@ -271,10 +431,18 @@
       "target_capability": "IPTC label inspection and explicit-authority write planning are callable and tested.",
       "status": "VERIFIED_PARITY",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["media.iptc-label"],
+      "required_command_ids": [
+        "media.iptc-label"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Read and validate labels.", "Write only with explicit authorization.", "Rollback metadata changes."],
-      "evidence": ["knowledge/ai-image-labeling.md"]
+      "acceptance": [
+        "Read and validate labels.",
+        "Write only with explicit authorization.",
+        "Rollback metadata changes."
+      ],
+      "evidence": [
+        "knowledge/ai-image-labeling.md"
+      ]
     },
     {
       "id": "drift-pipeline",
@@ -283,10 +451,23 @@
       "target_capability": "Baseline, compare, history, report and watch commands use the canonical tamper-evident EvidenceStore.",
       "status": "VERIFIED_SUPERIOR",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["drift.baseline", "drift.compare", "drift.history", "drift.report", "drift.watch"],
+      "required_command_ids": [
+        "drift.baseline",
+        "drift.compare",
+        "drift.history",
+        "drift.report",
+        "drift.watch"
+      ],
       "target_pr": "COMPLETE",
-      "acceptance": ["Baseline, compare, history, report and watch commands.", "One EvidenceStore only.", "Tamper checks before verdict."],
-      "evidence": ["adapters/evidence_store.py", "adapters/page_drift.py"]
+      "acceptance": [
+        "Baseline, compare, history, report and watch commands.",
+        "One EvidenceStore only.",
+        "Tamper checks before verdict."
+      ],
+      "evidence": [
+        "adapters/evidence_store.py",
+        "adapters/page_drift.py"
+      ]
     },
     {
       "id": "bing-indexnow",
@@ -298,10 +479,21 @@
       "owner": "Extension integrations owner",
       "next_action": "Run authorized Bing and IndexNow smokes against owner-controlled non-production targets.",
       "code_state": "CODE_VERIFIED",
-      "required_command_ids": ["bing.preflight", "indexnow.validate", "indexnow.submit"],
+      "required_command_ids": [
+        "bing.preflight",
+        "indexnow.validate",
+        "indexnow.submit"
+      ],
       "target_pr": "PR7",
-      "acceptance": ["Installable connector.", "Submission dry run.", "Explicit write approval.", "Redacted key handling."],
-      "evidence": ["docs/mcp-server-mapping.md"]
+      "acceptance": [
+        "Installable connector.",
+        "Submission dry run.",
+        "Explicit write approval.",
+        "Redacted key handling."
+      ],
+      "evidence": [
+        "docs/mcp-server-mapping.md"
+      ]
     },
     {
       "id": "paid-provider-packs",
@@ -313,8 +505,14 @@
       "owner": "Provider integrations owner",
       "next_action": "Implement provider-neutral contracts and fixtures before any credentialed provider-specific adapter is accepted.",
       "target_pr": "PR7",
-      "acceptance": ["Each pack is optional and removable.", "Cost estimate and approval precede calls.", "Credential checks and smoke tests exist."],
-      "evidence": ["adapters/mcp_extensions.py"]
+      "acceptance": [
+        "Each pack is optional and removable.",
+        "Cost estimate and approval precede calls.",
+        "Credential checks and smoke tests exist."
+      ],
+      "evidence": [
+        "adapters/mcp_extensions.py"
+      ]
     },
     {
       "id": "reference-library",
@@ -326,8 +524,14 @@
       "owner": "Knowledge owner",
       "next_action": "Expand high-value primary-source packs with per-pack provenance, freshness, and affected-skill bindings.",
       "target_pr": "PR8",
-      "acceptance": ["Every critical skill has sufficient reference coverage.", "Time-sensitive references have freshness metadata.", "No placeholder-only references."],
-      "evidence": ["knowledge/"]
+      "acceptance": [
+        "Every critical skill has sufficient reference coverage.",
+        "Time-sensitive references have freshness metadata.",
+        "No placeholder-only references."
+      ],
+      "evidence": [
+        "knowledge/"
+      ]
     },
     {
       "id": "content-prompt-pack",
@@ -339,8 +543,14 @@
       "owner": "Content system owner",
       "next_action": "Add schema-bound prompt contracts with deterministic fixtures and fact-preservation tests.",
       "target_pr": "PR9",
-      "acceptance": ["Modular prompts compose shared evidence and claims components.", "No duplicated prompt policy.", "Prompts have fixture tests."],
-      "evidence": ["skills/flow-prompts/"]
+      "acceptance": [
+        "Modular prompts compose shared evidence and claims components.",
+        "No duplicated prompt policy.",
+        "Prompts have fixture tests."
+      ],
+      "evidence": [
+        "skills/flow-prompts/"
+      ]
     },
     {
       "id": "image-generation-pack",
@@ -352,7 +562,11 @@
       "owner": "Media system owner",
       "next_action": "Add a safe optional image-generation contract with provenance, authorization, and rollback metadata.",
       "target_pr": "PR9",
-      "acceptance": ["Optional provider only.", "Cost, provenance, rights, labeling and no-auto-publish controls.", "Alt text and optimization output."],
+      "acceptance": [
+        "Optional provider only.",
+        "Cost, provenance, rights, labeling and no-auto-publish controls.",
+        "Alt text and optimization output."
+      ],
       "evidence": []
     },
     {
@@ -363,8 +577,13 @@
       "status": "VERIFIED_SUPERIOR",
       "code_state": "CODE_VERIFIED",
       "target_pr": "COMPLETE",
-      "acceptance": ["Coverage, typing, lint, secret scan, dependency audit and SBOM gates.", "Security-critical branches explicitly tested."],
-      "evidence": [".github/workflows/validate.yml"]
+      "acceptance": [
+        "Coverage, typing, lint, secret scan, dependency audit and SBOM gates.",
+        "Security-critical branches explicitly tested."
+      ],
+      "evidence": [
+        ".github/workflows/validate.yml"
+      ]
     },
     {
       "id": "documentation-install-success",
@@ -377,8 +596,17 @@
       "next_action": "Retain as excluded until packaging and release maturity returns to approved scope.",
       "code_state": "CODE_VERIFIED",
       "target_pr": "PR11",
-      "acceptance": ["Clone-to-report Quick Start is tested.", "Command docs are generated.", "Troubleshooting and integration guides exist."],
-      "evidence": ["docs/INSTALL.md", "docs/QUICKSTART.md", "docs/COMMANDS.md", "docs/TROUBLESHOOTING.md"]
+      "acceptance": [
+        "Clone-to-report Quick Start is tested.",
+        "Command docs are generated.",
+        "Troubleshooting and integration guides exist."
+      ],
+      "evidence": [
+        "docs/INSTALL.md",
+        "docs/QUICKSTART.md",
+        "docs/COMMANDS.md",
+        "docs/TROUBLESHOOTING.md"
+      ]
     },
     {
       "id": "community-infrastructure",
@@ -391,8 +619,19 @@
       "next_action": "Retain as excluded because adoption and community effectiveness require real-world evidence outside this remediation scope.",
       "code_state": "CODE_VERIFIED",
       "target_pr": "PR11",
-      "acceptance": ["CONTRIBUTORS, CITATION, CODEOWNERS and templates.", "Evidence-linked badges.", "Governance and roadmap."],
-      "evidence": ["CHANGELOG.md", "CONTRIBUTING.md", "CONTRIBUTORS.md", "CITATION.cff", ".github/CODEOWNERS", ".github/ISSUE_TEMPLATE/"]
+      "acceptance": [
+        "CONTRIBUTORS, CITATION, CODEOWNERS and templates.",
+        "Evidence-linked badges.",
+        "Governance and roadmap."
+      ],
+      "evidence": [
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "CONTRIBUTORS.md",
+        "CITATION.cff",
+        ".github/CODEOWNERS",
+        ".github/ISSUE_TEMPLATE/"
+      ]
     },
     {
       "id": "release-distribution",
@@ -404,8 +643,15 @@
       "owner": "Release owner",
       "next_action": "Retain as excluded until packaging and release maturity returns to approved scope.",
       "target_pr": "PR12",
-      "acceptance": ["Signed or checksummed release.", "SBOM and migration guide.", "Generic CLI and platform packages install successfully."],
-      "evidence": ["pyproject.toml", "CHANGELOG.md"]
+      "acceptance": [
+        "Signed or checksummed release.",
+        "SBOM and migration guide.",
+        "Generic CLI and platform packages install successfully."
+      ],
+      "evidence": [
+        "pyproject.toml",
+        "CHANGELOG.md"
+      ]
     }
   ]
 }

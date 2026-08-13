@@ -1,14 +1,15 @@
 """Primary-source-bound technical audit rules."""
 from __future__ import annotations
-import json,re,urllib.parse
-from collections import Counter,defaultdict
+
+import json
+import re
+import urllib.parse
+from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
 from integrations.product_proof.crawler import RobotsPolicy
-from integrations.product_proof.models import AgentContribution,Finding
-
+from integrations.product_proof.models import AgentContribution, Finding
+from integrations.product_proof.rule_groups import apply_technical_rule_groups
 SEV={"Critical":0,"High":1,"Medium":2,"Low":3,"Info":4}; PAGE={"page","paged","pagenum","page_num","pg"}; FACET={"color","size","brand","price","sort","order","filter","material","style","category","availability"}
-
 class ClaimPolicy:
  def __init__(self,path:str|Path):
   raw=json.loads(Path(path).read_text(encoding="utf-8-sig")); self.claims={r["id"]:r for r in raw["claims"]}; self.allowed=set(raw["recommendation_classes"]); self.order=["PRIMARY_SOURCE","CONTROLLED_EXPERIMENT","LARGE_SCALE_OBSERVATIONAL","PRACTITIONER_CONSENSUS","EXPERT_HYPOTHESIS","ANALYSIS","UNVERIFIED","DISPUTED","STALE","FALSE"]
@@ -100,36 +101,10 @@ class TechnicalAuditRules:
    ks=tuple(k.lower() for k,_ in urllib.parse.parse_qsl(urllib.parse.urlsplit(x["final_url"]).query));orders[tuple(sorted(ks))].append("&".join(ks))
   if any(len(set(v))>1 for v in orders.values()):self.add("facet-order-inconsistent","Equivalent facet parameters appear in inconsistent orders","Medium","Faceted Navigation",["facets-parameter-separator"],"Equivalent parameter sets have multiple orders.","Duplicate URL forms can expand inventory.","Normalize order and duplicate filters.","Regenerate facet inventory.",[x["final_url"] for x in facets],"SEO E-commerce Agent")
   n=len(p);self.decisions.append({"decision":"crawl_budget_materiality","status":"NOT_DEMONSTRATED" if n<10000 else "REQUIRES_SCALE_REVIEW","observed_crawl_size":n,"claim_id":"crawl-budget-scale","interpretation":"This bounded crawl does not establish a material crawl-budget constraint." if n<10000 else "Separate large-site review is warranted."})
- def head_metadata(self,c):
-  p=[x for x in c["pages"] if 200<=x["status_code"]<300 and str(x.get("content_type") or "").lower().startswith("text/html")]
-  indexable=[x for x in p if "noindex" not in self.dirs(x)]
-  missing_title=[x["final_url"] for x in indexable if not x.get("title")]
-  if missing_title:self.add("head-title-missing","Indexable HTML pages are missing title elements","High","Head Metadata",[],f"{len(missing_title)} indexable page(s) have no title.","Missing titles reduce result clarity, browser context, and page identification.","Add unique, descriptive title elements that match page purpose.","Recrawl representative templates and inspect rendered head.",missing_title,"SEO Technical Agent")
-  generic=[x["final_url"] for x in indexable if str(x.get("title") or "").strip().lower() in {"home","homepage","untitled","index","page","new page"}]
-  if generic:self.add("head-title-generic","Indexable HTML pages use generic title elements","Medium","Head Metadata",[],f"{len(generic)} indexable page(s) use generic titles.","Generic titles weaken differentiation and make template defects harder to spot.","Write page-specific titles tied to the primary entity, offer, or task.","Recrawl titles and confirm uniqueness.",generic,"SEO Copywriter/Content Agent")
-  titles=Counter(str(x.get("title") or "").strip().lower() for x in indexable if x.get("title"))
-  duplicate_titles=[x["final_url"] for x in indexable if x.get("title") and titles[str(x["title"]).strip().lower()]>1]
-  if duplicate_titles:self.add("head-title-duplicated","Multiple indexable pages share the same title element","Medium","Head Metadata",[],f"{len(set(duplicate_titles))} page(s) share duplicate titles.","Duplicate titles obscure page purpose and can indicate template-level metadata drift.","Create page-specific title patterns for each template and canonical intent.","Recrawl and compare title clusters.",duplicate_titles,"SEO Copywriter/Content Agent")
-  missing_desc=[x["final_url"] for x in indexable if not x.get("meta_description")]
-  if missing_desc:self.add("meta-description-missing","Indexable HTML pages are missing meta descriptions","Medium","Head Metadata",[],f"{len(missing_desc)} indexable page(s) have no meta description.","Missing descriptions reduce control over human-readable snippets, even though snippets are not guaranteed.","Add concise, page-specific descriptions that reflect visible content and intent.","Recrawl and inspect rendered head.",missing_desc,"SEO Copywriter/Content Agent")
-  descriptions=Counter(str(x.get("meta_description") or "").strip().lower() for x in indexable if x.get("meta_description"))
-  duplicate_desc=[x["final_url"] for x in indexable if x.get("meta_description") and descriptions[str(x["meta_description"]).strip().lower()]>1]
-  if duplicate_desc:self.add("meta-description-duplicated","Multiple indexable pages share the same meta description","Low","Head Metadata",[],f"{len(set(duplicate_desc))} page(s) share duplicate descriptions.","Duplicate descriptions usually indicate generic template copy rather than page-specific intent.","Write descriptions from page-specific evidence and buyer language.","Recrawl and compare description clusters.",duplicate_desc,"SEO Copywriter/Content Agent")
-  no_viewport=[x["final_url"] for x in p if not x.get("viewport")]
-  if no_viewport:self.add("viewport-missing","HTML pages are missing a viewport declaration","High","Head Metadata",[],f"{len(no_viewport)} HTML page(s) lack viewport metadata.","Mobile rendering can be unreliable, affecting usability and search quality diagnostics.","Add a standard responsive viewport declaration unless the framework already injects one at render time.","Render mobile and inspect the final head.",no_viewport,"Senior SEO Engineer Agent")
-  no_charset=[x["final_url"] for x in p if not x.get("charset")]
-  if no_charset:self.add("charset-missing","HTML pages do not expose a detectable charset","Medium","Head Metadata",[],f"{len(no_charset)} HTML page(s) lack a detectable charset.","Character decoding can become inconsistent across clients and crawlers.","Declare charset in HTTP headers or early HTML head.","Fetch and inspect response headers and rendered head.",no_charset,"Senior SEO Engineer Agent")
-  missing_canonical=[x["final_url"] for x in indexable if not x.get("canonical")]
-  if missing_canonical:self.add("canonical-missing","Indexable HTML pages are missing canonical annotations","Medium","Head Metadata",["canonical-strength"],f"{len(missing_canonical)} page(s) lack canonical annotations.","Canonical absence may be acceptable on simple sites, but weakens duplicate-management visibility at scale.","Add self-canonicals or document why canonical annotations are unnecessary.","Recrawl and inspect canonical targets.",missing_canonical,"SEO Technical Agent","STRONGLY_SUPPORTED","Medium")
-  deprecated=[x["final_url"] for x in p if x.get("deprecated_meta")]
-  if deprecated:self.add("deprecated-head-metadata","HTML pages contain deprecated or low-value head metadata","Low","Head Metadata",[],f"{len(deprecated)} page(s) contain deprecated metadata fields.","Deprecated metadata creates noise and can mislead teams into maintaining ineffective controls.","Remove low-value legacy tags unless a documented non-search system needs them.","Inspect final head after template cleanup.",deprecated,"Senior SEO Engineer Agent")
-  social=[x["final_url"] for x in indexable if not {"og:title","og:description"}.issubset(set(x.get("open_graph_tags",[]))) and len(str(x.get("title") or ""))>0]
-  if social:self.add("social-metadata-incomplete","Indexable pages have incomplete Open Graph metadata","Low","Head Metadata",[],f"{len(social)} page(s) lack complete Open Graph title and description metadata.","Social sharing previews and downstream previews may be generic or incorrect.","Add Open Graph metadata where sharing matters; keep it aligned with visible content.","Inspect final head and preview output.",social,"SEO Copywriter/Content Agent")
  def evaluate(self,c):
-  self.robots(c);self.statuses(c);self.canon(c);self.ai_cwv_facets(c);self.head_metadata(c);self.findings.sort(key=lambda x:(SEV[x.severity],x.category,x.id));g=defaultdict(list)
+  apply_technical_rule_groups(self,c);self.findings.sort(key=lambda x:(SEV[x.severity],x.category,x.id));g=defaultdict(list)
   for f in self.findings:g[f.category].append(f.id)
   return {"findings":[f.to_dict() for f in self.findings],"decisions":self.decisions,"root_cause_groups":[{"category":k,"finding_ids":v,"finding_count":len(v)} for k,v in sorted(g.items())]}
-
 def build_contributions(c,r):
  f=r["findings"];o=Counter(x["owner"] for x in f);e=len(c["pages"])+len(c["robots"])
  rows=[

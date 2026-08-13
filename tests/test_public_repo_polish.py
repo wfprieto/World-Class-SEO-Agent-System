@@ -48,7 +48,7 @@ def test_readme_validation_commands_match_current_gates() -> None:
     readme = _read("README.md")
     commands = [
         "powershell -ExecutionPolicy Bypass -File scripts\\validate-repository.ps1",
-        "python -m pytest -q --basetemp .pytest_tmp",
+        "python -m pytest -q --basetemp %TEMP%\\wcseo-pytest",
         "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
         "python -m mypy runtime seoctl integrations adapters scripts",
         "python scripts\\scan_secrets.py",

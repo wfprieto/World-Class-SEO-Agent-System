@@ -57,7 +57,7 @@ def test_final_certification_records_pull_request_gate() -> None:
 
 def test_final_certification_contains_current_verification_battery() -> None:
     commands = "\n".join(_certification()["verification_commands"])
-    assert "python -m pytest -q --basetemp .pytest_tmp" in commands
+    assert "python -m pytest -q --basetemp %TEMP%/wcseo-pytest" in commands
     assert "python -m ruff check . --select E9,F63,F7,F82 --no-cache" in commands
     assert "python scripts/scan_secrets.py" in commands
     assert "python scripts/validate_reference_freshness.py" in commands

@@ -8,7 +8,7 @@
     {
       "id": "working-tree-reconciliation",
       "severity": "High",
-      "reason": "The release branch release/v1.7.0-final-certification has been staged, locally verified, committed, pushed, and opened as pull request #39, but GitHub reported no status checks yet and review/merge evidence is still missing.",
+      "reason": "The release branch release/v1.7.0-final-certification is locally verified and pull request #39 exists, but GitHub status checks, required review, and merge evidence are still missing.",
       "owner": "Repository owner / release engineer",
       "required_next_action": "Wait for or configure GitHub status checks on PR #39, complete required review, then merge through the protected pull request process."
     },
@@ -55,17 +55,22 @@
     "python scripts/validate_canonical_skill_consistency.py",
     "python scripts/validate_seo_claims.py",
     "python scripts/scan_secrets.py",
-    "python -m pytest -q --basetemp .pytest_tmp",
+    "python -m pytest -q --basetemp %TEMP%/wcseo-pytest",
     "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
     "python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py",
     "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1"
   ],
   "latest_observed_results": {
-    "pytest": "441 passed",
-    "mypy": "125 source files passed",
+    "pytest": "1116 passed in 130.77s using external basetemp %TEMP%/wcseo-pytest",
+    "mypy": "177 source files passed",
     "ruff": "passed",
     "secret_scan": "passed",
     "repository_validation": "passed",
+    "quality_ratchet": "passed",
+    "libhunt_source_matrix": "passed",
+    "upgrade_source_matrix": "passed",
+    "skill_index": "current, 89 indexed skills",
+    "canonical_skill_consistency": "89 indexed skills, one procedure heading each",
     "reference_freshness": "68 entries across 21 packs",
     "seo_claims": "38 claims passed"
   },
