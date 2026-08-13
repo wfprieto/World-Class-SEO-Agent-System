@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 
+from runtime.assets import resolve_asset_root
 from scripts.validate_architecture_contract import validate as validate_architecture
 from scripts.validate_dependency_lock import validate as validate_dependency_lock
 from scripts.validate_open_issue_remediation import validate as validate_open_issues
@@ -145,13 +146,13 @@ def _repository_checks(root: Path, as_of: date | None) -> list[DoctorCheck]:
 
 
 def diagnose(
-    root: Path,
+    root: Path | None = None,
     *,
     as_of: date | None = None,
     python_version: tuple[int, int] | None = None,
 ) -> dict[str, object]:
     """Return bounded static readiness without network, credentials, or mutation."""
-    root = root.resolve()
+    root = resolve_asset_root() if root is None else root.resolve()
     version = python_version or (sys.version_info.major, sys.version_info.minor)
     checks: list[DoctorCheck] = []
     checks.append(

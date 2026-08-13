@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "world-class-seo-agent-system"
-version = "1.7.0"
+version = "1.7.1"
 description = "model-agnostic, evidence-governed SEO operating system with documentation-first contracts and a bounded executable layer."
 requires-python = ">=3.11,<3.14"
-dependencies = ["jsonschema>=4.22.0,<5", "tenacity>=8.2.0"]
+dependencies = ["jsonschema>=4.22.0,<5", "packaging>=24,<27", "tenacity>=8.2.0"]
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -19,7 +19,7 @@ seoctl = "seoctl.entrypoint:main"
 
 [project.optional-dependencies]
 render = ["playwright>=1.49,<2"]
-dev = ["jsonschema>=4.22.0,<5","pytest>=8.0.0,<10","pytest-asyncio>=0.23.0,<2","pytest-cov>=6.0,<8","PyYAML>=6.0.3,<7","tenacity>=8.2.0,<10","ruff>=0.9,<1","mypy>=1.15,<3","pip-audit>=2.7,<3","build>=1.2,<2","pip-tools>=7.5,<8"]
+dev = ["jsonschema>=4.22.0,<5","packaging>=24,<27","pytest>=8.0.0,<10","pytest-asyncio>=0.23.0,<2","pytest-cov>=6.0,<8","PyYAML>=6.0.3,<7","tenacity>=8.2.0,<10","ruff>=0.9,<1","mypy>=1.15,<3","pip-audit>=2.7,<3","build>=1.2,<2","pip-tools>=7.5,<8"]
 
 [tool.setuptools]
 include-package-data = true
@@ -32,11 +32,27 @@ include = ["adapters*", "contracts*", "evaluation*", "integrations*", "runtime*"
 seoctl = ["*.json"]
 
 [tool.setuptools.data-files]
-"share/world-class-seo" = ["SYSTEM_SPEC.md", "SYSTEM_MAP.md"]
+"share/world-class-seo" = ["CHANGELOG.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "LICENSE", "QUICKSTART.md", "README.md", "SECURITY.md", "SUPPORT.md", "SYSTEM_SPEC.md", "SYSTEM_MAP.md", "requirements-dev.in", "requirements-dev.txt"]
+"share/world-class-seo/.github/workflows" = [".github/workflows/*.yml"]
 "share/world-class-seo/agents" = ["agents/*.md"]
+"share/world-class-seo/adapters" = ["adapters/*.py"]
+"share/world-class-seo/contracts" = ["contracts/*.py"]
+"share/world-class-seo/docs" = ["docs/*.md", "docs/*.json"]
+"share/world-class-seo/governance" = ["governance/*.json", "governance/*.md"]
+"share/world-class-seo/integrations" = ["integrations/*.py"]
+"share/world-class-seo/integrations/authority_media" = ["integrations/authority_media/*.py"]
+"share/world-class-seo/integrations/content_intelligence" = ["integrations/content_intelligence/*.py"]
+"share/world-class-seo/integrations/extensions" = ["integrations/extensions/*.py"]
+"share/world-class-seo/integrations/google" = ["integrations/google/*.py"]
+"share/world-class-seo/integrations/product_proof" = ["integrations/product_proof/*.py"]
+"share/world-class-seo/integrations/technical" = ["integrations/technical/*.py"]
 "share/world-class-seo/knowledge" = ["knowledge/*.md", "knowledge/*.json"]
 "share/world-class-seo/knowledge/reference-packs" = ["knowledge/reference-packs/*.md"]
 "share/world-class-seo/knowledge/source-assets" = ["knowledge/source-assets/*.md"]
+"share/world-class-seo/runtime" = ["runtime/*.py"]
+"share/world-class-seo/scripts" = ["scripts/*.py"]
+"share/world-class-seo/security" = ["security/*.py"]
+"share/world-class-seo/seoctl" = ["seoctl/*.py", "seoctl/*.json"]
 "share/world-class-seo/skills" = ["skills/*.md", "skills/*.json"]
 "share/world-class-seo/skills/packages" = ["skills/packages/*.md"]
 "share/world-class-seo/skills/flow-prompts" = ["skills/flow-prompts/*.md"]
@@ -47,6 +63,7 @@ seoctl = ["*.json"]
 "share/world-class-seo/prompts" = ["prompts/*.json", "prompts/*.md"]
 "share/world-class-seo/evaluation/product-proof" = ["evaluation/product-proof/*.json"]
 "share/world-class-seo/evaluation/comparative" = ["evaluation/comparative/*.json", "evaluation/comparative/*.md"]
+"share/world-class-seo/evaluation/provider-receipts" = ["evaluation/provider-receipts/*"]
 "share/world-class-seo/examples/product-proof" = ["examples/product-proof/*"]
 
 [tool.pytest.ini_options]

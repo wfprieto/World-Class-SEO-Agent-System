@@ -128,8 +128,8 @@ def test_system_doctor_converts_validator_exceptions_to_structured_failures(
 
 
 def test_system_doctor_cli_uses_canonical_json_envelope(monkeypatch) -> None:
-    def supported_diagnose(root: Path, *, as_of: date | None = None):
-        return diagnose(root, as_of=as_of, python_version=(3, 13))
+    def supported_diagnose(*, as_of: date | None = None):
+        return diagnose(ROOT, as_of=as_of, python_version=(3, 13))
 
     monkeypatch.setattr("seoctl.doctor.diagnose", supported_diagnose)
     payload, code = run(["system", "doctor", "--as-of", "2026-08-02"])

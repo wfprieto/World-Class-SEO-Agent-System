@@ -125,7 +125,7 @@ def _system_run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 def _system_doctor(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     from seoctl.doctor import diagnose
 
-    result = diagnose(ROOT, as_of=args.as_of)
+    result = diagnose(as_of=args.as_of)
     passed = result["status"] == "PASS"
     return envelope("system.doctor", "ok" if passed else "failed", result), (
         EXIT_OK if passed else EXIT_FAILED

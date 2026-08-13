@@ -1,8 +1,8 @@
 # Integration Record
 
-**Status:** Integrated into `main` through Batch 3 (squash commit `cf782d9`)  
-**Version:** 1.7.0  
-**Last reviewed:** 2026-07-11
+**Status:** Integrated into `main` through v1.7.1 packaging-readiness remediation
+**Version:** 1.7.1
+**Last reviewed:** 2026-08-13
 
 This file records capabilities already integrated into the canonical `main` branch. It does not claim that a Git tag, marketplace publication, package distribution, deployment, or live provider validation exists. See `CHANGELOG.md` for the running history and Unreleased work.
 
@@ -86,4 +86,4 @@ These states are distinct:
 - **Published or distributed:** a package, plugin, or marketplace artifact is available.
 - **Deployed:** a running environment uses the release.
 
-This record currently attests only to integration into `main` through v1.7.0.
+This record currently attests only to integration into `main` through v1.7.1.
