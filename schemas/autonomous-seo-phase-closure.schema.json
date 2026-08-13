@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-phase-closure.schema.json",
+  "title": "WCSEO Autonomous SEO Phase Closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "program_id",
+    "phase_id",
+    "base_commit",
+    "candidate_commit",
+    "canonical_ci_run_id",
+    "builder_context_id",
+    "apivr",
+    "twenty_pass",
+    "reviewer_verdict_files",
+    "reviewer_provenance_files",
+    "rollback",
+    "technical_verification",
+    "outcome_verification",
+    "unexpected_change_scan",
+    "security_review",
+    "documentation_review",
+    "evidence_package_hash",
+    "evidence_refs",
+    "closure_state"
+  ],
+  "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-phase-closure.schema.json"},
+    "schema_version": {"const": "1.3.0"},
+    "program_id": {"const": "autonomous-seo-expansion"},
+    "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "base_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "canonical_ci_run_id": {"type": "integer", "minimum": 1},
+    "builder_context_id": {"type": "string", "minLength": 8},
+    "apivr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audit", "plan", "implement", "audit_implementation", "verify", "re_audit"],
+      "properties": {
+        "audit": {"const": "PASS"},
+        "plan": {"const": "PASS"},
+        "implement": {"const": "PASS"},
+        "audit_implementation": {"const": "PASS"},
+        "verify": {"const": "PASS"},
+        "re_audit": {"const": "PASS"}
+      }
+    },
+    "twenty_pass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passes_completed", "improvements"],
+      "properties": {
+        "passes_completed": {"const": 20},
+        "improvements": {"type": "array", "minItems": 20, "maxItems": 20, "uniqueItems": true, "items": {"type": "string", "minLength": 12}}
+      }
+    },
+    "reviewer_verdict_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "reviewer_provenance_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "rollback": {"$ref": "#/$defs/verification_block"},
+    "technical_verification": {"$ref": "#/$defs/verification_block"},
+    "outcome_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reason", "evidence_refs"],
+      "properties": {
+        "state": {"enum": ["PASS", "NOT_REQUIRED", "PENDING"]},
+        "reason": {"type": "string", "minLength": 12},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidence_ref"}}
+      }
+    },
+    "unexpected_change_scan": {"const": "PASS"},
+    "security_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
+    "documentation_review": {"enum": ["PASS", "NOT_APPLICABLE"]},
+    "evidence_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}},
+    "closure_state": {"const": "APPROVED_GREAT"}
+  },
+  "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "bound_commit"],
+      "properties": {
+        "kind": {"const": "repository_file"},
+        "path": {"type": "string", "minLength": 3, "not": {"pattern": "(^/|(^|/)\\.\\.(/|$))"}},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bound_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "verification_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_refs"],
+      "properties": {
+        "state": {"const": "PASS"},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}}
+      }
+    }
+  }
+}

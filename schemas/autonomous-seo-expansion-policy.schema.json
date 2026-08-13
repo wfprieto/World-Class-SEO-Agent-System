@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-expansion-policy.schema.json",
+  "title": "WCSEO Autonomous SEO Expansion Lifecycle Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "policy_id",
+    "phase_order",
+    "extension_lane_order",
+    "maturity_order",
+    "phase_maturity_targets",
+    "forensic_phases",
+    "write_safety_phase",
+    "outcome_pass_required_phases",
+    "complete_phase_allowed_outcomes",
+    "final_program_closure_required",
+    "final_program_reviewer_roles",
+    "post_review_program_transition"
+  ],
+  "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-expansion-policy.schema.json"},
+    "schema_version": {"const": "1.0.0"},
+    "policy_id": {"const": "autonomous-seo-expansion-lifecycle"},
+    "phase_order": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}},
+    "extension_lane_order": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"pattern": "^L-[A-D]$"}},
+    "maturity_order": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+    "phase_maturity_targets": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 3}},
+    "forensic_phases": {"type": "array", "uniqueItems": true, "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}},
+    "write_safety_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "outcome_pass_required_phases": {"type": "array", "uniqueItems": true, "items": {"pattern": "^P(?:[0-9]|1[0-3])$"}},
+    "complete_phase_allowed_outcomes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["PASS", "NOT_REQUIRED", "PENDING"]}},
+    "final_program_closure_required": {"const": true},
+    "final_program_reviewer_roles": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"enum": ["SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"]}},
+    "post_review_program_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewed_phase_status_from",
+        "reviewed_phase_status_to",
+        "technical_verification_to",
+        "next_phase_status_from",
+        "next_phase_status_to",
+        "immutable_fields",
+        "immutable_phase_fields",
+        "immutable_lane_fields"
+      ],
+      "properties": {
+        "reviewed_phase_status_from": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["IN_PROGRESS", "BLOCKED"]}},
+        "reviewed_phase_status_to": {"const": "COMPLETE"},
+        "technical_verification_to": {"const": "PASS"},
+        "next_phase_status_from": {"const": "NOT_STARTED"},
+        "next_phase_status_to": {"const": "IN_PROGRESS"},
+        "immutable_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 2}},
+        "immutable_phase_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 2}},
+        "immutable_lane_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 2}}
+      }
+    }
+  }
+}

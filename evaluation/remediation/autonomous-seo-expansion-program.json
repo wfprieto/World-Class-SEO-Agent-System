@@ -1,0 +1,444 @@
+{
+  "$schema": "../../schemas/autonomous-seo-expansion-program.schema.json",
+  "schema_version": "1.0.0",
+  "program_id": "autonomous-seo-expansion",
+  "objective": "Evolve WCSEO from an evidence-governed SEO diagnosis and orchestration system into a persistent, evidence-governed, self-improving SEO operations system that can progress selected capabilities through read-only, shadow, draft-write, canary-write, and bounded-autonomous maturity without weakening existing product, evidence, security, review, rollback, or claim boundaries.",
+  "baseline": {
+    "commit": "c2252947a35606d70c01416975e38f668ce24c8b",
+    "branch": "main",
+    "working_branch": "agent/autonomous-seo-expansion-p0",
+    "captured_at": "2026-08-10T15:57:00Z"
+  },
+  "apivr_tier": "COMPREHENSIVE",
+  "current_phase": "P0",
+  "direct_merge_permitted": false,
+  "capability_maturity_order": [
+    "G0_DOCUMENTED",
+    "G1_FIXTURE_VERIFIED",
+    "G2_SHADOW_VERIFIED",
+    "G3_LIVE_READ_VERIFIED",
+    "G4_DRAFT_WRITE_VERIFIED",
+    "G5_CANARY_WRITE_VERIFIED",
+    "G6_BOUNDED_AUTONOMOUS"
+  ],
+  "phase_close_requires": [
+    "exact source baseline recorded",
+    "planned versus actual implementation audit completed",
+    "focused and impacted regression tests pass",
+    "repository and schema validators pass",
+    "security and adverse-state checks pass where applicable",
+    "rollback or safe containment is demonstrated",
+    "Senior ScrumMaster 3 returns APPROVE_GREAT",
+    "VP Engineering independently approves",
+    "technical verification is complete",
+    "outcome verification is recorded as PASS, PENDING, or NOT_RUN only when the horizon is not yet observable",
+    "phase re-audit is complete"
+  ],
+  "scope": [
+    "persistent site identity, Brand Truth, site state, action, outcome, hypothesis, and experiment contracts",
+    "provider-neutral SEO intelligence and governed live-read provider integrations",
+    "SERP forensic intelligence, information architecture, internal linking, opportunity scoring, content rescue, and mission planning",
+    "R&D, attribution, site-local learning, and evidence-governed rule promotion",
+    "write-safety contracts, draft/staging integrations, production canaries, and bounded autonomous action classes",
+    "independent Local/GBP, GEO/AIO, authority, and social-distribution extension lanes"
+  ],
+  "exclusions": [
+    "changing the current read-only flagship audit into an autonomous write command",
+    "claiming provider, ranking, traffic, conversion, AI-citation, local-pack, or revenue outcomes without the required live or operational evidence",
+    "PBNs, manipulative paid links, automated reciprocal-link schemes, cloaking, fake reviews, fake locations, parasite abuse, fake community conversations, or other search spam",
+    "a global autonomy switch that permits unreviewed write classes to skip individual maturity gates"
+  ],
+  "phases": [
+    {
+      "id": "P0",
+      "title": "Authority, baseline, and expansion contract",
+      "status": "IN_PROGRESS",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Establish one machine-validated expansion program anchored to the current repository authority without changing the flagship product proof boundary or permitting direct merge.",
+      "depends_on": [],
+      "owners": {
+        "lead": "Runtime architecture owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": [
+        "canonical expansion program",
+        "phase order and maturity gates",
+        "APIVR and reviewer requirements",
+        "repository validation integration"
+      ],
+      "non_goals": [
+        "feature implementation",
+        "provider calls",
+        "external writes",
+        "main-branch mutation outside the approved PR process"
+      ],
+      "maturity_target": "G0_DOCUMENTED",
+      "acceptance_criteria": [
+        "The program is schema-valid and rejects phase skipping, multiple active phases, direct merge, premature write maturity, and missing safety controls.",
+        "The repository validator executes the autonomous expansion validator and mutation tests cover material program bypasses.",
+        "Existing owner-controlled remediation, product contract, command authority, and capability authority remain canonical and unweakened."
+      ],
+      "rollback": "Revert the Phase 0 schema, program, validator, tests, ledger, and repository-validator hook as one bounded PR if any existing governance or validation behavior regresses.",
+      "stop_conditions": [
+        "Current repository authority cannot be resolved unambiguously.",
+        "The new program requires weakening an existing product, security, evidence, reviewer, or rollback gate.",
+        "Repository validation cannot run the new control without breaking existing validation semantics."
+      ],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P1",
+      "title": "Site profile and Brand Truth contracts",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Create evidence-governed site identity, Brand Truth, site-state, action, outcome, hypothesis, and experiment contracts before introducing persistent behavior.",
+      "depends_on": ["P0"],
+      "owners": {
+        "lead": "Data architecture owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["site identity schema", "Brand Truth provenance", "action and outcome contracts", "hypothesis and experiment contracts"],
+      "non_goals": ["provider execution", "persistent storage implementation", "public content generation"],
+      "maturity_target": "G1_FIXTURE_VERIFIED",
+      "acceptance_criteria": [
+        "Schemas reject malformed, duplicate, contradictory, stale, unsupported-public, and sensitive-leakage fixtures where applicable.",
+        "Every public-use Brand Truth fact has explicit provenance, state, review timing, and use permission."
+      ],
+      "rollback": "Revert the new contracts and fixtures without altering existing session-state or runtime contracts.",
+      "stop_conditions": ["A proposed field duplicates an existing canonical contract without a justified extension path.", "Sensitive-data handling cannot be expressed without weakening current redaction rules."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P2",
+      "title": "Persistent site state, action ledger, and outcome store",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Implement bounded persistent site-level memory for approved evidence references, active experiments, actions, outcomes, and risks without replacing session state or persisting secrets.",
+      "depends_on": ["P1"],
+      "owners": {
+        "lead": "Runtime architecture owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["site state store", "action ledger", "outcome store", "redaction", "retention and version boundaries"],
+      "non_goals": ["provider collection", "production writes", "causal claims"],
+      "maturity_target": "G1_FIXTURE_VERIFIED",
+      "acceptance_criteria": [
+        "Atomicity, corruption handling, concurrency, redaction, retention, deletion, and schema-version boundaries are fixture verified.",
+        "Secrets and unnecessary personal data cannot enter persisted site state through supported write paths."
+      ],
+      "rollback": "Disable the new site-level persistence and revert its modules while leaving existing runtime session memory unchanged.",
+      "stop_conditions": ["Atomic or recoverable persistence cannot be demonstrated.", "The implementation requires storing secrets or uncontrolled raw provider payloads."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P3",
+      "title": "Provider-neutral SEO intelligence contracts",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Define provider-neutral read contracts for SERP, keyword, rendered content, rank, backlink, local maps, and AI visibility evidence while preserving provider semantics and cost provenance.",
+      "depends_on": ["P2"],
+      "owners": {
+        "lead": "Provider integrations owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["provider result interfaces", "normalization", "coverage states", "cost and provenance metadata", "failure semantics"],
+      "non_goals": ["credentialed provider calls", "provider-specific scoring normalization", "external writes"],
+      "maturity_target": "G1_FIXTURE_VERIFIED",
+      "acceptance_criteria": [
+        "Fixtures cover empty, partial, stale, malformed, timeout, rate-limit, pagination, unsupported-market, cost-ceiling, and unavailable-provider states.",
+        "Provider-specific metrics retain their native semantics unless equivalence is proven."
+      ],
+      "rollback": "Revert new provider-neutral interfaces before any provider implementation depends on them.",
+      "stop_conditions": ["The abstraction erases provider-specific semantics required for truthful downstream decisions.", "The contract bypasses existing AdapterResult or runtime tool governance without an approved architecture change."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P4",
+      "title": "DataForSEO and rendered-content acquisition",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Implement governed DataForSEO live-read capabilities and per-URL rendered-content fallback with cost approval, provenance, partial coverage, and authorized smoke evidence.",
+      "depends_on": ["P3"],
+      "owners": {
+        "lead": "Provider integrations owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["DataForSEO SERP and keyword reads", "approved rank/local reads", "parser cascade", "cost gate", "authorized live-read certification"],
+      "non_goals": ["provider writes", "hard-coded timeless pricing", "silent parser fallback"],
+      "maturity_target": "G3_LIVE_READ_VERIFIED",
+      "acceptance_criteria": [
+        "Fixture and adverse tests prove cost ceilings, pagination, partial failures, and per-URL parser provenance.",
+        "An authorized redacted live-read smoke certifies only the exact implemented capability set."
+      ],
+      "rollback": "Disable the provider pack and fall back to previously approved local/export evidence paths without changing downstream contracts.",
+      "stop_conditions": ["Current provider authentication or tool semantics cannot be verified.", "Cost cannot be bounded before calls.", "Live authorization or credentials are unavailable for G3 certification."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P5",
+      "title": "SERP forensic intelligence and information architecture",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Convert approved search evidence into competitor landscape, intent, missing-spoke, cannibalization, and bidirectional internal-link intelligence through existing WCSEO specialist ownership.",
+      "depends_on": ["P4"],
+      "owners": {
+        "lead": "Competitive intelligence owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["SERP landscape", "primary and secondary intent", "buyer stage", "missing spokes", "bidirectional internal linking", "coverage confidence"],
+      "non_goals": ["automatic publication", "copying competitor headings as a rule", "creating pages solely because competitors have them"],
+      "maturity_target": "G3_LIVE_READ_VERIFIED",
+      "acceptance_criteria": [
+        "Observed SERP evidence feeds existing content relevance and brief gates without creating a competing content authority.",
+        "Missing-spoke and link recommendations expose evidence coverage, duplicate-intent risk, and user-value rationale."
+      ],
+      "rollback": "Remove the new research commands and analysis services while preserving existing content brief and IA skills.",
+      "stop_conditions": ["The implementation duplicates an existing content or IA source of truth.", "Incomplete competitor coverage is being represented as complete evidence."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P6",
+      "title": "SEO opportunity engine",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Generate and explain prioritized SEO opportunities using business value, evidence, confidence, effort, risk, reversibility, strategic fit, urgency, dependencies, and measurement quality before any autonomous selection.",
+      "depends_on": ["P5"],
+      "owners": {
+        "lead": "Senior SEO Strategist Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["opportunity classes", "explainable scoring", "site-specific CTR evidence precedence", "shadow calibration"],
+      "non_goals": ["Google ranking probability", "automatic execution", "unexplained generic benchmark weights"],
+      "maturity_target": "G2_SHADOW_VERIFIED",
+      "acceptance_criteria": [
+        "The opportunity queue is reproducible and every score exposes its evidence, unknowns, and configurable WCSEO heuristics.",
+        "Shadow comparisons against specialist judgement identify and calibrate material ranking errors before action selection."
+      ],
+      "rollback": "Disable opportunity ranking and return to existing strategist prioritization without losing collected evidence.",
+      "stop_conditions": ["Scoring cannot distinguish missing evidence from low opportunity value.", "The engine presents heuristic weights as search-engine truth."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P7",
+      "title": "R&D, attribution, and site-local learning",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Create controlled hypothesis, experiment, attribution, and local-learning infrastructure that prevents correlation, industry commentary, or one-off wins from becoming canonical SEO rules.",
+      "depends_on": ["P6"],
+      "owners": {
+        "lead": "SEO Research and Development Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["hypothesis registry", "experiment registry", "attribution", "confounders", "local learning", "rule-promotion handoff"],
+      "non_goals": ["testing spam tactics", "universalizing site-local findings", "claiming causation from before-after correlation"],
+      "maturity_target": "G2_SHADOW_VERIFIED",
+      "acceptance_criteria": [
+        "Experiments encode treatment, control or justified alternative, metrics, horizon, confounders, stop conditions, and promotion or rejection criteria.",
+        "Observed outcomes and causal confidence remain separate fields and local learnings cannot silently become canonical rules."
+      ],
+      "rollback": "Revert the experimental learning layer while retaining immutable action and outcome observations already collected under approved retention rules.",
+      "stop_conditions": ["The experiment design would intentionally expose revenue-critical pages to unbounded risk.", "The learning path bypasses AI Principal SEO Scientist or Scrummaster rule-promotion governance."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P8",
+      "title": "Daily SEO mission planner in shadow mode",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Assemble site state, evidence freshness, opportunity scoring, experiment conflict checks, risk budgets, and Scrummaster challenge into a no-write daily mission planner that may return NO_CHANGE_RECOMMENDED.",
+      "depends_on": ["P7"],
+      "owners": {
+        "lead": "Senior SEO Strategist Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["workflow registry", "mission selection", "no-change outcome", "experiment conflicts", "risk and budget filters", "shadow comparison"],
+      "non_goals": ["external writes", "automatic content publication", "activity quotas"],
+      "maturity_target": "G2_SHADOW_VERIFIED",
+      "acceptance_criteria": [
+        "Shadow cycles are compared against independent specialist judgement and material disagreements are recorded and used for calibration.",
+        "The planner can safely return NO_CHANGE_RECOMMENDED and cannot bypass active-experiment or risk-budget controls."
+      ],
+      "rollback": "Disable the mission-planner workflow and continue using individual read-only commands and existing strategist routing.",
+      "stop_conditions": ["The planner requires hard-coded workflow branching that violates current architecture constraints without review.", "Shadow decisions repeatedly fail independent specialist challenge without an architectural correction."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P9",
+      "title": "Evidence-bound content and content rescue",
+      "status": "NOT_STARTED",
+      "apivr_tier": "COMPREHENSIVE",
+      "objective": "Enhance existing content workflows with live research, Brand Truth, independent source retrieval, claim-to-source validation, content rescue, drafting, and rewrite artifacts while keeping output local and unpublishing.",
+      "depends_on": ["P8"],
+      "owners": {
+        "lead": "SEO Copywriter/Content Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["enhanced content briefs", "source retrieval", "claim verification", "content rescue", "local draft and rewrite artifacts"],
+      "non_goals": ["production publication", "invented first-party experience", "treating a URL as proof of a claim"],
+      "maturity_target": "G2_SHADOW_VERIFIED",
+      "acceptance_criteria": [
+        "Content drafts preserve Brand Truth and map material factual claims to retrieved or supplied evidence states without fabricating support.",
+        "Rescue workflows compare technical, performance, SERP, content, link, and cannibalization evidence before recommending rewrites."
+      ],
+      "rollback": "Remove the new draft/rescue commands while preserving existing content quality, brief, decay, compare, verify, and humanize commands.",
+      "stop_conditions": ["Independent source retrieval cannot be bounded safely.", "Generated content can bypass current compliance, public-writing, or information-gain gates."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P10",
+      "title": "External write-safety architecture",
+      "status": "NOT_STARTED",
+      "apivr_tier": "FORENSIC",
+      "objective": "Create a separate fail-closed write contract with idempotency, preconditions, approval receipts, bounded change budgets, indeterminate-outcome handling, rollback, and durable write receipts before any real external mutation.",
+      "depends_on": ["P9"],
+      "owners": {
+        "lead": "Runtime architecture owner",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["write request", "write receipt", "idempotency", "preconditions", "change budgets", "rollback", "indeterminate outcomes", "adverse-state harness"],
+      "non_goals": ["real provider writes", "automatic retries after indeterminate writes", "weakening existing read-tool isolation"],
+      "maturity_target": "G1_FIXTURE_VERIFIED",
+      "acceptance_criteria": [
+        "Adverse fixtures cover timeout before send, timeout after remote mutation, lost response, duplicate retry, stale precondition, concurrent mutation, partial write, 429, 5xx, auth failure, wrong target, cost breach, receipt loss, and rollback failure.",
+        "No write class can execute without its declared approval, budget, precondition, and receipt contract."
+      ],
+      "rollback": "Remove the new write dispatch path entirely; existing read-only ToolDispatcher behavior remains unchanged.",
+      "stop_conditions": ["A write outcome can become unknown without a safe blocked state and reconciliation path.", "A supported write can retry without idempotency or explicit reconciliation.", "Current security review rejects the write boundary."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P11",
+      "title": "CMS and codebase draft or staging adapters",
+      "status": "NOT_STARTED",
+      "apivr_tier": "FORENSIC",
+      "objective": "Prove authorized external draft or staging mutation through WCSEO-native WordPress and Git-backed adapters without permitting autonomous production publication.",
+      "depends_on": ["P10"],
+      "owners": {
+        "lead": "Senior SEO Engineer Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["WordPress inspect and draft", "Git branch and PR staging", "write receipts", "post-write verification", "authorized live draft smoke"],
+      "non_goals": ["direct production publish", "direct production push", "unreviewed template-wide mutation"],
+      "maturity_target": "G4_DRAFT_WRITE_VERIFIED",
+      "acceptance_criteria": [
+        "At least one approved CMS or Git-backed adapter produces a durable authorized draft/staging write receipt and verified resulting state.",
+        "Draft/staging capability cannot be mistaken for production publication or SEO outcome evidence."
+      ],
+      "rollback": "Delete or revert the authorized draft/staging artifact using the provider-specific rollback path and disable the adapter if reconciliation fails.",
+      "stop_conditions": ["Required owner authorization or credentials are unavailable.", "Provider semantics cannot support idempotent draft/staging reconciliation.", "Rollback cannot be demonstrated."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P12",
+      "title": "Production canary writes",
+      "status": "NOT_STARTED",
+      "apivr_tier": "FORENSIC",
+      "objective": "Prove one separately authorized low-risk production action class on the smallest safe noncritical scope with complete before state, write receipt, rollback, immediate verification, and scheduled outcome observation.",
+      "depends_on": ["P11"],
+      "owners": {
+        "lead": "Senior SEO Engineer Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["single low-risk action class", "smallest canary scope", "production write receipt", "rollback", "technical verification", "outcome horizon"],
+      "non_goals": ["broad production rollout", "simultaneously increasing action complexity and blast radius", "high-risk robots, canonical, redirect, noindex, pricing, checkout, regulated-content, GBP ownership, or deletion changes"],
+      "maturity_target": "G5_CANARY_WRITE_VERIFIED",
+      "acceptance_criteria": [
+        "The canary is separately authorized, affects only the approved noncritical scope, and produces a reconciled before/write/after/rollback evidence chain.",
+        "A failed or ambiguous canary blocks promotion and reopens the owning write-safety or adapter phase rather than being averaged into success."
+      ],
+      "rollback": "Execute the pre-authorized canary rollback immediately on failed verification or material adverse effect, preserve evidence, and block that write class pending re-audit.",
+      "stop_conditions": ["Explicit production-write authorization is absent.", "A safe noncritical canary target cannot be identified.", "The write receipt or resulting state is indeterminate.", "Rollback fails or cannot be rehearsed."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    },
+    {
+      "id": "P13",
+      "title": "Bounded autonomous SEO operations",
+      "status": "NOT_STARTED",
+      "apivr_tier": "FORENSIC",
+      "objective": "Promote only individually proven low-risk action classes to bounded autonomous operation with no global autonomy switch, preserving no-change decisions, risk budgets, action receipts, verification, outcome measurement, and rapid containment.",
+      "depends_on": ["P12"],
+      "owners": {
+        "lead": "Senior SEO Strategist Agent",
+        "scrummaster": "Senior ScrumMaster 3",
+        "independent_reviewer": "VP Engineering"
+      },
+      "scope": ["individually certified autonomous action classes", "daily mission execution", "change budgets", "verification", "outcome learning", "containment"],
+      "non_goals": ["global autonomy", "automatic high-risk SEO changes", "search spam", "removing human approval from unproven write classes"],
+      "maturity_target": "G6_BOUNDED_AUTONOMOUS",
+      "acceptance_criteria": [
+        "Each autonomous action class has its own G5 evidence, explicit G6 authorization, bounded blast radius, rollback, receipts, monitoring, and stop conditions.",
+        "The daily loop can select NO_CHANGE_RECOMMENDED and automatically blocks any action whose evidence, authorization, budget, precondition, or maturity state is insufficient.",
+        "A whole-system APIVR re-audit confirms no existing flagship, evidence, security, review, or claim boundary was weakened."
+      ],
+      "rollback": "Disable the affected autonomous action class immediately, preserve its evidence, and revert to shadow or draft maturity while the responsible phase is re-audited.",
+      "stop_conditions": ["Any action class lacks independent G5 canary evidence.", "The system attempts to bypass a per-action maturity gate or human-only approval class.", "Whole-system verification detects a regression or false-green capability claim."],
+      "technical_verification": "NOT_RUN",
+      "outcome_verification": "NOT_RUN"
+    }
+  ],
+  "extension_lanes": [
+    {
+      "id": "L-A",
+      "title": "Local and Google Business Profile",
+      "status": "NOT_STARTED",
+      "depends_on": ["P5", "P10"],
+      "owner": "Local SEO Agent",
+      "maturity_ceiling_without_separate_authorization": "G3_LIVE_READ_VERIFIED",
+      "scope": ["command-backed local audits", "geo-grid", "NAP", "reviews", "owner-authorized GBP reads", "separately gated GBP writes"]
+    },
+    {
+      "id": "L-B",
+      "title": "GEO and AIO measurement",
+      "status": "NOT_STARTED",
+      "depends_on": ["P5", "P7"],
+      "owner": "GEO / AIO Optimization Agent",
+      "maturity_ceiling_without_separate_authorization": "G3_LIVE_READ_VERIFIED",
+      "scope": ["prompt registry", "dated AI observations", "citations", "representation accuracy", "competitor observations", "opportunities"]
+    },
+    {
+      "id": "L-C",
+      "title": "Digital PR and authority opportunities",
+      "status": "NOT_STARTED",
+      "depends_on": ["P5", "P7"],
+      "owner": "Digital PR & Programmatic Link Outreach Agent",
+      "maturity_ceiling_without_separate_authorization": "G3_LIVE_READ_VERIFIED",
+      "scope": ["unlinked mentions", "broken links", "legitimate directories", "competitive backlink gaps", "resource pages", "digital PR opportunities"]
+    },
+    {
+      "id": "L-D",
+      "title": "Social distribution",
+      "status": "NOT_STARTED",
+      "depends_on": ["P9", "P10"],
+      "owner": "SEO Copywriter/Content Agent",
+      "maturity_ceiling_without_separate_authorization": "G4_DRAFT_WRITE_VERIFIED",
+      "scope": ["provider-neutral distribution", "optional Blotato adapter", "platform-specific derivatives", "scheduling receipts", "performance observations"]
+    }
+  ],
+  "program_evidence_state": "NOT_RUN"
+}

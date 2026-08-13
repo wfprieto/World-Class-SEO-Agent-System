@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-program-closure.schema.json",
+  "title": "WCSEO Autonomous SEO Program Closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "program_id",
+    "candidate_commit",
+    "builder_context_id",
+    "apivr",
+    "twenty_pass",
+    "security_privacy_data_review",
+    "architecture_review",
+    "release_end_to_end_review",
+    "rollback_summary",
+    "phase_closure_files",
+    "reviewer_verdict_files",
+    "reviewer_provenance_files",
+    "evidence_package_hash",
+    "evidence_refs",
+    "closure_state"
+  ],
+  "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-program-closure.schema.json"},
+    "schema_version": {"const": "1.1.0"},
+    "program_id": {"const": "autonomous-seo-expansion"},
+    "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "builder_context_id": {"type": "string", "minLength": 8},
+    "apivr": {"$ref": "#/$defs/apivr"},
+    "twenty_pass": {"$ref": "#/$defs/twenty_pass"},
+    "security_privacy_data_review": {"const": "PASS"},
+    "architecture_review": {"const": "PASS"},
+    "release_end_to_end_review": {"const": "PASS"},
+    "rollback_summary": {"$ref": "#/$defs/verification_block"},
+    "phase_closure_files": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/autonomous-seo-expansion-p(?:[0-9]|1[0-3])-closure\\.json$"}},
+    "reviewer_verdict_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "reviewer_provenance_files": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evaluation/remediation/.*\\.json$"}},
+    "evidence_package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}},
+    "closure_state": {"const": "APPROVED_GREAT"}
+  },
+  "$defs": {
+    "apivr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audit", "plan", "implement", "audit_implementation", "verify", "re_audit"],
+      "properties": {
+        "audit": {"const": "PASS"},
+        "plan": {"const": "PASS"},
+        "implement": {"const": "PASS"},
+        "audit_implementation": {"const": "PASS"},
+        "verify": {"const": "PASS"},
+        "re_audit": {"const": "PASS"}
+      }
+    },
+    "twenty_pass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passes_completed", "improvements"],
+      "properties": {
+        "passes_completed": {"const": 20},
+        "improvements": {"type": "array", "minItems": 20, "maxItems": 20, "uniqueItems": true, "items": {"type": "string", "minLength": 12}}
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "bound_commit"],
+      "properties": {
+        "kind": {"const": "repository_file"},
+        "path": {"type": "string", "minLength": 3, "not": {"pattern": "(^/|(^|/)\\.\\.(/|$))"}},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bound_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "verification_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_refs"],
+      "properties": {
+        "state": {"const": "PASS"},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/evidence_ref"}}
+      }
+    }
+  }
+}
