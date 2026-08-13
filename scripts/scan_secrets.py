@@ -42,6 +42,11 @@ class Finding:
 
 def _tracked_files(root: Path) -> Iterable[Path]:
     try:
+        git_root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"], cwd=root, timeout=20, stderr=subprocess.DEVNULL
+        ).decode("utf-8").strip()
+        if Path(git_root).resolve() != root.resolve():
+            raise subprocess.CalledProcessError(1, ["git", "rev-parse", "--show-toplevel"])
         output = subprocess.check_output(
             ["git", "ls-files", "-z"], cwd=root, timeout=20, stderr=subprocess.DEVNULL
         )

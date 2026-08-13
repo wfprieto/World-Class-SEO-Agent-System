@@ -659,7 +659,11 @@ def test_rollback_baseline_boundaries_each_require_fresh_baseline_proof() -> Non
         end = workflow.find("\n      - ", position + len(proof_start))
         removed = workflow[:position] + workflow[end + 1 :]
         assert any("fresh adjacent source proof" in error for error in _workflow_errors(removed, 78.0))
-    weakened_transition = workflow.replace("git revert --no-commit", "git checkout main", 1)
+    weakened_transition = workflow.replace(
+        '"${{ steps.trusted_python.outputs.path }}" -I -E -S scripts/verify_phase0_rollback.py --baseline "$baseline" --receipt phase0-rollback-receipt.json',
+        "git checkout main",
+        1,
+    )
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(weakened_transition, 78.0))
 
 

@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "certification_id": "world-class-seo-agent-system-final-local-certification",
+  "date": "2026-08-13",
+  "scope": "local-public-repository-release-readiness",
+  "release_decision": "BLOCKED",
+  "blockers": [
+    {
+      "id": "working-tree-reconciliation",
+      "severity": "High",
+      "reason": "The release branch release/v1.7.0-final-certification is locally verified and pull request #39 exists, but GitHub status checks, required review, and merge evidence are still missing.",
+      "owner": "Repository owner / release engineer",
+      "required_next_action": "Wait for or configure GitHub status checks on PR #39, complete required review, then merge through the protected pull request process."
+    },
+    {
+      "id": "external-live-proof",
+      "severity": "Medium",
+      "reason": "Fixture and static validation are strong, but authorized live-site/provider proof is still outside the public repo release scope.",
+      "owner": "Repository owner / integration owner",
+      "required_next_action": "Keep public claims limited to fixture/anonymized/local proof until authorized live-provider evidence exists."
+    }
+  ],
+  "verified_phase_closeouts": [
+    "docs/APIVR-PHASE-1-RELEASE-HYGIENE-CLOSEOUT.md",
+    "docs/APIVR-PHASE-2-GOLDEN-DEMO-CLOSEOUT.md",
+    "docs/APIVR-PHASE-3-PROOF-PACK-CLOSEOUT.md",
+    "docs/APIVR-PHASE-4-AGENT-SYNERGY-CLOSEOUT.md",
+    "docs/APIVR-PHASE-5-AUTONOMY-SAFETY-CLOSEOUT.md",
+    "docs/APIVR-PHASE-6-PUBLIC-REPO-POLISH-CLOSEOUT.md",
+    "docs/APIVR-PHASE-7-KNOWLEDGE-EXPANSION-CLOSEOUT.md",
+    "docs/APIVR-PHASE-8-FINAL-RELEASE-CERTIFICATION-CLOSEOUT.md"
+  ],
+  "required_public_artifacts": [
+    "README.md",
+    "QUICKSTART.md",
+    "SYSTEM_MAP.md",
+    "SYSTEM_SPEC.md",
+    "docs/AGENT-SYNERGY-MAP.md",
+    "docs/AUTONOMY-SAFETY-MODEL.md",
+    "docs/RELEASE-BRANCH-RECONCILIATION.md",
+    "examples/golden-demo/expected-output-contract.json",
+    "examples/proof-pack/proof-pack-manifest.json",
+    "orchestration/agent-synergy-map.json",
+    "orchestration/autonomy-safety-policy.json",
+    "runtime/autonomy.py",
+    "evaluation/libhunt-source-ingestion-matrix.json",
+    "evaluation/upgrade-source-matrix.json",
+    "knowledge/reference-registry.json"
+  ],
+  "verification_commands": [
+    "python scripts/validate_libhunt_source_matrix.py",
+    "python scripts/validate_upgrade_source_matrix.py",
+    "python scripts/validate_reference_freshness.py",
+    "python scripts/generate_skill_index.py --check",
+    "python scripts/validate_canonical_skill_consistency.py",
+    "python scripts/validate_seo_claims.py",
+    "python scripts/scan_secrets.py",
+    "python -m pytest -q --basetemp %TEMP%/wcseo-pytest",
+    "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
+    "python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py tests/test_phase0_rollback_verifier.py",
+    "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1"
+  ],
+  "latest_observed_results": {
+    "pytest": "1118 passed in 123.47s using external basetemp %TEMP%/wcseo-pytest",
+    "mypy": "179 source files passed",
+    "ruff": "passed",
+    "secret_scan": "passed",
+    "repository_validation": "passed",
+    "quality_ratchet": "passed",
+    "libhunt_source_matrix": "passed",
+    "upgrade_source_matrix": "passed",
+    "skill_index": "current, 89 indexed skills",
+    "canonical_skill_consistency": "89 indexed skills, one procedure heading each",
+    "reference_freshness": "68 entries across 21 packs",
+    "seo_claims": "38 claims passed"
+  },
+  "pull_request": {
+    "number": 39,
+    "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/39",
+    "head": "release/v1.7.0-final-certification",
+    "base": "main",
+    "status_checks": "no checks reported on 2026-08-13 local audit"
+  },
+  "scrummaster_decision": "ACCEPT_WITH_EXPLICIT_RISK",
+  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_PR_CHECKS_REVIEW_AND_MERGE"
+}

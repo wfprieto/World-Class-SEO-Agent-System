@@ -165,6 +165,8 @@ Debate Mode:
 
 - Scrummaster forces agents to defend assumptions before important decisions.
 
+The canonical autonomy safety policy is `orchestration/autonomy-safety-policy.json`. The readable guide is `docs/AUTONOMY-SAFETY-MODEL.md`.
+
 ## Downstream Measurement Targets
 
 These are operator-selected measures for evaluating approved work after implementation. They are not outcomes proven by the repository, a fixture audit, or a bounded live audit. Missing baselines and unavailable first-party evidence remain explicit.

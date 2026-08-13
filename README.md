@@ -40,6 +40,33 @@ Continue with the [five-minute quick start](docs/QUICKSTART.md), then use [SYSTE
 
 Only assess websites, data, APIs, and accounts you are authorized to access. Never commit credentials, client exports, personal data, or generated private artifacts. Live integrations are optional and read credentials from local environment variables; see [.env.example](.env.example).
 
+## Proof And Safety
+
+| Need | Start Here |
+| --- | --- |
+| Run the offline demo | [docs/QUICKSTART.md](docs/QUICKSTART.md) |
+| Inspect demo expectations | [examples/golden-demo/expected-output-contract.json](examples/golden-demo/expected-output-contract.json) |
+| See proof coverage | [examples/proof-pack/proof-pack-manifest.json](examples/proof-pack/proof-pack-manifest.json) |
+| Understand agent cooperation | [docs/AGENT-SYNERGY-MAP.md](docs/AGENT-SYNERGY-MAP.md) |
+| Understand autonomy limits | [docs/AUTONOMY-SAFETY-MODEL.md](docs/AUTONOMY-SAFETY-MODEL.md) |
+| Verify repository health | [scripts/validate-repository.ps1](scripts/validate-repository.ps1) |
+
+The fixture demo proves offline routing, deterministic audit logic, evidence-backed artifact creation, report generation, and agent contribution tracking. It does not prove live rankings, live indexing, live Search Console access, live analytics access, provider authentication, or automatic website mutation.
+
+The public repository defaults to audit-only recommendations. Any automated website mutation, outreach sending, disavow generation, large-scale redirect/canonical/noindex change, or regulated public copy change requires explicit private-installation authorization and a rollback plan.
+
+## Validation Commands
+
+Use the same local gates before release or PR merge:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\validate-repository.ps1
+python -m pytest -q --basetemp %TEMP%\wcseo-pytest
+python -m ruff check . --select E9,F63,F7,F82 --no-cache
+python -m mypy runtime seoctl integrations adapters scripts
+python scripts\scan_secrets.py
+```
+
 ## What This Is
 
 This is not a prompt dump. It is a structured SEO operating system made of:
@@ -58,6 +85,14 @@ This is not a prompt dump. It is a structured SEO operating system made of:
 - LLM-specific operating guides for Codex, ChatGPT, Claude, Claude Code, Replit, and Manus
 
 The core system is LLM agnostic. Any capable coding or reasoning model can use the files. The top-level model control files provide environment-specific operating guidance without changing the system itself.
+
+## Why It Is Different
+
+- Agents are connected through [orchestration/capability-registry.json](orchestration/capability-registry.json), [orchestration/agent-synergy-map.json](orchestration/agent-synergy-map.json), and [workflows/](workflows/).
+- The public proof path is checked by tests, not just described in docs.
+- Reports distinguish fixture proof, anonymized examples, live-capable adapters, missing evidence, and blocked claims.
+- Dangerous SEO actions are governed by [orchestration/autonomy-safety-policy.json](orchestration/autonomy-safety-policy.json) and [runtime/autonomy.py](runtime/autonomy.py).
+- The default public mode is audit/report/recommendation. Full autopilot is reserved for private controlled installations with explicit authorization.
 
 ## Who It Is For
 

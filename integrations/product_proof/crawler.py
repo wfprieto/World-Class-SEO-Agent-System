@@ -14,6 +14,11 @@ from collections import deque
 from html.parser import HTMLParser
 from typing import Any, Callable
 
+from integrations.product_proof.link_extractor import extract_link_evidence
+from integrations.product_proof.metadata_parser import (
+    extract_head_metadata,
+    extract_robot_directives,
+)
 from integrations.product_proof.models import CrawlConfig, PageRecord, RobotsRecord
 from integrations.technical.http import BoundedHttpClient, HttpHop
 from security.url_safety import validate_public_url
@@ -253,30 +258,16 @@ class SiteCrawler:
             text = self._decode(hop)
             try: parser.feed(text)
             except Exception as exc: errors.append(f"HTML parse warning: {type(exc).__name__}")
-        base = hop.final_url
-        internal: set[str] = set(); external: set[str] = set(); rel_next: set[str] = set(); rel_prev: set[str] = set(); canonical: str | None = None
-        for link in parser.links:
-            href = link.get("href", "").strip()
-            if not href: continue
-            absolute = self._normalized(urllib.parse.urljoin(base, href))
-            relation = {part.lower() for part in link.get("rel", "").split()}
-            if "canonical" in relation and canonical is None: canonical = absolute
-            if "next" in relation: rel_next.add(absolute)
-            if "prev" in relation: rel_prev.add(absolute)
-            if link.get("href") and link.get("rel", "").lower() not in {"stylesheet", "preload", "modulepreload", "icon"}:
-                if urllib.parse.urlsplit(absolute).hostname == root_host: internal.add(absolute)
-                elif urllib.parse.urlsplit(absolute).scheme in {"http", "https"}: external.add(absolute)
-        assets = sorted({self._normalized(urllib.parse.urljoin(base, value)) for value in parser.assets if urllib.parse.urlsplit(urllib.parse.urljoin(base, value)).scheme in {"http", "https"}})
-        robots_values: list[str] = []
-        for meta in parser.metas:
-            if meta.get("name", "").lower() in {"robots", "googlebot"}:
-                robots_values.extend(token.strip().lower() for token in meta.get("content", "").split(",") if token.strip())
+        links = extract_link_evidence(parser.links, hop.final_url, root_host, self._normalized)
+        assets = sorted({self._normalized(urllib.parse.urljoin(hop.final_url, value)) for value in parser.assets if urllib.parse.urlsplit(urllib.parse.urljoin(hop.final_url, value)).scheme in {"http", "https"}})
+        robots_values = extract_robot_directives(parser.metas)
+        head = extract_head_metadata(parser.metas, content_type)
         x_robots = self._header(hop.headers, "x-robots-tag")
-        images = [{"src": self._normalized(urllib.parse.urljoin(base, image.get("src", ""))) if image.get("src", "").strip() else None, "loading": image.get("loading") or None, "fetchpriority": image.get("fetchpriority") or None, "width": image.get("width") or None, "height": image.get("height") or None, "alt_present": "alt" in image, "position": index} for index, image in enumerate(parser.images)]
+        images = [{"src": self._normalized(urllib.parse.urljoin(hop.final_url, image.get("src", ""))) if image.get("src", "").strip() else None, "loading": image.get("loading") or None, "fetchpriority": image.get("fetchpriority") or None, "width": image.get("width") or None, "height": image.get("height") or None, "alt_present": "alt" in image, "position": index} for index, image in enumerate(parser.images)]
         visible_text = " ".join(parser.text_parts)
         title = " ".join(parser.title_parts).strip() or None
         soft = bool(200 <= hop.status_code < 300 and (_SOFT_404.search((title or "") + " " + visible_text[:2000]) or len(visible_text.strip()) < 40))
-        return PageRecord(requested_url=url, final_url=self._normalized(hop.final_url), depth=depth, status_code=hop.status_code, elapsed_ms=hop.elapsed_ms, content_type=content_type, title=title, h1=parser.h1, canonical=canonical, meta_robots=sorted(set(robots_values)), x_robots_tag=x_robots, internal_links=sorted(internal), external_links=sorted(external), asset_urls=assets, images=images, jsonld_types=self._jsonld_types(parser.jsonld_payloads), rel_next=sorted(rel_next), rel_prev=sorted(rel_prev), data_nosnippet_count=parser.data_nosnippet_count, text_length=len(visible_text), content_hash=hashlib.sha256(visible_text.encode("utf-8")).hexdigest(), soft_404_signal=soft, raw_html_available=bool(text), errors=errors)
+        return PageRecord(requested_url=url, final_url=self._normalized(hop.final_url), depth=depth, status_code=hop.status_code, elapsed_ms=hop.elapsed_ms, content_type=content_type, title=title, h1=parser.h1, canonical=links.canonical, meta_robots=sorted(set(robots_values)), x_robots_tag=x_robots, internal_links=sorted(links.internal), external_links=sorted(links.external), asset_urls=assets, images=images, jsonld_types=self._jsonld_types(parser.jsonld_payloads), rel_next=sorted(links.rel_next), rel_prev=sorted(links.rel_prev), data_nosnippet_count=parser.data_nosnippet_count, text_length=len(visible_text), content_hash=hashlib.sha256(visible_text.encode("utf-8")).hexdigest(), soft_404_signal=soft, raw_html_available=bool(text), meta_description=head["meta_description"], viewport=head["viewport"], charset=head["charset"], open_graph_tags=head["open_graph_tags"], twitter_tags=head["twitter_tags"], deprecated_meta=head["deprecated_meta"], errors=errors)
 
     def _robots(self, scheme: str, host: str) -> RobotsRecord:
         url = urllib.parse.urlunsplit((scheme, host, "/robots.txt", "", ""))

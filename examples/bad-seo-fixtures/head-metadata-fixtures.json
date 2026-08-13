@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_is_live_proof": false,
+  "category": "head-metadata",
+  "fixtures": [
+    {
+      "id": "minimum-head-missing",
+      "url": "https://fixture.example/head/minimum-missing",
+      "html": "<html><head><title></title><meta name=\"keywords\" content=\"seo,seo,seo\"></head><body><h1>Service</h1><p>Useful content.</p></body></html>",
+      "expected_findings": [
+        "head-title-missing",
+        "meta-description-missing",
+        "viewport-missing",
+        "canonical-missing",
+        "deprecated-head-metadata"
+      ]
+    },
+    {
+      "id": "duplicate-template-head",
+      "url": "https://fixture.example/head/duplicate-template",
+      "html": "<html><head><title>Services</title><meta name=\"description\" content=\"Same generic service description.\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"canonical\" href=\"https://fixture.example/head/duplicate-template\"></head><body><h1>Services</h1><p>Page-specific service proof.</p></body></html>",
+      "expected_findings": [
+        "head-title-duplicated",
+        "meta-description-duplicated",
+        "social-metadata-incomplete"
+      ]
+    }
+  ]
+}

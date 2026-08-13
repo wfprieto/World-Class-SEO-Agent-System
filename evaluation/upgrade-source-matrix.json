@@ -1,0 +1,364 @@
+{
+  "schema_version": "1.0.0",
+  "apivr_tier": "Comprehensive",
+  "objective": "Govern source-inspired upgrades without copying external repository structure, prose, code, branding, or repository-specific implementation details.",
+  "source_policy": {
+    "allowed_use": [
+      "extract generalized SEO procedures",
+      "extract test-fixture categories and expected-finding ideas",
+      "extract adapter contract patterns",
+      "extract source-backed reference topics",
+      "rewrite all target artifacts in this repository's own architecture and voice"
+    ],
+    "forbidden_use": [
+      "copy external repo prose verbatim into target artifacts",
+      "copy external source code into runtime modules",
+      "retain external repo branding as system identity",
+      "create orphan imports or import files that are not connected to agents, skills, workflows, tests, or registries",
+      "add paid-tool recommendations without budget and access guardrails"
+    ],
+    "verification_standard": [
+      "every implemented upgrade must name target agents or skills",
+      "every implemented knowledge file must be registry-connected",
+      "every fixture must have expected findings",
+      "every adapter must return the local AdapterResult contract",
+      "every public-facing writing procedure must preserve the anti-AI writing quality gate"
+    ]
+  },
+  "sources": [
+    {
+      "id": "agricidaniel-claude-seo",
+      "repo": "AgriciDaniel/claude-seo",
+      "local_path": "../repositories/claude-seo",
+      "head_observed": "6cf1ea9",
+      "primary_value": "Deep SEO knowledge, FLOW prompt packs, reference packs, and specialist skill procedures.",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "every-app-open-seo",
+      "repo": "every-app/open-seo",
+      "local_path": "../repositories/open-seo",
+      "head_observed": "61c0b0c",
+      "primary_value": "Production SEO product patterns: MCP tools, DataForSEO shaping, GSC, AI search, rank tracking, audit workflows, and bad SEO fixtures.",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "stefankirkegaard-open-seo-github",
+      "repo": "stefankirkegaard/open-seo-github",
+      "local_path": "../repositories/open-seo-github",
+      "head_observed": "82d6363",
+      "primary_value": "Lean OpenSEO implementation patterns for DataForSEO, AI search, MCP, rank tracking, and self-hosting.",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "tahahachana-openseo",
+      "repo": "TahaHachana/OpenSEO",
+      "local_path": "../repositories/TahaHachana-OpenSEO",
+      "head_observed": "670fd11",
+      "primary_value": "Historical page-review checklist concepts: title, meta description, headings, links, keyword analysis, headers, and PageSpeed-era review output.",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    }
+  ],
+  "upgrade_units": [
+    {
+      "id": "phase-01-source-governance",
+      "apivr_phase": 1,
+      "title": "Source extraction governance",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Low",
+      "source_ids": [
+        "agricidaniel-claude-seo",
+        "every-app-open-seo",
+        "stefankirkegaard-open-seo-github",
+        "tahahachana-openseo"
+      ],
+      "target_files": [
+        "evaluation/upgrade-source-matrix.json",
+        "docs/SOURCE-INSPIRED-UPGRADE-MATRIX.md",
+        "scripts/validate_upgrade_source_matrix.py",
+        "tests/test_upgrade_source_matrix.py"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist",
+        "SEO Research and Development Agent"
+      ],
+      "target_skills": [
+        "system-improvement-loop",
+        "continuous-learning-workflow"
+      ],
+      "acceptance_criteria": [
+        "matrix validates structurally",
+        "each source has a stable id, repo, local path, observed head, primary value, license review, and status",
+        "each upgrade unit has target files, agents, skills, acceptance criteria, and verification commands",
+        "forbidden-use policy blocks blind copying and orphan imports"
+      ],
+      "verification_commands": [
+        "python scripts/validate_upgrade_source_matrix.py",
+        "python -m pytest tests/test_upgrade_source_matrix.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-02-flow-expansion",
+      "apivr_phase": 2,
+      "title": "FLOW prompt and operating-system expansion",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "agricidaniel-claude-seo"
+      ],
+      "source_patterns": [
+        "skills/seo-flow/references/flow-framework.md",
+        "skills/seo-flow/references/bibliography.md",
+        "skills/seo-flow/references/prompts/find/",
+        "skills/seo-flow/references/prompts/leverage/",
+        "skills/seo-flow/references/prompts/optimize/",
+        "skills/seo-flow/references/prompts/win/",
+        "skills/seo-flow/references/prompts/local/"
+      ],
+      "target_files": [
+        "skills/seo-flow-skill.md",
+        "skills/flow-prompts/find.md",
+        "skills/flow-prompts/leverage.md",
+        "skills/flow-prompts/optimize.md",
+        "skills/flow-prompts/win.md",
+        "skills/flow-prompts/local.md"
+      ],
+      "target_agents": [
+        "SEO Copywriter/Content Agent",
+        "Senior SEO Strategist Agent",
+        "GEO / AIO Optimization Agent",
+        "Local SEO Agent",
+        "Digital PR & Programmatic Link Outreach Agent",
+        "SEO CRO Agent"
+      ],
+      "target_skills": [
+        "seo-flow"
+      ],
+      "acceptance_criteria": [
+        "each FLOW stage has trigger conditions, required inputs, step procedures, quality gates, failure modes, and output expectations",
+        "FLOW prompts remain model-agnostic",
+        "public-facing copy routes through anti-AI writing quality gates",
+        "generated skill index remains current"
+      ],
+      "verification_commands": [
+        "python scripts/generate_skill_index.py --check",
+        "python scripts/validate_canonical_skill_consistency.py",
+        "python -m pytest tests/test_phase4_skills_and_references.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-03-knowledge-reference-expansion",
+      "apivr_phase": 3,
+      "title": "SEO reference pack expansion",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "High",
+      "source_ids": [
+        "agricidaniel-claude-seo"
+      ],
+      "source_patterns": [
+        "skills/seo/references/",
+        "skills/seo-google/references/",
+        "skills/seo-hreflang/references/",
+        "skills/seo-sxo/references/",
+        "skills/seo-content-brief/references/"
+      ],
+      "target_files": [
+        "knowledge/reference-packs/technical-search-expanded.md",
+        "knowledge/reference-packs/content-quality-expanded.md",
+        "knowledge/reference-packs/local-maps-expanded.md",
+        "knowledge/reference-packs/ai-search-geo-expanded.md",
+        "knowledge/reference-packs/international-hreflang-expanded.md",
+        "knowledge/reference-packs/sxo-cro-expanded.md",
+        "knowledge/reference-packs/backlink-authority-expanded.md",
+        "knowledge/reference-packs/ecommerce-programmatic-expanded.md",
+        "knowledge/reference-packs/google-apis-expanded.md",
+        "knowledge/reference-packs/schema-rich-results-expanded.md",
+        "knowledge/reference-registry.json"
+      ],
+      "target_agents": [
+        "SEO Technical Agent",
+        "SEO Copywriter/Content Agent",
+        "Local SEO Agent",
+        "International & Multilingual SEO Agent",
+        "GEO / AIO Optimization Agent",
+        "SEO CRO Agent",
+        "Digital PR & Programmatic Link Outreach Agent"
+      ],
+      "target_skills": [
+        "technical-seo",
+        "content-seo",
+        "local-seo",
+        "international-seo",
+        "geo-aio",
+        "backlink-authority"
+      ],
+      "acceptance_criteria": [
+        "each new reference pack is connected to at least one agent or skill",
+        "claim-like guidance identifies evidence level and source posture",
+        "deprecated tactics are routed to deprecation registry",
+        "reference freshness validation passes"
+      ],
+      "verification_commands": [
+        "python scripts/validate_reference_freshness.py",
+        "python scripts/validate_seo_claims.py",
+        "python -m pytest tests/test_repository_semantics.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-04-bad-seo-fixtures",
+      "apivr_phase": 4,
+      "title": "Bad SEO fixture and expected-finding pack",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "every-app-open-seo"
+      ],
+      "source_patterns": [
+        "badseo/src/fixtures/head-tags.ts",
+        "badseo/src/fixtures/content.ts",
+        "badseo/src/fixtures/indexability.ts",
+        "badseo/src/fixtures/http-status.ts",
+        "badseo/src/fixtures/redirects.ts",
+        "badseo/src/fixtures/structure.ts",
+        "badseo/src/fixtures/performance.ts",
+        "badseo/src/fixtures/kitchen-sink.ts",
+        "badseo/src/fixtures/registry.ts"
+      ],
+      "target_files": [
+        "examples/bad-seo-fixtures/fixtures.json",
+        "docs/BAD-SEO-FIXTURE-PACK.md",
+        "tests/test_bad_seo_fixtures.py"
+      ],
+      "target_agents": [
+        "SEO Technical Agent",
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Engineer Agent",
+        "SEO Output Report Agent"
+      ],
+      "target_skills": [
+        "product-proof-technical-audit",
+        "technical-seo"
+      ],
+      "acceptance_criteria": [
+        "fixtures cover head tags, content, indexability, status, redirects, structure, performance, and compound failure cases",
+        "each fixture has expected finding ids, severity, evidence refs, and recommended action category",
+        "fixture validation does not depend on live network access"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_bad_seo_fixtures.py -q",
+        "python scripts/validate_product_proof_program.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-05-adapter-tooling-upgrade",
+      "apivr_phase": 5,
+      "title": "Adapter, MCP, and cost-aware tool routing upgrade",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "High",
+      "source_ids": [
+        "every-app-open-seo",
+        "stefankirkegaard-open-seo-github"
+      ],
+      "source_patterns": [
+        "src/server/mcp/tools/",
+        "src/server/lib/dataforseo/",
+        "src/server/features/gsc/",
+        "src/server/features/ai-search/",
+        "src/server/features/rank-tracking/",
+        "src/server/features/backlinks/"
+      ],
+      "target_files": [
+        "adapters/README.md",
+        "adapters/TOOLS.md",
+        "adapters/registry.py",
+        "runtime/tools.py",
+        "tests/test_adapters.py",
+        "tests/test_tool_protocol.py"
+      ],
+      "target_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "Competitive Intelligence Agent",
+        "Predictive SEO Trend Agent",
+        "Digital PR & Programmatic Link Outreach Agent",
+        "GEO / AIO Optimization Agent"
+      ],
+      "target_skills": [
+        "diagnostic-infrastructure",
+        "competitive-intelligence",
+        "predictive-seo",
+        "digital-pr",
+        "geo-aio"
+      ],
+      "acceptance_criteria": [
+        "cost-bearing tools expose budget and credential requirements",
+        "unsafe URLs are rejected before adapter calls",
+        "missing credentials return MISSING or BLOCKED states instead of crashing",
+        "all adapters conform to local AdapterResult"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_adapters.py tests/test_runtime_hardening.py -q",
+        "python scripts/scan_secrets.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-06-final-cross-reference-audit",
+      "apivr_phase": 6,
+      "title": "Final cross-reference, orphan, and release-readiness audit",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "agricidaniel-claude-seo",
+        "every-app-open-seo",
+        "stefankirkegaard-open-seo-github",
+        "tahahachana-openseo"
+      ],
+      "target_files": [
+        "tests/test_knowledge_registry_integrity.py",
+        "tests/test_flow_prompt_registry.py",
+        "tests/test_agent_skill_knowledge_links.py",
+        "docs/APIVR-KNOWLEDGE-AND-FIXTURE-UPGRADE-REPORT.md",
+        "docs/20-PASS-KNOWLEDGE-EXPANSION-REVIEW.md"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist",
+        "SEO Research and Development Agent"
+      ],
+      "target_skills": [
+        "system-improvement-loop",
+        "continuous-learning-workflow"
+      ],
+      "acceptance_criteria": [
+        "no orphan agents, skills, knowledge files, adapters, or FLOW prompts",
+        "validation suite passes",
+        "APIVR report records compliance and outcome verification",
+        "20-pass report states only real counted improvements"
+      ],
+      "verification_commands": [
+        "python scripts/validate_upgrade_source_matrix.py",
+        "python scripts/validate_reference_freshness.py",
+        "python scripts/generate_skill_index.py --check",
+        "python -m pytest -q",
+        "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
+        "python -m mypy runtime seoctl integrations adapters"
+      ],
+      "status": "verified"
+    }
+  ]
+}

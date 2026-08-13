@@ -6,12 +6,13 @@ This is the fast navigation file for humans and LLMs. Start here when you need t
 
 1. Read `SYSTEM_SPEC.md` for rules, evidence standards, approval gates and output expectations.
 2. Use `workflows/request-routing.md` or `runtime/routing.py` to choose the lead agent.
-3. Open the lead agent in `agents/`.
-4. Load the agent's primary skills from `skills/SKILL_INDEX.md`.
-5. Use `skills/deep-skill-procedures.md` for the step-by-step procedure.
-6. Pull evidence through `adapters/` or supplied exports.
-7. Return output with the right file from `schemas/` or `templates/`.
-8. Validate with `scripts/validate-repository.ps1`, `scripts/validate_schema_examples.py` and `pytest`.
+3. Use `docs/AGENT-SYNERGY-MAP.md` and `orchestration/agent-synergy-map.json` to identify required support, challenge, reporting and learning roles.
+4. Open the lead agent in `agents/`.
+5. Load the agent's primary skills from `skills/SKILL_INDEX.md`.
+6. Use `skills/deep-skill-procedures.md` for the step-by-step procedure.
+7. Pull evidence through `adapters/` or supplied exports.
+8. Return output with the right file from `schemas/` or `templates/`.
+9. Validate with `scripts/validate-repository.ps1`, `scripts/validate_schema_examples.py` and `pytest`.
 
 ## Directory Roles
 
@@ -28,6 +29,14 @@ This is the fast navigation file for humans and LLMs. Start here when you need t
 | `orchestration/` | Session state and handoff rules | `orchestration/README.md` |
 | `examples/` | Valid examples, sample exports and schema fixtures | `examples/README.md` |
 | `tests/` | Semantic and runtime test coverage | `tests/test_repository_semantics.py` |
+
+## Synergy Lookup
+
+Use [`docs/AGENT-SYNERGY-MAP.md`](docs/AGENT-SYNERGY-MAP.md) for the human-readable operating loop. Use [`orchestration/agent-synergy-map.json`](orchestration/agent-synergy-map.json) for the machine-readable contract that connects workflows, lead agents, support agents, proof units, handoff rules, final output owners and governance roles.
+
+## Autonomy Safety Lookup
+
+Use [`docs/AUTONOMY-SAFETY-MODEL.md`](docs/AUTONOMY-SAFETY-MODEL.md) for the readable autonomy ladder. Use [`orchestration/autonomy-safety-policy.json`](orchestration/autonomy-safety-policy.json) and [`runtime/autonomy.py`](runtime/autonomy.py) to evaluate whether an SEO action is audit-only, recommendation-only, draft-only, approval-gated, limited-autopilot, or reserved for private full-autopilot installations.
 
 ## Agent Lookup
 

@@ -59,8 +59,8 @@
       "removal_phase": "P7"
     },
     "integrations/extensions/indexnow.py": {
-      "max_lines": 210,
-      "max_complexity_total": 45,
+      "max_lines": 198,
+      "max_complexity_total": 43,
       "max_missing_annotations": 7,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -83,8 +83,8 @@
       "removal_phase": "P7"
     },
     "integrations/product_proof/crawler.py": {
-      "max_lines": 309,
-      "max_complexity_total": 161,
+      "max_lines": 300,
+      "max_complexity_total": 146,
       "max_missing_annotations": 1,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -245,7 +245,7 @@
       "removal_phase": "P7"
     },
     "runtime.tools::ToolDispatcher.dispatch": {
-      "max_span": 80,
+      "max_span": 76,
       "max_complexity": 13,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
@@ -412,14 +412,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations.extensions.indexnow::IndexNowService.submit": {
-      "max_span": 89,
-      "max_complexity": 10,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.google.client::_NoCrossHostRedirects.redirect_request": {
       "max_span": 15,
       "max_complexity": 4,
@@ -501,8 +493,8 @@
       "removal_phase": "P7"
     },
     "integrations.product_proof.crawler::SiteCrawler._page": {
-      "max_span": 35,
-      "max_complexity": 33,
+      "max_span": 21,
+      "max_complexity": 18,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -1577,18 +1569,16 @@
       "integrations/authority_media/transport.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
       "integrations/content_intelligence/service.py|C901|`decay` is too complex (12 > 10)": 1,
       "integrations/content_intelligence/service.py|C901|`verify` is too complex (20 > 10)": 1,
-      "integrations/extensions/indexnow.py|UP035|Import from `collections.abc` instead: `Callable`, `Iterable`": 1,
       "integrations/google/client.py|C901|`request` is too complex (20 > 10)": 1,
       "integrations/google/client.py|C901|`token` is too complex (13 > 10)": 1,
       "integrations/google/client.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/google/client.py|UP037|Remove quotes from type annotation": 1,
       "integrations/google/gsc.py|C901|`query` is too complex (19 > 10)": 1,
-      "integrations/product_proof/crawler.py|C901|`_page` is too complex (13 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`allowed` is too complex (11 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`handle_starttag` is too complex (16 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`parse_robots` is too complex (11 > 10)": 1,
-      "integrations/product_proof/crawler.py|E701|Multiple statements on one line (colon)": 19,
-      "integrations/product_proof/crawler.py|E702|Multiple statements on one line (semicolon)": 15,
+      "integrations/product_proof/crawler.py|E701|Multiple statements on one line (colon)": 13,
+      "integrations/product_proof/crawler.py|E702|Multiple statements on one line (semicolon)": 11,
       "integrations/product_proof/crawler.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
       "integrations/product_proof/intelligence.py|C901|`analyze` is too complex (11 > 10)": 1,
       "integrations/product_proof/intelligence.py|E701|Multiple statements on one line (colon)": 20,
@@ -1596,10 +1586,8 @@
       "integrations/product_proof/rules.py|C901|`ai_cwv_facets` is too complex (12 > 10)": 1,
       "integrations/product_proof/rules.py|C901|`canon` is too complex (13 > 10)": 1,
       "integrations/product_proof/rules.py|C901|`robots` is too complex (13 > 10)": 1,
-      "integrations/product_proof/rules.py|E401|Multiple imports on one line": 1,
       "integrations/product_proof/rules.py|E701|Multiple statements on one line (colon)": 35,
-      "integrations/product_proof/rules.py|E702|Multiple statements on one line (semicolon)": 48,
-      "integrations/product_proof/rules.py|F401|`typing.Any` imported but unused": 1,
+      "integrations/product_proof/rules.py|E702|Multiple statements on one line (semicolon)": 45,
       "integrations/product_proof/rules.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/technical/browser.py|C901|`render` is too complex (14 > 10)": 1,
       "integrations/technical/http.py|I001|Import block is un-sorted or un-formatted": 1,

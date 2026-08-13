@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "demo_id": "golden-demo-technical-audit",
+  "command": "python -m seoctl.entrypoint audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output audit-runs/golden-demo --max-urls 20",
+  "fixture": "examples/product-proof/site-fixture.json",
+  "expected": {
+    "status": "complete",
+    "evidence_mode": "FIXTURE",
+    "pages_crawled": 5,
+    "findings": 18,
+    "critical_findings": 3,
+    "agents_executed": 0,
+    "external_changes_made": "NONE",
+    "unsupported_material_findings": 0,
+    "fixture_is_live_proof": false
+  },
+  "artifacts": [
+    "run-manifest.json",
+    "crawl.json",
+    "findings.json",
+    "decisions.json",
+    "agent-contributions.json",
+    "trust-summary.json",
+    "technical-audit.md",
+    "executive-summary.md",
+    "remediation-plan.csv",
+    "verification-plan.json"
+  ],
+  "claims": {
+    "proves": [
+      "offline command routing",
+      "fixture-safe technical audit execution",
+      "evidence-backed finding generation",
+      "plain-English report generation",
+      "technical report generation",
+      "agent contribution tracking",
+      "artifact hashing"
+    ],
+    "does_not_prove": [
+      "live rankings",
+      "live indexing",
+      "live Search Console data",
+      "live analytics data",
+      "live Core Web Vitals",
+      "provider authentication",
+      "automatic website mutation"
+    ]
+  }
+}

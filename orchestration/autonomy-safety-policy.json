@@ -1,0 +1,214 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "world-class-seo-autonomy-safety-policy",
+  "default_mode": "mode_0_audit_only",
+  "public_repo_default": "mode_0_audit_only",
+  "modes": [
+    {
+      "id": "mode_0_audit_only",
+      "level": 0,
+      "name": "Audit Only",
+      "allows": [
+        "read supplied files",
+        "read local exports",
+        "run offline fixtures",
+        "produce findings",
+        "produce reports",
+        "produce verification plans"
+      ],
+      "forbids": [
+        "website mutation",
+        "provider mutation",
+        "publishing",
+        "outreach sending"
+      ],
+      "requires_human_approval": false
+    },
+    {
+      "id": "mode_1_recommend_only",
+      "level": 1,
+      "name": "Recommend Only",
+      "allows": [
+        "prioritize recommendations",
+        "estimate impact and effort",
+        "create action queues",
+        "create owner-ready briefs"
+      ],
+      "forbids": [
+        "website mutation",
+        "provider mutation",
+        "publishing",
+        "outreach sending"
+      ],
+      "requires_human_approval": false
+    },
+    {
+      "id": "mode_2_draft_changes",
+      "level": 2,
+      "name": "Draft Changes",
+      "allows": [
+        "draft patches",
+        "draft content",
+        "draft metadata",
+        "draft redirects",
+        "draft schema",
+        "draft tickets"
+      ],
+      "forbids": [
+        "applying changes",
+        "deploying changes",
+        "publishing",
+        "provider mutation",
+        "outreach sending"
+      ],
+      "requires_human_approval": false
+    },
+    {
+      "id": "mode_3_approval_gated_execution",
+      "level": 3,
+      "name": "Approval-Gated Execution",
+      "allows": [
+        "apply approved low-risk changes",
+        "apply approved code patches",
+        "apply approved content edits",
+        "create approved pull requests",
+        "create approved tickets"
+      ],
+      "forbids": [
+        "unapproved mutation",
+        "unapproved publishing",
+        "unapproved provider mutation",
+        "unapproved outreach sending"
+      ],
+      "requires_human_approval": true
+    },
+    {
+      "id": "mode_4_limited_autopilot",
+      "level": 4,
+      "name": "Limited Autopilot",
+      "allows": [
+        "apply pre-approved low-risk formatting fixes",
+        "refresh local reports",
+        "refresh monitoring artifacts",
+        "open pull requests for review"
+      ],
+      "forbids": [
+        "high-risk SEO mutation",
+        "sitewide SEO mutation",
+        "revenue-funnel mutation",
+        "legal/compliance publication",
+        "provider destructive actions",
+        "outreach sending"
+      ],
+      "requires_human_approval": true
+    },
+    {
+      "id": "mode_5_full_autopilot_reserved",
+      "level": 5,
+      "name": "Full Autopilot Reserved",
+      "allows": [
+        "reserved for private controlled installations with explicit owner authorization"
+      ],
+      "forbids": [
+        "public repository default use",
+        "unscoped autonomous mutation",
+        "unapproved dangerous SEO actions"
+      ],
+      "requires_human_approval": true
+    }
+  ],
+  "dangerous_actions": [
+    {
+      "id": "sitewide_robots_change",
+      "patterns": ["robots.txt change", "block crawling", "disallow important pages", "change googlebot rules"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO Technical Agent", "SEO Scrummaster Agent", "Senior SEO Engineer Agent"]
+    },
+    {
+      "id": "mass_noindex_change",
+      "patterns": ["mass noindex", "add noindex", "remove from index", "noindex template"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO Technical Agent", "SEO Scrummaster Agent", "Senior SEO Strategist Agent"]
+    },
+    {
+      "id": "canonical_rule_change",
+      "patterns": ["canonical rule", "change canonicals", "self canonical", "canonicalize pages"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO Technical Agent", "Senior SEO Engineer Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "redirect_migration",
+      "patterns": ["redirect migration", "bulk redirect", "301 migration", "change redirects"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["Senior SEO Engineer Agent", "SEO Technical Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "disavow_submission",
+      "patterns": ["submit disavow", "upload disavow", "disavow links"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": false,
+      "required_reviewers": ["Digital PR & Programmatic Link Outreach Agent", "Negative SEO & Security Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "programmatic_page_creation",
+      "patterns": ["large programmatic page creation", "generate thousands of pages", "publish programmatic pages"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO Copywriter/Content Agent", "SEO Compliance & Legal Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "regulated_or_legal_publication",
+      "patterns": ["legal claim", "medical claim", "financial claim", "regulated content", "compliance-sensitive publication"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO Compliance & Legal Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "revenue_funnel_change",
+      "patterns": ["checkout change", "lead form change", "pricing page change", "revenue funnel change"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": true,
+      "required_reviewers": ["SEO CRO Agent", "Senior SEO Engineer Agent", "SEO Scrummaster Agent"]
+    },
+    {
+      "id": "outreach_send",
+      "patterns": ["send outreach", "email prospects", "contact journalists", "send link request"],
+      "minimum_mode": "mode_3_approval_gated_execution",
+      "requires_approval": true,
+      "requires_rollback": false,
+      "required_reviewers": ["Digital PR & Programmatic Link Outreach Agent", "SEO Compliance & Legal Agent", "SEO Scrummaster Agent"]
+    }
+  ],
+  "action_queue_required_fields": [
+    "action_id",
+    "mode",
+    "proposed_action",
+    "affected_urls_or_files",
+    "evidence_refs",
+    "risk_class",
+    "approval_required",
+    "rollback_plan",
+    "owner",
+    "verification_method",
+    "follow_up"
+  ],
+  "hard_rules": [
+    "Default to audit-only mode in the public repository.",
+    "Never execute dangerous actions without explicit human approval.",
+    "Never claim live autonomy from fixture or static validation.",
+    "Every mutation-capable action needs evidence, owner, rollback, verification, and follow-up.",
+    "Mode 5 is reserved for private controlled installations and is not a public repository default."
+  ]
+}

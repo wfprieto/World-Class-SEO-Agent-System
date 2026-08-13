@@ -8,13 +8,15 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from contracts.adapter import AdapterNotConfigured, AdapterResult
+from integrations.extensions.indexnow_result import response_result
+from integrations.extensions.indexnow_retry import post_with_retries
 
 MAX_URLS = 10_000
-MAX_RESPONSE_BYTES = 65_536
 INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
 APPROVED_ENDPOINT_HOSTS = frozenset({"api.indexnow.org", "www.bing.com"})
 _KEY = re.compile(r"^[A-Za-z0-9-]{8,128}$")
@@ -116,6 +118,8 @@ class IndexNowService:
         endpoint: str = INDEXNOW_ENDPOINT,
         opener: Callable[..., Any] | None = None,
         timeout: float = 15.0,
+        retries: int = 0,
+        retry_backoff_seconds: float = 0.25,
     ) -> AdapterResult:
         submission = normalize(urls, key_location)
         target = _validate_endpoint(endpoint)
@@ -161,38 +165,22 @@ class IndexNowService:
             },
         )
         active = opener or urllib.request.build_opener(NoRedirect()).open
-        try:
-            response = active(request, timeout=timeout)
-            status_code = int(getattr(response, "status", response.getcode()))
-            raw = response.read(MAX_RESPONSE_BYTES + 1)
-            if len(raw) > MAX_RESPONSE_BYTES:
-                raise ValueError("IndexNow response exceeded the safe size limit")
-        except urllib.error.HTTPError as exc:
-            status_code = int(exc.code)
-            raw = exc.read(MAX_RESPONSE_BYTES + 1)
-        state = {
-            200: ("ok", "AVAILABLE"),
-            202: ("partial", "PARTIAL"),
-            400: ("invalid_response", "INVALID_RESPONSE"),
-            403: ("unauthorized", "UNAUTHORIZED"),
-            422: ("invalid_response", "INVALID_RESPONSE"),
-            429: ("rate_limited", "RATE_LIMITED"),
-        }.get(status_code, ("failed", "FAILED"))
-        return AdapterResult(
-            source="indexnow",
-            status=state[0],
-            data={
-                "state": state[1],
-                "http_status": status_code,
-                "host": submission.host,
-                "url_count": len(submission.urls),
-                "endpoint_host": urllib.parse.urlsplit(target).hostname,
-                "key_location": submission.key_location,
-                "response_excerpt": raw.decode("utf-8", errors="replace").replace(secret, "[REDACTED]")[:500],
-            },
-            warnings=[
-                "HTTP 200/202 confirms receipt or pending key validation only; it does not prove crawling or indexing."
-            ],
+        status_code, raw, attempts = post_with_retries(
+            active,
+            request,
+            timeout=timeout,
+            retries=retries,
+            retry_backoff_seconds=retry_backoff_seconds,
+        )
+        return response_result(
+            status_code=status_code,
+            raw=raw,
+            secret=secret,
+            host=submission.host,
+            url_count=len(submission.urls),
+            attempts=attempts,
+            endpoint=target,
+            key_location=submission.key_location,
         )
 
 

@@ -1,14 +1,15 @@
 """Primary-source-bound technical audit rules."""
 from __future__ import annotations
-import json,re,urllib.parse
-from collections import Counter,defaultdict
+
+import json
+import re
+import urllib.parse
+from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
 from integrations.product_proof.crawler import RobotsPolicy
-from integrations.product_proof.models import AgentContribution,Finding
-
+from integrations.product_proof.models import AgentContribution, Finding
+from integrations.product_proof.rule_groups import apply_technical_rule_groups
 SEV={"Critical":0,"High":1,"Medium":2,"Low":3,"Info":4}; PAGE={"page","paged","pagenum","page_num","pg"}; FACET={"color","size","brand","price","sort","order","filter","material","style","category","availability"}
-
 class ClaimPolicy:
  def __init__(self,path:str|Path):
   raw=json.loads(Path(path).read_text(encoding="utf-8-sig")); self.claims={r["id"]:r for r in raw["claims"]}; self.allowed=set(raw["recommendation_classes"]); self.order=["PRIMARY_SOURCE","CONTROLLED_EXPERIMENT","LARGE_SCALE_OBSERVATIONAL","PRACTITIONER_CONSENSUS","EXPERT_HYPOTHESIS","ANALYSIS","UNVERIFIED","DISPUTED","STALE","FALSE"]
@@ -101,10 +102,9 @@ class TechnicalAuditRules:
   if any(len(set(v))>1 for v in orders.values()):self.add("facet-order-inconsistent","Equivalent facet parameters appear in inconsistent orders","Medium","Faceted Navigation",["facets-parameter-separator"],"Equivalent parameter sets have multiple orders.","Duplicate URL forms can expand inventory.","Normalize order and duplicate filters.","Regenerate facet inventory.",[x["final_url"] for x in facets],"SEO E-commerce Agent")
   n=len(p);self.decisions.append({"decision":"crawl_budget_materiality","status":"NOT_DEMONSTRATED" if n<10000 else "REQUIRES_SCALE_REVIEW","observed_crawl_size":n,"claim_id":"crawl-budget-scale","interpretation":"This bounded crawl does not establish a material crawl-budget constraint." if n<10000 else "Separate large-site review is warranted."})
  def evaluate(self,c):
-  self.robots(c);self.statuses(c);self.canon(c);self.ai_cwv_facets(c);self.findings.sort(key=lambda x:(SEV[x.severity],x.category,x.id));g=defaultdict(list)
+  apply_technical_rule_groups(self,c);self.findings.sort(key=lambda x:(SEV[x.severity],x.category,x.id));g=defaultdict(list)
   for f in self.findings:g[f.category].append(f.id)
   return {"findings":[f.to_dict() for f in self.findings],"decisions":self.decisions,"root_cause_groups":[{"category":k,"finding_ids":v,"finding_count":len(v)} for k,v in sorted(g.items())]}
-
 def build_contributions(c,r):
  f=r["findings"];o=Counter(x["owner"] for x in f);e=len(c["pages"])+len(c["robots"])
  rows=[

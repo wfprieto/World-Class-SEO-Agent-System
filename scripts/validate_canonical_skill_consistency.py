@@ -9,7 +9,7 @@ PROHIBITED={"geo-grid-rank-scan":[r"haversine\s+offset",r"default\s+7x7"],"gbp-p
 def indexed_skills():
  p=json.loads(CATALOG.read_text(encoding="utf-8-sig"));return {str(s) for c in p.get("categories",[]) for s in c.get("skills",[])}
 def procedure_sections():
- sections={};heads=[]
+ sections:dict[str,str]={};heads=[]
  for path in PROCEDURE_FILES:
   if not path.exists():continue
   text=path.read_text(encoding="utf-8");ms=list(re.finditer(r"^## ([a-z0-9-]+)\s*$",text,re.M))

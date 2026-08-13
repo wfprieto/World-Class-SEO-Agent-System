@@ -666,19 +666,7 @@ jobs:
         run: |
           set -euo pipefail
           baseline=e8c37abb5e939d4433e42ea8a02af63549ca0010
-          candidate=$(git rev-parse HEAD)
-          mapfile -t commits < <(git rev-list "$baseline..$candidate")
-          test "${#commits[@]}" -gt 0
-          git config user.name "Phase 0 rollback verifier"
-          git config user.email "rollback-verifier@users.noreply.github.com"
-          git revert --no-commit "${commits[@]}"
-          baseline_tree=$(git rev-parse "$baseline^{tree}")
-          post_revert_tree=$(git write-tree)
-          test "$post_revert_tree" = "$baseline_tree"
-          printf '{"candidate_commit":"%s","baseline_commit":"%s","commit_count":%s,"baseline_tree":"%s","post_revert_tree":"%s","result":"TREE_MATCH"}\n' \
-            "$candidate" "$baseline" "${#commits[@]}" "$baseline_tree" "$post_revert_tree" > phase0-rollback-receipt.json
-          git reset --soft "$baseline"
-          test "$(git rev-parse HEAD)" = "$baseline"
+          "${{ steps.trusted_python.outputs.path }}" -I -E -S scripts/verify_phase0_rollback.py --baseline "$baseline" --receipt phase0-rollback-receipt.json
       - name: Prove exact restored baseline
         shell: /usr/bin/pwsh -command ". '{0}'"
         run: |-

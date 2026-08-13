@@ -15,6 +15,14 @@ EXCLUDED = {".git", ".pytest_cache", "__pycache__", ".seo-cache", "outputs", "bu
 
 def _tracked(root: Path) -> list[Path]:
     try:
+        git_root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=root,
+            timeout=20,
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8").strip()
+        if Path(git_root).resolve() != root.resolve():
+            raise subprocess.CalledProcessError(1, ["git", "rev-parse", "--show-toplevel"])
         raw = subprocess.check_output(
             ["git", "ls-files", "-z"],
             cwd=root,

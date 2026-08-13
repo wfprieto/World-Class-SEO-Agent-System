@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Offline bad SEO fixtures for deterministic audit regression tests. These are synthetic examples and are not live-site proof.",
+  "fixture_is_live_proof": false,
+  "categories": [
+    "head-tags",
+    "content",
+    "indexability",
+    "http-status",
+    "redirects",
+    "structure",
+    "performance",
+    "compound"
+  ],
+  "fixtures": [
+    {
+      "id": "head-tags-missing-title",
+      "category": "head-tags",
+      "url": "https://fixture.example/head-tags/missing-title",
+      "inputs": {
+        "status_code": 200,
+        "title": "",
+        "meta_description": "Same description reused across the whole template.",
+        "canonical": "https://fixture.example/head-tags/missing-title"
+      },
+      "expected_findings": [
+        {
+          "id": "head-title-missing",
+          "severity": "High",
+          "evidence_refs": ["inputs.title"],
+          "recommended_action_category": "template-metadata"
+        },
+        {
+          "id": "meta-description-duplicated",
+          "severity": "Medium",
+          "evidence_refs": ["inputs.meta_description"],
+          "recommended_action_category": "snippet-quality"
+        }
+      ]
+    },
+    {
+      "id": "content-thin-generic",
+      "category": "content",
+      "url": "https://fixture.example/content/thin-generic",
+      "inputs": {
+        "word_count": 126,
+        "unique_evidence": false,
+        "buyer_questions_answered": 1,
+        "public_copy_risk": "generic_summary_without_information_gain"
+      },
+      "expected_findings": [
+        {
+          "id": "content-information-gain-missing",
+          "severity": "High",
+          "evidence_refs": ["inputs.unique_evidence", "inputs.public_copy_risk"],
+          "recommended_action_category": "content-proof"
+        }
+      ]
+    },
+    {
+      "id": "indexability-noindex-canonical-conflict",
+      "category": "indexability",
+      "url": "https://fixture.example/indexability/conflict",
+      "inputs": {
+        "robots_meta": "noindex,follow",
+        "canonical": "https://fixture.example/indexability/canonical-target",
+        "included_in_sitemap": true
+      },
+      "expected_findings": [
+        {
+          "id": "indexability-conflicting-signals",
+          "severity": "Critical",
+          "evidence_refs": ["inputs.robots_meta", "inputs.canonical", "inputs.included_in_sitemap"],
+          "recommended_action_category": "indexing-policy"
+        }
+      ]
+    },
+    {
+      "id": "http-status-soft-404-indexable",
+      "category": "http-status",
+      "url": "https://fixture.example/status/soft-404",
+      "inputs": {
+        "status_code": 200,
+        "body_pattern": "not found",
+        "indexable": true,
+        "canonical": "self"
+      },
+      "expected_findings": [
+        {
+          "id": "soft-404-indexable",
+          "severity": "High",
+          "evidence_refs": ["inputs.status_code", "inputs.body_pattern", "inputs.indexable"],
+          "recommended_action_category": "http-status"
+        }
+      ]
+    },
+    {
+      "id": "redirect-chain-loop-risk",
+      "category": "redirects",
+      "url": "https://fixture.example/redirects/start",
+      "inputs": {
+        "chain": [
+          "https://fixture.example/redirects/start",
+          "https://fixture.example/redirects/mid",
+          "https://fixture.example/redirects/end",
+          "https://fixture.example/redirects/mid"
+        ],
+        "final_status": "loop_detected"
+      },
+      "expected_findings": [
+        {
+          "id": "redirect-loop-detected",
+          "severity": "Critical",
+          "evidence_refs": ["inputs.chain", "inputs.final_status"],
+          "recommended_action_category": "redirect-map"
+        }
+      ]
+    },
+    {
+      "id": "structure-orphan-deep-page",
+      "category": "structure",
+      "url": "https://fixture.example/structure/orphan",
+      "inputs": {
+        "inlinks": 0,
+        "click_depth": null,
+        "sitemap_only": true,
+        "business_value": "commercial"
+      },
+      "expected_findings": [
+        {
+          "id": "commercial-orphan-url",
+          "severity": "High",
+          "evidence_refs": ["inputs.inlinks", "inputs.sitemap_only", "inputs.business_value"],
+          "recommended_action_category": "internal-linking"
+        }
+      ]
+    },
+    {
+      "id": "performance-cwv-field-failure",
+      "category": "performance",
+      "url": "https://fixture.example/performance/cwv-fail",
+      "inputs": {
+        "field_data": {
+          "lcp_ms": 4100,
+          "inp_ms": 380,
+          "cls": 0.18
+        },
+        "template": "product-detail",
+        "device": "mobile"
+      },
+      "expected_findings": [
+        {
+          "id": "core-web-vitals-composite-fail",
+          "severity": "High",
+          "evidence_refs": ["inputs.field_data.lcp_ms", "inputs.field_data.inp_ms", "inputs.field_data.cls"],
+          "recommended_action_category": "performance-remediation"
+        }
+      ]
+    },
+    {
+      "id": "compound-kitchen-sink",
+      "category": "compound",
+      "url": "https://fixture.example/compound/kitchen-sink",
+      "inputs": {
+        "status_code": 200,
+        "title": "Home",
+        "canonical": "https://fixture.example/",
+        "robots_meta": "index,follow",
+        "word_count": 89,
+        "inlinks": 0,
+        "schema_errors": 4,
+        "field_data": {
+          "lcp_ms": 5200,
+          "inp_ms": 510,
+          "cls": 0.22
+        }
+      },
+      "expected_findings": [
+        {
+          "id": "canonical-points-to-root-from-unique-page",
+          "severity": "High",
+          "evidence_refs": ["inputs.canonical"],
+          "recommended_action_category": "canonicalization"
+        },
+        {
+          "id": "compound-low-quality-indexable-page",
+          "severity": "Critical",
+          "evidence_refs": ["inputs.word_count", "inputs.inlinks", "inputs.schema_errors", "inputs.field_data"],
+          "recommended_action_category": "compound-audit"
+        }
+      ]
+    }
+  ]
+}

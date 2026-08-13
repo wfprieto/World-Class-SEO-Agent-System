@@ -1,1 +1,1207 @@
-{"version":"2.0.0","packs":{"technical-search":{"path":"knowledge/reference-packs/technical-search.md","owner":"SEO Technical Agent","freshness_class":"quarterly","primary_sources":["https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics","https://developers.google.com/search/docs/crawling-indexing/robots/intro","https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview","https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls","https://developers.google.com/search/docs/crawling-indexing/301-redirects","https://developers.google.com/search/docs/specialty/international/localized-versions","https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data","https://developers.google.com/search/docs/appearance/core-web-vitals"],"verified_at":"2026-07-12","content_sha256":"1f652a9e89abb97da357e13851ed48047771f3b2370f239a92807f2f8dc15eee"},"content-and-ai-search":{"path":"knowledge/reference-packs/content-and-ai-search.md","owner":"SEO Copywriter/Content Agent","freshness_class":"quarterly","primary_sources":["https://developers.google.com/search/docs/fundamentals/creating-helpful-content","https://developers.google.com/search/docs/fundamentals/using-gen-ai-content","https://developers.google.com/search/docs/appearance/ai-features"],"verified_at":"2026-07-12","content_sha256":"ec2d6c3dfef11f6f35d33338fb882a767cba2da6838c53dab9321f502b68310a"},"local-ecommerce-programmatic":{"path":"knowledge/reference-packs/local-ecommerce-programmatic.md","owner":"SEO E-commerce Agent","freshness_class":"quarterly","primary_sources":["https://developers.google.com/search/docs/specialty/ecommerce","https://developers.google.com/search/docs/appearance/structured-data/local-business","https://developers.google.com/search/docs/essentials/spam-policies"],"verified_at":"2026-07-12","content_sha256":"aeb371a3c45133bf1eeff19646c04fea67b445dccbdd3107b4effae4a07b063c"},"authority-spam-privacy":{"path":"knowledge/reference-packs/authority-spam-privacy.md","owner":"SEO Compliance & Legal Agent","freshness_class":"quarterly","primary_sources":["https://developers.google.com/search/docs/essentials/spam-policies","https://developers.google.com/search/docs/fundamentals/creating-helpful-content"],"verified_at":"2026-07-12","content_sha256":"2a5c9c33432779b6634a2d29cccd5df745ae5adac320c43950e1d5a52ab02955"},"accessibility-media":{"path":"knowledge/reference-packs/accessibility-media.md","owner":"SEO Accessibility Agent","freshness_class":"annual","primary_sources":["https://www.w3.org/WAI/standards-guidelines/wcag/","https://developers.google.com/search/docs/appearance/google-images"],"verified_at":"2026-07-12","content_sha256":"951c0327e69f2a4b822db4d58408cc9794780e52aa6e1647e5b0f34eab6e0e87"},"experimentation-reporting-platforms":{"path":"knowledge/reference-packs/experimentation-reporting-platforms.md","owner":"SEO Research and Development Agent","freshness_class":"quarterly","primary_sources":["https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console","https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops","https://developers.google.com/search/docs/fundamentals/seo-starter-guide"],"verified_at":"2026-07-12","content_sha256":"caa9d886903aa9f55404cdc6ed47e93b3de2a99cf1a3ce50c1c8ce1e0a3156ab"}},"entries":[{"id":"crawling-indexing","title":"Crawling and indexing","pack":"technical-search","anchor":"crawling-indexing","affected_skills":["full-site-audit","technical-audit","single-page-audit"],"affected_agents":["SEO Full Audit/Analyst Agent","Senior SEO Strategist Agent"]},{"id":"javascript-rendering","title":"JavaScript rendering","pack":"technical-search","anchor":"javascript-rendering","affected_skills":["rendered-visual-audit","technical-audit"],"affected_agents":["SEO Diagnostic Infrastructure Agent","SEO Technical Agent"]},{"id":"robots-sitemaps","title":"Robots and sitemaps","pack":"technical-search","anchor":"robots-sitemaps","affected_skills":["technical-audit","full-site-audit"],"affected_agents":["SEO Technical Agent"]},{"id":"canonicals-redirects","title":"Canonicals and redirects","pack":"technical-search","anchor":"canonicals-redirects","affected_skills":["technical-audit","technical-implementation"],"affected_agents":["SEO Technical Agent"]},{"id":"hreflang-localization","title":"Hreflang and localization","pack":"technical-search","anchor":"hreflang-localization","affected_skills":["hreflang-audit"],"affected_agents":["International & Multilingual SEO Agent"]},{"id":"structured-data","title":"Structured data","pack":"technical-search","anchor":"structured-data","affected_skills":["schema-detect-validate-generate","product-page-seo-audit"],"affected_agents":["SEO Technical Agent","Senior SEO Engineer Agent"]},{"id":"core-web-vitals","title":"Core Web Vitals","pack":"technical-search","anchor":"core-web-vitals","affected_skills":["core-web-vitals-triage","single-page-audit"],"affected_agents":["SEO Technical Agent","SEO Diagnostic Infrastructure Agent"]},{"id":"content-quality","title":"Content quality","pack":"content-and-ai-search","anchor":"content-quality","affected_skills":["content-audit","content-brief"],"affected_agents":["SEO Copywriter/Content Agent","SEO Compliance & Legal Agent"]},{"id":"eeat-ymyl","title":"E-E-A-T and YMYL","pack":"content-and-ai-search","anchor":"eeat-ymyl","affected_skills":["content-audit","compliance-review"],"affected_agents":["SEO Copywriter/Content Agent","SEO Compliance & Legal Agent"]},{"id":"generative-ai-content","title":"Generative AI content","pack":"content-and-ai-search","anchor":"generative-ai-content","affected_skills":["content-audit","programmatic-seo-governance"],"affected_agents":["SEO Copywriter/Content Agent","SEO Compliance & Legal Agent"]},{"id":"ai-features","title":"AI features","pack":"content-and-ai-search","anchor":"ai-features","affected_skills":["geo-aio-citation-audit","content-brief"],"affected_agents":["GEO / AIO Optimization Agent","SEO Knowledge Graph Sync Agent"]},{"id":"entities-knowledge-graph","title":"Entities and knowledge graph","pack":"content-and-ai-search","anchor":"entities-knowledge-graph","affected_skills":["geo-aio-citation-audit","content-audit"],"affected_agents":["GEO / AIO Optimization Agent","SEO Knowledge Graph Sync Agent"]},{"id":"local-seo","title":"Local SEO","pack":"local-ecommerce-programmatic","anchor":"local-seo","affected_skills":["local-seo-audit"],"affected_agents":["Local SEO Agent"]},{"id":"ecommerce-merchant","title":"Ecommerce and merchant data","pack":"local-ecommerce-programmatic","anchor":"ecommerce-merchant","affected_skills":["product-page-seo-audit"],"affected_agents":["SEO E-commerce Agent","SEO Technical Agent"]},{"id":"programmatic-seo","title":"Programmatic SEO","pack":"local-ecommerce-programmatic","anchor":"programmatic-seo","affected_skills":["programmatic-seo-governance"],"affected_agents":["Senior SEO Strategist Agent","SEO Compliance & Legal Agent"]},{"id":"faceted-navigation","title":"Faceted navigation","pack":"local-ecommerce-programmatic","anchor":"faceted-navigation","affected_skills":["product-page-seo-audit"],"affected_agents":["SEO E-commerce Agent","SEO Technical Agent"]},{"id":"backlinks-spam","title":"Backlinks and spam","pack":"authority-spam-privacy","anchor":"backlinks-spam","affected_skills":["backlink-profile"],"affected_agents":["Digital PR & Programmatic Link Outreach Agent"]},{"id":"site-reputation-abuse","title":"Site reputation abuse","pack":"authority-spam-privacy","anchor":"site-reputation-abuse","affected_skills":["programmatic-seo-governance","compliance-review"],"affected_agents":["Senior SEO Strategist Agent","SEO Compliance & Legal Agent"]},{"id":"privacy-consent","title":"Privacy and consent","pack":"authority-spam-privacy","anchor":"privacy-consent","affected_skills":["consent-mode-diagnostic","compliance-review"],"affected_agents":["SEO Compliance & Legal Agent"]},{"id":"claims-compliance","title":"Claims and compliance","pack":"authority-spam-privacy","anchor":"claims-compliance","affected_skills":["compliance-review","content-audit"],"affected_agents":["SEO Compliance & Legal Agent"]},{"id":"accessibility","title":"Accessibility","pack":"accessibility-media","anchor":"accessibility","affected_skills":["single-page-audit","rendered-visual-audit"],"affected_agents":["SEO Technical Agent","SEO Full Audit/Analyst Agent"]},{"id":"image-seo","title":"Image SEO","pack":"accessibility-media","anchor":"image-seo","affected_skills":["product-page-seo-audit"],"affected_agents":["SEO E-commerce Agent","SEO Technical Agent"]},{"id":"video-transcripts","title":"Video and transcripts","pack":"accessibility-media","anchor":"video-transcripts","affected_skills":["content-audit"],"affected_agents":["SEO Copywriter/Content Agent","SEO Compliance & Legal Agent"]},{"id":"ai-media-provenance","title":"AI media provenance","pack":"accessibility-media","anchor":"ai-media-provenance","affected_skills":["compliance-review"],"affected_agents":["SEO Compliance & Legal Agent"]},{"id":"experimentation","title":"Search experimentation","pack":"experimentation-reporting-platforms","anchor":"experimentation","affected_skills":["full-site-audit"],"affected_agents":["SEO Full Audit/Analyst Agent","Senior SEO Strategist Agent"]},{"id":"reporting-forecasting","title":"Reporting and forecasting","pack":"experimentation-reporting-platforms","anchor":"reporting-forecasting","affected_skills":["full-site-audit","content-decay"],"affected_agents":["SEO Full Audit/Analyst Agent","Senior SEO Strategist Agent"]},{"id":"api-limitations","title":"API limitations","pack":"experimentation-reporting-platforms","anchor":"api-limitations","affected_skills":["full-site-audit","technical-audit"],"affected_agents":["SEO Full Audit/Analyst Agent","Senior SEO Strategist Agent"]},{"id":"cms-frameworks","title":"CMS and framework patterns","pack":"experimentation-reporting-platforms","anchor":"cms-frameworks","affected_skills":["technical-audit","technical-implementation"],"affected_agents":["SEO Technical Agent"]},{"id":"drift-observability","title":"Drift and observability","pack":"experimentation-reporting-platforms","anchor":"drift-observability","affected_skills":["seo-drift-monitor"],"affected_agents":["SEO Full Audit/Analyst Agent","SEO Diagnostic Infrastructure Agent"]}],"validation":["scripts/validate_reference_freshness.py","tests/test_phase4_skill_reference_prompt_pack.py"],"registry_updated_at":"2026-07-12"}
+{
+  "version": "2.0.0",
+  "packs": {
+    "technical-search": {
+      "path": "knowledge/reference-packs/technical-search.md",
+      "owner": "SEO Technical Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+        "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+        "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
+        "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "https://developers.google.com/search/docs/crawling-indexing/301-redirects",
+        "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "https://developers.google.com/search/docs/appearance/core-web-vitals"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "1f652a9e89abb97da357e13851ed48047771f3b2370f239a92807f2f8dc15eee"
+    },
+    "content-and-ai-search": {
+      "path": "knowledge/reference-packs/content-and-ai-search.md",
+      "owner": "SEO Copywriter/Content Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
+        "https://developers.google.com/search/docs/appearance/ai-features"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "ec2d6c3dfef11f6f35d33338fb882a767cba2da6838c53dab9321f502b68310a"
+    },
+    "local-ecommerce-programmatic": {
+      "path": "knowledge/reference-packs/local-ecommerce-programmatic.md",
+      "owner": "SEO E-commerce Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/specialty/ecommerce",
+        "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+        "https://developers.google.com/search/docs/essentials/spam-policies"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "aeb371a3c45133bf1eeff19646c04fea67b445dccbdd3107b4effae4a07b063c"
+    },
+    "authority-spam-privacy": {
+      "path": "knowledge/reference-packs/authority-spam-privacy.md",
+      "owner": "SEO Compliance & Legal Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/essentials/spam-policies",
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "2a5c9c33432779b6634a2d29cccd5df745ae5adac320c43950e1d5a52ab02955"
+    },
+    "accessibility-media": {
+      "path": "knowledge/reference-packs/accessibility-media.md",
+      "owner": "SEO Accessibility Agent",
+      "freshness_class": "annual",
+      "primary_sources": [
+        "https://www.w3.org/WAI/standards-guidelines/wcag/",
+        "https://developers.google.com/search/docs/appearance/google-images"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "951c0327e69f2a4b822db4d58408cc9794780e52aa6e1647e5b0f34eab6e0e87"
+    },
+    "experimentation-reporting-platforms": {
+      "path": "knowledge/reference-packs/experimentation-reporting-platforms.md",
+      "owner": "SEO Research and Development Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console",
+        "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops",
+        "https://developers.google.com/search/docs/fundamentals/seo-starter-guide"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "caa9d886903aa9f55404cdc6ed47e93b3de2a99cf1a3ce50c1c8ce1e0a3156ab"
+    },
+    "technical-search-expanded": {
+      "path": "knowledge/reference-packs/technical-search-expanded.md",
+      "owner": "SEO Technical Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+        "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+        "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
+        "https://developers.google.com/search/docs/appearance/core-web-vitals"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "93056d953dd558cefe4f11ba17a2b24f7580875f57a51483a6c37925666d2f02"
+    },
+    "content-quality-expanded": {
+      "path": "knowledge/reference-packs/content-quality-expanded.md",
+      "owner": "SEO Copywriter/Content Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
+        "https://developers.google.com/search/docs/essentials/spam-policies"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "22f9373ec86105281f9aa8c79c46d3c1929ba907a60e72bcecbccd9759afc8ce"
+    },
+    "local-maps-expanded": {
+      "path": "knowledge/reference-packs/local-maps-expanded.md",
+      "owner": "Local SEO Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://support.google.com/business/answer/3038177",
+        "https://developers.google.com/search/docs/appearance/structured-data/local-business"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "eca2fcf4ad2084bce4b6c74ccbb0189509481455c94aa085279bcdcdba1af838"
+    },
+    "ai-search-geo-expanded": {
+      "path": "knowledge/reference-packs/ai-search-geo-expanded.md",
+      "owner": "GEO / AIO Optimization Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/appearance/ai-features",
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "b87cb4da61ea974565a7f2c25896490c67fd686aa1e2dfbe4e9ee29cb739e723"
+    },
+    "international-hreflang-expanded": {
+      "path": "knowledge/reference-packs/international-hreflang-expanded.md",
+      "owner": "International & Multilingual SEO Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "c226cd41974b548f58ae3eaf16d440f0f885122abd4f79a59d4a0d0960c6653d"
+    },
+    "sxo-cro-expanded": {
+      "path": "knowledge/reference-packs/sxo-cro-expanded.md",
+      "owner": "SEO CRO Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console",
+        "https://www.w3.org/WAI/standards-guidelines/wcag/"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "4920adde6d46a1e4f493ae23ba21669a9a68bde34ee886da5b95060e5144ff1e"
+    },
+    "backlink-authority-expanded": {
+      "path": "knowledge/reference-packs/backlink-authority-expanded.md",
+      "owner": "Digital PR & Programmatic Link Outreach Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/essentials/spam-policies",
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "cda06bee61132a6418309a98fdcc0b33470bacdde19c9986004716f207cdfdc7"
+    },
+    "ecommerce-programmatic-expanded": {
+      "path": "knowledge/reference-packs/ecommerce-programmatic-expanded.md",
+      "owner": "SEO E-commerce Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/specialty/ecommerce",
+        "https://developers.google.com/search/docs/appearance/structured-data/product",
+        "https://developers.google.com/search/docs/essentials/spam-policies"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "f42c3b4cbc84864f9d4f65b72f6d9eb01ad539c9e93b97fb425679adea77c0e0"
+    },
+    "google-apis-expanded": {
+      "path": "knowledge/reference-packs/google-apis-expanded.md",
+      "owner": "SEO Diagnostic Infrastructure Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "https://developers.google.com/analytics/devguides/reporting/data/v1",
+        "https://developers.google.com/speed/docs/insights/v5/get-started"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "20e5ae4ecad6026ed27258d5fa74390988985a48a6d9d5485750dfcc9e455f8f"
+    },
+    "schema-rich-results-expanded": {
+      "path": "knowledge/reference-packs/schema-rich-results-expanded.md",
+      "owner": "Senior SEO Engineer Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
+        "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "4ee96c9fec5ccf90bd144df4ad72e946b9d3e8995fa156117ce47e07c44dd2d5"
+    },
+    "head-metadata-expanded": {
+      "path": "knowledge/reference-packs/head-metadata-expanded.md",
+      "owner": "SEO Technical Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/appearance/title-link",
+        "https://developers.google.com/search/docs/appearance/snippet",
+        "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag",
+        "https://ogp.me/"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "cec54a5fe8e9c379aac01317a5cb2e7b18e06d6ce8a7d2d42b1722baa747afb4"
+    },
+    "geo-aeo-sro-expanded": {
+      "path": "knowledge/reference-packs/geo-aeo-sro-expanded.md",
+      "owner": "GEO / AIO Optimization Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/appearance/ai-features",
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "https://help.openai.com/en/articles/12627856-publishers-and-developers-faq",
+        "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "1e60d796d441653d3f58e470c9f78156b1f24813147825a007ef1920c0e65fb1"
+    },
+    "legacy-checklist-triage": {
+      "path": "knowledge/reference-packs/legacy-checklist-triage.md",
+      "owner": "SEO Research and Development Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "https://developers.google.com/search/docs/essentials/spam-policies",
+        "https://www.w3.org/WAI/standards-guidelines/wcag/"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "0e4ba0f8a9af2dba7311fe2e49da6f3a07681027e887a74a322a3745386a7b7e"
+    },
+    "crawl-budget-logfile-expanded": {
+      "path": "knowledge/reference-packs/crawl-budget-logfile-expanded.md",
+      "owner": "SEO Diagnostic Infrastructure Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget",
+        "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+        "https://developers.google.com/search/docs/monitor-debug/search-console-start",
+        "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "230e015db701ee1bb84b7f89b51b9183ac0550794fe65efae6c3b9d2acf4d51d"
+    },
+    "framework-seo-implementation-expanded": {
+      "path": "knowledge/reference-packs/framework-seo-implementation-expanded.md",
+      "owner": "Senior SEO Engineer Agent",
+      "freshness_class": "quarterly",
+      "primary_sources": [
+        "https://nextjs.org/docs/app/api-reference/functions/generate-metadata",
+        "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
+        "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+        "https://developers.google.com/search/apis/indexing-api/v3/quickstart"
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "ab37ca98112bbfa666c0d3562caa5e9cb383022a4a123a644ebb453b0638d107"
+    }
+  },
+  "entries": [
+    {
+      "id": "crawling-indexing",
+      "title": "Crawling and indexing",
+      "pack": "technical-search",
+      "anchor": "crawling-indexing",
+      "affected_skills": [
+        "full-site-audit",
+        "technical-audit",
+        "single-page-audit"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "javascript-rendering",
+      "title": "JavaScript rendering",
+      "pack": "technical-search",
+      "anchor": "javascript-rendering",
+      "affected_skills": [
+        "rendered-visual-audit",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "robots-sitemaps",
+      "title": "Robots and sitemaps",
+      "pack": "technical-search",
+      "anchor": "robots-sitemaps",
+      "affected_skills": [
+        "technical-audit",
+        "full-site-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "canonicals-redirects",
+      "title": "Canonicals and redirects",
+      "pack": "technical-search",
+      "anchor": "canonicals-redirects",
+      "affected_skills": [
+        "technical-audit",
+        "technical-implementation"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "hreflang-localization",
+      "title": "Hreflang and localization",
+      "pack": "technical-search",
+      "anchor": "hreflang-localization",
+      "affected_skills": [
+        "hreflang-audit"
+      ],
+      "affected_agents": [
+        "International & Multilingual SEO Agent"
+      ]
+    },
+    {
+      "id": "structured-data",
+      "title": "Structured data",
+      "pack": "technical-search",
+      "anchor": "structured-data",
+      "affected_skills": [
+        "schema-detect-validate-generate",
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "Senior SEO Engineer Agent"
+      ]
+    },
+    {
+      "id": "core-web-vitals",
+      "title": "Core Web Vitals",
+      "pack": "technical-search",
+      "anchor": "core-web-vitals",
+      "affected_skills": [
+        "core-web-vitals-triage",
+        "single-page-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO Diagnostic Infrastructure Agent"
+      ]
+    },
+    {
+      "id": "content-quality",
+      "title": "Content quality",
+      "pack": "content-and-ai-search",
+      "anchor": "content-quality",
+      "affected_skills": [
+        "content-audit",
+        "content-brief"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "eeat-ymyl",
+      "title": "E-E-A-T and YMYL",
+      "pack": "content-and-ai-search",
+      "anchor": "eeat-ymyl",
+      "affected_skills": [
+        "content-audit",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "generative-ai-content",
+      "title": "Generative AI content",
+      "pack": "content-and-ai-search",
+      "anchor": "generative-ai-content",
+      "affected_skills": [
+        "content-audit",
+        "programmatic-seo-governance"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "ai-features",
+      "title": "AI features",
+      "pack": "content-and-ai-search",
+      "anchor": "ai-features",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "content-brief"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "SEO Knowledge Graph Sync Agent"
+      ]
+    },
+    {
+      "id": "entities-knowledge-graph",
+      "title": "Entities and knowledge graph",
+      "pack": "content-and-ai-search",
+      "anchor": "entities-knowledge-graph",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "SEO Knowledge Graph Sync Agent"
+      ]
+    },
+    {
+      "id": "local-seo",
+      "title": "Local SEO",
+      "pack": "local-ecommerce-programmatic",
+      "anchor": "local-seo",
+      "affected_skills": [
+        "local-seo-audit"
+      ],
+      "affected_agents": [
+        "Local SEO Agent"
+      ]
+    },
+    {
+      "id": "ecommerce-merchant",
+      "title": "Ecommerce and merchant data",
+      "pack": "local-ecommerce-programmatic",
+      "anchor": "ecommerce-merchant",
+      "affected_skills": [
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "SEO E-commerce Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "programmatic-seo",
+      "title": "Programmatic SEO",
+      "pack": "local-ecommerce-programmatic",
+      "anchor": "programmatic-seo",
+      "affected_skills": [
+        "programmatic-seo-governance"
+      ],
+      "affected_agents": [
+        "Senior SEO Strategist Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "faceted-navigation",
+      "title": "Faceted navigation",
+      "pack": "local-ecommerce-programmatic",
+      "anchor": "faceted-navigation",
+      "affected_skills": [
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "SEO E-commerce Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "backlinks-spam",
+      "title": "Backlinks and spam",
+      "pack": "authority-spam-privacy",
+      "anchor": "backlinks-spam",
+      "affected_skills": [
+        "backlink-profile"
+      ],
+      "affected_agents": [
+        "Digital PR & Programmatic Link Outreach Agent"
+      ]
+    },
+    {
+      "id": "site-reputation-abuse",
+      "title": "Site reputation abuse",
+      "pack": "authority-spam-privacy",
+      "anchor": "site-reputation-abuse",
+      "affected_skills": [
+        "programmatic-seo-governance",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "Senior SEO Strategist Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "privacy-consent",
+      "title": "Privacy and consent",
+      "pack": "authority-spam-privacy",
+      "anchor": "privacy-consent",
+      "affected_skills": [
+        "consent-mode-diagnostic",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "claims-compliance",
+      "title": "Claims and compliance",
+      "pack": "authority-spam-privacy",
+      "anchor": "claims-compliance",
+      "affected_skills": [
+        "compliance-review",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "accessibility",
+      "title": "Accessibility",
+      "pack": "accessibility-media",
+      "anchor": "accessibility",
+      "affected_skills": [
+        "single-page-audit",
+        "rendered-visual-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "image-seo",
+      "title": "Image SEO",
+      "pack": "accessibility-media",
+      "anchor": "image-seo",
+      "affected_skills": [
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "SEO E-commerce Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "video-transcripts",
+      "title": "Video and transcripts",
+      "pack": "accessibility-media",
+      "anchor": "video-transcripts",
+      "affected_skills": [
+        "content-audit"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "ai-media-provenance",
+      "title": "AI media provenance",
+      "pack": "accessibility-media",
+      "anchor": "ai-media-provenance",
+      "affected_skills": [
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "experimentation",
+      "title": "Search experimentation",
+      "pack": "experimentation-reporting-platforms",
+      "anchor": "experimentation",
+      "affected_skills": [
+        "full-site-audit"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "reporting-forecasting",
+      "title": "Reporting and forecasting",
+      "pack": "experimentation-reporting-platforms",
+      "anchor": "reporting-forecasting",
+      "affected_skills": [
+        "full-site-audit",
+        "content-decay"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "api-limitations",
+      "title": "API limitations",
+      "pack": "experimentation-reporting-platforms",
+      "anchor": "api-limitations",
+      "affected_skills": [
+        "full-site-audit",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "cms-frameworks",
+      "title": "CMS and framework patterns",
+      "pack": "experimentation-reporting-platforms",
+      "anchor": "cms-frameworks",
+      "affected_skills": [
+        "technical-audit",
+        "technical-implementation"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "drift-observability",
+      "title": "Drift and observability",
+      "pack": "experimentation-reporting-platforms",
+      "anchor": "drift-observability",
+      "affected_skills": [
+        "seo-drift-monitor"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "SEO Diagnostic Infrastructure Agent"
+      ]
+    },
+    {
+      "id": "technical-triage-sequence",
+      "title": "Technical triage sequence",
+      "pack": "technical-search-expanded",
+      "anchor": "technical-triage-sequence",
+      "affected_skills": [
+        "technical-audit",
+        "full-site-audit",
+        "single-page-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "technical-fix-priority",
+      "title": "Technical fix priority",
+      "pack": "technical-search-expanded",
+      "anchor": "technical-fix-priority",
+      "affected_skills": [
+        "technical-audit",
+        "technical-implementation"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "Senior SEO Engineer Agent"
+      ]
+    },
+    {
+      "id": "information-gain",
+      "title": "Information gain",
+      "pack": "content-quality-expanded",
+      "anchor": "information-gain",
+      "affected_skills": [
+        "content-audit",
+        "content-brief"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent"
+      ]
+    },
+    {
+      "id": "public-copy-quality",
+      "title": "Public copy quality",
+      "pack": "content-quality-expanded",
+      "anchor": "public-copy-quality",
+      "affected_skills": [
+        "content-audit",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "local-eligibility",
+      "title": "Local eligibility",
+      "pack": "local-maps-expanded",
+      "anchor": "local-eligibility",
+      "affected_skills": [
+        "local-seo-audit"
+      ],
+      "affected_agents": [
+        "Local SEO Agent"
+      ]
+    },
+    {
+      "id": "local-page-proof",
+      "title": "Local page proof",
+      "pack": "local-maps-expanded",
+      "anchor": "local-page-proof",
+      "affected_skills": [
+        "local-seo-audit",
+        "content-brief"
+      ],
+      "affected_agents": [
+        "Local SEO Agent",
+        "SEO Copywriter/Content Agent"
+      ]
+    },
+    {
+      "id": "ai-citation-readiness",
+      "title": "AI citation readiness",
+      "pack": "ai-search-geo-expanded",
+      "anchor": "ai-citation-readiness",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent"
+      ]
+    },
+    {
+      "id": "entity-answer-structure",
+      "title": "Entity answer structure",
+      "pack": "ai-search-geo-expanded",
+      "anchor": "entity-answer-structure",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "content-brief"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "SEO Knowledge Graph Sync Agent"
+      ]
+    },
+    {
+      "id": "hreflang-cluster-integrity",
+      "title": "Hreflang cluster integrity",
+      "pack": "international-hreflang-expanded",
+      "anchor": "hreflang-cluster-integrity",
+      "affected_skills": [
+        "hreflang-audit"
+      ],
+      "affected_agents": [
+        "International & Multilingual SEO Agent"
+      ]
+    },
+    {
+      "id": "localization-quality",
+      "title": "Localization quality",
+      "pack": "international-hreflang-expanded",
+      "anchor": "localization-quality",
+      "affected_skills": [
+        "hreflang-audit",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "International & Multilingual SEO Agent",
+        "SEO Copywriter/Content Agent"
+      ]
+    },
+    {
+      "id": "intent-to-action-match",
+      "title": "Intent to action match",
+      "pack": "sxo-cro-expanded",
+      "anchor": "intent-to-action-match",
+      "affected_skills": [
+        "content-brief",
+        "single-page-audit"
+      ],
+      "affected_agents": [
+        "SEO CRO Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "seo-cro-measurement",
+      "title": "SEO CRO measurement",
+      "pack": "sxo-cro-expanded",
+      "anchor": "seo-cro-measurement",
+      "affected_skills": [
+        "full-site-audit",
+        "content-decay"
+      ],
+      "affected_agents": [
+        "SEO CRO Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "earned-authority",
+      "title": "Earned authority",
+      "pack": "backlink-authority-expanded",
+      "anchor": "earned-authority",
+      "affected_skills": [
+        "backlink-profile"
+      ],
+      "affected_agents": [
+        "Digital PR & Programmatic Link Outreach Agent"
+      ]
+    },
+    {
+      "id": "defensive-link-review",
+      "title": "Defensive link review",
+      "pack": "backlink-authority-expanded",
+      "anchor": "defensive-link-review",
+      "affected_skills": [
+        "backlink-profile",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "Digital PR & Programmatic Link Outreach Agent",
+        "Negative SEO & Security Agent"
+      ]
+    },
+    {
+      "id": "template-uniqueness",
+      "title": "Template uniqueness",
+      "pack": "ecommerce-programmatic-expanded",
+      "anchor": "template-uniqueness",
+      "affected_skills": [
+        "programmatic-seo-governance",
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "SEO E-commerce Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "merchant-data-consistency",
+      "title": "Merchant data consistency",
+      "pack": "ecommerce-programmatic-expanded",
+      "anchor": "merchant-data-consistency",
+      "affected_skills": [
+        "product-page-seo-audit",
+        "schema-detect-validate-generate"
+      ],
+      "affected_agents": [
+        "SEO E-commerce Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "api-scope-and-sampling",
+      "title": "API scope and sampling",
+      "pack": "google-apis-expanded",
+      "anchor": "api-scope-and-sampling",
+      "affected_skills": [
+        "full-site-audit",
+        "seo-drift-monitor"
+      ],
+      "affected_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "diagnostic-join-rules",
+      "title": "Diagnostic join rules",
+      "pack": "google-apis-expanded",
+      "anchor": "diagnostic-join-rules",
+      "affected_skills": [
+        "full-site-audit",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "schema-eligibility",
+      "title": "Schema eligibility",
+      "pack": "schema-rich-results-expanded",
+      "anchor": "schema-eligibility",
+      "affected_skills": [
+        "schema-detect-validate-generate",
+        "product-page-seo-audit"
+      ],
+      "affected_agents": [
+        "Senior SEO Engineer Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "rich-result-validation",
+      "title": "Rich result validation",
+      "pack": "schema-rich-results-expanded",
+      "anchor": "rich-result-validation",
+      "affected_skills": [
+        "schema-detect-validate-generate"
+      ],
+      "affected_agents": [
+        "Senior SEO Engineer Agent"
+      ]
+    },
+    {
+      "id": "minimum-head-evidence",
+      "title": "Minimum head evidence",
+      "pack": "head-metadata-expanded",
+      "anchor": "minimum-head-evidence",
+      "affected_skills": [
+        "technical-audit",
+        "product-proof-technical-audit",
+        "single-page-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "snippet-and-title-quality",
+      "title": "Snippet and title quality",
+      "pack": "head-metadata-expanded",
+      "anchor": "snippet-and-title-quality",
+      "affected_skills": [
+        "content-audit",
+        "metadata-generation",
+        "product-proof-technical-audit"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "head-social-preview",
+      "title": "Social preview metadata",
+      "pack": "head-metadata-expanded",
+      "anchor": "head-social-preview",
+      "affected_skills": [
+        "metadata-generation",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "SEO Copywriter/Content Agent"
+      ]
+    },
+    {
+      "id": "head-deprecated-noise",
+      "title": "Deprecated head noise",
+      "pack": "head-metadata-expanded",
+      "anchor": "head-deprecated-noise",
+      "affected_skills": [
+        "technical-audit",
+        "technical-implementation"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "Senior SEO Engineer Agent"
+      ]
+    },
+    {
+      "id": "sro-evidence-pipeline",
+      "title": "SRO evidence pipeline",
+      "pack": "geo-aeo-sro-expanded",
+      "anchor": "sro-evidence-pipeline",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "ai-citation-opportunity-map",
+        "content-audit"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "SEO Knowledge Graph Sync Agent"
+      ]
+    },
+    {
+      "id": "aeo-readiness-checks",
+      "title": "AEO readiness checks",
+      "pack": "geo-aeo-sro-expanded",
+      "anchor": "aeo-readiness-checks",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "content-audit",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "ai-visibility-observation-contract",
+      "title": "AI visibility observation contract",
+      "pack": "geo-aeo-sro-expanded",
+      "anchor": "ai-visibility-observation-contract",
+      "affected_skills": [
+        "geo-aio-citation-audit",
+        "ai-citation-opportunity-map"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "AI Principal SEO Scientist"
+      ]
+    },
+    {
+      "id": "citation-opportunity-ethics",
+      "title": "Citation opportunity ethics",
+      "pack": "geo-aeo-sro-expanded",
+      "anchor": "citation-opportunity-ethics",
+      "affected_skills": [
+        "ai-citation-opportunity-map",
+        "backlink-profile",
+        "compliance-review"
+      ],
+      "affected_agents": [
+        "GEO / AIO Optimization Agent",
+        "Digital PR & Programmatic Link Outreach Agent",
+        "SEO Compliance & Legal Agent"
+      ]
+    },
+    {
+      "id": "checklist-status-taxonomy",
+      "title": "Checklist status taxonomy",
+      "pack": "legacy-checklist-triage",
+      "anchor": "checklist-status-taxonomy",
+      "affected_skills": [
+        "official-source-monitor",
+        "knowledge-sync",
+        "definition-of-done"
+      ],
+      "affected_agents": [
+        "SEO Research and Development Agent",
+        "AI Principal SEO Scientist"
+      ]
+    },
+    {
+      "id": "checklist-rule-promotion-gate",
+      "title": "Checklist rule promotion gate",
+      "pack": "legacy-checklist-triage",
+      "anchor": "checklist-rule-promotion-gate",
+      "affected_skills": [
+        "product-proof-technical-audit",
+        "technical-audit",
+        "definition-of-done"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO Scrummaster Agent"
+      ]
+    },
+    {
+      "id": "checklist-advisory-use",
+      "title": "Checklist advisory use",
+      "pack": "legacy-checklist-triage",
+      "anchor": "checklist-advisory-use",
+      "affected_skills": [
+        "content-audit",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent"
+      ]
+    },
+    {
+      "id": "crawl-budget-materiality",
+      "title": "Crawl budget materiality",
+      "pack": "crawl-budget-logfile-expanded",
+      "anchor": "crawl-budget-materiality",
+      "affected_skills": [
+        "technical-audit",
+        "full-site-audit",
+        "seo-drift-monitor"
+      ],
+      "affected_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "logfile-bot-analysis",
+      "title": "Logfile bot analysis",
+      "pack": "crawl-budget-logfile-expanded",
+      "anchor": "logfile-bot-analysis",
+      "affected_skills": [
+        "technical-audit",
+        "seo-drift-monitor"
+      ],
+      "affected_agents": [
+        "SEO Diagnostic Infrastructure Agent",
+        "Negative SEO & Security Agent"
+      ]
+    },
+    {
+      "id": "crawl-waste-patterns",
+      "title": "Crawl waste patterns",
+      "pack": "crawl-budget-logfile-expanded",
+      "anchor": "crawl-waste-patterns",
+      "affected_skills": [
+        "technical-audit",
+        "faceted-navigation-governance"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "SEO E-commerce Agent"
+      ]
+    },
+    {
+      "id": "crawl-priority-map",
+      "title": "Crawl priority map",
+      "pack": "crawl-budget-logfile-expanded",
+      "anchor": "crawl-priority-map",
+      "affected_skills": [
+        "full-site-audit",
+        "prioritization-matrix"
+      ],
+      "affected_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "Senior SEO Strategist Agent"
+      ]
+    },
+    {
+      "id": "framework-metadata-boundary",
+      "title": "Framework metadata boundary",
+      "pack": "framework-seo-implementation-expanded",
+      "anchor": "framework-metadata-boundary",
+      "affected_skills": [
+        "technical-implementation",
+        "metadata-generation",
+        "technical-audit"
+      ],
+      "affected_agents": [
+        "Senior SEO Engineer Agent",
+        "SEO Technical Agent"
+      ]
+    },
+    {
+      "id": "structured-data-component-gate",
+      "title": "Structured data component gate",
+      "pack": "framework-seo-implementation-expanded",
+      "anchor": "structured-data-component-gate",
+      "affected_skills": [
+        "schema-detect-validate-generate",
+        "technical-implementation",
+        "product-schema-validate-generate"
+      ],
+      "affected_agents": [
+        "Senior SEO Engineer Agent",
+        "SEO E-commerce Agent"
+      ]
+    },
+    {
+      "id": "sitemap-generation-patterns",
+      "title": "Sitemap generation patterns",
+      "pack": "framework-seo-implementation-expanded",
+      "anchor": "sitemap-generation-patterns",
+      "affected_skills": [
+        "sitemap-audit",
+        "technical-implementation",
+        "hreflang-audit"
+      ],
+      "affected_agents": [
+        "SEO Technical Agent",
+        "International & Multilingual SEO Agent"
+      ]
+    },
+    {
+      "id": "adapter-hardening-patterns",
+      "title": "Adapter hardening patterns",
+      "pack": "framework-seo-implementation-expanded",
+      "anchor": "adapter-hardening-patterns",
+      "affected_skills": [
+        "redirect-validation",
+        "technical-audit",
+        "seo-ci-checks"
+      ],
+      "affected_agents": [
+        "Senior SEO Engineer Agent",
+        "Visual & Video Search Agent",
+        "SEO Technical Agent"
+      ]
+    }
+  ],
+  "validation": [
+    "scripts/validate_reference_freshness.py",
+    "tests/test_phase4_skill_reference_prompt_pack.py"
+  ]
+}

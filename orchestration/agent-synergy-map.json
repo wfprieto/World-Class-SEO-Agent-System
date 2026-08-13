@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Canonical map for how agents, workflows, evidence, proof units, reporting, challenge, and learning operate together.",
+  "global_loop": [
+    "intake",
+    "route",
+    "evidence_collect",
+    "specialist_execute",
+    "cross_agent_handoff",
+    "scrummaster_challenge",
+    "strategy_prioritize",
+    "plain_language_report",
+    "verification_plan",
+    "learning_record"
+  ],
+  "required_governance_agents": [
+    "SEO Scrummaster Agent",
+    "Senior SEO Strategist Agent",
+    "SEO Output Report Agent",
+    "AI Principal SEO Scientist"
+  ],
+  "handoff_rules": [
+    {
+      "id": "missing-evidence",
+      "when": "Required evidence is absent, stale, contradictory, or outside the agent's authority.",
+      "handoff_to": "SEO Scrummaster Agent",
+      "required_payload": "schemas/handoff-payload.schema.json"
+    },
+    {
+      "id": "implementation-needed",
+      "when": "A recommendation requires code, templates, redirects, schema, deployment, test changes, or rollback planning.",
+      "handoff_to": "Senior SEO Engineer Agent",
+      "required_payload": "schemas/handoff-payload.schema.json"
+    },
+    {
+      "id": "public-copy-needed",
+      "when": "Any user-visible website or app text is created or changed.",
+      "handoff_to": "SEO Copywriter/Content Agent",
+      "required_skill": "anti-ai-public-writing"
+    },
+    {
+      "id": "plain-language-needed",
+      "when": "Findings, completed work, recommendations, or risks must be explained to a non-technical stakeholder.",
+      "handoff_to": "SEO Output Report Agent",
+      "required_skill": "plain-language-seo-report"
+    },
+    {
+      "id": "knowledge-change-needed",
+      "when": "A new SEO rule, source update, deprecation, or learning should change future agent behavior.",
+      "handoff_to": "AI Principal SEO Scientist",
+      "required_payload": "schemas/rule-update.schema.json"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "full-audit",
+      "workflow_file": "workflows/full-audit-workflow.md",
+      "lead_agent": "SEO Full Audit/Analyst Agent",
+      "support_agents": [
+        "SEO Technical Agent",
+        "SEO Copywriter/Content Agent",
+        "SEO Information Architecture Agent",
+        "SEO Accessibility Agent",
+        "SEO CRO Agent",
+        "GEO / AIO Optimization Agent",
+        "SEO Diagnostic Infrastructure Agent",
+        "SEO Output Report Agent",
+        "SEO Scrummaster Agent"
+      ],
+      "proof_units": [
+        "golden-demo-technical-audit",
+        "anonymized-search-performance-and-cwv",
+        "schema-and-report-examples"
+      ],
+      "final_output_owner": "SEO Output Report Agent"
+    },
+    {
+      "id": "technical-deployment",
+      "workflow_file": "workflows/technical-deployment-workflow.md",
+      "lead_agent": "Senior SEO Engineer Agent",
+      "support_agents": [
+        "SEO Technical Agent",
+        "SEO Accessibility Agent",
+        "SEO Scrummaster Agent"
+      ],
+      "proof_units": [
+        "golden-demo-technical-audit",
+        "bad-seo-failure-fixtures"
+      ],
+      "final_output_owner": "Senior SEO Engineer Agent"
+    },
+    {
+      "id": "content-production",
+      "workflow_file": "workflows/content-production-workflow.md",
+      "lead_agent": "SEO Copywriter/Content Agent",
+      "support_agents": [
+        "SEO Information Architecture Agent",
+        "GEO / AIO Optimization Agent",
+        "SEO Compliance & Legal Agent",
+        "SEO CRO Agent"
+      ],
+      "proof_units": [
+        "schema-and-report-examples"
+      ],
+      "final_output_owner": "SEO Copywriter/Content Agent"
+    },
+    {
+      "id": "monitoring",
+      "workflow_file": "workflows/monitoring-workflow.md",
+      "lead_agent": "SEO Full Audit/Analyst Agent",
+      "support_agents": [
+        "Negative SEO & Security Agent",
+        "Predictive SEO Trend Agent",
+        "Competitive Intelligence Agent",
+        "AI Principal SEO Scientist",
+        "SEO Output Report Agent"
+      ],
+      "proof_units": [
+        "product-proof-intelligence-fixtures",
+        "anonymized-search-performance-and-cwv"
+      ],
+      "final_output_owner": "SEO Output Report Agent"
+    },
+    {
+      "id": "continuous-learning",
+      "workflow_file": "workflows/continuous-learning-workflow.md",
+      "lead_agent": "AI Principal SEO Scientist",
+      "support_agents": [
+        "SEO Research and Development Agent",
+        "SEO Scrummaster Agent"
+      ],
+      "proof_units": [
+        "product-proof-intelligence-fixtures"
+      ],
+      "final_output_owner": "AI Principal SEO Scientist"
+    }
+  ],
+  "completion_gates": [
+    "all referenced agents exist in orchestration/capability-registry.json",
+    "all referenced workflow files exist",
+    "all referenced proof units exist in examples/proof-pack/proof-pack-manifest.json",
+    "every workflow has a final output owner",
+    "SEO Scrummaster Agent is available for challenge and escalation",
+    "SEO Output Report Agent is available for stakeholder reporting",
+    "AI Principal SEO Scientist is available for learning records"
+  ]
+}
