@@ -36,7 +36,7 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "4034fbf4017e40480d25327b90d7dc391c2acfe2ff351a7e4986cdcc1cf647be"
+WORKFLOW_CONTRACT_SHA = "75b1c0825fa77a6409fb615a53f6d5b5f863176f6d69cf69d287f44f2089ac9c"
 RELEASE_CONTRACT_SHA = "0bbd415a39319a18621ee5bf726e7771afbd3fd92049013d3a23af7ea5596056"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
@@ -44,7 +44,7 @@ CONTRACT_RUN_STEPS = {
     "Seal successful receipt", "Preserve trusted source-integrity validator", "Prove exact restored baseline",
 }
 PHASE0_BASELINE = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
-PHASE0_ROLLBACK_SHA = "544c0b03bb3c369a39ac95a4e9d318136b4d1c25976ff747fc913aaf8b064d64"
+PHASE0_ROLLBACK_SHA = "a6949648241634c21ec14d1ddc64323de1d477240a652b762cd563644aef4be1"
 BASELINE_PROOF_SUFFIX = (
     "$raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S \"$env:RUNNER_TEMP/validate_source_integrity.py\" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked ",
     "$exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json",

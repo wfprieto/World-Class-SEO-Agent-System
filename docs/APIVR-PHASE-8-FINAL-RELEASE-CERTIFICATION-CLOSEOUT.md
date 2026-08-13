@@ -30,8 +30,8 @@ The final local verification battery passed:
 - `python scripts/validate_quality_ratchets.py`: passed.
 - `python -m ruff check . --select E9,F63,F7,F82 --no-cache`: passed.
 - `git diff --cached --check`: passed.
-- `python -m pytest -q --basetemp %TEMP%\wcseo-pytest`: 1117 passed in 119.92s.
-- `python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py`: passed, 177 source files.
+- `python -m pytest -q --basetemp %TEMP%\wcseo-pytest`: 1118 passed in 123.47s.
+- `python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py tests/test_phase0_rollback_verifier.py`: passed, 179 source files.
 - `powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1`: passed.
 
 ## Learning Agent Record
