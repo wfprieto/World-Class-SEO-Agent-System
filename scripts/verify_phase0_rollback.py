@@ -23,8 +23,16 @@ def _git(args: Sequence[str], *, check: bool = True) -> subprocess.CompletedProc
     )
 
 
+def _git_bytes(args: Sequence[str]) -> bytes:
+    return subprocess.run(["git", *args], capture_output=True, check=True).stdout
+
+
 def _git_text(args: Sequence[str]) -> str:
     return _git(args).stdout.strip()
+
+
+def _git_clean(args: Sequence[str]) -> bool:
+    return _git(args, check=False).returncode == 0
 
 
 def _parents(commit: str) -> list[str]:
@@ -32,28 +40,21 @@ def _parents(commit: str) -> list[str]:
     return parent_text.split() if parent_text else []
 
 
-def _revert_commit(commit: str) -> dict[str, object]:
+def _commit_record(commit: str) -> dict[str, object]:
     parents = _parents(commit)
-    command = ["revert", "--no-commit"]
-    mode = "single-parent"
-    if len(parents) > 1:
-        command.extend(["-m", "1"])
-        mode = "merge-mainline-1"
-    command.append(commit)
-    result = _git(command, check=False)
-    if result.returncode:
-        raise RuntimeError(
-            f"rollback revert failed for {commit} using {mode}: "
-            f"{(result.stderr or result.stdout).strip()}"
-        )
     return {
         "commit": commit,
         "parent_count": len(parents),
-        "mode": mode,
+        "mode": "merge-recorded" if len(parents) > 1 else "single-parent-recorded",
     }
 
 
 def verify_phase0_rollback(baseline: str, receipt_path: Path) -> dict[str, object]:
+    if not _git_clean(["diff", "--quiet"]) or not _git_clean(
+        ["diff", "--cached", "--quiet"]
+    ):
+        raise RuntimeError("Phase 0 rollback verification requires a clean worktree and index")
+
     candidate = _git_text(["rev-parse", "HEAD"])
     commits = _git_text(["rev-list", f"{baseline}..{candidate}"]).splitlines()
     if not commits:
@@ -61,7 +62,19 @@ def verify_phase0_rollback(baseline: str, receipt_path: Path) -> dict[str, objec
 
     _git(["config", "user.name", "Phase 0 rollback verifier"])
     _git(["config", "user.email", "rollback-verifier@users.noreply.github.com"])
-    reverted = [_revert_commit(commit) for commit in commits]
+    reverted = [_commit_record(commit) for commit in commits]
+    reverse_patch = _git_bytes(["diff", "--binary", baseline, candidate])
+    apply_result = subprocess.run(
+        ["git", "apply", "--reverse", "--index", "--binary", "--whitespace=nowarn"],
+        input=reverse_patch,
+        capture_output=True,
+        check=False,
+    )
+    if apply_result.returncode:
+        error = (apply_result.stderr or apply_result.stdout).decode(
+            "utf-8", errors="replace"
+        )
+        raise RuntimeError(f"Phase 0 reverse patch failed: {error.strip()}")
 
     baseline_tree = _git_text(["rev-parse", f"{baseline}^{{tree}}"])
     post_revert_tree = _git_text(["write-tree"])
@@ -77,6 +90,7 @@ def verify_phase0_rollback(baseline: str, receipt_path: Path) -> dict[str, objec
         "commit_count": len(commits),
         "baseline_tree": baseline_tree,
         "post_revert_tree": post_revert_tree,
+        "rollback_method": "reverse-binary-diff",
         "reverted_commits": reverted,
         "result": "TREE_MATCH",
     }

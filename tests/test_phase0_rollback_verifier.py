@@ -76,6 +76,7 @@ def test_phase0_rollback_verifier_handles_merge_commits(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stderr
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     assert receipt["result"] == "TREE_MATCH"
+    assert receipt["rollback_method"] == "reverse-binary-diff"
     assert receipt["baseline_commit"] == baseline
     assert _git(repo, "rev-parse", "HEAD") == baseline
-    assert any(item["mode"] == "merge-mainline-1" for item in receipt["reverted_commits"])
+    assert any(item["mode"] == "merge-recorded" for item in receipt["reverted_commits"])
