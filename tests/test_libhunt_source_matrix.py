@@ -39,6 +39,12 @@ def test_libhunt_source_matrix_names_expected_repositories():
     }
 
 
+def test_libhunt_external_inventory_paths_do_not_need_committed_clones():
+    matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
+    assert all(source["local_path"].startswith("../repositories/") for source in matrix["sources"])
+    assert validate() == []
+
+
 def test_libhunt_completed_units_target_existing_files():
     matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
     completed = [

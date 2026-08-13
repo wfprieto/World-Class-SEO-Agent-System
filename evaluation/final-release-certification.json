@@ -61,7 +61,7 @@
     "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1"
   ],
   "latest_observed_results": {
-    "pytest": "1116 passed in 130.77s using external basetemp %TEMP%/wcseo-pytest",
+    "pytest": "1117 passed in 119.92s using external basetemp %TEMP%/wcseo-pytest",
     "mypy": "177 source files passed",
     "ruff": "passed",
     "secret_scan": "passed",

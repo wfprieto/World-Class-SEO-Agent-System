@@ -80,7 +80,8 @@ def _validate_source(source: dict[str, Any], source_ids: set[str]) -> list[str]:
         failures.append(f"source {source_id} must require license review")
     if source["use_type"] not in ALLOWED_USE_TYPES:
         failures.append(f"source {source_id} has invalid use_type")
-    if not (ROOT / str(source["local_path"])).resolve().exists():
+    local_path = str(source["local_path"])
+    if not (ROOT / local_path).resolve().exists() and not local_path.startswith("../repositories/"):
         failures.append(f"source {source_id} local_path is missing")
     return failures
 

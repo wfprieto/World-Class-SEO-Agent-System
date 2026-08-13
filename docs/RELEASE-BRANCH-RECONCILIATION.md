@@ -36,7 +36,7 @@ This is a process blocker, not a failing-test blocker.
 ## Verification Already Observed
 
 - `git diff --cached --check`: passed.
-- `python -m pytest -q --basetemp %TEMP%\wcseo-pytest`: 1116 passed in 130.77s.
+- `python -m pytest -q --basetemp %TEMP%\wcseo-pytest`: 1117 passed in 119.92s.
 - `python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py`: passed, 177 source files.
 - `python -m ruff check . --select E9,F63,F7,F82 --no-cache`: passed.
 - `powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1`: passed.
