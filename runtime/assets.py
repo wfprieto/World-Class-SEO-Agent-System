@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import sysconfig
 from pathlib import Path
 
 _MARKERS = (
@@ -23,12 +24,17 @@ def resolve_asset_root(preferred: str | Path | None = None) -> Path:
         candidates.append(Path(configured).expanduser())
     if preferred is not None:
         candidates.append(Path(preferred).expanduser())
-    candidates.extend([
-        Path.cwd(),
-        Path(__file__).resolve().parents[1],
-        Path(sys.prefix) / "share" / "world-class-seo",
-        Path(sys.base_prefix) / "share" / "world-class-seo",
-    ])
+    installed_data = sysconfig.get_path("data")
+    if installed_data:
+        candidates.append(Path(installed_data) / "share" / "world-class-seo")
+    candidates.extend(
+        [
+            Path.cwd(),
+            Path(__file__).resolve().parents[1],
+            Path(sys.prefix) / "share" / "world-class-seo",
+            Path(sys.base_prefix) / "share" / "world-class-seo",
+        ]
+    )
     seen: set[Path] = set()
     for candidate in candidates:
         try:

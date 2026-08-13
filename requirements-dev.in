@@ -2,6 +2,7 @@
 #   python -m piptools compile --strip-extras --output-file requirements-dev.txt requirements-dev.in
 # Use a supported Python (3.11, 3.12, or 3.13); CI verifies the generated file on 3.13.
 jsonschema>=4.22.0,<5
+packaging>=24,<27
 pytest>=8.0.0,<10
 pytest-asyncio>=0.23.0,<2
 pytest-cov>=6.0,<8

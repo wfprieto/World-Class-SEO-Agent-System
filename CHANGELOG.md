@@ -38,13 +38,22 @@ This project follows semantic versioning where possible:
 - Content-brief relevance and SERP evidence logic now validates weights, excludes own-domain results, uses current dates, separates intent correctly, and blocks stale, mixed, conditional, or insufficient evidence.
 - Consent Mode diagnostics now use region/subregion resolution, recursive redaction, and separate observed defects from topology that still requires verification.
 - The report renderer now preserves canonical finding text, affected scope, evidence references, actions, owners, success metrics, dependencies, acceptance criteria, verification, risks, impact, and follow-up.
-- `docs/INTEGRATION-MANIFEST.md` and `pyproject.toml` are reconciled to version 1.7.0; version drift is now a CI failure.
+- `docs/INTEGRATION-MANIFEST.md` and `pyproject.toml` are reconciled by release-version validation; version drift is now a CI failure.
 
 ### Security
 
 - Untrusted tool and retrieved content cannot override system rules, approvals, scope, tool selection, or cost boundaries.
 - Arbitrary model prose is not converted into a successful-looking schema wrapper.
 - Required risk handoffs remain unresolved until the addressed Scrummaster node consumes them.
+
+## [1.7.1] - 2026-08-13
+
+### Fixed
+
+- Declared the runtime `packaging` dependency used by installed CLI validation paths.
+- Packaged the support files required by `seoctl system doctor`, including governance contracts, schemas, knowledge files, dependency locks, static source snapshots, and offline evaluation metadata.
+- Made installed asset discovery use the Python installation data path and verified clean-wheel commands from outside the source checkout.
+- Extended clean-wheel verification to run `seoctl --help`, command-registry validation, `seoctl system doctor`, packaged-resource checks, and no-network/no-provider-auth assertions.
 
 ## [1.7.0] - 2026-07-11
 
