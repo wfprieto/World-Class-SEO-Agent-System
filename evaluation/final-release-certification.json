@@ -8,9 +8,9 @@
     {
       "id": "working-tree-reconciliation",
       "severity": "High",
-      "reason": "The local upgrade work has been moved from main onto release/v1.7.0-final-certification, staged, verified, and committed locally at 26d3bc9, but it still must be pushed and merged through a protected pull request before release.",
+      "reason": "The release branch release/v1.7.0-final-certification has been staged, locally verified, committed, pushed, and opened as pull request #39, but GitHub reported no status checks yet and review/merge evidence is still missing.",
       "owner": "Repository owner / release engineer",
-      "required_next_action": "Push release/v1.7.0-final-certification, open a protected pull request, and require GitHub status checks/review before merge."
+      "required_next_action": "Wait for or configure GitHub status checks on PR #39, complete required review, then merge through the protected pull request process."
     },
     {
       "id": "external-live-proof",
@@ -69,6 +69,13 @@
     "reference_freshness": "68 entries across 21 packs",
     "seo_claims": "38 claims passed"
   },
+  "pull_request": {
+    "number": 39,
+    "url": "https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/39",
+    "head": "release/v1.7.0-final-certification",
+    "base": "main",
+    "status_checks": "no checks reported on 2026-08-13 local audit"
+  },
   "scrummaster_decision": "ACCEPT_WITH_EXPLICIT_RISK",
-  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_PUSHED_AND_PR_GATED"
+  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_PR_CHECKS_REVIEW_AND_MERGE"
 }

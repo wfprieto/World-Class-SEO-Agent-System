@@ -8,19 +8,23 @@ The final local certification work has been moved off `main` and onto:
 
 `release/v1.7.0-final-certification`
 
-The branch contains the verified repository upgrade set. The intended files have been staged, the staged whitespace check passed, and the release branch has been committed locally at `26d3bc9`. The release is not merge-ready until the branch is pushed and merged through the protected pull request process.
+The branch contains the verified repository upgrade set. The intended files have been staged, the staged whitespace check passed, the release branch has been committed and pushed, and pull request #39 has been opened:
+
+`https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/39`
+
+The release is not merge-ready until GitHub status checks and required review are complete.
 
 ## Release Decision
 
-`BLOCKED_FOR_MERGE_UNTIL_PUSHED_AND_PR_GATED`
+`BLOCKED_FOR_MERGE_UNTIL_PR_CHECKS_REVIEW_AND_MERGE`
 
 This is a process blocker, not a failing-test blocker.
 
 ## Required Next Actions
 
-1. Push `release/v1.7.0-final-certification`.
-2. Open a pull request into `main`.
-3. Require GitHub status checks and review before merge.
+1. Wait for or configure GitHub status checks on PR #39.
+2. Complete required review.
+3. Merge through the protected pull request process only after checks/review pass.
 
 ## Do Not Do
 
@@ -47,11 +51,11 @@ Evidence verdict: Local technical evidence is green. Review/PR evidence is not y
 
 Counterexample tested: The staged branch is locally green, but no commit, pushed branch, pull request, or GitHub status-check evidence exists yet.
 
-Unmet acceptance criteria: Push, PR, and GitHub checks.
+Unmet acceptance criteria: GitHub status checks, review, and merge.
 
 Risk owner and deadline: Repository owner / release engineer before merge.
 
-Required next action: Push the reviewed release branch.
+Required next action: Wait for or configure GitHub status checks on PR #39.
 
 ## Learning Agent Record
 

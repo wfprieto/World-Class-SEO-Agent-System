@@ -33,7 +33,7 @@ def test_final_certification_is_honest_about_merge_blockers() -> None:
     blocker_ids = {blocker["id"] for blocker in certification["blockers"]}
     assert "working-tree-reconciliation" in blocker_ids
     assert "external-live-proof" in blocker_ids
-    assert certification["vp_engineering_decision"] == "BLOCKED_FOR_MERGE_UNTIL_PUSHED_AND_PR_GATED"
+    assert certification["vp_engineering_decision"] == "BLOCKED_FOR_MERGE_UNTIL_PR_CHECKS_REVIEW_AND_MERGE"
 
 
 def test_final_certification_records_release_branch_reconciliation() -> None:
@@ -42,7 +42,17 @@ def test_final_certification_records_release_branch_reconciliation() -> None:
     assert "docs/RELEASE-BRANCH-RECONCILIATION.md" in artifacts
     blocker_text = json.dumps(certification["blockers"])
     assert "release/v1.7.0-final-certification" in blocker_text
-    assert "26d3bc9" in blocker_text
+    assert "pull request #39" in blocker_text
+
+
+def test_final_certification_records_pull_request_gate() -> None:
+    certification = _certification()
+    pull_request = certification["pull_request"]
+    assert pull_request["number"] == 39
+    assert pull_request["url"] == "https://github.com/wfprieto/World-Class-SEO-Agent-System/pull/39"
+    assert pull_request["head"] == "release/v1.7.0-final-certification"
+    assert pull_request["base"] == "main"
+    assert "no checks reported" in pull_request["status_checks"]
 
 
 def test_final_certification_contains_current_verification_battery() -> None:
