@@ -67,6 +67,44 @@ A numeric score does not override a hard gate.
 - Original information, expert analysis, first-party data, useful tools, or meaningful synthesis adds value beyond commodity summaries.
 - Headings, tables, lists, and concise passages are used when they improve human comprehension. Do not force fixed word counts or artificial “AI chunks.”
 
+## SRO / AEO operating layer
+
+Use this layer when the work specifically concerns AI-answer visibility, answer-engine optimization,
+or selection-rate optimization.
+
+### SRO evidence pipeline
+
+Record six evidence stages separately:
+
+1. Prompt/query set: buyer intent, platform, locale, date, and test persona.
+2. Platform observations: cited, linked, mentioned without link, absent, or blocked.
+3. SERP context: organic competitors, forum results, local/video/image results, and owned-page rank where observed.
+4. Page extraction: title, headings, direct-answer placement, schema types, source labels, and crawl/render availability.
+5. Site/entity context: official entity facts, sameAs consistency, author/business proof, and external corroboration.
+6. Recommendation synthesis: only recommend actions supported by the previous evidence stages.
+
+### AEO readiness checks
+
+- Direct answer or BLUF appears near the top when the query benefits from a concise answer.
+- The page has one clear primary H1 and useful H2/H3 sections.
+- Structured data is eligible and matches visible content.
+- Entity facts are explicit and consistent with owned profiles and reputable external sources.
+- `llms.txt` presence is recorded as governance context only, not as a Google Search boost.
+- Missing evidence creates an `UNKNOWN` state rather than a readiness point.
+
+### AI visibility observation contract
+
+Every observation must include:
+
+- model or search surface
+- prompt or query
+- date
+- locale or market
+- brand/page citation state
+- competitor citation state
+- linked, unlinked, or no-mention state
+- evidence limits and repeat-test recommendation
+
 ### 3. Evidence and trust
 
 - Material factual claims are attributable to current, reliable sources.

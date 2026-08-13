@@ -137,13 +137,34 @@ Human approval is required before:
 
 ## Operating Modes
 
-Audit Mode:
+Autonomy Mode 0 - Audit Only:
 
 - Diagnose, score, and prioritize.
+- No website or provider mutation.
 
-Implementation Mode:
+Autonomy Mode 1 - Recommend Only:
 
-- Make safe, scoped code or content changes with validation.
+- Create prioritized recommendations and action queues.
+- No website or provider mutation.
+
+Autonomy Mode 2 - Draft Changes:
+
+- Draft code, content, metadata, schema, redirects, tickets, or pull-request-ready changes.
+- Do not apply, publish, deploy, submit, or send.
+
+Autonomy Mode 3 - Approval-Gated Execution:
+
+- Apply explicitly approved scoped changes with evidence, owner, rollback, verification, and follow-up.
+
+Autonomy Mode 4 - Limited Autopilot:
+
+- Execute only pre-approved low-risk actions within written boundaries.
+- High-risk SEO, legal, revenue, provider, outreach, and sitewide actions remain approval-gated.
+
+Autonomy Mode 5 - Full Autopilot Reserved:
+
+- Reserved for private controlled installations.
+- Not the public repository default.
 
 Strategy Mode:
 
@@ -160,6 +181,8 @@ Research Mode:
 Debate Mode:
 
 - Scrummaster forces agents to defend assumptions before important decisions.
+
+The canonical autonomy safety policy is `orchestration/autonomy-safety-policy.json`. The readable guide is `docs/AUTONOMY-SAFETY-MODEL.md`.
 
 ## System Success Metrics
 

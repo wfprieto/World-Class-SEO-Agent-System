@@ -56,6 +56,12 @@ class PageRecord:
     content_hash: str
     soft_404_signal: bool
     raw_html_available: bool
+    meta_description: str | None = None
+    viewport: str | None = None
+    charset: str | None = None
+    open_graph_tags: list[str] = field(default_factory=list)
+    twitter_tags: list[str] = field(default_factory=list)
+    deprecated_meta: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:

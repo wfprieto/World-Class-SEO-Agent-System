@@ -60,6 +60,17 @@ JSON arguments are supported:
 python main.py "Validate robots rules" --execute --tool robots_txt="{\"path\":\"exports/robots.txt\",\"user_agent\":\"Googlebot\"}"
 ```
 
+## Cost and Credential Preflight
+
+`runtime.tools.ToolDispatcher` performs adapter preflight before calling any adapter:
+
+- Live Google adapters require their documented credential environment variables.
+- Paid or quota-sensitive tools require explicit `budget_approved=True` on `ToolRequest`.
+- Obvious unsafe target URLs, local IPs, credential-bearing URLs, and non-HTTP schemes are rejected before adapter execution.
+- Missing optional credentials return `MISSING`; missing required credentials return `BLOCKED`.
+
+The canonical metadata lives in `runtime.tools.TOOL_ACCESS_REQUIREMENTS`.
+
 ## Adding a New Adapter
 
 1. Create `adapters/my_tool.py`.

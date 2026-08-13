@@ -1,0 +1,165 @@
+{
+  "schema_version": "1.0.0",
+  "proof_pack_id": "world-class-seo-public-proof-pack",
+  "fixture_is_live_proof": false,
+  "privacy_boundary": {
+    "allows": [
+      "synthetic fixtures",
+      "anonymized exports",
+      "sanitized production-style examples",
+      "offline expected-output contracts"
+    ],
+    "forbids": [
+      "API keys",
+      "OAuth tokens",
+      "service-account credentials",
+      "private client domains",
+      "property IDs",
+      "account IDs",
+      "unapproved live exports",
+      "claims of live rankings or indexing"
+    ]
+  },
+  "proof_units": [
+    {
+      "id": "golden-demo-technical-audit",
+      "evidence_type": "offline_fixture_execution_contract",
+      "summary": "Runs the flagship technical audit from a safe fixture and verifies artifacts, evidence mode, agent contributions and safety limits.",
+      "target_agents": [
+        "SEO Technical Agent",
+        "SEO Full Audit/Analyst Agent",
+        "SEO Output Report Agent",
+        "SEO Scrummaster Agent"
+      ],
+      "files": [
+        "QUICKSTART.md",
+        "examples/golden-demo/README.md",
+        "examples/golden-demo/expected-output-contract.json",
+        "examples/product-proof/site-fixture.json",
+        "tests/test_golden_demo.py"
+      ],
+      "validation": [
+        "python -m pytest tests/test_golden_demo.py -q --basetemp .pytest_tmp"
+      ],
+      "does_not_prove": [
+        "live rankings",
+        "live indexing",
+        "provider authentication",
+        "automatic website mutation"
+      ]
+    },
+    {
+      "id": "bad-seo-failure-fixtures",
+      "evidence_type": "synthetic_failure_mode_contract",
+      "summary": "Documents deterministic SEO failure modes across metadata, content, indexability, HTTP status, redirects, structure, performance and compound issues.",
+      "target_agents": [
+        "SEO Technical Agent",
+        "SEO Copywriter/Content Agent",
+        "SEO Information Architecture Agent",
+        "Senior SEO Engineer Agent"
+      ],
+      "files": [
+        "docs/BAD-SEO-FIXTURE-PACK.md",
+        "examples/bad-seo-fixtures/fixtures.json",
+        "examples/bad-seo-fixtures/head-metadata-fixtures.json",
+        "tests/test_bad_seo_fixtures.py",
+        "tests/test_head_metadata_rules.py"
+      ],
+      "validation": [
+        "python -m pytest tests/test_bad_seo_fixtures.py tests/test_head_metadata_rules.py -q --basetemp .pytest_tmp"
+      ],
+      "does_not_prove": [
+        "complete live-site coverage",
+        "field data availability",
+        "ranking causality"
+      ]
+    },
+    {
+      "id": "anonymized-search-performance-and-cwv",
+      "evidence_type": "anonymized_export_pattern",
+      "summary": "Shows safe public formats for GSC-style performance exports, local/commercial page samples, CrUX-style origin data and PageSpeed-style CWV data.",
+      "target_agents": [
+        "SEO Full Audit/Analyst Agent",
+        "SEO Technical Agent",
+        "Local SEO Agent",
+        "GEO / AIO Optimization Agent"
+      ],
+      "files": [
+        "examples/anonymized-real-site-gsc-export/README.md",
+        "examples/anonymized-real-site-gsc-export/gsc-search-performance-anonymized.csv",
+        "examples/anonymized-real-site-gsc-export/gsc-local-pages-anonymized.csv",
+        "examples/anonymized-real-site-gsc-export/gsc-commercial-pages-anonymized.csv",
+        "examples/anonymized-real-site-gsc-export/crux-origin-cwv-anonymized.json",
+        "examples/anonymized-real-site-gsc-export/pagespeed-cwv-anonymized.json",
+        "examples/anonymized-production-style-example/inputs/gsc.csv",
+        "examples/anonymized-production-style-example/inputs/ga4.csv",
+        "examples/anonymized-production-style-example/inputs/crawl.csv"
+      ],
+      "validation": [
+        "python -m pytest tests/test_adapters.py tests/test_rendering_technical.py -q --basetemp .pytest_tmp"
+      ],
+      "does_not_prove": [
+        "live GSC access",
+        "live GA4 access",
+        "live CrUX access",
+        "complete client history"
+      ]
+    },
+    {
+      "id": "product-proof-intelligence-fixtures",
+      "evidence_type": "offline_intelligence_fixture_contract",
+      "summary": "Exercises AI crawler timeout analysis, AI citation observations, review-compliance screening and performance narrative logic from safe local files.",
+      "target_agents": [
+        "AI Principal SEO Scientist",
+        "GEO / AIO Optimization Agent",
+        "SEO Compliance & Legal Agent",
+        "SEO Full Audit/Analyst Agent"
+      ],
+      "files": [
+        "examples/product-proof/README.md",
+        "examples/product-proof/access.log",
+        "examples/product-proof/ai-observations.json",
+        "examples/product-proof/review-practices.json",
+        "examples/product-proof/performance.json",
+        "tests/test_product_proof_technical_audit.py"
+      ],
+      "validation": [
+        "python -m pytest tests/test_product_proof_technical_audit.py -q --basetemp .pytest_tmp"
+      ],
+      "does_not_prove": [
+        "live AI crawler traffic",
+        "live AI Overview citation tracking",
+        "legal compliance determination"
+      ]
+    },
+    {
+      "id": "schema-and-report-examples",
+      "evidence_type": "schema_example_contract",
+      "summary": "Shows valid schema examples, full audit output, plain-language reporting and technical deployment handoff formats.",
+      "target_agents": [
+        "SEO Output Report Agent",
+        "SEO Scrummaster Agent",
+        "Senior SEO Engineer Agent",
+        "Senior SEO Strategist Agent"
+      ],
+      "files": [
+        "examples/schema-validation-examples/decision-record.json",
+        "examples/schema-validation-examples/handoff-payload.json",
+        "examples/schema-validation-examples/rule-update.json",
+        "examples/full-audit-example/agent-output.json",
+        "examples/full-audit-example/audit-report.md",
+        "examples/plain-language-report-example/plain-language-seo-report.md",
+        "examples/technical-deployment-example/engineering-change-plan.md"
+      ],
+      "validation": [
+        "python scripts/validate_schema_examples.py",
+        "python -m pytest tests/test_schema_validation.py -q --basetemp .pytest_tmp"
+      ],
+      "does_not_prove": [
+        "provider execution",
+        "deployment approval",
+        "live customer outcome"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,529 @@
+{
+  "schema_version": "1.0.0",
+  "apivr_tier": "Comprehensive",
+  "objective": "Govern LibHunt and LibHunt-adjacent SEO source upgrades without copying external repository prose, source code, branding, or repository-specific structure.",
+  "source_policy": {
+    "allowed_use": [
+      "extract generalized SEO heuristics",
+      "extract deterministic rule categories",
+      "extract adapter-hardening edge cases",
+      "extract source-discovery topics",
+      "rewrite all target artifacts in this repository's architecture and voice"
+    ],
+    "forbidden_use": [
+      "copy external repo prose verbatim into target artifacts",
+      "copy external source code into runtime modules",
+      "retain external repo branding as system identity",
+      "create orphan imports or files not connected to agents, skills, workflows, tests, registries, or docs",
+      "promote dated checklist advice into enforced rules without primary-source confirmation",
+      "commit credentials, private client data, or live-provider exports"
+    ],
+    "verification_standard": [
+      "every implemented upgrade must name target files, agents, skills, and tests",
+      "every knowledge pack must be connected to knowledge/reference-registry.json",
+      "every deterministic rule must have a fixture and expected finding",
+      "every adapter-hardening change must preserve local fixture mode and structured missing-credential states",
+      "every external-source-derived rule must remain clean-room and model-agnostic"
+    ]
+  },
+  "sources": [
+    {
+      "id": "joshbuchea-head",
+      "repo": "joshbuchea/HEAD",
+      "local_path": "../repositories/HEAD",
+      "head_observed": "de1304e",
+      "primary_value": "Deterministic HTML head, metadata, social, canonical, app-link, and deprecated-tag checks.",
+      "use_type": "rule-candidate",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "danishashko-geo-aeo-tracker",
+      "repo": "danishashko/geo-aeo-tracker",
+      "local_path": "../repositories/geo-aeo-tracker",
+      "head_observed": "08a997d",
+      "primary_value": "Modern GEO, AEO, SRO, multi-model AI visibility, and AI-answer audit heuristics.",
+      "use_type": "knowledge",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "every-app-open-seo",
+      "repo": "every-app/open-seo",
+      "local_path": "../repositories/open-seo",
+      "head_observed": "61c0b0c",
+      "primary_value": "MCP-style SEO workflows, agent skills, DataForSEO patterns, rank tracking, backlinks, and AI visibility.",
+      "use_type": "workflow-pattern",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "marcobiedermann-search-engine-optimization",
+      "repo": "marcobiedermann/search-engine-optimization",
+      "local_path": "../repositories/search-engine-optimization",
+      "head_observed": "a4681ed",
+      "primary_value": "Broad SEO checklist candidates for URL, accessibility, metadata, content, links, mobile, and sitemap review.",
+      "use_type": "rule-candidate",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "bmpi-dev-awesome-seo",
+      "repo": "bmpi-dev/awesome-seo",
+      "local_path": "../repositories/awesome-seo",
+      "head_observed": "6537646",
+      "primary_value": "Curated source-discovery index for crawl budget, logfile analysis, tools, international search, and SEO learning resources.",
+      "use_type": "source-index",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "garmeeh-next-seo",
+      "repo": "garmeeh/next-seo",
+      "local_path": "../repositories/next-seo",
+      "head_observed": "f74b86b",
+      "primary_value": "Framework-specific metadata and JSON-LD implementation patterns for Next.js.",
+      "use_type": "implementation-reference",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "iamvishnusankar-next-sitemap",
+      "repo": "iamvishnusankar/next-sitemap",
+      "local_path": "../repositories/next-sitemap",
+      "head_observed": "144fad9",
+      "primary_value": "Framework-specific sitemap, robots, alternate-ref, and large-site sitemap generation patterns.",
+      "use_type": "implementation-reference",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "kjvarga-sitemap-generator",
+      "repo": "kjvarga/sitemap_generator",
+      "local_path": "../repositories/SitemapGenerator",
+      "head_observed": "b7bcd69",
+      "primary_value": "Sitemap implementation patterns for image, video, news, mobile, PageMap, and alternate-link sitemap extensions.",
+      "use_type": "implementation-reference",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "goenning-google-indexing-script",
+      "repo": "goenning/google-indexing-script",
+      "local_path": "../repositories/google-indexing-script",
+      "head_observed": "c52c2f8",
+      "primary_value": "Google Indexing API credential, CLI, retry, and rate-limit implementation reference.",
+      "use_type": "adapter-hardening",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    },
+    {
+      "id": "stevenvachon-broken-link-checker",
+      "repo": "stevenvachon/broken-link-checker",
+      "local_path": "../repositories/broken-link-checker",
+      "head_observed": "ce9e116",
+      "primary_value": "Broken-link crawler edge cases: skipped links, robots handling, redirects, queueing, and URL normalization.",
+      "use_type": "adapter-hardening",
+      "license_review": "required_before_copying_any_expression",
+      "status": "inventoried"
+    }
+  ],
+  "upgrade_units": [
+    {
+      "id": "phase-01-libhunt-source-governance",
+      "apivr_phase": 1,
+      "title": "LibHunt source governance and inventory",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Low",
+      "source_ids": [
+        "joshbuchea-head",
+        "danishashko-geo-aeo-tracker",
+        "every-app-open-seo",
+        "marcobiedermann-search-engine-optimization",
+        "bmpi-dev-awesome-seo",
+        "garmeeh-next-seo",
+        "iamvishnusankar-next-sitemap",
+        "kjvarga-sitemap-generator",
+        "goenning-google-indexing-script",
+        "stevenvachon-broken-link-checker"
+      ],
+      "target_files": [
+        "evaluation/libhunt-source-ingestion-matrix.json",
+        "docs/LIBHUNT-SOURCE-INGESTION-PLAN.md",
+        "scripts/validate_libhunt_source_matrix.py",
+        "tests/test_libhunt_source_matrix.py"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist",
+        "SEO Research and Development Agent"
+      ],
+      "target_skills": [
+        "system-improvement-loop",
+        "continuous-learning-workflow"
+      ],
+      "acceptance_criteria": [
+        "matrix validates structurally",
+        "each source has stable id, repo, local path, observed head, primary value, use type, license review, and status",
+        "forbidden-use policy blocks blind copying, dated-rule promotion, orphan files, and committed secrets",
+        "each upgrade phase has target files, agents, skills, acceptance criteria, and verification commands"
+      ],
+      "verification_commands": [
+        "python scripts/validate_libhunt_source_matrix.py",
+        "python -m pytest tests/test_libhunt_source_matrix.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-02-head-metadata-rules",
+      "apivr_phase": 2,
+      "title": "HEAD metadata knowledge, fixtures, and deterministic rules",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": ["joshbuchea-head", "marcobiedermann-search-engine-optimization"],
+      "target_files": [
+        "knowledge/reference-packs/head-metadata-expanded.md",
+        "knowledge/reference-registry.json",
+        "examples/bad-seo-fixtures/head-metadata-fixtures.json",
+        "integrations/product_proof/rules.py",
+        "tests/test_head_metadata_rules.py"
+      ],
+      "target_agents": ["SEO Technical Agent", "Senior SEO Engineer Agent", "SEO Full Audit/Analyst Agent"],
+      "target_skills": ["technical-audit", "schema-detect-validate-generate", "product-proof-technical-audit"],
+      "acceptance_criteria": [
+        "head metadata knowledge pack is registry-connected",
+        "fixtures cover minimum head, title, description, canonical, social metadata, deprecated tags, and unsafe URL patterns",
+        "rules produce deterministic expected findings without live network access"
+      ],
+      "verification_commands": [
+        "python scripts/validate_reference_freshness.py",
+        "python -m pytest tests/test_head_metadata_rules.py tests/test_bad_seo_fixtures.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-03-geo-aeo-sro-upgrade",
+      "apivr_phase": 3,
+      "title": "GEO, AEO, SRO, and AI-search readiness expansion",
+      "priority": "P0",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": ["danishashko-geo-aeo-tracker"],
+      "target_files": [
+        "knowledge/reference-packs/geo-aeo-sro-expanded.md",
+        "knowledge/geo-readiness-rubric.md",
+        "knowledge/reference-registry.json",
+        "skills/deep-skill-procedures.md",
+        "tests/test_geo_aio_sro_readiness.py"
+      ],
+      "target_agents": ["GEO / AIO Optimization Agent", "SEO Knowledge Graph Sync Agent", "AI Principal SEO Scientist"],
+      "target_skills": ["geo-aio-citation-audit", "ai-citation-opportunity-map", "knowledge-graph-sync"],
+      "acceptance_criteria": [
+        "AI visibility observations require model, prompt/query, date, market, and citation state",
+        "AEO checks include llms.txt, BLUF answer structure, schema eligibility, heading extraction, and entity clarity",
+        "rubric remains advisory unless observed evidence exists"
+      ],
+      "verification_commands": [
+        "python scripts/validate_reference_freshness.py",
+        "python -m pytest tests/test_geo_aio_sro_readiness.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-04-openseo-workflow-expansion",
+      "apivr_phase": 4,
+      "title": "OpenSEO-inspired workflow, skill, and FLOW expansion",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": ["every-app-open-seo"],
+      "target_files": [
+        "skills/flow-prompts/find.md",
+        "skills/flow-prompts/leverage.md",
+        "skills/flow-prompts/optimize.md",
+        "skills/deep-skill-procedures.md",
+        "docs/OPENSEO-WORKFLOW-ADAPTATION.md",
+        "tests/test_openseo_workflow_expansion.py"
+      ],
+      "target_agents": [
+        "SEO Copywriter/Content Agent",
+        "Competitive Intelligence Agent",
+        "Digital PR & Programmatic Link Outreach Agent",
+        "GEO / AIO Optimization Agent"
+      ],
+      "target_skills": [
+        "keyword-cluster",
+        "competitive-gap",
+        "competitor-change-monitor",
+        "backlink-gap",
+        "outreach-prospecting",
+        "ai-citation-opportunity-map"
+      ],
+      "acceptance_criteria": [
+        "workflow prompts remain model-agnostic and clean-room",
+        "paid or metered tool use includes budget and credential guardrails",
+        "expanded procedures include inputs, stop states, outputs, and verification"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_openseo_workflow_expansion.py tests/test_flow_prompt_expansion.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-05-checklist-crawl-log-reference-expansion",
+      "apivr_phase": 5,
+      "title": "Checklist triage, crawl budget, and logfile reference expansion",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "marcobiedermann-search-engine-optimization",
+        "bmpi-dev-awesome-seo"
+      ],
+      "target_files": [
+        "knowledge/reference-packs/legacy-checklist-triage.md",
+        "knowledge/reference-packs/crawl-budget-logfile-expanded.md",
+        "knowledge/reference-registry.json",
+        "tests/test_libhunt_reference_expansion.py"
+      ],
+      "target_agents": ["SEO Technical Agent", "SEO Diagnostic Infrastructure Agent", "SEO Full Audit/Analyst Agent"],
+      "target_skills": ["technical-audit", "full-site-audit", "seo-drift-monitor"],
+      "acceptance_criteria": [
+        "dated checklist items are labeled and not enforced without primary-source confirmation",
+        "crawl-budget and logfile guidance separates observation from inference",
+        "reference packs validate and connect to agents and skills"
+      ],
+      "verification_commands": [
+        "python scripts/validate_reference_freshness.py",
+        "python -m pytest tests/test_libhunt_reference_expansion.py -q"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-06-explicit-phase-split-checkpoint",
+      "apivr_phase": 6,
+      "title": "Explicit Phase 7-10 split checkpoint",
+      "priority": "P1",
+      "impact": "Medium",
+      "effort": "Low",
+      "source_ids": [
+        "garmeeh-next-seo",
+        "iamvishnusankar-next-sitemap",
+        "kjvarga-sitemap-generator",
+        "goenning-google-indexing-script",
+        "stevenvachon-broken-link-checker"
+      ],
+      "target_files": [
+        "evaluation/libhunt-source-ingestion-matrix.json",
+        "docs/LIBHUNT-SOURCE-INGESTION-PLAN.md",
+        "scripts/validate_libhunt_source_matrix.py"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist"
+      ],
+      "target_skills": [
+        "request-routing",
+        "definition-of-done"
+      ],
+      "acceptance_criteria": [
+        "combined final phase is split into explicit phase 7, 8, 9, and 10 units",
+        "APIVR phase numbering remains contiguous for validation",
+        "later phases are verified separately instead of inherited from a combined phase"
+      ],
+      "verification_commands": [
+        "python scripts/validate_libhunt_source_matrix.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-07-framework-implementation-notes",
+      "apivr_phase": 7,
+      "title": "Framework implementation notes",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "garmeeh-next-seo",
+        "iamvishnusankar-next-sitemap",
+        "kjvarga-sitemap-generator"
+      ],
+      "target_files": [
+        "knowledge/reference-packs/framework-seo-implementation-expanded.md",
+        "knowledge/reference-registry.json",
+        "tests/test_libhunt_framework_notes.py"
+      ],
+      "target_agents": [
+        "Senior SEO Engineer Agent",
+        "SEO Technical Agent",
+        "International & Multilingual SEO Agent",
+        "Visual & Video Search Agent"
+      ],
+      "target_skills": [
+        "technical-implementation",
+        "sitemap-audit",
+        "schema-detect-validate-generate",
+        "hreflang-audit",
+        "image-seo-audit",
+        "video-seo-audit"
+      ],
+      "acceptance_criteria": [
+        "framework notes are advisory unless framework context is present",
+        "no framework-specific advice becomes universal SEO policy",
+        "Next.js metadata, JSON-LD caveats, dynamic sitemaps, robots, sitemap indexes, media sitemaps, hreflang, canonical, and App Router risks are covered"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_libhunt_framework_notes.py -q",
+        "python scripts/validate_reference_freshness.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-08-adapter-hardening",
+      "apivr_phase": 8,
+      "title": "Adapter hardening",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "goenning-google-indexing-script",
+        "stevenvachon-broken-link-checker"
+      ],
+      "target_files": [
+        "adapters/redirect_chain.py",
+        "adapters/robots_txt.py",
+        "adapters/rendered_page.py",
+        "integrations/extensions/indexnow.py",
+        "runtime/tools.py",
+        "tests/test_libhunt_adapter_hardening.py",
+        "tests/test_adapters.py",
+        "tests/test_tool_protocol.py"
+      ],
+      "target_agents": [
+        "Senior SEO Engineer Agent",
+        "SEO Technical Agent",
+        "Negative SEO & Security Agent"
+      ],
+      "target_skills": [
+        "redirect-validation",
+        "technical-audit",
+        "seo-ci-checks",
+        "rendered-visual-audit"
+      ],
+      "acceptance_criteria": [
+        "retry/backoff, queue limits, robots/meta/X-Robots awareness, skipped link states, redirect loop states, credential safety, environment guidance, local fixture mode, and rate-limit reporting are covered",
+        "missing credentials return structured missing or blocked states instead of crashes",
+        "secret scan passes and no service-account examples are committed"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_libhunt_adapter_hardening.py tests/test_adapters.py tests/test_tool_protocol.py -q",
+        "python scripts/scan_secrets.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-09-registry-and-cross-linking",
+      "apivr_phase": 9,
+      "title": "Registry and cross-linking",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "joshbuchea-head",
+        "danishashko-geo-aeo-tracker",
+        "every-app-open-seo",
+        "marcobiedermann-search-engine-optimization",
+        "bmpi-dev-awesome-seo",
+        "garmeeh-next-seo",
+        "iamvishnusankar-next-sitemap",
+        "kjvarga-sitemap-generator",
+        "goenning-google-indexing-script",
+        "stevenvachon-broken-link-checker"
+      ],
+      "target_files": [
+        "knowledge/reference-registry.json",
+        "skills/package-registry.json",
+        "orchestration/capability-registry.json",
+        "docs/SKILLS-REFERENCES-PROMPTS.md",
+        "docs/INTEGRATION-MANIFEST.md",
+        "tests/test_libhunt_reference_registry.py",
+        "tests/test_libhunt_agent_skill_links.py",
+        "tests/test_no_unconnected_libhunt_artifacts.py"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist"
+      ],
+      "target_skills": [
+        "request-routing",
+        "knowledge-sync",
+        "definition-of-done"
+      ],
+      "acceptance_criteria": [
+        "no orphan knowledge files",
+        "no orphan fixtures",
+        "no source matrix entry lacks a target",
+        "no target file lacks a validation path"
+      ],
+      "verification_commands": [
+        "python -m pytest tests/test_libhunt_reference_registry.py tests/test_libhunt_agent_skill_links.py tests/test_no_unconnected_libhunt_artifacts.py -q",
+        "python scripts/validate_reference_freshness.py",
+        "python scripts/validate_libhunt_source_matrix.py"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "phase-10-final-verification-and-rebaseline",
+      "apivr_phase": 10,
+      "title": "Final verification and rebaseline",
+      "priority": "P1",
+      "impact": "High",
+      "effort": "Medium",
+      "source_ids": [
+        "joshbuchea-head",
+        "danishashko-geo-aeo-tracker",
+        "every-app-open-seo",
+        "marcobiedermann-search-engine-optimization",
+        "bmpi-dev-awesome-seo",
+        "garmeeh-next-seo",
+        "iamvishnusankar-next-sitemap",
+        "kjvarga-sitemap-generator",
+        "goenning-google-indexing-script",
+        "stevenvachon-broken-link-checker"
+      ],
+      "target_files": [
+        "docs/APIVR-LIBHUNT-UPGRADE-REPORT.md",
+        "docs/20-PASS-LIBHUNT-UPGRADE-REVIEW.md",
+        "tests/test_libhunt_final_integrity.py"
+      ],
+      "target_agents": [
+        "SEO Scrummaster Agent",
+        "AI Principal SEO Scientist"
+      ],
+      "target_skills": [
+        "definition-of-done",
+        "knowledge-sync"
+      ],
+      "acceptance_criteria": [
+        "all validation commands pass",
+        "final docs point to canonical matrices and registries",
+        "CHANGELOG.md is updated only when implementation is intentionally released"
+      ],
+      "verification_commands": [
+        "python scripts/validate_libhunt_source_matrix.py",
+        "python scripts/validate_reference_freshness.py",
+        "python scripts/validate_upgrade_source_matrix.py",
+        "python scripts/generate_skill_index.py --check",
+        "python scripts/validate_canonical_skill_consistency.py",
+        "python scripts/validate_seo_claims.py",
+        "python scripts/scan_secrets.py",
+        "python -m pytest -q",
+        "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
+        "python -m mypy runtime seoctl integrations adapters"
+      ],
+      "status": "verified"
+    }
+  ]
+}

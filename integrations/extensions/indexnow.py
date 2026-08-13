@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -116,7 +117,13 @@ class IndexNowService:
         endpoint: str = INDEXNOW_ENDPOINT,
         opener: Callable[..., Any] | None = None,
         timeout: float = 15.0,
+        retries: int = 1,
+        retry_backoff_seconds: float = 0.25,
     ) -> AdapterResult:
+        if not isinstance(retries, int) or not 0 <= retries <= 3:
+            raise ValueError("retries must be an integer from 0 to 3")
+        if not isinstance(retry_backoff_seconds, (int, float)) or not 0 <= float(retry_backoff_seconds) <= 10:
+            raise ValueError("retry_backoff_seconds must be from 0 to 10")
         submission = normalize(urls, key_location)
         target = _validate_endpoint(endpoint)
         secret = key or os.environ.get("INDEXNOW_KEY")
@@ -161,19 +168,32 @@ class IndexNowService:
             },
         )
         active = opener or urllib.request.build_opener(NoRedirect()).open
+        attempts = 0
+        raw = b""
+        status_code = 0
         try:
-            response = active(request, timeout=timeout)
-            status_code = int(getattr(response, "status", response.getcode()))
-            raw = response.read(MAX_RESPONSE_BYTES + 1)
-            if len(raw) > MAX_RESPONSE_BYTES:
-                raise ValueError("IndexNow response exceeded the safe size limit")
-        except urllib.error.HTTPError as exc:
-            status_code = int(exc.code)
-            raw = exc.read(MAX_RESPONSE_BYTES + 1)
+            while True:
+                attempts += 1
+                try:
+                    response = active(request, timeout=timeout)
+                    status_code = int(getattr(response, "status", response.getcode()))
+                    raw = response.read(MAX_RESPONSE_BYTES + 1)
+                except urllib.error.HTTPError as exc:
+                    status_code = int(exc.code)
+                    raw = exc.read(MAX_RESPONSE_BYTES + 1)
+                if len(raw) > MAX_RESPONSE_BYTES:
+                    raise ValueError("IndexNow response exceeded the safe size limit")
+                if status_code not in {429, 500, 502, 503, 504} or attempts > retries:
+                    break
+                time.sleep(float(retry_backoff_seconds) * attempts)
+        except TimeoutError:
+            status_code = 408
+            raw = b"request timed out"
         state = {
             200: ("ok", "AVAILABLE"),
             202: ("partial", "PARTIAL"),
             400: ("invalid_response", "INVALID_RESPONSE"),
+            408: ("failed", "TIMEOUT"),
             403: ("unauthorized", "UNAUTHORIZED"),
             422: ("invalid_response", "INVALID_RESPONSE"),
             429: ("rate_limited", "RATE_LIMITED"),
@@ -186,6 +206,7 @@ class IndexNowService:
                 "http_status": status_code,
                 "host": submission.host,
                 "url_count": len(submission.urls),
+                "attempts": attempts,
                 "endpoint_host": urllib.parse.urlsplit(target).hostname,
                 "key_location": submission.key_location,
                 "response_excerpt": raw.decode("utf-8", errors="replace").replace(secret, "[REDACTED]")[:500],

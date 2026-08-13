@@ -12,7 +12,7 @@
       "agent_file": "agents/seo-technical-agent.md",
       "skills": ["technical-audit", "crawl-map", "indexation-reality-check", "schema-detect-validate-generate", "core-web-vitals-triage"],
       "skill_files": ["skills/core-skills.md", "skills/rendered-visual-audit-and-page-entry.md"],
-      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/core-web-vitals-gates.md", "knowledge/schema-deprecation-registry.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/core-web-vitals-gates.md", "knowledge/schema-deprecation-registry.md", "knowledge/reference-packs/framework-seo-implementation-expanded.md"],
       "templates": ["templates/audit-report.md"],
       "required_evidence": ["domain_or_urls", "crawl_or_page_evidence", "rendered_or_http_evidence"]
     },
@@ -68,7 +68,7 @@
       "agent_file": "agents/senior-seo-engineer-agent.md",
       "skills": ["technical-implementation", "seo-ci-checks", "redirect-validation", "desktop-commander-execution"],
       "skill_files": ["skills/core-skills.md", "skills/local-execution-skills.md"],
-      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/reference-packs/framework-seo-implementation-expanded.md"],
       "templates": ["templates/engineering-change-plan.md"],
       "required_evidence": ["codebase", "acceptance_criteria", "rollback_plan"]
     },
@@ -116,7 +116,7 @@
       "agent_file": "agents/visual-video-search-agent.md",
       "skills": ["image-seo-audit", "video-seo-audit", "rendered-visual-audit"],
       "skill_files": ["skills/specialist-skills.md", "skills/rendered-visual-audit-and-page-entry.md"],
-      "knowledge_files": ["knowledge/ai-image-labeling.md"],
+      "knowledge_files": ["knowledge/ai-image-labeling.md", "knowledge/reference-packs/framework-seo-implementation-expanded.md"],
       "templates": ["templates/audit-report.md"],
       "required_evidence": ["media_inventory", "rendered_page", "asset_metadata"]
     },
@@ -148,7 +148,7 @@
       "agent_file": "agents/international-multilingual-seo-agent.md",
       "skills": ["hreflang-audit", "international-url-architecture", "localized-content-review", "regional-keyword-map"],
       "skill_files": ["skills/specialist-skills.md"],
-      "knowledge_files": ["knowledge/seo-quality-gates.md"],
+      "knowledge_files": ["knowledge/seo-quality-gates.md", "knowledge/reference-packs/framework-seo-implementation-expanded.md"],
       "templates": ["templates/audit-report.md"],
       "required_evidence": ["market_and_locale_inventory", "hreflang_or_url_evidence"]
     },

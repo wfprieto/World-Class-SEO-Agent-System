@@ -28,6 +28,10 @@ This file records capabilities already integrated into the canonical `main` bran
 | Report generation | `scripts/seo_pdf_report.py` |
 | SERP-overlap clustering | `scripts/serp_cluster.py`, `skills/seo-cluster-skill.md` |
 | FLOW prompt library | `skills/seo-flow-skill.md`, `skills/flow-prompts/` |
+| LibHunt clean-room source governance | `evaluation/libhunt-source-ingestion-matrix.json`, `docs/LIBHUNT-SOURCE-INGESTION-PLAN.md` |
+| Expanded SEO reference packs | `knowledge/reference-registry.json`, `knowledge/reference-packs/` |
+| Framework SEO implementation notes | `knowledge/reference-packs/framework-seo-implementation-expanded.md` |
+| Adapter hardening coverage | `tests/test_libhunt_adapter_hardening.py`, `runtime/tools.py`, `adapters/` |
 
 ## Wiring rules
 
@@ -66,6 +70,8 @@ Canonical validation on `main` includes:
 ```powershell
 ./scripts/validate-repository.ps1
 python scripts/validate_schema_examples.py
+python scripts/validate_libhunt_source_matrix.py
+python scripts/validate_reference_freshness.py
 pytest -q
 ```
 

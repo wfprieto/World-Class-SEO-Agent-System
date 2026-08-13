@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "certification_id": "world-class-seo-agent-system-final-local-certification",
+  "date": "2026-08-13",
+  "scope": "local-public-repository-release-readiness",
+  "release_decision": "BLOCKED",
+  "blockers": [
+    {
+      "id": "working-tree-reconciliation",
+      "severity": "High",
+      "reason": "The local upgrade work has been moved from main onto release/v1.7.0-final-certification and staged with a clean whitespace check, but it still must be committed, pushed, and merged through a protected pull request before release.",
+      "owner": "Repository owner / release engineer",
+      "required_next_action": "Commit the staged release branch, push release/v1.7.0-final-certification, open a protected pull request, and require GitHub status checks/review before merge."
+    },
+    {
+      "id": "external-live-proof",
+      "severity": "Medium",
+      "reason": "Fixture and static validation are strong, but authorized live-site/provider proof is still outside the public repo release scope.",
+      "owner": "Repository owner / integration owner",
+      "required_next_action": "Keep public claims limited to fixture/anonymized/local proof until authorized live-provider evidence exists."
+    }
+  ],
+  "verified_phase_closeouts": [
+    "docs/APIVR-PHASE-1-RELEASE-HYGIENE-CLOSEOUT.md",
+    "docs/APIVR-PHASE-2-GOLDEN-DEMO-CLOSEOUT.md",
+    "docs/APIVR-PHASE-3-PROOF-PACK-CLOSEOUT.md",
+    "docs/APIVR-PHASE-4-AGENT-SYNERGY-CLOSEOUT.md",
+    "docs/APIVR-PHASE-5-AUTONOMY-SAFETY-CLOSEOUT.md",
+    "docs/APIVR-PHASE-6-PUBLIC-REPO-POLISH-CLOSEOUT.md",
+    "docs/APIVR-PHASE-7-KNOWLEDGE-EXPANSION-CLOSEOUT.md",
+    "docs/APIVR-PHASE-8-FINAL-RELEASE-CERTIFICATION-CLOSEOUT.md"
+  ],
+  "required_public_artifacts": [
+    "README.md",
+    "QUICKSTART.md",
+    "SYSTEM_MAP.md",
+    "SYSTEM_SPEC.md",
+    "docs/AGENT-SYNERGY-MAP.md",
+    "docs/AUTONOMY-SAFETY-MODEL.md",
+    "docs/RELEASE-BRANCH-RECONCILIATION.md",
+    "examples/golden-demo/expected-output-contract.json",
+    "examples/proof-pack/proof-pack-manifest.json",
+    "orchestration/agent-synergy-map.json",
+    "orchestration/autonomy-safety-policy.json",
+    "runtime/autonomy.py",
+    "evaluation/libhunt-source-ingestion-matrix.json",
+    "evaluation/upgrade-source-matrix.json",
+    "knowledge/reference-registry.json"
+  ],
+  "verification_commands": [
+    "python scripts/validate_libhunt_source_matrix.py",
+    "python scripts/validate_upgrade_source_matrix.py",
+    "python scripts/validate_reference_freshness.py",
+    "python scripts/generate_skill_index.py --check",
+    "python scripts/validate_canonical_skill_consistency.py",
+    "python scripts/validate_seo_claims.py",
+    "python scripts/scan_secrets.py",
+    "python -m pytest -q --basetemp .pytest_tmp",
+    "python -m ruff check . --select E9,F63,F7,F82 --no-cache",
+    "python -m mypy runtime seoctl integrations adapters scripts tests/test_golden_demo.py tests/test_proof_pack.py tests/test_agent_synergy_map.py tests/test_autonomy_safety.py tests/test_public_repo_polish.py tests/test_final_release_certification.py",
+    "powershell -ExecutionPolicy Bypass -File scripts/validate-repository.ps1"
+  ],
+  "latest_observed_results": {
+    "pytest": "441 passed",
+    "mypy": "125 source files passed",
+    "ruff": "passed",
+    "secret_scan": "passed",
+    "repository_validation": "passed",
+    "reference_freshness": "68 entries across 21 packs",
+    "seo_claims": "38 claims passed"
+  },
+  "scrummaster_decision": "ACCEPT_WITH_EXPLICIT_RISK",
+  "vp_engineering_decision": "BLOCKED_FOR_MERGE_UNTIL_COMMITTED_PUSHED_AND_PR_GATED"
+}

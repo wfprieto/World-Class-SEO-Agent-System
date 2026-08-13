@@ -1,27 +1,52 @@
 # World-Class SEO Agent System
 
-A model-agnostic operating system for senior SEO engineering, technical SEO, content strategy, GEO/AIO optimization, local SEO, accessibility, CRO, compliance, security, digital PR, competitive intelligence, and continuous SEO research.
+An evidence-governed, model-agnostic SEO agent operating system for senior SEO engineering teams.
 
-This repository is designed as a single source of truth for coding professionals who want SEO agents and SEO skills that work together with clear routing, evidence standards, handoffs, quality gates, implementation templates, and verification rules.
+This repository brings together specialist SEO agents, reusable SEO skills, executable runtime contracts, tool adapters, proof fixtures, safety gates, report templates, and validation tests. It is designed for coding professionals who want SEO work to be routed, challenged, documented, and verified instead of handled as loose prompts or one-off checklists.
+
+## What You Can Do Immediately
+
+Run the golden demo without API keys, paid tools, live-site access, or website changes:
+
+```powershell
+python -m seoctl.entrypoint audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output audit-runs/golden-demo --max-urls 20
+```
+
+Then inspect:
+
+- `audit-runs/golden-demo/executive-summary.md`
+- `audit-runs/golden-demo/technical-audit.md`
+- `audit-runs/golden-demo/findings.json`
+- `audit-runs/golden-demo/agent-contributions.json`
+- `audit-runs/golden-demo/trust-summary.json`
+- `audit-runs/golden-demo/run-manifest.json`
+
+Start with [`QUICKSTART.md`](QUICKSTART.md), then use [`examples/golden-demo/`](examples/golden-demo/) and [`examples/proof-pack/`](examples/proof-pack/) to see the verified demo path and proof coverage.
 
 ## What This Is
 
 This is not a prompt dump. It is a structured SEO operating system made of:
 
-- 25 specialist SEO agents
-- Reusable SEO skills
-- Shared evidence standards
-- Cross-agent workflows
-- Lightweight executable runtime and router
-- Tool adapter contracts and offline-safe parsers
-- Knowledge-source rules
-- Quality gates and anti-patterns
-- JSON output schemas
-- Semantic validation and tests
-- Practical report and implementation templates
-- LLM-specific operating guides for Codex, ChatGPT, Claude, Claude Code, Replit, and Manus
+| Layer | Purpose |
+| --- | --- |
+| 25 specialist agents | Own distinct SEO responsibilities and handoffs. |
+| Reusable skills | Keep audits, briefs, implementation, reporting, and research consistent. |
+| Runtime contracts | Route requests, execute workflows, dispatch tools, and preserve evidence. |
+| Adapters | Normalize crawler, GSC, GA4, PageSpeed, CrUX, backlink, rank, schema, sitemap, robots, hreflang, local, and accessibility data. |
+| Proof pack | Shows safe fixture, anonymized, and schema-backed examples without live overclaims. |
+| Safety model | Keeps public-repo autonomy audit-first and approval-gated for dangerous SEO actions. |
+| Governance | Applies quality gates, source rules, anti-patterns, schemas, tests, and release validation. |
+| LLM control files | Provide Codex, ChatGPT, Claude, Claude Code, Replit, and Manus operating guidance without locking the system to one model. |
 
 The core system is LLM agnostic. Any capable coding or reasoning model can use the files. The top-level model control files provide environment-specific operating guidance without changing the system itself.
+
+## Why It Is Different
+
+- Agents are connected through [`orchestration/capability-registry.json`](orchestration/capability-registry.json), [`orchestration/agent-synergy-map.json`](orchestration/agent-synergy-map.json), and [`workflows/`](workflows/).
+- The public proof path is checked by tests, not just described in docs.
+- Reports distinguish fixture proof, anonymized examples, live-capable adapters, missing evidence, and blocked claims.
+- Dangerous SEO actions are governed by [`orchestration/autonomy-safety-policy.json`](orchestration/autonomy-safety-policy.json) and [`runtime/autonomy.py`](runtime/autonomy.py).
+- The default public mode is audit/report/recommendation. Full autopilot is reserved for private controlled installations with explicit authorization.
 
 ## Who It Is For
 
@@ -39,6 +64,19 @@ The core system is LLM agnostic. Any capable coding or reasoning model can use t
 
 Every SEO recommendation must be evidence-backed, user-first, policy-safe, technically verifiable, and mapped to an owner, risk level, acceptance criteria, and measurement plan.
 
+## Proof And Safety
+
+| Need | Start Here |
+| --- | --- |
+| Run the offline demo | [`QUICKSTART.md`](QUICKSTART.md) |
+| Inspect demo expectations | [`examples/golden-demo/expected-output-contract.json`](examples/golden-demo/expected-output-contract.json) |
+| See proof coverage | [`examples/proof-pack/proof-pack-manifest.json`](examples/proof-pack/proof-pack-manifest.json) |
+| Understand agent cooperation | [`docs/AGENT-SYNERGY-MAP.md`](docs/AGENT-SYNERGY-MAP.md) |
+| Understand autonomy limits | [`docs/AUTONOMY-SAFETY-MODEL.md`](docs/AUTONOMY-SAFETY-MODEL.md) |
+| Verify repository health | [`scripts/validate-repository.ps1`](scripts/validate-repository.ps1) |
+
+The fixture demo proves offline routing, deterministic audit logic, evidence-backed artifact creation, report generation, and agent contribution tracking. It does not prove live rankings, live indexing, live Search Console access, live analytics access, provider authentication, or automatic website mutation.
+
 ## Repository Structure
 
 ```text
@@ -51,6 +89,7 @@ World-Class-SEO-Agent-System/
 |-- Replit.md
 |-- Manus.md
 |-- SYSTEM_SPEC.md
+|-- QUICKSTART.md
 |-- agents/
 |-- adapters/
 |-- skills/
@@ -69,13 +108,14 @@ World-Class-SEO-Agent-System/
 
 1. Read [`SYSTEM_MAP.md`](SYSTEM_MAP.md) for the fastest navigation path through the repository.
 2. Read [`SYSTEM_SPEC.md`](SYSTEM_SPEC.md) for the system mission, evidence hierarchy, operating modes, and approval gates.
-3. Use [`workflows/request-routing.md`](workflows/request-routing.md) to choose the right agent or workflow.
-4. Open [`agents/AGENT_INDEX.md`](agents/AGENT_INDEX.md) to find the specialist agents.
-5. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
-6. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
-7. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
-8. For multi-agent work, use [`orchestration/README.md`](orchestration/README.md) and [`orchestration/session-state.schema.json`](orchestration/session-state.schema.json).
-9. For executable routing or integration work, use [`main.py`](main.py), [`runtime/`](runtime/), and [`adapters/`](adapters/).
+3. Run [`QUICKSTART.md`](QUICKSTART.md) if you want the fastest executable proof path.
+4. Use [`workflows/request-routing.md`](workflows/request-routing.md) to choose the right agent or workflow.
+5. Use [`docs/AGENT-SYNERGY-MAP.md`](docs/AGENT-SYNERGY-MAP.md) to identify support, challenge, reporting, and learning roles.
+6. Open [`agents/AGENT_INDEX.md`](agents/AGENT_INDEX.md) to find the specialist agents.
+7. Use [`skills/SKILL_INDEX.md`](skills/SKILL_INDEX.md) to select reusable SEO capabilities.
+8. Apply [`knowledge/seo-quality-gates.md`](knowledge/seo-quality-gates.md) before accepting any recommendation.
+9. Return structured outputs using [`schemas/agent-output.schema.json`](schemas/agent-output.schema.json) or the closest file in [`templates/`](templates/).
+10. For executable routing or integration work, use [`main.py`](main.py), [`runtime/`](runtime/), and [`adapters/`](adapters/).
 
 ## Agent Roster
 
@@ -206,6 +246,8 @@ Any text a website or app visitor can read should pass [`skills/public-facing-wr
 
 See [`examples/`](examples/) for worked sample outputs:
 
+- Golden demo with expected output contract
+- Unified proof-pack manifest
 - Full audit example
 - Content brief example
 - Technical deployment example
@@ -218,7 +260,7 @@ See [`examples/`](examples/) for worked sample outputs:
 Run repository validation locally with:
 
 ```powershell
-./scripts/validate-repository.ps1
+powershell -ExecutionPolicy Bypass -File scripts\validate-repository.ps1
 ```
 
 Run semantic schema validation and tests with:
@@ -226,8 +268,13 @@ Run semantic schema validation and tests with:
 ```powershell
 python -m pip install -r requirements-dev.txt
 python scripts/validate_schema_examples.py
-pytest -q
+python -m pytest -q --basetemp .pytest_tmp
+python -m ruff check . --select E9,F63,F7,F82 --no-cache
+python -m mypy runtime seoctl integrations adapters scripts
+python scripts\scan_secrets.py
 ```
+
+On Windows, `--basetemp .pytest_tmp` keeps pytest temporary files inside the workspace and avoids user-temp permission issues.
 
 The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workflows/validate.yml) validates JSON, internal markdown links, agent skill references, template references, schema conformance for example outputs, runtime routing, adapter behavior, and semantic repository contracts.
 
@@ -236,6 +283,8 @@ The GitHub Actions workflow in [`.github/workflows/validate.yml`](.github/workfl
 The executable layer is intentionally lightweight and model-agnostic. [`runtime/`](runtime/) provides session state, request routing, async execution, memory, tool dispatch and LLM clients. [`adapters/`](adapters/) provides normalized contracts for crawl exports, server logs, PageSpeed/Lighthouse payloads, schema validation, rank tracking, backlinks, GSC exports, and GA4 exports. Live API credentials are not stored in the repository; adapters are designed so teams can plug in authenticated fetchers while still testing with safe local exports.
 
 Adapter implementation details live in [`adapters/README.md`](adapters/README.md). Recommended tools to connect are listed in [`adapters/TOOLS.md`](adapters/TOOLS.md). A safe OAuth2 Google Search Console pattern is provided in [`adapters/gsc_live_example.py`](adapters/gsc_live_example.py). A live key-only PageSpeed Insights and CrUX adapter with SSRF-safe URL validation is provided in [`adapters/google_pagespeed_live.py`](adapters/google_pagespeed_live.py), and a persistent cross-session drift store in [`adapters/evidence_store.py`](adapters/evidence_store.py).
+
+Autonomy safety is governed by [`docs/AUTONOMY-SAFETY-MODEL.md`](docs/AUTONOMY-SAFETY-MODEL.md), [`orchestration/autonomy-safety-policy.json`](orchestration/autonomy-safety-policy.json), and [`runtime/autonomy.py`](runtime/autonomy.py). The public repository defaults to audit-only behavior. Dangerous SEO actions require explicit approval.
 
 Dry-run routing:
 

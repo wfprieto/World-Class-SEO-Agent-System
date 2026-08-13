@@ -2,6 +2,13 @@
 
 Use this list to decide which tools should feed the adapter layer. Prefer the free baseline first, then add paid tools only when site size, revenue, reporting needs or risk justifies them.
 
+## Connection Policy
+
+- Free local exports should work without credentials or budget approval.
+- Live APIs require credentials from environment variables or a secret manager.
+- Paid, quota-sensitive, or metered tools require explicit budget approval before dispatch.
+- Tools that process private client data must use anonymized exports in tests and public examples.
+
 ## Free First-Party Search Data
 
 - Google Search Console: indexing, search performance, sitemaps, enhancements and security signals.

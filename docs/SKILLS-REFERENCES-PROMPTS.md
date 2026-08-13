@@ -9,6 +9,8 @@ Phase 4 replaces the hand-maintained skill index with generated metadata, adds p
 - Procedure authority: `skills/deep-skill-procedures.md`
 - Generated index: `skills/SKILL_INDEX.md`
 - Reference metadata: `knowledge/reference-registry.json`
+- LibHunt source matrix: `evaluation/libhunt-source-ingestion-matrix.json`
+- Framework implementation pack: `knowledge/reference-packs/framework-seo-implementation-expanded.md`
 - Prompt composition: `prompts/prompt-manifest.json`
 
 ## Validation
@@ -17,6 +19,7 @@ Phase 4 replaces the hand-maintained skill index with generated metadata, adds p
 python scripts/generate_skill_index.py --check
 python scripts/validate_canonical_skill_consistency.py
 python scripts/validate_reference_freshness.py
+python scripts/validate_libhunt_source_matrix.py
 pytest -q tests/test_phase4_skill_reference_prompt_pack.py
 ```
 

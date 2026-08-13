@@ -47,7 +47,12 @@ def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
     categories = scorecard.get("categories")
     if not isinstance(categories, list) or len(categories) != 10:
         return ["scorecard must contain exactly ten categories"]
-    ids = [row.get("id") for row in categories if isinstance(row, dict)]
+    ids: list[int] = []
+    for row in categories:
+        if isinstance(row, dict):
+            row_id = row.get("id")
+            if isinstance(row_id, int):
+                ids.append(row_id)
     if sorted(ids) != list(range(1, 11)):
         errors.append("category ids must be unique integers 1 through 10")
     weight = sum(float(row.get("weight", 0)) for row in categories)

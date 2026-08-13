@@ -268,15 +268,40 @@ class SiteCrawler:
                 elif urllib.parse.urlsplit(absolute).scheme in {"http", "https"}: external.add(absolute)
         assets = sorted({self._normalized(urllib.parse.urljoin(base, value)) for value in parser.assets if urllib.parse.urlsplit(urllib.parse.urljoin(base, value)).scheme in {"http", "https"}})
         robots_values: list[str] = []
+        meta_description: str | None = None
+        viewport: str | None = None
+        charset: str | None = None
+        open_graph_tags: set[str] = set()
+        twitter_tags: set[str] = set()
+        deprecated_meta: set[str] = set()
         for meta in parser.metas:
             if meta.get("name", "").lower() in {"robots", "googlebot"}:
                 robots_values.extend(token.strip().lower() for token in meta.get("content", "").split(",") if token.strip())
+            name = meta.get("name", "").lower()
+            prop = meta.get("property", "").lower()
+            http_equiv = meta.get("http-equiv", "").lower()
+            if name == "description" and meta_description is None:
+                meta_description = meta.get("content", "").strip() or None
+            if name == "viewport" and viewport is None:
+                viewport = meta.get("content", "").strip() or None
+            if meta.get("charset") and charset is None:
+                charset = meta.get("charset", "").strip().lower() or None
+            if prop.startswith("og:"):
+                open_graph_tags.add(prop)
+            if name.startswith("twitter:"):
+                twitter_tags.add(name)
+            if name in {"keywords", "revisit-after", "rating"} or http_equiv == "pragma":
+                deprecated_meta.add(name or http_equiv)
+        if charset is None:
+            content_match = re.search(r"charset=([A-Za-z0-9._-]+)", content_type or "", re.I)
+            if content_match:
+                charset = content_match.group(1).lower()
         x_robots = self._header(hop.headers, "x-robots-tag")
         images = [{"src": self._normalized(urllib.parse.urljoin(base, image.get("src", ""))) if image.get("src", "").strip() else None, "loading": image.get("loading") or None, "fetchpriority": image.get("fetchpriority") or None, "width": image.get("width") or None, "height": image.get("height") or None, "alt_present": "alt" in image, "position": index} for index, image in enumerate(parser.images)]
         visible_text = " ".join(parser.text_parts)
         title = " ".join(parser.title_parts).strip() or None
         soft = bool(200 <= hop.status_code < 300 and (_SOFT_404.search((title or "") + " " + visible_text[:2000]) or len(visible_text.strip()) < 40))
-        return PageRecord(requested_url=url, final_url=self._normalized(hop.final_url), depth=depth, status_code=hop.status_code, elapsed_ms=hop.elapsed_ms, content_type=content_type, title=title, h1=parser.h1, canonical=canonical, meta_robots=sorted(set(robots_values)), x_robots_tag=x_robots, internal_links=sorted(internal), external_links=sorted(external), asset_urls=assets, images=images, jsonld_types=self._jsonld_types(parser.jsonld_payloads), rel_next=sorted(rel_next), rel_prev=sorted(rel_prev), data_nosnippet_count=parser.data_nosnippet_count, text_length=len(visible_text), content_hash=hashlib.sha256(visible_text.encode("utf-8")).hexdigest(), soft_404_signal=soft, raw_html_available=bool(text), errors=errors)
+        return PageRecord(requested_url=url, final_url=self._normalized(hop.final_url), depth=depth, status_code=hop.status_code, elapsed_ms=hop.elapsed_ms, content_type=content_type, title=title, h1=parser.h1, canonical=canonical, meta_robots=sorted(set(robots_values)), x_robots_tag=x_robots, internal_links=sorted(internal), external_links=sorted(external), asset_urls=assets, images=images, jsonld_types=self._jsonld_types(parser.jsonld_payloads), rel_next=sorted(rel_next), rel_prev=sorted(rel_prev), data_nosnippet_count=parser.data_nosnippet_count, text_length=len(visible_text), content_hash=hashlib.sha256(visible_text.encode("utf-8")).hexdigest(), soft_404_signal=soft, raw_html_available=bool(text), meta_description=meta_description, viewport=viewport, charset=charset, open_graph_tags=sorted(open_graph_tags), twitter_tags=sorted(twitter_tags), deprecated_meta=sorted(deprecated_meta), errors=errors)
 
     def _robots(self, scheme: str, host: str) -> RobotsRecord:
         url = urllib.parse.urlunsplit((scheme, host, "/robots.txt", "", ""))

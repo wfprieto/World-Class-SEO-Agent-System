@@ -5,6 +5,8 @@ These examples show complete, filled-in outputs using the repository's agents, s
 ## Included Examples
 
 - `full-audit-example/`: sample full SEO audit output.
+- `golden-demo/`: verified offline demo path and expected output contract.
+- `proof-pack/`: unified proof-pack manifest connecting examples, fixtures, agents, and validation paths.
 - `content-brief-example/`: sample content brief output.
 - `technical-deployment-example/`: sample technical SEO implementation plan and handoff.
 - `anonymized-production-style-example/`: crawl, GSC-style and GA4-style inputs with a matching agent output.
