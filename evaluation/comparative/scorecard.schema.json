@@ -4,11 +4,22 @@
   "title": "Comparative SEO System Scorecard",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "as_of", "target_repository", "comparator", "formula", "categories", "overall_score"],
+  "required": ["schema_version", "score_model_version", "as_of", "target_repository", "comparator", "formula", "categories", "overall_score"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
+    "score_model_version": {"const": "comparative-static-v1"},
     "as_of": {"type": "string", "format": "date"},
     "target_repository": {"type": "string", "minLength": 3},
+    "verification_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code_verified", "live_verified", "externally_reproduced"],
+      "properties": {
+        "code_verified": {"enum": ["PASS", "INCOMPLETE", "FAIL"]},
+        "live_verified": {"enum": ["PASS", "INCOMPLETE", "NOT_RUN", "FAIL"]},
+        "externally_reproduced": {"enum": ["PASS", "INCOMPLETE", "NOT_RUN", "FAIL"]}
+      }
+    },
     "comparator": {
       "type": "object",
       "additionalProperties": false,
@@ -45,11 +56,13 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["source", "claim", "state"],
+              "required": ["id", "source", "claim", "state", "sha256"],
               "properties": {
+                "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
                 "source": {"type": "string"},
                 "claim": {"type": "string"},
-                "state": {"enum": ["VERIFIED", "PARTIAL", "STALE", "UNVERIFIED"]}
+                "state": {"enum": ["VERIFIED", "PARTIAL", "STALE", "UNVERIFIED"]},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
               }
             }
           },

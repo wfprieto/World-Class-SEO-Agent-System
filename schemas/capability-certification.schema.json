@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/capability-certification.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "max_receipt_age_days", "required_checks", "trusted_issuers", "profiles"],
+  "properties": {
+    "$schema": {"const": "../schemas/capability-certification.schema.json"},
+    "schema_version": {"const": "1.0.0"},
+    "max_receipt_age_days": {"type": "integer", "minimum": 1, "maximum": 90},
+    "required_checks": {
+      "const": ["prerequisites", "auth_preflight", "fixture_replay", "adverse_cases", "live_probe", "redaction"]
+    },
+    "trusted_issuers": {
+      "type": "array",
+      "maxItems": 0,
+      "description": "Empty until an authenticated external attestation verifier is implemented."
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version", "capabilities", "provider_id", "provider", "transport", "side_effect", "owner", "relevant_sources", "credential_env_sets", "required_binaries", "live_authorization"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+          "version": {"type": "integer", "minimum": 1},
+          "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "provider_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$"},
+          "provider": {"type": "string", "minLength": 1},
+          "transport": {"enum": ["bounded_https", "browser", "llm_provider"]},
+          "side_effect": {"enum": ["read_only", "write"]},
+          "owner": {"type": "string", "minLength": 1},
+          "relevant_sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"}},
+          "credential_env_sets": {
+            "type": "array",
+            "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}}
+          },
+          "required_binaries": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]+$"}},
+          "live_authorization": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["execute_flag", "confirmation", "authorized_target_required", "cost_approval_required", "write_approval_required"],
+            "properties": {
+              "execute_flag": {"const": "--execute-live"},
+              "confirmation": {"const": "LIVE_CERTIFY"},
+              "authorized_target_required": {"const": true},
+              "cost_approval_required": {"type": "boolean"},
+              "write_approval_required": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,5 @@
 {
-  "version": "1.0.0",
-  "verified_at": "2026-07-12",
+  "version": "2.0.0",
   "packs": {
     "technical-search": {
       "path": "knowledge/reference-packs/technical-search.md",
@@ -15,7 +14,9 @@
         "https://developers.google.com/search/docs/specialty/international/localized-versions",
         "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
         "https://developers.google.com/search/docs/appearance/core-web-vitals"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "1f652a9e89abb97da357e13851ed48047771f3b2370f239a92807f2f8dc15eee"
     },
     "content-and-ai-search": {
       "path": "knowledge/reference-packs/content-and-ai-search.md",
@@ -25,7 +26,9 @@
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
         "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
         "https://developers.google.com/search/docs/appearance/ai-features"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "ec2d6c3dfef11f6f35d33338fb882a767cba2da6838c53dab9321f502b68310a"
     },
     "local-ecommerce-programmatic": {
       "path": "knowledge/reference-packs/local-ecommerce-programmatic.md",
@@ -35,7 +38,9 @@
         "https://developers.google.com/search/docs/specialty/ecommerce",
         "https://developers.google.com/search/docs/appearance/structured-data/local-business",
         "https://developers.google.com/search/docs/essentials/spam-policies"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "aeb371a3c45133bf1eeff19646c04fea67b445dccbdd3107b4effae4a07b063c"
     },
     "authority-spam-privacy": {
       "path": "knowledge/reference-packs/authority-spam-privacy.md",
@@ -44,7 +49,9 @@
       "primary_sources": [
         "https://developers.google.com/search/docs/essentials/spam-policies",
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "2a5c9c33432779b6634a2d29cccd5df745ae5adac320c43950e1d5a52ab02955"
     },
     "accessibility-media": {
       "path": "knowledge/reference-packs/accessibility-media.md",
@@ -53,7 +60,9 @@
       "primary_sources": [
         "https://www.w3.org/WAI/standards-guidelines/wcag/",
         "https://developers.google.com/search/docs/appearance/google-images"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "951c0327e69f2a4b822db4d58408cc9794780e52aa6e1647e5b0f34eab6e0e87"
     },
     "experimentation-reporting-platforms": {
       "path": "knowledge/reference-packs/experimentation-reporting-platforms.md",
@@ -63,7 +72,9 @@
         "https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console",
         "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops",
         "https://developers.google.com/search/docs/fundamentals/seo-starter-guide"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "caa9d886903aa9f55404cdc6ed47e93b3de2a99cf1a3ce50c1c8ce1e0a3156ab"
     },
     "technical-search-expanded": {
       "path": "knowledge/reference-packs/technical-search-expanded.md",
@@ -74,7 +85,9 @@
         "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
         "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
         "https://developers.google.com/search/docs/appearance/core-web-vitals"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "93056d953dd558cefe4f11ba17a2b24f7580875f57a51483a6c37925666d2f02"
     },
     "content-quality-expanded": {
       "path": "knowledge/reference-packs/content-quality-expanded.md",
@@ -84,7 +97,9 @@
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
         "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
         "https://developers.google.com/search/docs/essentials/spam-policies"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "22f9373ec86105281f9aa8c79c46d3c1929ba907a60e72bcecbccd9759afc8ce"
     },
     "local-maps-expanded": {
       "path": "knowledge/reference-packs/local-maps-expanded.md",
@@ -93,7 +108,9 @@
       "primary_sources": [
         "https://support.google.com/business/answer/3038177",
         "https://developers.google.com/search/docs/appearance/structured-data/local-business"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "eca2fcf4ad2084bce4b6c74ccbb0189509481455c94aa085279bcdcdba1af838"
     },
     "ai-search-geo-expanded": {
       "path": "knowledge/reference-packs/ai-search-geo-expanded.md",
@@ -103,7 +120,9 @@
         "https://developers.google.com/search/docs/appearance/ai-features",
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
         "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "b87cb4da61ea974565a7f2c25896490c67fd686aa1e2dfbe4e9ee29cb739e723"
     },
     "international-hreflang-expanded": {
       "path": "knowledge/reference-packs/international-hreflang-expanded.md",
@@ -112,7 +131,9 @@
       "primary_sources": [
         "https://developers.google.com/search/docs/specialty/international/localized-versions",
         "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "c226cd41974b548f58ae3eaf16d440f0f885122abd4f79a59d4a0d0960c6653d"
     },
     "sxo-cro-expanded": {
       "path": "knowledge/reference-packs/sxo-cro-expanded.md",
@@ -122,7 +143,9 @@
         "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
         "https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console",
         "https://www.w3.org/WAI/standards-guidelines/wcag/"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "4920adde6d46a1e4f493ae23ba21669a9a68bde34ee886da5b95060e5144ff1e"
     },
     "backlink-authority-expanded": {
       "path": "knowledge/reference-packs/backlink-authority-expanded.md",
@@ -131,7 +154,9 @@
       "primary_sources": [
         "https://developers.google.com/search/docs/essentials/spam-policies",
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "cda06bee61132a6418309a98fdcc0b33470bacdde19c9986004716f207cdfdc7"
     },
     "ecommerce-programmatic-expanded": {
       "path": "knowledge/reference-packs/ecommerce-programmatic-expanded.md",
@@ -141,7 +166,9 @@
         "https://developers.google.com/search/docs/specialty/ecommerce",
         "https://developers.google.com/search/docs/appearance/structured-data/product",
         "https://developers.google.com/search/docs/essentials/spam-policies"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "f42c3b4cbc84864f9d4f65b72f6d9eb01ad539c9e93b97fb425679adea77c0e0"
     },
     "google-apis-expanded": {
       "path": "knowledge/reference-packs/google-apis-expanded.md",
@@ -151,7 +178,9 @@
         "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
         "https://developers.google.com/analytics/devguides/reporting/data/v1",
         "https://developers.google.com/speed/docs/insights/v5/get-started"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "20e5ae4ecad6026ed27258d5fa74390988985a48a6d9d5485750dfcc9e455f8f"
     },
     "schema-rich-results-expanded": {
       "path": "knowledge/reference-packs/schema-rich-results-expanded.md",
@@ -161,7 +190,9 @@
         "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
         "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
         "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "4ee96c9fec5ccf90bd144df4ad72e946b9d3e8995fa156117ce47e07c44dd2d5"
     },
     "head-metadata-expanded": {
       "path": "knowledge/reference-packs/head-metadata-expanded.md",
@@ -173,7 +204,9 @@
         "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
         "https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag",
         "https://ogp.me/"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "cec54a5fe8e9c379aac01317a5cb2e7b18e06d6ce8a7d2d42b1722baa747afb4"
     },
     "geo-aeo-sro-expanded": {
       "path": "knowledge/reference-packs/geo-aeo-sro-expanded.md",
@@ -184,7 +217,9 @@
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
         "https://help.openai.com/en/articles/12627856-publishers-and-developers-faq",
         "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "1e60d796d441653d3f58e470c9f78156b1f24813147825a007ef1920c0e65fb1"
     },
     "legacy-checklist-triage": {
       "path": "knowledge/reference-packs/legacy-checklist-triage.md",
@@ -195,7 +230,9 @@
         "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
         "https://developers.google.com/search/docs/essentials/spam-policies",
         "https://www.w3.org/WAI/standards-guidelines/wcag/"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "0e4ba0f8a9af2dba7311fe2e49da6f3a07681027e887a74a322a3745386a7b7e"
     },
     "crawl-budget-logfile-expanded": {
       "path": "knowledge/reference-packs/crawl-budget-logfile-expanded.md",
@@ -206,7 +243,9 @@
         "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
         "https://developers.google.com/search/docs/monitor-debug/search-console-start",
         "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "230e015db701ee1bb84b7f89b51b9183ac0550794fe65efae6c3b9d2acf4d51d"
     },
     "framework-seo-implementation-expanded": {
       "path": "knowledge/reference-packs/framework-seo-implementation-expanded.md",
@@ -218,7 +257,9 @@
         "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
         "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
         "https://developers.google.com/search/apis/indexing-api/v3/quickstart"
-      ]
+      ],
+      "verified_at": "2026-07-12",
+      "content_sha256": "ab37ca98112bbfa666c0d3562caa5e9cb383022a4a123a644ebb453b0638d107"
     }
   },
   "entries": [

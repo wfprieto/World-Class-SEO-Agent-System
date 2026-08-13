@@ -1,22 +1,35 @@
 {
-  "schema_version": "1.0.1",
-  "as_of": "2026-07-12",
-  "evaluated_target_commit": "e40e45c642abc442a098ea38862115a2b9e5877b",
+  "schema_version": "1.1.0",
+  "as_of": "2026-08-01",
+  "evaluated_target_commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
   "phase6_package_commit": "4570d700c9dba5d5fc3ab1925c9c317fa35eb2f6",
-  "phase6_ci_enforcement_commit": "e40e45c642abc442a098ea38862115a2b9e5877b",
+  "phase6_ci_enforcement_commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
   "claude_commit": "6cf1ea9fe4c2088b2ad3089797f846850fd66164",
-  "release_candidate": "v2.0.0",
+  "release_candidate": "UNSET_UNTAGGED",
+  "verification_state": {
+    "code_verified": "PASS",
+    "live_verified": "INCOMPLETE",
+    "externally_reproduced": "NOT_RUN"
+  },
+  "verified_ci": {
+    "provider": "GitHub Actions",
+    "run_id": 30681366958,
+    "commit": "1dbfc232eb8b8540f2f5a3e5f79fabe54874531d",
+    "cells": ["ubuntu-python-3.11", "ubuntu-python-3.13", "windows-python-3.11", "windows-python-3.13"]
+  },
   "gates": {
     "phase4_deterministic": "PASS",
     "phase5_deterministic": "PASS",
     "phase6_artifact_consistency": "PASS",
-    "final_push_ci": "NOT_OBSERVABLE",
-    "dependency_audit": "BLOCKED_BY_NETWORK",
+    "final_push_ci": "NOT_RUN",
+    "dependency_audit": "PASS",
     "live_authorized_smokes": "INCOMPLETE",
     "seven_archetype_benchmark": "NOT_RUN",
     "scrummaster3_verdict": "REWORK_GOOD",
     "vp_engineering_verdict": "REWORK_GOOD",
-    "external_reproduction": "NOT_RUN"
+    "external_reproduction": "NOT_RUN",
+    "version_tag": "NOT_RUN",
+    "public_release_artifacts": "NOT_RUN"
   },
   "release_decision": "BLOCKED",
   "public_description_allowed": "A governed, evidence-first SEO agent operating system under active release validation.",

@@ -96,6 +96,14 @@ def evaluate_cycle(cycle: dict[str, Any], *, builder_context_id: str) -> dict[st
     }
     evidence_hash = canonical_hash(evidence_package)
 
+    for field in ("files_changed", "tests_added", "lessons"):
+        values = cycle.get(field)
+        if not values or any(not str(value).strip() for value in values):
+            errors.append(f"{field} must contain at least one concrete record")
+    evidence_refs = verification.get("evidence_refs")
+    if not evidence_refs or any(not str(value).strip() for value in evidence_refs):
+        errors.append("verification evidence_refs must contain at least one concrete reference")
+
     if cycle.get("direct_merge_permitted") is not False:
         errors.append("improvement cycles can never authorize direct merge")
     if not verification.get("tests_passed"):

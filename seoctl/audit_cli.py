@@ -11,7 +11,7 @@ from integrations.product_proof.service import ProductProofTechnicalAudit
 from runtime.assets import resolve_asset_root
 from scripts.validate_product_claims import validate as validate_product_claims
 from scripts.validate_seo_claims import validate as validate_claims
-from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, envelope
+from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, envelope, exit_code_for_status
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[1])
 
@@ -21,12 +21,7 @@ def _service() -> ProductProofTechnicalAudit:
 
 
 def _result(command: str, result):
-    code = EXIT_OK
-    if result.status in {"not_configured", "unavailable"}:
-        code = EXIT_UNAVAILABLE
-    elif result.status in {"failed", "invalid", "invalid_response"}:
-        code = EXIT_FAILED
-    return envelope(command, result.status, result.data, warnings=result.warnings), code
+    return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
 def _technical(args: argparse.Namespace):

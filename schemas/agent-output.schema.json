@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "contract_version",
     "agent",
     "summary",
     "evidence",
@@ -18,9 +19,20 @@
     "dependencies",
     "acceptance_criteria",
     "verification",
-    "follow_up"
+    "follow_up",
+    "material_claims",
+    "execution_state"
   ],
   "properties": {
+    "contract_version": {
+      "type": "string",
+      "enum": ["1.0.0", "2.0.0"],
+      "description": "Evidence contract version. Runtime validation requires this explicitly; unversioned payloads must pass through the opt-in legacy normalizer."
+    },
+    "legacy_unverified": {
+      "type": "boolean",
+      "description": "True only for explicitly normalized version 1.0.0 output."
+    },
     "output_id": {
       "type": "string",
       "description": "Stable runtime output identifier used by handoffs and workflow events."
@@ -43,10 +55,14 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Optional stable evidence identifier."
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "description": "Stable evidence identifier used by every evidence reference."
           },
           "source": {
             "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
             "description": "URL, file, export, report, crawl, API, or user-provided source."
           },
           "type": {
@@ -60,6 +76,11 @@
           "notes": {
             "type": "string",
             "description": "Short note explaining relevance, limitations, or confidence."
+          },
+          "state": {
+            "type": "string",
+            "enum": ["CURRENT", "UNVERIFIED", "STALE", "MISSING", "INVALID", "CONTRADICTORY"],
+            "description": "Truthful freshness and consistency state used by finding reconciliation."
           }
         }
       }
@@ -79,6 +100,8 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
             "description": "Stable finding identifier."
           },
           "severity": {
@@ -96,8 +119,28 @@
           },
           "evidence_refs": {
             "type": "array",
-            "description": "References to evidence items by stable id or source label.",
-            "items": {"type": "string"}
+            "description": "References to evidence items by unique stable id.",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "action_polarity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target", "polarity"],
+            "description": "Optional bounded action contract. Use the same normalized target for recommendations that must be checked for incompatibility.",
+            "properties": {
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Concrete behavior or state being controlled, such as product-page crawling."
+              },
+              "polarity": {
+                "type": "string",
+                "enum": ["ENABLE", "DISABLE"],
+                "description": "Whether the finding recommends enabling or disabling the target."
+              }
+            }
           }
         }
       }
@@ -175,15 +218,27 @@
         "additionalProperties": false,
         "required": ["claim_id", "claim_type", "statement", "evidence_refs", "evidence_state", "inference"],
         "properties": {
-          "claim_id": {"type": "string"},
+          "claim_id": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
           "claim_type": {
             "type": "string",
             "enum": ["numeric", "url", "date", "platform_behavior", "policy", "legal", "comparative", "completion", "other"]
           },
-          "statement": {"type": "string"},
+          "statement": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+          "bound_fields": {
+            "type": "array",
+            "description": "Exact material output field paths whose values this claim supports.",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
+          },
           "normalized_value": {},
           "unit": {"type": "string"},
-          "evidence_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "evidence_refs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+            "minItems": 1,
+            "uniqueItems": true
+          },
           "evidence_state": {
             "type": "string",
             "enum": ["AVAILABLE", "PARTIAL", "MISSING", "STALE", "INVALID", "BLOCKED"]
@@ -206,18 +261,90 @@
       "type": "string",
       "enum": ["COMPLETE", "PARTIAL", "BLOCKED", "FAILED", "SYNTHETIC"],
       "description": "Truthful execution state of the agent node."
+    },
+    "specialist_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "mapped_execution_state", "rationale_code", "evidence_refs", "human_action_required"],
+      "properties": {
+        "state": {"enum": ["READY", "PARTIAL", "BLOCKED", "ABSTAIN", "ESCALATE"]},
+        "mapped_execution_state": {"enum": ["COMPLETE", "PARTIAL", "BLOCKED"]},
+        "rationale_code": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "human_action_required": {"type": "boolean"}
+      },
+      "description": "Required at runtime for priority specialists; mapping is enforced against execution_state by StructuredOutputService."
+    },
+    "handoff_acknowledgements": {
+      "type": "array",
+      "description": "Explicit, per-handoff resolution records. Omission leaves an addressed required handoff unresolved.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handoff_id", "disposition", "requested_action_addressed", "evidence_refs_addressed", "acceptance_criteria_addressed", "resolution_note"],
+        "properties": {
+          "handoff_id": {"type": "string", "minLength": 1},
+          "disposition": {"enum": ["ACCEPTED", "CHALLENGED", "UNRESOLVED"]},
+          "requested_action_addressed": {"type": "string"},
+          "evidence_refs_addressed": {"type": "array", "items": {"type": "string"}},
+          "acceptance_criteria_addressed": {"type": "array", "items": {"type": "string"}},
+          "resolution_note": {"type": "string", "minLength": 1}
+        }
+      }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "required": ["contract_version"],
+        "properties": {"contract_version": {"const": "2.0.0"}}
+      },
+      "then": {
+        "required": ["execution_state", "material_claims"],
+        "properties": {
+          "material_claims": {
+            "items": {"required": ["bound_fields"]}
+          },
+          "evidence": {
+            "items": {"required": ["id", "source", "type", "date_checked", "notes", "state"]}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["contract_version"],
+        "properties": {"contract_version": {"const": "1.0.0"}}
+      },
+      "then": {
+        "required": ["execution_state", "material_claims", "legacy_unverified"],
+        "properties": {
+          "execution_state": {"const": "PARTIAL"},
+          "legacy_unverified": {"const": true},
+          "evidence": {
+            "items": {
+              "required": ["id", "source", "type", "date_checked", "notes", "state"],
+              "properties": {"state": {"const": "UNVERIFIED"}}
+            }
+          }
+        }
+      }
+    }
+  ],
   "examples": [
     {
+      "contract_version": "1.0.0",
+      "legacy_unverified": true,
       "agent": "SEO Technical Agent",
       "summary": "The product template emits conflicting canonical and hreflang signals.",
       "evidence": [
         {
+          "id": "crawl-export-2026-07-03.csv",
           "source": "crawl-export-2026-07-03.csv",
           "type": "crawl_export",
           "date_checked": "2026-07-03",
-          "notes": "Sample of 50 product URLs showed canonical conflicts."
+          "notes": "Sample of 50 product URLs showed canonical conflicts.",
+          "state": "UNVERIFIED"
         }
       ],
       "confidence": "High",
@@ -245,7 +372,9 @@
       "dependencies": ["International & Multilingual SEO Agent validation", "Template access"],
       "acceptance_criteria": ["Self-canonical is present on sampled localized URLs", "Return hreflang tags validate", "No unexpected noindex or robots blocks"],
       "verification": ["Run hreflang audit on sample URLs", "Inspect rendered HTML", "Submit sample URLs for indexation validation when available"],
-      "follow_up": "Recheck sampled localized URLs 14 days after deployment or after next sitemap submission."
+      "follow_up": "Recheck sampled localized URLs 14 days after deployment or after next sitemap submission.",
+      "material_claims": [],
+      "execution_state": "PARTIAL"
     }
   ]
 }

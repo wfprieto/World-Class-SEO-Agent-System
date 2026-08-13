@@ -31,12 +31,15 @@ Optimize images, videos, visual SERP features, thumbnails, transcripts, media st
 
 - `image-seo-audit`
 - `video-seo-audit`
-- `schema-detect-validate-generate`
-- `accessibility-audit`
+- `rendered-visual-audit`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Evaluate discovery, accessibility, performance, provenance, and schema separately. Narrow screenshot-only conclusions, never infer transcript or timestamp accuracy, and escalate rights, sensitive-media, or destructive replacement decisions.
 
 ## Output
 
-Use `templates/media-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

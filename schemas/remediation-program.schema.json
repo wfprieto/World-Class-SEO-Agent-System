@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://world-class-seo.local/schemas/remediation-program.json",
+  "title": "Owner-Controlled APIVR Remediation Program",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "program_id",
+    "objective",
+    "baseline",
+    "apivr_tier",
+    "current_phase",
+    "direct_merge_permitted",
+    "scope",
+    "exclusions",
+    "evidence_classes",
+    "phases",
+    "audit_findings",
+    "failures",
+    "learning_records"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "program_id": {"const": "owner-controlled-remediation"},
+    "objective": {"type": "string", "minLength": 40},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "branch", "working_branch", "tests_collected", "coverage_percent"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "branch": {"type": "string", "minLength": 1},
+        "working_branch": {"type": "string", "minLength": 1},
+        "tests_collected": {"type": "integer", "minimum": 1},
+        "coverage_percent": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "apivr_tier": {"enum": ["COMPREHENSIVE", "FORENSIC"]},
+    "current_phase": {"type": "string", "pattern": "^P[0-8]$"},
+    "direct_merge_permitted": {"const": false},
+    "scope": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 3}
+    },
+    "exclusions": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 3}
+    },
+    "evidence_classes": {
+      "type": "array",
+      "const": ["SOURCE", "AUTOMATED", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"]
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {"$ref": "#/$defs/phase"}
+    },
+    "audit_findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/audit_finding"}
+    },
+    "failures": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/failure"}
+    },
+    "learning_records": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/learning"}
+    }
+  },
+  "$defs": {
+    "audit_finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "phase_id", "severity", "summary", "status", "source_refs",
+        "remediation", "acceptance"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^AUD-[0-9]{3,}$"},
+        "phase_id": {"type": "string", "pattern": "^P[0-8]$"},
+        "severity": {"enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]},
+        "summary": {"type": "string", "minLength": 12},
+        "status": {"enum": ["OPEN", "IN_PROGRESS", "RESOLVED", "OWNER_DECISION"]},
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "remediation": {"type": "string", "minLength": 12},
+        "acceptance": {"type": "string", "minLength": 12}
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "horizon", "status", "evidence_refs"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^P[0-8]-AC-[0-9]{2}$"},
+        "description": {"type": "string", "minLength": 12},
+        "horizon": {"enum": ["IMMEDIATE", "LEADING_INDICATOR"]},
+        "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "OUT_OF_SCOPE"]},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "ref", "commit", "sha256", "environment", "status", "assertion"],
+      "properties": {
+        "class": {"enum": ["SOURCE", "AUTOMATED", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"]},
+        "ref": {"type": "string", "minLength": 2},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "environment": {"enum": ["LOCAL", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"]},
+        "status": {"enum": ["OBSERVED", "PASS", "FAIL", "BLOCKED", "OUT_OF_SCOPE"]},
+        "assertion": {"type": "string", "minLength": 8},
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "workflow", "head_sha", "conclusion", "jobs"],
+          "properties": {
+            "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+            "workflow": {"const": "Validate repository"},
+            "head_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "conclusion": {"const": "success"},
+            "jobs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 2}}
+          }
+        }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "title", "status", "rollback_baseline_commit", "verified_commit", "review_snapshot_commit", "frozen_package_commit", "rollback_evidence_sha256", "authority_evidence", "package_certification", "owner", "approver", "verifier", "notify",
+        "scope", "non_goals", "rollback", "acceptance_criteria", "required_evidence_classes",
+        "evidence_status", "gates", "gate_evidence", "review"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^P[0-8]$"},
+        "title": {"type": "string", "minLength": 8},
+        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETE"]},
+        "rollback_baseline_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "verified_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "review_snapshot_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "frozen_package_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "rollback_evidence_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "authority_evidence": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/evidence"}},
+        "package_certification": {"type": "array", "maxItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "owner": {"type": "string", "minLength": 3},
+        "approver": {"type": "string", "minLength": 3},
+        "verifier": {"type": "string", "minLength": 3},
+        "notify": {"type": "array", "items": {"type": "string", "minLength": 3}},
+        "scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
+        "non_goals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
+        "rollback": {"type": "string", "minLength": 12},
+        "acceptance_criteria": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/criterion"}},
+        "required_evidence_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["SOURCE", "AUTOMATED", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"]}
+        },
+        "evidence_status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["SOURCE", "AUTOMATED", "CI", "PROVIDER", "DEPLOYED", "OPERATIONAL"],
+          "properties": {
+            "SOURCE": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "AUTOMATED": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "CI": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "PROVIDER": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "OUT_OF_SCOPE"]},
+            "DEPLOYED": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "OUT_OF_SCOPE"]},
+            "OPERATIONAL": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "OUT_OF_SCOPE"]}
+          }
+        },
+        "gates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "implementation_audit", "focused_tests", "full_certification", "security_review",
+            "documentation", "learning", "unexpected_change_scan"
+          ],
+          "properties": {
+            "implementation_audit": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "focused_tests": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "full_certification": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+            "security_review": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
+            "documentation": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
+            "learning": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "NO_MATERIAL_LEARNING"]},
+            "unexpected_change_scan": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]}
+          }
+        },
+        "gate_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "implementation_audit", "focused_tests", "full_certification", "security_review",
+            "documentation", "learning", "unexpected_change_scan"
+          ],
+          "properties": {
+            "implementation_audit": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "focused_tests": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "full_certification": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "security_review": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "documentation": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "learning": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+            "unexpected_change_scan": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+          }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evidence_package_hash", "verdicts"],
+          "properties": {
+            "evidence_package_hash": {
+              "type": ["string", "null"],
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "verdicts": {
+              "type": "array",
+              "maxItems": 2,
+              "items": {"$ref": "https://world-class-seo.local/schemas/reviewer-verdict.json"}
+            }
+          }
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "phase_id", "summary", "status", "evidence_refs"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^FAIL-[0-9]{4,}$"},
+        "phase_id": {"type": "string", "pattern": "^P[0-8]$"},
+        "summary": {"type": "string", "minLength": 8},
+        "status": {"enum": ["OPEN", "RESOLVED"]},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "phase_id", "failure_id", "status", "affected_invariant", "expected_result",
+        "observed_evidence", "learning", "recurrence_signature", "guardrail", "verification_evidence",
+        "rollback_position", "residual_risk", "owner", "due_phase", "apivr_next_action"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^LEARN-[0-9]{4,}$"},
+        "phase_id": {"type": "string", "pattern": "^P[0-8]$"},
+        "failure_id": {"type": ["string", "null"]},
+        "status": {"enum": ["CONFIRMED", "REJECTED", "UNRESOLVED", "NONE"]},
+        "affected_invariant": {"type": "string", "minLength": 8},
+        "expected_result": {"type": "string", "minLength": 8},
+        "observed_evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+        "learning": {"type": "string", "minLength": 3},
+        "recurrence_signature": {"type": "string", "minLength": 8},
+        "guardrail": {"type": "string", "minLength": 3},
+        "verification_evidence": {"$ref": "#/$defs/evidence"},
+        "rollback_position": {"type": "string", "minLength": 8},
+        "residual_risk": {"type": "string", "minLength": 3},
+        "owner": {"type": "string", "minLength": 3},
+        "due_phase": {"type": "string", "pattern": "^P[0-8]$"},
+        "apivr_next_action": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

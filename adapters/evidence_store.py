@@ -1,31 +1,32 @@
-"""Durable normalized SEO evidence snapshots and compatible drift comparison.
-
-Canonical target: ``adapters/evidence_store.py``. The store is consumed by
-adapters and drift-monitoring workflows under the rules in
-``docs/evidence-cache-contract.md``. It is intentionally dependency-free and
-provides additive schema migration, deterministic JSON, provenance, integrity
-verification, nested drift, retention, deletion, and safe lifecycle handling.
-
-The database is append-oriented: repeated captures may be valid observations,
-but callers must not present identical records as independent corroboration.
-Local digests detect accidental corruption and unsophisticated tampering; they
-are not encryption or a trust boundary against a writer that can recompute them.
-"""
+"""Durable SEO evidence snapshots; local digests detect corruption, not hostile writers."""
 
 from __future__ import annotations
 
-import hashlib
 import hmac
-import json
 import math
 import os
 import sqlite3
 import threading
 import time
 import urllib.parse
+from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import Any, Final, Iterator, Mapping
+from typing import Any, Final
 
+from adapters.evidence_integrity import (
+    SnapshotIntegrityFailure,
+    decode_verified_row,
+)
+from adapters.evidence_integrity import (
+    canonical_json as _canonical_json,
+)
+from adapters.evidence_integrity import (
+    record_digest as _record_digest,
+)
+from adapters.evidence_integrity import (
+    sha256_text as _sha256,
+)
+from sensitive_data import SENSITIVE_QUERY_KEYS, redact_evidence_fields
 
 __all__ = [
     "DEFAULT_DB",
@@ -42,23 +43,6 @@ DEFAULT_PAYLOAD_SCHEMA_VERSION: Final = "1"
 MAX_TEXT_LENGTH: Final = 2_048
 MAX_PAYLOAD_BYTES: Final = 2_000_000
 _SCHEMA_INIT_LOCK = threading.Lock()
-
-SENSITIVE_QUERY_KEYS: Final = frozenset(
-    {
-        "access_token",
-        "api_key",
-        "apikey",
-        "auth",
-        "authorization",
-        "code",
-        "password",
-        "passwd",
-        "session",
-        "sessionid",
-        "token",
-    }
-)
-
 
 class EvidenceStoreError(RuntimeError):
     """Base class for evidence-store failures."""
@@ -102,54 +86,6 @@ def canonicalize_url(url: str) -> str:
     netloc = display_host if port is None else f"{display_host}:{port}"
     path = parsed.path or "/"
     return urllib.parse.urlunsplit((scheme, netloc, path, parsed.query, ""))
-
-
-def _canonical_json(value: Any, field: str, max_bytes: int) -> str:
-    try:
-        encoded = json.dumps(
-            value,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            allow_nan=False,
-        )
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{field} must be finite JSON-compatible data") from exc
-    if len(encoded.encode("utf-8")) > max_bytes:
-        raise ValueError(f"{field} exceeds {max_bytes} bytes")
-    return encoded
-
-
-def _sha256(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _record_digest(
-    *,
-    url: str,
-    metric_group: str,
-    captured_at: float,
-    payload_json: str,
-    schema_version: str,
-    source: str | None,
-    status: str,
-    run_id: str | None,
-    scope_json: str,
-) -> str:
-    envelope = [
-        url,
-        metric_group,
-        float(captured_at).hex(),
-        payload_json,
-        schema_version,
-        source,
-        status,
-        run_id,
-        scope_json,
-    ]
-    return _sha256(
-        json.dumps(envelope, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
-    )
 
 
 def _json_pointer_escape(token: str) -> str:
@@ -385,10 +321,13 @@ class EvidenceStore:
         metric_group = self._require_label(metric_group, "metric_group")
         schema_version = self._require_label(schema_version, "schema_version")
         status = self._require_label(status, "status")
+        source, run_id, sanitized_payload, sanitized_scope = redact_evidence_fields(
+            source, run_id, payload, dict(scope or {})
+        )
         source = None if source is None else self._require_label(source, "source")
         run_id = None if run_id is None else self._require_label(run_id, "run_id")
-        payload_json = _canonical_json(payload, "payload", self.max_payload_bytes)
-        scope_json = _canonical_json(dict(scope or {}), "scope", self.max_payload_bytes)
+        payload_json = _canonical_json(sanitized_payload, "payload", self.max_payload_bytes)
+        scope_json = _canonical_json(sanitized_scope, "scope", self.max_payload_bytes)
 
         timestamp = time.time() if captured_at is None else float(captured_at)
         if not math.isfinite(timestamp) or timestamp < 0:
@@ -433,56 +372,10 @@ class EvidenceStore:
             return int(cursor.lastrowid)
 
     def _decode_row(self, row: sqlite3.Row) -> dict[str, Any]:
-        payload_json = row["payload_json"]
-        expected_hash = row["payload_sha256"]
-        actual_hash = _sha256(payload_json)
-        if not expected_hash or not hmac.compare_digest(expected_hash, actual_hash):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} failed payload hash verification"
-            )
-        expected_record_hash = row["record_sha256"]
-        actual_record_hash = _record_digest(
-            url=row["url"],
-            metric_group=row["metric_group"],
-            captured_at=row["captured_at"],
-            payload_json=payload_json,
-            schema_version=row["schema_version"],
-            source=row["source"],
-            status=row["status"],
-            run_id=row["run_id"],
-            scope_json=row["scope_json"],
-        )
-        if not expected_record_hash or not hmac.compare_digest(
-            expected_record_hash, actual_record_hash
-        ):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} failed record hash verification"
-            )
         try:
-            payload = json.loads(payload_json)
-            scope = json.loads(row["scope_json"])
-        except json.JSONDecodeError as exc:
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} contains malformed JSON"
-            ) from exc
-        if not isinstance(payload, dict) or not isinstance(scope, dict):
-            raise EvidenceIntegrityError(
-                f"snapshot {row['id']} violates the payload or scope object contract"
-            )
-        return {
-            "id": row["id"],
-            "url": row["url"],
-            "metric_group": row["metric_group"],
-            "captured_at": row["captured_at"],
-            "payload": payload,
-            "schema_version": row["schema_version"],
-            "source": row["source"],
-            "status": row["status"],
-            "run_id": row["run_id"],
-            "scope": scope,
-            "payload_sha256": expected_hash,
-            "record_sha256": expected_record_hash,
-        }
+            return decode_verified_row(row)
+        except SnapshotIntegrityFailure as exc:
+            raise EvidenceIntegrityError(str(exc)) from exc
 
     def latest(
         self,
@@ -736,7 +629,7 @@ class EvidenceStore:
                 self._conn.close()
                 self._closed = True
 
-    def __enter__(self) -> "EvidenceStore":
+    def __enter__(self) -> EvidenceStore:
         self._ensure_open()
         return self
 

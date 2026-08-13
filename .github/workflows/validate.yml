@@ -8,57 +8,203 @@ on:
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
-  validate:
+  validation_matrix:
+    name: validate (${{ matrix.os }}, ${{ matrix.python-version }})
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
-        python-version: ["3.11", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Install validation dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate generated dependency lock
+        run: python scripts/validate_dependency_lock.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Compile Python sources
         run: python -m compileall -q .
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate canonical skill convergence
         run: python scripts/validate_canonical_skill_consistency.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate release-version consistency
         run: python scripts/validate_release_version.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate comparative rebaseline and capability ledger
         run: python scripts/inventory_comparator.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate controlled improvement governance
         id: improvement_governance
         continue-on-error: true
         shell: bash
         run: python scripts/validate_improvement_evidence.py 2>&1 | tee improvement-governance.json
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate owner-controlled remediation program
+        run: python scripts/validate_remediation_program.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate architecture and quality ratchets
+        run: |
+          python scripts/validate_architecture_contract.py
+          python scripts/validate_quality_ratchets.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate repository governance contract
+        run: python scripts/validate_repository_governance.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate pytest temporary-root isolation
+        run: python scripts/validate_pytest_temp_isolation.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload improvement governance result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
           path: improvement-governance.json
           if-no-files-found: error
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Enforce controlled improvement governance
         if: steps.improvement_governance.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate generated operator references
         run: |
           seoctl --registry-check
           python scripts/generate_command_docs.py --check
           python scripts/generate_skill_index.py --check
+          python scripts/generate_capability_evidence_registry.py --check
+          python scripts/validate_capability_certification.py
+          python scripts/validate_private_conduct_intake.py
+          python scripts/validate_specialist_depth.py --mutations
+          python scripts/validate_product_contract.py
           python scripts/validate_reference_freshness.py
           python scripts/validate_seo_claims.py
           python scripts/validate_product_claims.py
           python scripts/validate_product_proof_program.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run deterministic product-proof fixture
         shell: bash
         run: |
@@ -66,144 +212,639 @@ jobs:
           seoctl audit technical --url https://example.com/ --fixture examples/product-proof/site-fixture.json --output outputs/product-proof-fixture --max-urls 20
           test -s outputs/product-proof-fixture/run-manifest.json
           test -s outputs/product-proof-fixture/executive-summary.md
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run multi-agent tracer gate
         run: python evaluation/tracer/run_tracer.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate legacy repository contracts
         shell: pwsh
         run: ./scripts/validate-repository.ps1
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Validate example outputs against schemas
         run: python scripts/validate_schema_examples.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run semantic and runtime test suite
         id: pytest
         continue-on-error: true
         run: pytest -q --junitxml=pytest-results.xml
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload pytest result
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: steps.pytest.outcome == 'success' || steps.pytest.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
           path: pytest-results.xml
           if-no-files-found: error
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Enforce pytest result
         if: steps.pytest.outcome == 'failure'
         run: python -c "import sys; sys.exit(1)"
-      - name: Publish matrix commit status
-        if: always()
-        uses: actions/github-script@v7
+
+  provider_authentication:
+    name: provider-authentication
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          script: |
-            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state,
-              context: 'validate/${{ matrix.os }}/python-${{ matrix.python-version }}',
-              description: `Matrix cell ${{ job.status }}`,
-              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            });
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Install provider-validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Authenticate remediation CI receipts
+        run: python scripts/validate_remediation_program.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          WCSEO_AUTHENTICATE_CI_RECEIPTS: "true"
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Authenticate live GitHub governance controls
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: python scripts/capture_github_controls.py --ci-observable
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Reject provider-unverifiable fork pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        shell: pwsh
+        run: throw 'Provider authentication is unavailable for fork pull requests; repository certification fails closed.'
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+
+  validate:
+    name: validate
+    permissions:
+      contents: read
+    needs: [validation_matrix, provider_authentication]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce validation matrix
+        shell: bash
+        run: test "${{ needs.validation_matrix.result }}" = "success"
+      - name: Enforce provider authentication
+        shell: bash
+        run: test "${{ needs.provider_authentication.result }}" = "success"
 
   quality_security_release:
+    permissions:
+      contents: read
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Install quality dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Install seoctl editable package
         run: python -m pip install -e . --no-deps
-      - name: Lint correctness-critical rules
-        run: ruff check . --select E9,F63,F7,F82
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate architecture boundaries
+        run: python scripts/validate_architecture_contract.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate quality debt ratchets
+        run: python scripts/validate_quality_ratchets.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Lint canonical P3 profile
+        run: ruff check runtime adapters integrations seoctl scripts
+        continue-on-error: true # Exact legacy fingerprints are enforced by the ratchet above.
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run complete static type gate
         run: mypy runtime seoctl integrations adapters
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Type-check security and release scripts
         run: >-
           mypy scripts/scan_secrets.py scripts/generate_sbom.py scripts/generate_release_manifest.py
           scripts/validate_release_artifacts.py scripts/run_performance_benchmarks.py
           scripts/run_security_mutation_checks.py scripts/validate_seo_claims.py
           scripts/validate_product_claims.py scripts/validate_product_proof_program.py
+          scripts/validate_dependency_lock.py scripts/validate_risk_coverage.py
+          scripts/verify_clean_wheel.py scripts/validate_remediation_program.py
+          scripts/capture_github_controls.py scripts/validate_repository_governance.py
+          scripts/validate_pytest_temp_isolation.py
+          scripts/generate_capability_evidence_registry.py scripts/validate_product_contract.py
+          scripts/validate_architecture_contract.py scripts/validate_quality_ratchets.py
+          scripts/workflow_quality_contract.py scripts/validate_source_integrity.py
           --ignore-missing-imports --check-untyped-defs
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Scan tracked files for likely secrets
         run: python scripts/scan_secrets.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run security mutation probes
         run: python scripts/run_security_mutation_checks.py
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Prepare quality outputs
+        run: mkdir -p outputs
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run coverage gate
-        run: |
-          mkdir -p outputs
-          pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=65 --junitxml=outputs/pytest-quality.xml
+        run: pytest -q --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Validate critical coverage
+        run: python scripts/validate_risk_coverage.py outputs/coverage.json
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Audit declared Python dependencies
         run: pip-audit -r requirements-dev.txt --desc off
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Generate and validate release evidence
         run: |
           python scripts/generate_sbom.py --out outputs/sbom.cdx.json
           python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
           python scripts/validate_release_artifacts.py --manifest outputs/release-manifest.json --sbom outputs/sbom.cdx.json
           python scripts/run_performance_benchmarks.py --iterations 20 --out outputs/performance.json
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Build distributions
         run: python -m build
-      - name: Verify clean wheel installation and packaged product assets
-        shell: bash
-        run: |
-          python -m venv .clean-install
-          . .clean-install/bin/activate
-          python -m pip install --upgrade pip
-          python -m pip install dist/*.whl
-          printf "Formulaic filler text.\n" > /tmp/input.txt
-          seoctl content humanize --input /tmp/input.txt --output /tmp/output.txt
-          python -m seoctl integrations list
-          seoctl knowledge validate
-          seoctl knowledge product-claims --status BLOCKED
-          rm -rf /tmp/product-proof-wheel
-          seoctl audit technical --url https://example.com/ --fixture "$VIRTUAL_ENV/share/world-class-seo/examples/product-proof/site-fixture.json" --output /tmp/product-proof-wheel --max-urls 20
-          test -s /tmp/output.txt
-          test -s /tmp/product-proof-wheel/run-manifest.json
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload quality and release evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: quality-security-release
           path: |
             outputs/
             dist/
           if-no-files-found: warn
-      - name: Publish quality commit status
-        if: always()
-        uses: actions/github-script@v7
+
+  clean_wheel_install:
+    permissions:
+      contents: read
+    name: clean wheel (${{ matrix.os }}, Python 3.13)
+    needs: quality_security_release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          script: |
-            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state,
-              context: 'quality-security-release',
-              description: `Quality/security/release ${state}`,
-              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            });
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: quality-security-release
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Verify isolated wheel and packaged product assets
+        shell: pwsh
+        run: |
+          $wheel = (Get-ChildItem dist -Filter *.whl | Select-Object -First 1).FullName
+          if (-not $wheel) { throw "Built wheel artifact was not found" }
+          python scripts/verify_clean_wheel.py $wheel
+
+  phase0_rollback_certification:
+    name: phase0-rollback-certification
+    permissions:
+      contents: read
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Preserve trusted source-integrity validator
+        shell: pwsh
+        run: Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Rehearse exact-head Phase 0 rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=e8c37abb5e939d4433e42ea8a02af63549ca0010
+          candidate=$(git rev-parse HEAD)
+          mapfile -t commits < <(git rev-list "$baseline..$candidate")
+          test "${#commits[@]}" -gt 0
+          git config user.name "Phase 0 rollback verifier"
+          git config user.email "rollback-verifier@users.noreply.github.com"
+          git revert --no-commit "${commits[@]}"
+          baseline_tree=$(git rev-parse "$baseline^{tree}")
+          post_revert_tree=$(git write-tree)
+          test "$post_revert_tree" = "$baseline_tree"
+          printf '{"candidate_commit":"%s","baseline_commit":"%s","commit_count":%s,"baseline_tree":"%s","post_revert_tree":"%s","result":"TREE_MATCH"}\n' \
+            "$candidate" "$baseline" "${#commits[@]}" "$baseline_tree" "$post_revert_tree" > phase0-rollback-receipt.json
+          git reset --soft "$baseline"
+          test "$(git rev-parse HEAD)" = "$baseline"
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = 'e8c37abb5e939d4433e42ea8a02af63549ca0010'
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Install baseline validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = 'e8c37abb5e939d4433e42ea8a02af63549ca0010'
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Validate restored baseline tree
+        shell: pwsh
+        run: ./scripts/validate-repository.ps1
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = 'e8c37abb5e939d4433e42ea8a02af63549ca0010'
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Run baseline improvement-loop regression
+        run: python -m pytest -q tests/test_improvement_loop.py
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = 'e8c37abb5e939d4433e42ea8a02af63549ca0010'
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Seal successful receipt
+        shell: bash
+        run: |
+          sed -i 's/"result":"TREE_MATCH"/"result":"PASS"/' phase0-rollback-receipt.json
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = 'e8c37abb5e939d4433e42ea8a02af63549ca0010'
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Upload authenticated rollback receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: phase0-rollback-receipt
+          path: phase0-rollback-receipt.json
+          if-no-files-found: error
+
+  phase_rollback_certification:
+    name: phase-rollback-certification
+    permissions:
+      contents: read
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Preserve trusted source-integrity validator
+        shell: pwsh
+        run: Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.event.pull_request.head.sha || github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Rehearse exact-head current-phase rollback
+        run: python scripts/rehearse_phase_rollback.py --receipt phase-rollback-receipt.json
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Install baseline validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Validate restored baseline tree
+        shell: pwsh
+        run: ./scripts/validate-repository.ps1
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Run baseline improvement-loop regression
+        run: python -m pytest -q tests/test_improvement_loop.py
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Seal successful receipt
+        shell: bash
+        run: |
+          sed -i 's/"result": "TREE_MATCH"/"result": "PASS"/' phase-rollback-receipt.json
+      - name: Prove exact restored baseline
+        shell: /usr/bin/pwsh -command ". '{0}'"
+        run: |-
+          $expectedCommit = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
+      - name: Upload authenticated phase rollback receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: phase-rollback-receipt
+          path: phase-rollback-receipt.json
+          if-no-files-found: error
 
   certification_status:
-    needs: [validate, quality_security_release]
+    name: repository-certification
+    permissions:
+      contents: read
+    needs: [validation_matrix, provider_authentication, validate, quality_security_release, clean_wheel_install, phase0_rollback_certification, phase_rollback_certification]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Publish aggregate certification status
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const validate = '${{ needs.validate.result }}';
-            const quality = '${{ needs.quality_security_release.result }}';
-            const state = validate === 'success' && quality === 'success' ? 'success' : 'failure';
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state,
-              context: 'repository-certification',
-              description: `matrix=${validate}; quality=${quality}`,
-              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            });
-            if (state !== 'success') core.setFailed(`Certification failed: matrix=${validate}; quality=${quality}`);
+      - name: Enforce aggregate certification
+        shell: bash
+        run: |
+          test "${{ needs.validation_matrix.result }}" = "success"
+          test "${{ needs.validate.result }}" = "success"
+          test "${{ needs.provider_authentication.result }}" = "success"
+          test "${{ needs.quality_security_release.result }}" = "success"
+          test "${{ needs.clean_wheel_install.result }}" = "success"
+          test "${{ needs.phase0_rollback_certification.result }}" = "success"
+          test "${{ needs.phase_rollback_certification.result }}" = "success"

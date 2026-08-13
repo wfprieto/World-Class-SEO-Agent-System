@@ -26,14 +26,14 @@ Earn authority through useful assets, legitimate outreach, unlinked mentions, br
 
 ## Primary Skills
 
-- `backlink-gap`
 - `backlink-profile`
+- `backlink-gap`
 - `digital-pr-asset-brief`
 - `outreach-prospecting`
 
 ## Output
 
-Use `templates/outreach-campaign.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

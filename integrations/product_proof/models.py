@@ -120,4 +120,7 @@ class AgentContribution:
     unique_contribution: str
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["contribution_type"] = "DETERMINISTIC_RULE_ATTRIBUTION"
+        payload["execution_evidence"] = []
+        return payload

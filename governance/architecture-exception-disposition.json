@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "source_contract": "governance/architecture-contract.json",
+  "overdue_phase": "P8",
+  "disposition": "REAUTHORIZE",
+  "target_phase": "P9",
+  "expected_exception_count": 19,
+  "expected_edges_sha256": "70be8c39971031351c0d340dc17b3a4120bae7ce1ad8a93a94cd7538f37f0eb4",
+  "rationale": "Issue #26 reauthorizes 19 exact observed composition, persistence, provider, asset, PageSpeed, and transport-delegation edges through P9, owned by the Runtime architecture and Security owners with the next review due 2026-09-01; no allowed edge or static-analysis scope is broadened.",
+  "retirement_plans": [
+    {
+      "id": "explicit-runtime-composition",
+      "owner": "Runtime architecture owner",
+      "edges": ["runtime.tools->adapters.registry"],
+      "acceptance": "All runtime tool construction receives adapter dependencies explicitly and the legacy default composition import is absent.",
+      "verification": "python scripts/validate_architecture_contract.py"
+    },
+    {
+      "id": "canonical-adapter-composition-root",
+      "owner": "Runtime architecture owner",
+      "edges": [
+        "adapters.registry->integrations.authority_media.adapters",
+        "adapters.registry->integrations.content_intelligence.adapters",
+        "adapters.registry->integrations.extensions",
+        "adapters.registry->integrations.google.crux",
+        "adapters.registry->integrations.google.ga4",
+        "adapters.registry->integrations.google.gsc",
+        "adapters.registry->integrations.google.sitemaps",
+        "adapters.registry->integrations.product_proof.adapters",
+        "adapters.registry->integrations.technical.adapters"
+      ],
+      "acceptance": "Concrete integration construction moves to the composition layer and the adapter registry contains contracts only.",
+      "verification": "python scripts/validate_architecture_contract.py"
+    },
+    {
+      "id": "canonical-transport-delegation",
+      "owner": "Security owner",
+      "edges": [
+        "adapters.gsc_live_example->integrations.google.client",
+        "adapters.google_pagespeed_live->integrations.google.client",
+        "adapters.rendered_page->integrations.technical.http"
+      ],
+      "acceptance": "Compatibility adapters are removed or inverted behind contracts while every-hop URL and transport policy remains enforced.",
+      "verification": "python scripts/run_security_mutation_checks.py"
+    },
+    {
+      "id": "integration-persistence-ports",
+      "owner": "Runtime architecture owner",
+      "edges": [
+        "integrations.authority_media.drift->adapters.evidence_store",
+        "integrations.authority_media.drift->adapters.page_drift",
+        "integrations.authority_media.services->adapters.evidence_store",
+        "integrations.extensions.providers->adapters.mcp_extensions"
+      ],
+      "acceptance": "Integration services consume injected persistence, drift, and extension ports without importing concrete adapters.",
+      "verification": "python scripts/validate_architecture_contract.py"
+    },
+    {
+      "id": "asset-and-pagespeed-ports",
+      "owner": "Runtime architecture owner",
+      "edges": [
+        "integrations.product_proof.service->runtime.assets",
+        "integrations.technical.inspection->adapters.google_pagespeed_live"
+      ],
+      "acceptance": "Asset resolution and PageSpeed execution are injected through contracts owned by their consuming integration.",
+      "verification": "python scripts/validate_architecture_contract.py"
+    }
+  ]
+}

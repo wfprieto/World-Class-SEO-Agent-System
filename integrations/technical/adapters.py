@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
-from adapters.base import AdapterResult
+from contracts.adapter import AdapterResult
 from integrations.technical.browser import RenderedPageService
 from integrations.technical.inspection import TechnicalInspectionService
 

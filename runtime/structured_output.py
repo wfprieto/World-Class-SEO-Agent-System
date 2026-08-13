@@ -11,6 +11,7 @@ from runtime.evidence_binding import validate_evidence_binding
 from runtime.llm import LLMClient, LLMMessage, LLMResponse
 from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.schema_registry import SchemaRegistry
+from runtime.specialist_decision import SPECIALIST_AGENTS, specialist_output_errors
 
 
 @dataclass
@@ -34,7 +35,7 @@ def _extract_json(content: str) -> dict[str, Any]:
         start = text.find("{")
         end = text.rfind("}")
         if start < 0 or end <= start:
-            raise ValueError("model response did not contain a JSON object")
+            raise ValueError("model response did not contain a JSON object") from None
         parsed = json.loads(text[start : end + 1])
     if not isinstance(parsed, dict):
         raise ValueError("agent output must be a JSON object")
@@ -45,6 +46,16 @@ def _slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
+def _synthetic_specialist_decision(evidence_id: str) -> dict[str, Any]:
+    return {
+        "state": "PARTIAL",
+        "mapped_execution_state": "PARTIAL",
+        "rationale_code": "SYNTHETIC_EVIDENCE_ONLY",
+        "evidence_refs": [evidence_id],
+        "human_action_required": False,
+    }
+
+
 def _echo_output(
     agent_name: str,
     request: str,
@@ -52,24 +63,20 @@ def _echo_output(
     skills: list[str],
     knowledge: list[str],
     prior_outputs: list[dict[str, Any]],
+    required_handoffs: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Explicit synthetic output for deterministic offline execution, never a live finding."""
-    prior_finding_ids = [
-        str(item.get("id"))
-        for prior in prior_outputs
-        for item in prior.get("findings", [])
-        if isinstance(item, dict) and item.get("id")
-    ]
     prior_sources = [
         str(item.get("source"))
         for prior in prior_outputs
         for item in prior.get("evidence", [])
         if isinstance(item, dict) and item.get("source")
     ]
-    evidence_refs = prior_finding_ids or prior_sources
     evidence_source = prior_sources[0] if prior_sources else "runtime_request"
+    evidence_id = "synthetic-runtime-context"
     slug = _slug(agent_name)
-    return {
+    output: dict[str, Any] = {
+        "contract_version": "2.0.0",
         "output_id": f"synthetic-{slug}",
         "agent": agent_name,
         "summary": (
@@ -78,10 +85,12 @@ def _echo_output(
         ),
         "evidence": [
             {
+                "id": evidence_id,
                 "source": evidence_source,
                 "type": "synthetic_runtime_fixture",
                 "date_checked": "1970-01-01",
                 "notes": "Offline echo-mode evidence; no live website or provider was inspected.",
+                "state": "CURRENT",
             }
         ],
         "confidence": "Low",
@@ -91,7 +100,7 @@ def _echo_output(
                 "severity": "Low",
                 "finding": f"{agent_name} executed in synthetic offline mode for request: {request[:160]}",
                 "affected_scope": domain or "Unspecified property",
-                "evidence_refs": evidence_refs or [evidence_source],
+                "evidence_refs": [evidence_id],
             }
         ],
         "recommended_actions": [
@@ -114,7 +123,52 @@ def _echo_output(
         "skills_used": skills,
         "knowledge_used": knowledge,
         "execution_state": "SYNTHETIC",
+        "handoff_acknowledgements": _echo_handoff_acknowledgements(required_handoffs),
     }
+    if agent_name in SPECIALIST_AGENTS:
+        output["specialist_decision"] = _synthetic_specialist_decision(evidence_id)
+    return output
+
+
+def _echo_handoff_acknowledgements(
+    required_handoffs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "handoff_id": handoff["handoff_id"],
+            "disposition": "ACCEPTED" if handoff["evidence_refs"] else "CHALLENGED",
+            "requested_action_addressed": handoff["requested_action"],
+            "evidence_refs_addressed": handoff["evidence_refs"],
+            "acceptance_criteria_addressed": handoff["acceptance_criteria"],
+            "resolution_note": "Synthetic acknowledgement; not production evidence.",
+        }
+        for handoff in required_handoffs
+    ]
+
+
+def _canonical_instruction(agent_name: str, schema: dict[str, Any]) -> LLMMessage:
+    guidance = (
+        f"You are {agent_name!r}. Return only one JSON object whose agent field is exactly "
+        f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
+        "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
+        "provider results. Every factual numeric or URL claim must also appear in "
+        "material_claims with valid evidence_refs and bound_fields naming every exact "
+        "originating output path, such as summary or findings[0].affected_scope. Set "
+        "contract_version to 2.0.0 and explicitly provide execution_state and material_claims. "
+        "Give every evidence item a unique stable id and declared state; evidence_refs must use "
+        "only those ids. Downstream findings must explicitly reference or challenge the "
+        "supplied dependency evidence.\n\n"
+    )
+    if agent_name in SPECIALIST_AGENTS:
+        guidance += (
+            "As a priority specialist, include specialist_decision with one of READY, PARTIAL, "
+            "BLOCKED, ABSTAIN, or ESCALATE; its mapped_execution_state must follow the schema "
+            "contract and agree with execution_state. Cite only evidence ids present in this "
+            "output, and set human_action_required true exactly for ESCALATE. "
+        )
+    return LLMMessage(
+        role="system", content=guidance + json.dumps(schema, separators=(",", ":"))
+    )
 
 
 class StructuredOutputService:
@@ -133,8 +187,39 @@ class StructuredOutputService:
             errors.append(
                 f"agent identity mismatch: expected {expected_agent!r}, got {output.get('agent')!r}"
             )
+        errors.extend(specialist_output_errors(output))
         errors.extend(validate_evidence_binding(output))
         return errors
+
+    def _complete_echo(
+        self,
+        *,
+        agent_name: str,
+        request: str,
+        domain: str,
+        skills: list[str],
+        knowledge: list[str],
+        prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]],
+    ) -> StructuredOutputResult:
+        output = _echo_output(
+            agent_name,
+            request,
+            domain,
+            skills,
+            knowledge,
+            prior_outputs,
+            required_handoffs,
+        )
+        errors = self._errors(output, expected_agent=agent_name)
+        return StructuredOutputResult(
+            status="ok" if not errors else "failed",
+            output=output if not errors else None,
+            errors=errors,
+            attempts=0,
+            response=None,
+            synthetic=True,
+        )
 
     async def complete_agent_output(
         self,
@@ -147,43 +232,27 @@ class StructuredOutputService:
         skills: list[str],
         knowledge: list[str],
         prior_outputs: list[dict[str, Any]],
+        required_handoffs: list[dict[str, Any]],
         budget: RunBudget,
     ) -> StructuredOutputResult:
         if getattr(client, "provider", "") == "echo":
-            synthetic_output = _echo_output(
-                agent_name, request, domain, skills, knowledge, prior_outputs
-            )
-            synthetic_errors = self._errors(
-                synthetic_output, expected_agent=agent_name
-            )
-            return StructuredOutputResult(
-                status="ok" if not synthetic_errors else "failed",
-                output=synthetic_output if not synthetic_errors else None,
-                errors=synthetic_errors,
-                attempts=0,
-                response=None,
-                synthetic=True,
+            return self._complete_echo(
+                agent_name=agent_name,
+                request=request,
+                domain=domain,
+                skills=skills,
+                knowledge=knowledge,
+                prior_outputs=prior_outputs,
+                required_handoffs=required_handoffs,
             )
 
         schema = self.schemas.load("agent-output")
-        instruction = LLMMessage(
-            role="system",
-            content=(
-                f"You are {agent_name!r}. Return only one JSON object whose agent field is exactly "
-                f"{agent_name!r} and that validates against this JSON Schema. Do not wrap prose in "
-                "a fake schema shell. Do not invent evidence, URLs, metrics, completion claims, or "
-                "provider results. Every factual numeric or URL claim must also appear in "
-                "material_claims with valid evidence_refs. Downstream findings must explicitly "
-                "reference or challenge the supplied dependency evidence.\n\n"
-                + json.dumps(schema, separators=(",", ":"))
-            ),
-        )
+        instruction = _canonical_instruction(agent_name, schema)
         active_messages = [*messages, instruction]
         attempts = 0
         last_response: LLMResponse | None = None
         errors: list[str] = []
         output: dict[str, Any] | None = None
-
         for correction in range(budget.limits.max_correction_attempts + 1):
             try:
                 budget.reserve_llm_call(correction=correction > 0)
@@ -204,10 +273,8 @@ class StructuredOutputService:
                 output = None
             else:
                 output.setdefault("output_id", f"{_slug(agent_name)}-output")
-                output.setdefault("material_claims", [])
                 output.setdefault("skills_used", skills)
                 output.setdefault("knowledge_used", knowledge)
-                output.setdefault("execution_state", "COMPLETE")
                 errors = self._errors(output, expected_agent=agent_name)
                 if not errors:
                     return StructuredOutputResult(

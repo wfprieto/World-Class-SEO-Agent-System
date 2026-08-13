@@ -26,14 +26,17 @@ Detect and mitigate SEO threats from spam links, hacked pages, malware, scraping
 
 ## Primary Skills
 
-- `backlink-profile`
 - `negative-seo-threat-review`
 - `security-indexation-check`
-- `seo-drift-monitor`
+- `spam-policy-check`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Compromise and manual-action evidence outrank backlink-tool scores; contain root cause before search cleanup. Preserve benign explanations, abstain from attacker attribution, and require human approval for disavow or destructive action.
 
 ## Output
 
-Use `templates/security-seo-report.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

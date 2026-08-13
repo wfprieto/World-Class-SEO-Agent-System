@@ -16,20 +16,32 @@ Google Search Console API access to user data uses OAuth 2.0.
 
 from __future__ import annotations
 
-import json
-import os
 import urllib.parse
-import urllib.request
 from datetime import date, timedelta
 from typing import Any
 
 from adapters.base import AdapterNotConfigured, AdapterResult
+from integrations.google.client import (
+    GoogleAPIError,
+    GoogleJsonClient,
+    GoogleOAuthConfig,
+    GoogleOAuthProvider,
+)
 
 
 class GSCLiveExampleAdapter:
     name = "gsc_live_example"
 
     SEARCH_ANALYTICS_URL = "https://www.googleapis.com/webmasters/v3/sites/{site_url}/searchAnalytics/query"
+
+    def __init__(
+        self,
+        *,
+        oauth: GoogleOAuthProvider | None = None,
+        client: GoogleJsonClient | None = None,
+    ) -> None:
+        self.oauth = oauth or GoogleOAuthProvider(GoogleOAuthConfig.from_env("GSC"))
+        self.client = client or GoogleJsonClient(allowed_hosts={"www.googleapis.com"})
 
     def fetch(
         self,
@@ -69,40 +81,29 @@ class GSCLiveExampleAdapter:
         )
 
     def _access_token(self) -> str:
-        client_id = os.getenv("GSC_CLIENT_ID")
-        client_secret = os.getenv("GSC_CLIENT_SECRET")
-        refresh_token = os.getenv("GSC_REFRESH_TOKEN")
-        token_uri = os.getenv("GSC_TOKEN_URI", "https://oauth2.googleapis.com/token")
-        if not all([client_id, client_secret, refresh_token]):
-            raise AdapterNotConfigured("Set GSC_CLIENT_ID, GSC_CLIENT_SECRET and GSC_REFRESH_TOKEN.")
-        form = urllib.parse.urlencode(
-            {
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "refresh_token": refresh_token,
-                "grant_type": "refresh_token",
-            }
-        ).encode("utf-8")
-        request = urllib.request.Request(
-            token_uri,
-            data=form,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=60) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-        token = payload.get("access_token")
-        if not token:
-            raise AdapterNotConfigured("OAuth token response did not include access_token.")
-        return token
+        try:
+            return self.oauth.token()
+        except GoogleAPIError as exc:
+            if exc.state == "NOT_CONFIGURED":
+                raise AdapterNotConfigured(
+                    "Set GSC_CLIENT_ID, GSC_CLIENT_SECRET and GSC_REFRESH_TOKEN."
+                ) from exc
+            raise
 
-    @staticmethod
-    def _post_json(url: str, payload: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
-        request = urllib.request.Request(
+    def _post_json(
+        self,
+        url: str,
+        payload: dict[str, Any],
+        headers: dict[str, str],
+    ) -> dict[str, Any]:
+        authorization = headers.get("Authorization", "")
+        scheme, _, access_token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not access_token:
+            raise GoogleAPIError("gsc", None, "missing bearer token", state="BLOCKED")
+        return self.client.request(
             url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={**headers, "Content-Type": "application/json"},
+            service="gsc",
             method="POST",
+            payload=payload,
+            access_token=access_token,
         )
-        with urllib.request.urlopen(request, timeout=120) as response:
-            return json.loads(response.read().decode("utf-8"))

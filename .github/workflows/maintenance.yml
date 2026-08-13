@@ -1,0 +1,83 @@
+name: Scheduled repository maintenance
+
+on:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-maintenance:
+    name: static-maintenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Capture trusted tools
+        id: trusted_tools
+        shell: pwsh
+        run: |-
+          $python = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($python) -or -not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'trusted Python path is invalid' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is invalid' }
+          "python=$python" >> $env:GITHUB_OUTPUT
+          "git=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove source integrity before dependency installation
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_tools.outputs.git }}';
+          & '${{ steps.trusted_tools.outputs.python }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}
+      - name: Install locked validation dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Prove source integrity after dependency installation
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_tools.outputs.git }}';
+          & '${{ steps.trusted_tools.outputs.python }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }}
+      - name: Validate scheduled maintenance contract
+        run: python scripts/validate_scheduled_maintenance.py
+      - name: Validate issue remediation contracts
+        run: python scripts/validate_open_issue_remediation.py
+      - name: Validate private conduct intake contract
+        run: python scripts/validate_private_conduct_intake.py
+      - name: Validate specialist decision depth
+        run: python scripts/validate_specialist_depth.py --mutations
+      - name: Validate live-capability certification receipts
+        run: python scripts/validate_capability_certification.py
+      - name: Validate knowledge freshness
+        run: python scripts/validate_reference_freshness.py
+      - name: Validate dependency lock
+        run: python scripts/validate_dependency_lock.py
+      - name: Validate repository operations
+        run: python scripts/validate_repository_operations.py
+      - name: Validate repository governance
+        run: python scripts/validate_repository_governance.py
+      - name: Validate comparative capability dispositions
+        run: python scripts/inventory_comparator.py
+      - name: Validate architecture exception disposition
+        run: python scripts/validate_architecture_exception_disposition.py
+      - name: Run recurring-control mutation tests
+        run: >-
+          pytest -q
+          tests/test_open_issue_remediation.py
+          tests/test_private_conduct_intake.py
+          tests/test_repository_operations.py
+          tests/test_specialist_depth.py
+          tests/test_capability_certification.py
+          tests/test_comparative_rebaseline.py
+          tests/test_phase_rollback.py
+          tests/test_evidence_binding_hardening.py
+          tests/test_schema_validation.py
+          tests/test_batch2_integration.py
+          tests/test_batch2_hardening.py

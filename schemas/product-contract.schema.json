@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/product-contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "contract_id", "product_name", "product_category", "layer_model", "primary_operator", "secondary_users", "flagship", "non_flagship_capabilities", "proof_boundaries", "claim_language_policy", "capability_classification", "authoritative_surfaces"],
+  "properties": {
+    "$schema": {"const": "../schemas/product-contract.schema.json"},
+    "schema_version": {"const": "1.0.0"},
+    "contract_id": {"const": "world-class-seo-product"},
+    "product_name": {"minLength": 1, "type": "string"},
+    "product_category": {"minLength": 1, "type": "string"},
+    "layer_model": {"type": "object", "additionalProperties": false, "required": ["primary", "executable"], "properties": {"primary": {"minLength": 1, "type": "string"}, "executable": {"minLength": 1, "type": "string"}}},
+    "primary_operator": {"minLength": 1, "type": "string"},
+    "secondary_users": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}},
+    "flagship": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command_id", "command", "skill", "owner", "mode", "outcome", "artifacts"],
+      "properties": {
+        "command_id": {"const": "audit.technical"}, "command": {"const": "seoctl audit technical"},
+        "skill": {"const": "product-proof-technical-audit"}, "owner": {"minLength": 1, "type": "string"},
+        "mode": {"minLength": 1, "type": "string"}, "outcome": {"minLength": 1, "type": "string"},
+        "artifacts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"pattern": "^[a-z0-9][a-z0-9.-]+$", "type": "string"}}
+      }
+    },
+    "non_flagship_capabilities": {"type": "object", "additionalProperties": {"minLength": 1, "type": "string"}, "required": ["system.run", "full-site-audit"]},
+    "proof_boundaries": {
+      "type": "object", "additionalProperties": false, "required": ["fixture", "live_bounded", "never_implies", "external_changes"],
+      "properties": {"fixture": {"minLength": 1, "type": "string"}, "live_bounded": {"minLength": 1, "type": "string"}, "never_implies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}}, "external_changes": {"const": false}}
+    },
+    "claim_language_policy": {
+      "type": "object", "additionalProperties": false, "required": ["brand_name_only", "prohibited_patterns"],
+      "properties": {
+        "brand_name_only": {"const": "World-Class SEO Agent System"},
+        "prohibited_patterns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}}
+      }
+    },
+    "capability_classification": {
+      "type": "object", "additionalProperties": false, "required": ["command_network_proof", "agent_execution_proof"],
+      "properties": {
+        "command_network_proof": {"type": "object", "additionalProperties": false, "required": ["none", "live_optional", "provider_optional"], "properties": {"none": {"const": "LOCAL_DETERMINISTIC"}, "live_optional": {"const": "LIVE_BOUNDED"}, "provider_optional": {"const": "PROVIDER_OR_FIXTURE"}}},
+        "agent_execution_proof": {"type": "object", "additionalProperties": false, "required": ["executable", "advisory", "governance"], "properties": {"executable": {"const": "COMMAND_BACKED"}, "advisory": {"const": "DOCUMENTED_ADVISORY"}, "governance": {"const": "GOVERNANCE_CONTROL"}}}
+      }
+    },
+    "authoritative_surfaces": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["path", "required_terms"], "properties": {"path": {"minLength": 1, "type": "string"}, "required_terms": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"minLength": 1, "type": "string"}}}}}
+  }
+}

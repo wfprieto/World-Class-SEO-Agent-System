@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
-
+from typing import Any, Literal
 
 _SEVERITY_ORDER = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
+EvidenceState = Literal["VALID", "MISSING", "STALE", "DUPLICATE", "CONTRADICTORY"]
+ActionPolarity = Literal["ENABLE", "DISABLE"]
+_EVIDENCE_STATE_ORDER: dict[EvidenceState, int] = {
+    "VALID": 0,
+    "DUPLICATE": 1,
+    "STALE": 2,
+    "MISSING": 3,
+    "CONTRADICTORY": 4,
+}
 
 
 def _norm(value: str) -> str:
@@ -24,13 +32,125 @@ def _finding_key(finding: dict[str, Any]) -> tuple[str, str]:
     root_terms = sorted(
         words
         & {
-            "canonical", "noindex", "robots", "redirect", "schema", "hreflang",
-            "indexation", "rendering", "duplicate", "content", "claim", "consent",
-            "availability", "price", "internal", "link", "accessibility", "security",
+            "canonical",
+            "noindex",
+            "robots",
+            "redirect",
+            "schema",
+            "hreflang",
+            "indexation",
+            "rendering",
+            "duplicate",
+            "content",
+            "claim",
+            "consent",
+            "availability",
+            "price",
+            "internal",
+            "link",
+            "accessibility",
+            "security",
         }
     )
     identity = " ".join(root_terms) or " ".join(sorted(words)[:10])
     return scope, identity
+
+
+def _record_key_text(key: tuple[str, str]) -> str:
+    """Return the stable, unambiguous identity used for registry state joins."""
+    return "::".join(key)
+
+
+def _finding_id(finding: dict[str, Any]) -> tuple[str, str | None]:
+    """Normalize a display identifier while failing closed on missing/blank IDs."""
+    value = finding.get("id")
+    if not isinstance(value, str) or not value.strip():
+        return "", "finding id must be a non-empty string"
+    return value, None
+
+
+def _worse(left: EvidenceState, right: EvidenceState) -> EvidenceState:
+    return left if _EVIDENCE_STATE_ORDER[left] >= _EVIDENCE_STATE_ORDER[right] else right
+
+
+def _evidence_inventory(output: dict[str, Any]) -> dict[str, list[str]]:
+    inventory: dict[str, list[str]] = {}
+    for item in output.get("evidence", []):
+        if not isinstance(item, dict):
+            continue
+        evidence_status = str(item.get("state", "CURRENT")).upper()
+        # An id and source are aliases for one physical evidence item. If they are
+        # identical, indexing the item twice would fabricate a duplicate.
+        keys = {
+            key
+            for key in (item.get("id"), item.get("source"))
+            if isinstance(key, str) and key.strip()
+        }
+        for key in keys:
+            inventory.setdefault(key, []).append(evidence_status)
+    return inventory
+
+
+def _action_polarity(
+    finding: dict[str, Any],
+) -> tuple[tuple[str, ActionPolarity] | None, str | None]:
+    """Return an exact structured action contract; malformed contracts fail closed."""
+    raw = finding.get("action_polarity")
+    if raw is None:
+        return None, None
+    if not isinstance(raw, dict):
+        return None, "action_polarity must be an object"
+    if set(raw) != {"target", "polarity"}:
+        return None, "action_polarity requires exactly target and polarity"
+    raw_target = raw.get("target")
+    raw_polarity = raw.get("polarity")
+    if not isinstance(raw_target, str) or not isinstance(raw_polarity, str):
+        return None, "action_polarity target and polarity must be strings"
+    target = _norm(raw_target)
+    if not target or raw_polarity not in {"ENABLE", "DISABLE"}:
+        return None, "action_polarity requires a non-empty target and ENABLE or DISABLE polarity"
+    typed_polarity: ActionPolarity = "ENABLE" if raw_polarity == "ENABLE" else "DISABLE"
+    return (target, typed_polarity), None
+
+
+def _reference_state(reference: str, observed: list[str]) -> tuple[EvidenceState, list[str]]:
+    if not observed:
+        return "MISSING", [f"unknown evidence reference: {reference}"]
+    state: EvidenceState = "VALID"
+    issues: list[str] = []
+    if len(observed) != 1:
+        state = "DUPLICATE"
+        issues.append(f"duplicate evidence inventory key: {reference}")
+    normalized = set(observed)
+    if "CONTRADICTORY" in normalized:
+        return "CONTRADICTORY", [*issues, f"contradictory evidence: {reference}"]
+    if normalized & {"MISSING", "INVALID"}:
+        return _worse(state, "MISSING"), [*issues, f"unavailable evidence: {reference}"]
+    if "STALE" in normalized:
+        return _worse(state, "STALE"), [*issues, f"stale evidence: {reference}"]
+    return state, issues
+
+
+def _evidence_state(
+    output: dict[str, Any], finding: dict[str, Any]
+) -> tuple[EvidenceState, list[str]]:
+    """Classify evidence refs without converting uncertainty into acceptance."""
+    inventory = _evidence_inventory(output)
+    raw_refs = finding.get("evidence_refs", [])
+    refs = [str(item) for item in raw_refs] if isinstance(raw_refs, list) else []
+    issues: list[str] = []
+    state: EvidenceState = "VALID"
+    if not refs:
+        return "MISSING", ["finding has no evidence references"]
+    if len(refs) != len(set(refs)):
+        state = "DUPLICATE"
+        issues.append("finding repeats an evidence reference")
+    for reference in sorted(set(refs)):
+        observed = inventory.get(reference, [])
+        reference_state, reference_issues = _reference_state(reference, observed)
+        state = _worse(state, reference_state)
+        issues.extend(reference_issues)
+    return state, sorted(set(issues))
 
 
 @dataclass
@@ -38,14 +158,32 @@ class FindingRecord:
     key: tuple[str, str]
     finding: dict[str, Any]
     agents: list[str] = field(default_factory=list)
+    finding_ids: list[str] = field(default_factory=list)
     state: str = "PROPOSED"
+    evidence_state: EvidenceState = "VALID"
+    evidence_issues: list[str] = field(default_factory=list)
+    review_issues: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         result = dict(self.finding)
         result["agents"] = list(self.agents)
+        result["finding_ids"] = list(self.finding_ids)
         result["state"] = self.state
-        result["root_cause_key"] = "::".join(self.key)
+        result["evidence_state"] = self.evidence_state
+        result["evidence_issues"] = list(self.evidence_issues)
+        result["review_issues"] = list(self.review_issues)
+        result["root_cause_key"] = _record_key_text(self.key)
         return result
+
+
+@dataclass(frozen=True)
+class _ActionRow:
+    agent: str
+    finding_id: str
+    record_key: tuple[str, str]
+    contract: tuple[str, ActionPolarity] | None
+    contract_issue: str | None
+    statement: str
 
 
 class FindingRegistry:
@@ -58,75 +196,153 @@ class FindingRegistry:
             if not isinstance(finding, dict):
                 continue
             key = _finding_key(finding)
+            evidence_state, evidence_issues = _evidence_state(output, finding)
+            _, action_issue = _action_polarity(finding)
+            finding_id, finding_id_issue = _finding_id(finding)
+            review_issues = [
+                issue for issue in (action_issue, finding_id_issue) if issue is not None
+            ]
             if key not in self._records:
                 self._records[key] = FindingRecord(
                     key=key,
                     finding=dict(finding),
                     agents=[agent],
+                    finding_ids=[finding_id] if finding_id else [],
+                    evidence_state=evidence_state,
+                    evidence_issues=evidence_issues,
+                    review_issues=review_issues,
                 )
                 continue
             record = self._records[key]
             if agent not in record.agents:
                 record.agents.append(agent)
             existing_refs = set(record.finding.get("evidence_refs", []))
-            existing_refs.update(finding.get("evidence_refs", []))
+            incoming_refs = set(finding.get("evidence_refs", []))
+            if existing_refs.intersection(incoming_refs):
+                evidence_state = _worse(evidence_state, "DUPLICATE")
+                evidence_issues.append("duplicate evidence repeated across findings")
+            existing_refs.update(incoming_refs)
             record.finding["evidence_refs"] = sorted(existing_refs)
+            if finding_id and finding_id not in record.finding_ids:
+                record.finding_ids.append(finding_id)
+            record.evidence_state = _worse(record.evidence_state, evidence_state)
+            record.evidence_issues = sorted(set(record.evidence_issues).union(evidence_issues))
+            if action_issue:
+                record.review_issues = sorted(set(record.review_issues) | {action_issue})
+            if finding_id_issue:
+                record.review_issues = sorted(set(record.review_issues) | {finding_id_issue})
             current = str(record.finding.get("severity", "Low"))
             incoming = str(finding.get("severity", "Low"))
             if _SEVERITY_ORDER.get(incoming, 0) > _SEVERITY_ORDER.get(current, 0):
                 record.finding["severity"] = incoming
 
     def records(self) -> list[dict[str, Any]]:
-        return [record.to_dict() for record in self._records.values()]
+        return [self._records[key].to_dict() for key in sorted(self._records)]
+
+    def _mark_contradictory(self, record_keys: set[tuple[str, str]]) -> None:
+        for key, record in self._records.items():
+            if key in record_keys:
+                record.evidence_state = "CONTRADICTORY"
+                record.evidence_issues = sorted(
+                    set(record.evidence_issues)
+                    | {"specialists supplied contradictory evidence or actions"}
+                )
+
+    def _mark_action_review(self, record_keys: set[tuple[str, str]], issue: str) -> None:
+        for key, record in self._records.items():
+            if key in record_keys:
+                record.review_issues = sorted(set(record.review_issues) | {issue})
+
+    def _reconcile_action_pair(
+        self, scope: str, left: _ActionRow, right: _ActionRow
+    ) -> dict[str, Any] | None:
+        record_keys = {left.record_key, right.record_key}
+        if left.contract_issue or right.contract_issue:
+            self._mark_action_review(
+                record_keys,
+                "malformed structured action polarity requires specialist review",
+            )
+            return None
+        if left.contract is not None and right.contract is not None:
+            same_target = left.contract[0] == right.contract[0]
+            opposite_polarity = left.contract[1] != right.contract[1]
+            if not (same_target and opposite_polarity):
+                return None
+            self._mark_contradictory(record_keys)
+            return {
+                "affected_scope": scope or "unspecified",
+                "agents": [left.agent, right.agent],
+                "finding_ids": [left.finding_id, right.finding_id],
+                "record_keys": [
+                    _record_key_text(key) for key in sorted(record_keys)
+                ],
+                "reason": (
+                    "Agents declared opposite action polarities for the same normalized target."
+                ),
+                "risk": "High",
+            }
+        if left.agent != right.agent and left.statement != right.statement:
+            self._mark_action_review(
+                record_keys,
+                "specialist action compatibility is unproven without action_polarity",
+            )
+        return None
 
     def conflicts(self, outputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         conflicts: list[dict[str, Any]] = []
-        by_scope: dict[str, list[tuple[str, str, set[str]]]] = {}
+        by_scope: dict[str, list[_ActionRow]] = {}
         for output in outputs:
             agent = str(output.get("agent", "Unknown Agent"))
             for finding in output.get("findings", []):
                 if not isinstance(finding, dict):
                     continue
                 scope = _norm(finding.get("affected_scope", ""))
-                words = _tokens(finding.get("finding", ""))
-                by_scope.setdefault(scope, []).append((agent, str(finding.get("id", "")), words))
+                action, action_issue = _action_polarity(finding)
+                finding_id, finding_id_issue = _finding_id(finding)
+                by_scope.setdefault(scope, []).append(
+                    _ActionRow(
+                        agent=agent,
+                        finding_id=finding_id,
+                        record_key=_finding_key(finding),
+                        contract=action,
+                        contract_issue=action_issue or finding_id_issue,
+                        statement=_norm(finding.get("finding", "")),
+                    )
+                )
 
-        opposing = [
-            ({"publish", "launch", "index"}, {"noindex", "block", "reject", "remove"}),
-            ({"grant", "allow"}, {"deny", "denied", "block"}),
-            ({"implement", "generate"}, {"unsupported", "invalid", "prohibited"}),
-        ]
         for scope, rows in by_scope.items():
             for index, left in enumerate(rows):
                 for right in rows[index + 1 :]:
-                    for positive, negative in opposing:
-                        left_positive = bool(left[2] & positive)
-                        left_negative = bool(left[2] & negative)
-                        right_positive = bool(right[2] & positive)
-                        right_negative = bool(right[2] & negative)
-                        if (left_positive and right_negative) or (left_negative and right_positive):
-                            conflicts.append({
-                                "conflict_id": f"conflict-{len(conflicts) + 1:03d}",
-                                "affected_scope": scope or "unspecified",
-                                "agents": [left[0], right[0]],
-                                "finding_ids": [left[1], right[1]],
-                                "reason": "Agents proposed materially incompatible states or actions.",
-                                "risk": "High",
-                            })
-                            break
+                    conflict = self._reconcile_action_pair(scope, left, right)
+                    if conflict is not None:
+                        conflicts.append(
+                            {"conflict_id": f"conflict-{len(conflicts) + 1:03d}", **conflict}
+                        )
         return conflicts
 
     def accept_all_without_conflict(self, conflicts: list[dict[str, Any]]) -> None:
-        conflicted_ids = {
-            finding_id
-            for conflict in conflicts
-            for finding_id in conflict.get("finding_ids", [])
+        conflicted_record_keys = {
+            record_key for conflict in conflicts for record_key in conflict.get("record_keys", [])
         }
-        for record in self._records.values():
-            if record.finding.get("id") in conflicted_ids:
+        for key, record in self._records.items():
+            if _record_key_text(key) in conflicted_record_keys:
                 record.state = "CONFLICTED"
+                record.evidence_state = "CONTRADICTORY"
             else:
-                record.state = "ACCEPTED"
+                record.state = (
+                    "ACCEPTED"
+                    if record.evidence_state == "VALID" and not record.review_issues
+                    else "EVIDENCE_REVIEW"
+                )
+
+
+def _decision_evidence(values: Any, *, context: str) -> list[str]:
+    if not isinstance(values, list) or not values:
+        raise ValueError(f"{context} requires canonical evidence references")
+    normalized = [value.strip() for value in values if isinstance(value, str) and value.strip()]
+    if len(normalized) != len(values) or len(set(normalized)) != len(normalized):
+        raise ValueError(f"{context} evidence references must be non-empty and unique")
+    return sorted(normalized)
 
 
 def build_decisions(
@@ -136,39 +352,49 @@ def build_decisions(
     """Create explicit conservative decisions. Scrummaster output remains supporting evidence."""
     decisions: list[dict[str, Any]] = []
     for conflict in conflicts:
-        decisions.append({
-            "decision_id": f"decision-{conflict['conflict_id']}",
-            "proposal": f"Resolve conflict for {conflict['affected_scope']}",
-            "decision": "Revise",
-            "evidence": list(conflict.get("finding_ids", [])),
-            "counterarguments": [conflict.get("reason", "Conflicting specialist conclusions")],
-            "risk": conflict.get("risk", "High"),
-            "owner": "SEO Scrummaster Agent",
-            "conditions": [
-                "Reconcile the underlying evidence before implementation or publication.",
-                "Record the accepted finding and reject or supersede the conflicting finding.",
-            ],
-            "verification": "Re-run the affected specialists against the same evidence inventory.",
-            "rollback": "Do not implement either conflicting action until the decision is resolved.",
-        })
+        decisions.append(
+            {
+                "decision_id": f"decision-{conflict['conflict_id']}",
+                "proposal": f"Resolve conflict for {conflict['affected_scope']}",
+                "decision": "Revise",
+                "evidence": _decision_evidence(
+                    conflict.get("record_keys"), context="conflict decision"
+                ),
+                "counterarguments": [conflict.get("reason", "Conflicting specialist conclusions")],
+                "risk": conflict.get("risk", "High"),
+                "owner": "SEO Scrummaster Agent",
+                "conditions": [
+                    "Reconcile the underlying evidence before implementation or publication.",
+                    "Record the accepted finding and reject or supersede the conflicting finding.",
+                ],
+                "verification": "Re-run the affected specialists against the same evidence inventory.",
+                "rollback": "Do not implement either conflicting action until the decision is resolved.",
+            }
+        )
 
     critical = [
         finding
         for finding in findings
-        if finding.get("severity") in {"Critical", "High"}
-        and finding.get("state") != "CONFLICTED"
+        if finding.get("severity") in {"Critical", "High"} and finding.get("state") == "ACCEPTED"
     ]
     if critical:
-        decisions.append({
-            "decision_id": "decision-high-risk-review",
-            "proposal": "Accept high-risk findings for roadmap planning, not automatic implementation.",
-            "decision": "Approve",
-            "evidence": [str(item.get("id")) for item in critical],
-            "counterarguments": ["High-risk SEO changes may affect indexation, revenue, compliance, or security."],
-            "risk": "High",
-            "owner": "SEO Scrummaster Agent",
-            "conditions": ["Human approval remains required before any gated implementation."],
-            "verification": "Confirm owner, acceptance criteria, rollback, and post-change validation.",
-            "rollback": "Keep the current production behavior until the approved implementation is verified.",
-        })
+        decisions.append(
+            {
+                "decision_id": "decision-high-risk-review",
+                "proposal": "Accept high-risk findings for roadmap planning, not automatic implementation.",
+                "decision": "Approve",
+                "evidence": _decision_evidence(
+                    [item.get("root_cause_key") for item in critical],
+                    context="high-risk decision",
+                ),
+                "counterarguments": [
+                    "High-risk SEO changes may affect indexation, revenue, compliance, or security."
+                ],
+                "risk": "High",
+                "owner": "SEO Scrummaster Agent",
+                "conditions": ["Human approval remains required before any gated implementation."],
+                "verification": "Confirm owner, acceptance criteria, rollback, and post-change validation.",
+                "rollback": "Keep the current production behavior until the approved implementation is verified.",
+            }
+        )
     return decisions

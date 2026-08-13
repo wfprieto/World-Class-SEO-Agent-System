@@ -12,6 +12,11 @@ This project follows semantic versioning where possible:
 
 ### Added
 
+- Registry-derived root CLI help, a deterministic fixture-first onboarding path, and regression coverage for every command family.
+- Comparative freshness validation pinned to Git ancestry and canonical inventory hashes.
+- A generated development dependency lock, risk-weighted coverage floors, a six-cell Python/OS validation matrix, and clean-wheel checks on Windows and Ubuntu.
+- Fail-closed tag release automation with checksums, CycloneDX evidence, and GitHub build/SBOM attestations.
+- Pure content-analysis, technical-parsing, authority-drift, and evidence-integrity modules with adverse-state regression tests.
 - A bounded multi-agent workflow graph that executes specialist agents, lead synthesis, Scrummaster governance, strategy, and stakeholder reporting as real dependency-ordered nodes.
 - `orchestration/capability-registry.json`, the machine-readable mapping from all 25 agents to canonical skills, knowledge, templates, and evidence requirements.
 - Strict structured-agent output, material-claim evidence binding, cross-agent finding normalization, conflict detection, consumed handoffs, decision records, workflow events, and complete session validation.

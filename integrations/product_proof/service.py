@@ -5,19 +5,101 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from adapters.base import AdapterResult
-from adapters.url_safety import validate_public_url
+from contracts.adapter import AdapterResult
 from integrations.product_proof.crawler import SiteCrawler
 from integrations.product_proof.models import CrawlConfig
-from integrations.product_proof.report import executive_markdown, technical_markdown, trust_summary, write_csv
+from integrations.product_proof.report import (
+    executive_markdown,
+    technical_markdown,
+    trust_summary,
+    write_csv,
+)
 from integrations.product_proof.rules import ClaimPolicy, TechnicalAuditRules, build_contributions
 from integrations.technical.http import HttpHop
 from runtime.assets import resolve_asset_root
+from security.url_safety import validate_public_url
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[2])
+
+ARTIFACT_FILENAMES = {
+    "crawl": "crawl.json",
+    "findings": "findings.json",
+    "decisions": "decisions.json",
+    "contributions": "agent-contributions.json",
+    "trust": "trust-summary.json",
+    "technical_report": "technical-audit.md",
+    "executive_report": "executive-summary.md",
+    "remediation": "remediation-plan.csv",
+    "verification": "verification-plan.json",
+    "manifest": "run-manifest.json",
+}
+
+
+def _contribution_semantics(
+    contributions: list[dict[str, Any]], decisions: list[dict[str, Any]]
+) -> dict[str, Any]:
+    return {
+        "type": "DETERMINISTIC_RULE_ATTRIBUTION",
+        "agents_executed": 0,
+        "agent_execution_evidence": [],
+        "agent_roles_represented": len(contributions),
+        "roles": [row["agent"] for row in contributions],
+        "handoffs_consumed": 0,
+        "decisions_recorded": len(decisions),
+        "contribution_records": len(contributions),
+    }
+
+
+def _result_data(
+    *,
+    run_id: str,
+    target: str,
+    evidence_mode: str,
+    crawl: dict[str, Any],
+    evaluated: dict[str, Any],
+    contributions: list[dict[str, Any]],
+    artifacts: dict[str, Path],
+    trust: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "state": "AVAILABLE" if crawl["pages"] else "EMPTY",
+        "run_id": run_id,
+        "target": target,
+        "evidence_mode": evidence_mode,
+        "pages_crawled": len(crawl["pages"]),
+        "findings": len(evaluated["findings"]),
+        "critical_findings": sum(
+            row["severity"] == "Critical" for row in evaluated["findings"]
+        ),
+        "agents_executed": 0,
+        "agent_execution_evidence": [],
+        "contribution_records": len(contributions),
+        "contribution_type": "DETERMINISTIC_RULE_ATTRIBUTION",
+        "artifacts": {name: str(path) for name, path in artifacts.items()},
+        "trust_summary": trust,
+        "limitations": [
+            "A bounded crawl cannot prove search-engine indexing, rankings, conversions, or complete site coverage.",
+            "Static source checks do not replace field Core Web Vitals, browser traces, Search Console, analytics, logs, or expert review.",
+            "No external mutation is performed.",
+        ],
+    }
+
+
+def _run_warnings(crawl: dict[str, Any], *, fixture: bool) -> list[str]:
+    warnings: list[str] = []
+    if crawl["truncated"]:
+        warnings.append("Crawl reached a configured ceiling; uncrawled URLs remain unknown.")
+    if crawl["failed_fetches"]:
+        warnings.append(
+            f"{len(crawl['failed_fetches'])} URL fetch(es) failed and remain missing evidence."
+        )
+    if fixture:
+        warnings.append("Fixture execution verifies contracts only and is not live-site proof.")
+    return warnings
 
 
 class FixtureHttpClient:
@@ -98,30 +180,25 @@ class ProductProofTechnicalAudit:
         output.mkdir(parents=True, exist_ok=True)
         run_seed = json.dumps({"url": safe_url, "config": config.to_dict(), "evidence_mode": evidence_mode}, sort_keys=True)
         run_id = hashlib.sha256(run_seed.encode("utf-8")).hexdigest()[:16]
-        artifacts = {
-            "crawl": output / "crawl.json",
-            "findings": output / "findings.json",
-            "decisions": output / "decisions.json",
-            "contributions": output / "agent-contributions.json",
-            "trust": output / "trust-summary.json",
-            "technical_report": output / "technical-audit.md",
-            "executive_report": output / "executive-summary.md",
-            "remediation": output / "remediation-plan.csv",
-            "verification": output / "verification-plan.json",
-            "manifest": output / "run-manifest.json",
-        }
+        artifacts = {name: output / filename for name, filename in ARTIFACT_FILENAMES.items()}
         self._write_json(artifacts["crawl"], crawl)
         self._write_json(artifacts["findings"], evaluated["findings"])
         self._write_json(artifacts["decisions"], evaluated["decisions"])
         self._write_json(artifacts["contributions"], contributions)
         self._write_json(artifacts["trust"], trust)
-        artifacts["technical_report"].write_text(technical_markdown(safe_url, crawl, evaluated, trust), encoding="utf-8")
-        artifacts["executive_report"].write_text(executive_markdown(safe_url, evaluated, trust), encoding="utf-8")
+        artifacts["technical_report"].write_text(
+            technical_markdown(safe_url, crawl, evaluated, trust, evidence_mode),
+            encoding="utf-8",
+        )
+        artifacts["executive_report"].write_text(
+            executive_markdown(safe_url, evaluated, trust, evidence_mode),
+            encoding="utf-8",
+        )
         write_csv(artifacts["remediation"], evaluated["findings"])
         self._write_json(artifacts["verification"], [{"finding_id": row["id"], "verification": row["verification"], "owner": row["owner"], "status": "OPEN"} for row in evaluated["findings"]])
         digests = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in artifacts.items() if name != "manifest" and path.exists()}
         manifest = {
-            "schema_version": "1.0.0",
+            "schema_version": "2.0.0",
             "run_id": run_id,
             "target": safe_url,
             "evidence_mode": evidence_mode,
@@ -132,31 +209,25 @@ class ProductProofTechnicalAudit:
             "artifacts": {name: str(path) for name, path in artifacts.items()},
             "sha256": digests,
             "external_changes_made": False,
-            "multi_agent_contribution": {"agents_executed": len(contributions), "agents": [row["agent"] for row in contributions], "handoffs_consumed": max(len(contributions) - 1, 0), "decisions_recorded": len(evaluated["decisions"]), "contribution_records": len(contributions)},
+            "contribution_semantics": _contribution_semantics(
+                contributions, evaluated["decisions"]
+            ),
         }
         self._write_json(artifacts["manifest"], manifest)
-        warnings = []
-        if crawl["truncated"]:
-            warnings.append("Crawl reached a configured ceiling; uncrawled URLs remain unknown.")
-        if crawl["failed_fetches"]:
-            warnings.append(f"{len(crawl['failed_fetches'])} URL fetch(es) failed and remain missing evidence.")
-        if fixture:
-            warnings.append("Fixture execution verifies contracts only and is not live-site proof.")
+        warnings = _run_warnings(crawl, fixture=fixture is not None)
         status = "complete" if crawl["pages"] and not crawl["truncated"] else "partial"
-        return AdapterResult(source=self.name, status=status, data={
-            "state": "AVAILABLE" if crawl["pages"] else "EMPTY",
-            "run_id": run_id,
-            "target": safe_url,
-            "evidence_mode": evidence_mode,
-            "pages_crawled": len(crawl["pages"]),
-            "findings": len(evaluated["findings"]),
-            "critical_findings": sum(row["severity"] == "Critical" for row in evaluated["findings"]),
-            "agents_executed": len(contributions),
-            "artifacts": {name: str(path) for name, path in artifacts.items()},
-            "trust_summary": trust,
-            "limitations": [
-                "A bounded crawl cannot prove search-engine indexing, rankings, conversions, or complete site coverage.",
-                "Static source checks do not replace field Core Web Vitals, browser traces, Search Console, analytics, logs, or expert review.",
-                "No external mutation is performed.",
-            ],
-        }, warnings=warnings)
+        return AdapterResult(
+            source=self.name,
+            status=status,
+            data=_result_data(
+                run_id=run_id,
+                target=safe_url,
+                evidence_mode=evidence_mode,
+                crawl=crawl,
+                evaluated=evaluated,
+                contributions=contributions,
+                artifacts=artifacts,
+                trust=trust,
+            ),
+            warnings=warnings,
+        )

@@ -24,14 +24,17 @@ Identify emerging demand, seasonal peaks, market shifts, and search behavior cha
 
 ## Primary Skills
 
-- `forecasting`
 - `trend-monitor`
+- `forecasting`
 - `content-calendar`
-- `competitive-gap`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Use ranges, assumptions, anomaly treatment, lead time, and capacity. Require independent signal classes for emerging trends; route one-source spikes to a watchlist and abstain from precise or guaranteed forecasts.
 
 ## Output
 
-Use `templates/trend-opportunity-brief.md`.
+Use `templates/seo-roadmap.md`.
 
 ## Forbidden Actions
 

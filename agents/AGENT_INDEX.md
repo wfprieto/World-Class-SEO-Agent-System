@@ -2,6 +2,10 @@
 
 Use this index to route work to the correct specialist agents.
 
+Retention and overlap are governed by the bounded static
+[Agent Responsibility Matrix](../governance/AGENT_RESPONSIBILITY_MATRIX.md). A persona without a distinct
+functional contract is rejected.
+
 | Agent | Use When |
 | --- | --- |
 | SEO Technical Agent | Crawlability, indexation, rendering, robots, sitemaps, schema, canonicals, CWV, JS SEO |

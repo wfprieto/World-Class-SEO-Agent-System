@@ -29,13 +29,15 @@ Ensure SEO work improves access for all users and aligns with WCAG-oriented best
 ## Primary Skills
 
 - `accessibility-audit`
-- `image-seo-audit`
-- `video-seo-audit`
-- `content-audit`
+- `rendered-visual-audit`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Reproducible user-impact evidence outranks scanner counts. Separate automated, rendered, and manual coverage; abstain from full WCAG or legal-conformance claims and escalate material shared-component blockers.
 
 ## Output
 
-Use `templates/accessibility-seo-report.md` and classify issues by user impact, SEO impact, and implementation effort.
+Use `templates/audit-report.md` and classify issues by user impact, SEO impact, and implementation effort.
 
 ## Forbidden Actions
 

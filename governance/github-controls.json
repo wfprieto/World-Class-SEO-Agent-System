@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "default_branch": "main",
+  "private_vulnerability_reporting": true,
+  "discussions": true,
+  "vulnerability_alerts": true,
+  "dependabot_security_updates": true,
+  "secret_scanning": true,
+  "secret_scanning_push_protection": true,
+  "ruleset": {
+    "name": "Protect main",
+    "target": "branch",
+    "enforcement": "active",
+    "include": ["~DEFAULT_BRANCH"],
+    "exclude": [],
+    "required_status_checks": [
+      {"context": "repository-certification", "integration_id": 15368}
+    ],
+    "strict_required_status_checks_policy": true,
+    "required_approving_review_count": 0,
+    "dismiss_stale_reviews_on_push": true,
+    "require_last_push_approval": false,
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": false,
+    "allowed_merge_methods": ["squash"],
+    "required_linear_history": true,
+    "block_deletion": true,
+    "block_non_fast_forward": true,
+    "bypass_actor_count": 0
+  },
+  "independent_reviewer": {
+    "status": "NOT_APPLICABLE_SOLO_MAINTAINER",
+    "constraint": "The repository has one human account; every material change requires the exact-head repository-certification check and resolved review threads without claiming a nonexistent human approval.",
+    "accountable_owner": "Repository maintainer",
+    "due_phase": "P8",
+    "merge_availability": "AVAILABLE_AFTER_REQUIRED_STATUS_CHECKS",
+    "closure_truth": "The owner explicitly selected the solo-maintainer policy after GitHub proved that a self-authored pull request cannot satisfy one required approval."
+  },
+  "phase8_pull_request": {
+    "number": 24,
+    "base": "main",
+    "head": "agent/owner-controlled-remediation-loop",
+    "allowed_states": ["OPEN", "CLOSED"]
+  }
+}

@@ -29,10 +29,15 @@ Improve visibility and trust for local, service-area, brick-and-mortar, franchis
 ## Primary Skills
 
 - `local-seo-audit`
-- `schema-detect-validate-generate`
 - `citation-audit`
-- `review-strategy`
-- `local-landing-page-brief`
+- `gbp-profile-audit`
+- `geo-grid-rank-scan`
+- `cross-platform-nap-verify`
+- `review-compliance-audit`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Resolve the business entity and authorization/source tier before comparison or scoring. Protect hidden service-area addresses, preserve intentional identity variations, and escalate ownership, suspension, merge, and regulated-review decisions.
 
 ## Output
 

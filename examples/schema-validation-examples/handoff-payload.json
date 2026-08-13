@@ -15,5 +15,14 @@
     "Unsupported claims are removed or rewritten.",
     "Final copy passes anti-ai-public-writing after compliance edits."
   ],
-  "due_trigger": "Before the service page moves to publication review."
+  "due_trigger": "Before the service page moves to publication review.",
+  "source_node_id": "content-draft",
+  "target_node_id": "compliance-review",
+  "status": "CREATED",
+  "receiving_output_id": "",
+  "receiving_node_id": "",
+  "consumed_at": "",
+  "unresolved_reason": "",
+  "resolution": "PENDING",
+  "terminal_receipt": ""
 }

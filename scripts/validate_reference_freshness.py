@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import date
 from pathlib import Path
@@ -14,44 +15,70 @@ CATALOG = ROOT / "skills" / "skill-catalog.json"
 WINDOWS = {"volatile": 45, "quarterly": 140, "annual": 400, "stable": 800}
 
 
-def validate(*, as_of: date | None = None) -> list[str]:
+def _content_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _source_errors(pack_id: str, sources: object) -> list[str]:
+    if not isinstance(sources, list) or not sources:
+        return [f"{pack_id} requires primary_sources"]
+    return [
+        f"{pack_id} has invalid primary source URL"
+        for source in sources
+        if (parsed := urlsplit(str(source))).scheme != "https" or not parsed.hostname
+    ]
+
+
+def _content_errors(pack_id: str, pack: dict, root: Path) -> list[str]:
+    expected_digest = str(pack.get("content_sha256", ""))
+    digest_is_valid = (
+        len(expected_digest) == 64
+        and all(character in "0123456789abcdef" for character in expected_digest)
+    )
+    failures = [] if digest_is_valid else [f"{pack_id} has invalid content_sha256"]
+    path = root / str(pack.get("path", ""))
+    if not path.is_file():
+        failures.append(f"{pack_id} path is missing")
+    elif digest_is_valid and _content_sha256(path) != expected_digest:
+        failures.append(f"{pack_id} content digest does not match its pack")
+    return failures
+
+
+def _pack_errors(pack_id: str, pack: dict, *, today: date, root: Path) -> list[str]:
     failures: list[str] = []
-    today = as_of or date.today()
-    payload = json.loads(REGISTRY.read_text(encoding="utf-8-sig"))
-    catalog = json.loads(CATALOG.read_text(encoding="utf-8-sig"))
-    known_skills = {
-        str(skill)
-        for category in catalog.get("categories", [])
-        for skill in category.get("skills", [])
-    }
+    freshness_class = str(pack.get("freshness_class", ""))
+    freshness_window = WINDOWS.get(freshness_class)
+    if freshness_window is None:
+        failures.append(f"{pack_id} has invalid freshness_class")
+    verified: date | None = None
     try:
-        verified = date.fromisoformat(str(payload["verified_at"]))
+        verified = date.fromisoformat(str(pack["verified_at"]))
     except (KeyError, ValueError):
-        return ["reference registry has invalid verified_at"]
-    if verified > today:
-        failures.append("reference registry verified_at is in the future")
+        failures.append(f"{pack_id} has invalid verified_at")
+    if verified is not None:
+        if verified > today:
+            failures.append(f"{pack_id} verified_at is in the future")
+        elif freshness_window is not None:
+            age = (today - verified).days
+            if age > freshness_window:
+                failures.append(f"{pack_id} is stale by freshness policy ({age} days)")
+    if not str(pack.get("owner", "")).strip():
+        failures.append(f"{pack_id} requires an owner")
+    failures.extend(_content_errors(pack_id, pack, root))
+    failures.extend(_source_errors(pack_id, pack.get("primary_sources", [])))
+    return failures
 
-    packs = payload.get("packs", {})
-    for pack_id, pack in packs.items():
-        freshness_class = str(pack.get("freshness_class", ""))
-        if freshness_class not in WINDOWS:
-            failures.append(f"{pack_id} has invalid freshness_class")
-            continue
-        age = (today - verified).days
-        if age > WINDOWS[freshness_class]:
-            failures.append(f"{pack_id} is stale by freshness policy ({age} days)")
-        path = ROOT / str(pack.get("path", ""))
-        if not path.is_file():
-            failures.append(f"{pack_id} path is missing")
-        sources = pack.get("primary_sources", [])
-        if not isinstance(sources, list) or not sources:
-            failures.append(f"{pack_id} requires primary_sources")
-        for source in sources:
-            parsed = urlsplit(str(source))
-            if parsed.scheme != "https" or not parsed.hostname:
-                failures.append(f"{pack_id} has invalid primary source URL")
 
-    entries = payload.get("entries", [])
+def _entry_errors(
+    entries: object,
+    *,
+    packs: dict,
+    known_skills: set[str],
+    root: Path,
+) -> list[str]:
+    if not isinstance(entries, list):
+        return ["reference entries must be a list"]
+    failures: list[str] = []
     ids = [str(row.get("id", "")) for row in entries if isinstance(row, dict)]
     if len(ids) != len(set(ids)):
         failures.append("reference ids must be unique")
@@ -64,13 +91,49 @@ def validate(*, as_of: date | None = None) -> list[str]:
         if pack_id not in packs:
             failures.append(f"{ref_id} references unknown pack {pack_id}")
             continue
-        path = ROOT / str(packs[pack_id]["path"])
+        pack = packs[pack_id]
+        if not isinstance(pack, dict):
+            failures.append(f"{ref_id} references invalid pack {pack_id}")
+            continue
+        path = root / str(pack.get("path", ""))
         anchor = str(row.get("anchor", ""))
         if path.is_file() and f'id="{anchor}"' not in path.read_text(encoding="utf-8"):
             failures.append(f"{ref_id} anchor is missing")
         unknown = sorted(set(map(str, row.get("affected_skills", []))) - known_skills)
         if unknown:
             failures.append(f"{ref_id} references unknown skills {unknown}")
+    return failures
+
+
+def validate(*, as_of: date | None = None, root: Path = ROOT) -> list[str]:
+    failures: list[str] = []
+    today = as_of or date.today()
+    registry_path = root / REGISTRY.relative_to(ROOT)
+    catalog_path = root / CATALOG.relative_to(ROOT)
+    payload = json.loads(registry_path.read_text(encoding="utf-8-sig"))
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8-sig"))
+    known_skills = {
+        str(skill)
+        for category in catalog.get("categories", [])
+        for skill in category.get("skills", [])
+    }
+    packs = payload.get("packs", {})
+    if not isinstance(packs, dict):
+        return ["reference packs must be an object"]
+    for pack_id, pack in packs.items():
+        if not isinstance(pack, dict):
+            failures.append(f"{pack_id} pack must be an object")
+            continue
+        failures.extend(_pack_errors(str(pack_id), pack, today=today, root=root))
+
+    failures.extend(
+        _entry_errors(
+            payload.get("entries", []),
+            packs=packs,
+            known_skills=known_skills,
+            root=root,
+        )
+    )
     return failures
 
 

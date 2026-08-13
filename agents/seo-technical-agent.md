@@ -37,11 +37,11 @@ Ensure the site is crawlable, indexable, renderable, fast enough, structurally c
 - `indexation-reality-check`
 - `schema-detect-validate-generate`
 - `core-web-vitals-triage`
-- `seo-drift-monitor`
+- `product-proof-technical-audit`
 
 ## Output
 
-Use `templates/technical-seo-ticket.md` for implementation issues and `templates/audit-report.md` for audits.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

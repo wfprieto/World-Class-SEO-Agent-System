@@ -9,23 +9,29 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
+import importlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
+
+effective_inventory = importlib.import_module(
+    "scripts.effective_inventory" if __package__ else "effective_inventory"
+)
+_effective_command_registry = effective_inventory.effective_command_registry
+_effective_inventory_hashes = effective_inventory.effective_inventory_hashes
+scoring = importlib.import_module(
+    "scripts.comparative_scoring" if __package__ else "comparative_scoring"
+)
+validate_scorecard = scoring.validate_scorecard
+validate_reviewed_scorecard = scoring.validate_reviewed_scorecard
+weighted_score = scoring.weighted_score
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPARATIVE = ROOT / "evaluation" / "comparative"
 
-MATURITY_MAX_SCORE = {
-    "ABSENT": 1.9,
-    "DOCUMENTED": 3.9,
-    "STUB": 5.9,
-    "FUNCTIONAL": 7.9,
-    "LIVE_CAPABLE": 8.9,
-    "PRODUCTION_READY": 9.5,
-    "BEST_IN_CLASS": 10.0,
-}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -35,52 +41,123 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
-def weighted_score(scorecard: dict[str, Any]) -> float:
-    return round(
-        sum((float(row["score"]) / 10.0) * float(row["weight"]) for row in scorecard["categories"]),
-        4,
+def _git_head(root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    head = result.stdout.strip().lower()
+    return head if re.fullmatch(r"[0-9a-f]{40}", head) else None
+
+
+def _is_ancestor(root: Path, commit: str, head: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, head],
+            cwd=root,
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def _sha256(path: Path) -> str:
+    # Git may materialize text files with CRLF or LF depending on the runner.
+    # Pin the logical UTF-8 source while preserving every non-newline byte.
+    normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def validate_inventory_freshness(parity: dict[str, Any], root: Path = ROOT) -> list[str]:
+    expected = parity.get("canonical_inventory_sha256")
+    if not isinstance(expected, dict):
+        return ["canonical effective inventory hashes are missing"]
+    try:
+        actual = _effective_inventory_hashes(root)
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        return [f"effective inventory could not be merged: {exc}"]
+    errors = (
+        []
+        if set(expected) == set(actual)
+        else ["canonical effective inventory hash set is incomplete"]
     )
+    errors.extend(
+        f"effective inventory drifted since evaluation: {label}"
+        for label, digest in actual.items()
+        if expected.get(label) != digest
+    )
+    return errors
 
 
-def validate_scorecard(scorecard: dict[str, Any]) -> list[str]:
+def validate_current_target_commits(
+    world: dict[str, Any],
+    parity: dict[str, Any],
+    readiness: dict[str, Any],
+    root: Path = ROOT,
+) -> list[str]:
+    """Reject unknown baselines while allowing reviewed descendant commits.
+
+    A reviewed baseline commit may remain valid on descendants because this
+    validator also pins the canonical inventories. This avoids making every
+    documentation-only commit stale while still failing closed when the
+    capability or command source of truth changes.
+    """
     errors: list[str] = []
-    categories = scorecard.get("categories")
-    if not isinstance(categories, list) or len(categories) != 10:
-        return ["scorecard must contain exactly ten categories"]
-    ids: list[int] = []
-    for row in categories:
-        if isinstance(row, dict):
-            row_id = row.get("id")
-            if isinstance(row_id, int):
-                ids.append(row_id)
-    if sorted(ids) != list(range(1, 11)):
-        errors.append("category ids must be unique integers 1 through 10")
-    weight = sum(float(row.get("weight", 0)) for row in categories)
-    if abs(weight - 100.0) > 0.0001:
-        errors.append(f"category weights must total 100; found {weight}")
-    for row in categories:
-        if not isinstance(row, dict):
-            errors.append("every category must be an object")
-            continue
-        maturity = str(row.get("evidence_maturity", ""))
-        score = float(row.get("score", -1))
-        if maturity not in MATURITY_MAX_SCORE:
-            errors.append(f"category {row.get('id')} has unknown evidence maturity {maturity!r}")
-            continue
-        maximum = MATURITY_MAX_SCORE[maturity]
-        if score > maximum:
+    head = _git_head(root)
+    if head is None:
+        return ["cannot resolve current Git HEAD; comparative freshness is unverified"]
+    target_values = {
+        "world-class": str(world.get("target_repository", "")).rsplit("@", 1)[-1],
+        "parity": str(parity.get("target_commit", "")),
+        "release-readiness": str(readiness.get("evaluated_target_commit", "")),
+    }
+    for label, commit in target_values.items():
+        if not re.fullmatch(r"[0-9a-f]{40}", commit) or not _is_ancestor(root, commit, head):
             errors.append(
-                f"category {row.get('id')} score {score} exceeds maturity ceiling {maximum} for {maturity}"
+                f"{label} target commit is stale or is not an ancestor of current HEAD {head}"
             )
-        evidence = row.get("evidence")
-        if not isinstance(evidence, list) or not evidence:
-            errors.append(f"category {row.get('id')} has no evidence")
-        if score >= 8 and maturity not in {"LIVE_CAPABLE", "PRODUCTION_READY", "BEST_IN_CLASS"}:
-            errors.append(f"category {row.get('id')} cannot score 8+ without live-capable evidence")
-    calculated = weighted_score(scorecard)
-    claimed = float(scorecard.get("overall_score", -1))
-    if abs(calculated - claimed) > 0.0001:
-        errors.append(f"overall_score is {claimed}, but the formula produces {calculated}")
+
+    errors.extend(validate_inventory_freshness(parity, root))
+    return errors
+
+
+def validate_capability_inventory(ledger: dict[str, Any], root: Path = ROOT) -> list[str]:
+    """Cross-check code-state claims against the effective command registry."""
+    try:
+        registry = _effective_command_registry(root)
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        return [f"effective command inventory could not be merged: {exc}"]
+    command_ids = {
+        str(row.get("id")) for row in registry.get("commands", []) if isinstance(row, dict)
+    }
+    errors: list[str] = []
+    for row in ledger.get("capabilities", []):
+        if not isinstance(row, dict):
+            continue
+        required = row.get("required_command_ids", [])
+        if not isinstance(required, list) or not required:
+            continue
+        required_ids = {str(item) for item in required}
+        present = required_ids.issubset(command_ids)
+        code_state = row.get("code_state")
+        row_id = row.get("id")
+        if present and code_state == "ABSENT":
+            errors.append(
+                f"{row_id} contradicts the effective command inventory: required commands exist"
+            )
+        if not present and code_state == "CODE_VERIFIED":
+            missing = sorted(required_ids - command_ids)
+            errors.append(
+                f"{row_id} contradicts the effective command inventory: missing {missing}"
+            )
     return errors
 
 
@@ -90,11 +167,27 @@ def _skill_ids(path: Path) -> set[str]:
     text = path.read_text(encoding="utf-8-sig")
     return set(
         re.findall(
-            r"^- `([a-z0-9-]+)`(?:\s+—\s+package:.*)?$",
+            # The identifier is the contract; generated annotations may evolve.
+            r"^- `([a-z0-9-]+)`(?:[ \t]+[^\r\n]*)?$",
             text,
             flags=re.MULTILINE,
         )
     )
+
+
+def _catalog_skill_ids(path: Path) -> set[str]:
+    """Inventory skills from the machine authority, not its rendered reference."""
+    payload = load_json(path)
+    categories = payload.get("categories", [])
+    if not isinstance(categories, list):
+        return set()
+    return {
+        str(skill)
+        for category in categories
+        if isinstance(category, dict) and isinstance(category.get("skills"), list)
+        for skill in category["skills"]
+        if isinstance(skill, str) and skill
+    }
 
 
 def _test_functions(path: Path) -> int:
@@ -107,7 +200,8 @@ def _test_functions(path: Path) -> int:
         total += sum(
             1
             for node in ast.walk(tree)
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_")
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name.startswith("test_")
         )
     return total
 
@@ -115,14 +209,16 @@ def _test_functions(path: Path) -> int:
 def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
     agent_files = [path for path in (root / "agents").glob("*.md") if path.name != "AGENT_INDEX.md"]
     script_files = [path for path in (root / "scripts").glob("*.py") if path.name != "__init__.py"]
-    adapter_files = [path for path in (root / "adapters").glob("*.py") if path.name != "__init__.py"]
+    adapter_files = [
+        path for path in (root / "adapters").glob("*.py") if path.name != "__init__.py"
+    ]
     knowledge_files = [path for path in (root / "knowledge").iterdir() if path.is_file()]
     reference_files = list((root / "skills").glob("**/references/*"))
     prompt_files = list((root / "skills" / "flow-prompts").glob("*.md"))
     workflow_files = list((root / "workflows").glob("*.md"))
     return {
         "agent_files": len(agent_files),
-        "indexed_skills": len(_skill_ids(root / "skills" / "SKILL_INDEX.md")),
+        "indexed_skills": len(_catalog_skill_ids(root / "skills" / "skill-catalog.json")),
         "python_scripts": len(script_files),
         "python_adapters": len(adapter_files),
         "knowledge_files": len(knowledge_files),
@@ -137,9 +233,54 @@ def inventory_repo(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
+GAP_DISPOSITIONS = {
+    "CODE_REMEDIATION",
+    "EXTERNAL_EVIDENCE_REQUIRED",
+    "EXCLUDED_PACKAGING_RELEASE",
+    "EXCLUDED_REAL_WORLD_EVIDENCE",
+}
+
+
+def _gap_disposition_errors(row_id: str, row: dict[str, Any], status: str) -> list[str]:
+    if status != "GAP_OPEN":
+        return (
+            [f"{row_id} closed capability must not retain open-gap disposition"]
+            if any(field in row for field in ("gap_disposition", "next_action"))
+            else []
+        )
+    errors = []
+    if row.get("gap_disposition") not in GAP_DISPOSITIONS:
+        errors.append(f"{row_id} has invalid or missing gap disposition")
+    for field in ("owner", "next_action"):
+        value = row.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{row_id} open gap requires {field}")
+    return errors
+
+
+def _parity_row_errors(
+    row_id: str, row: dict[str, Any], status: str, allowed: set[object]
+) -> list[str]:
+    errors: list[str] = []
+    if status not in allowed:
+        errors.append(f"{row_id} has invalid status {status!r}")
+    if status == "GAP_OPEN" and not row.get("target_pr"):
+        errors.append(f"{row_id} is open without a target PR")
+    errors.extend(_gap_disposition_errors(row_id, row, status))
+    if status != "GAP_OPEN" and not row.get("evidence"):
+        errors.append(f"{row_id} claims closure without evidence")
+    acceptance = row.get("acceptance")
+    if not isinstance(acceptance, list) or not acceptance:
+        errors.append(f"{row_id} has no acceptance criteria")
+    return errors
+
+
 def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     allowed = set(ledger.get("allowed_statuses", []))
+    allowed_gap_dispositions = set(ledger.get("allowed_gap_dispositions", []))
+    if allowed_gap_dispositions != GAP_DISPOSITIONS:
+        errors.append("allowed gap dispositions must match the canonical bounded set")
     rows = ledger.get("capabilities")
     if not isinstance(rows, list) or not rows:
         return ["capability parity ledger must contain rows"]
@@ -155,26 +296,36 @@ def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
             errors.append(f"duplicate parity id: {row_id}")
         seen.add(row_id)
         status = str(row.get("status", ""))
-        if status not in allowed:
-            errors.append(f"{row_id} has invalid status {status!r}")
-        if status == "GAP_OPEN" and not row.get("target_pr"):
-            errors.append(f"{row_id} is open without a target PR")
-        if status != "GAP_OPEN" and not row.get("evidence"):
-            errors.append(f"{row_id} claims closure without evidence")
-        acceptance = row.get("acceptance")
-        if not isinstance(acceptance, list) or not acceptance:
-            errors.append(f"{row_id} has no acceptance criteria")
+        errors.extend(_parity_row_errors(row_id, row, status, allowed))
     return errors
 
 
 def validate_all(root: Path = ROOT) -> dict[str, Any]:
-    world = load_json(COMPARATIVE / "world-class-baseline.json")
-    claude = load_json(COMPARATIVE / "claude-seo-baseline.json")
-    parity = load_json(COMPARATIVE / "capability-parity.json")
+    comparative = root / "evaluation" / "comparative"
+    world = load_json(comparative / "world-class-baseline.json")
+    claude = load_json(comparative / "claude-seo-baseline.json")
+    authority = load_json(comparative / "reviewed-source-authority.json")
+    parity = load_json(comparative / "capability-parity.json")
+    readiness = load_json(comparative / "final-release-readiness.json")
     errors = [
-        *[f"world-class: {item}" for item in validate_scorecard(world)],
-        *[f"claude-seo: {item}" for item in validate_scorecard(claude)],
+        *[
+            f"world-class: {item}"
+            for item in validate_reviewed_scorecard(
+                world, "world-class-baseline.json", authority
+            )
+        ],
+        *[
+            f"claude-seo: {item}"
+            for item in validate_reviewed_scorecard(
+                claude, "claude-seo-baseline.json", authority
+            )
+        ],
         *[f"parity: {item}" for item in validate_parity_ledger(parity)],
+        *[
+            f"freshness: {item}"
+            for item in validate_current_target_commits(world, parity, readiness, root)
+        ],
+        *[f"inventory: {item}" for item in validate_capability_inventory(parity, root)],
     ]
     return {
         "status": "PASS" if not errors else "FAIL",
@@ -186,7 +337,9 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
             "gap": round(weighted_score(claude) - weighted_score(world), 4),
             "target": float(world.get("target_score", 92)),
         },
-        "open_capabilities": sum(1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"),
+        "open_capabilities": sum(
+            1 for row in parity["capabilities"] if row.get("status") == "GAP_OPEN"
+        ),
     }
 
 

@@ -28,14 +28,17 @@ Monitor competitors, identify gaps, detect threats, and translate competitive mo
 ## Primary Skills
 
 - `competitive-gap`
-- `backlink-gap`
-- `sxo-page-fit`
-- `geo-aio-citation-audit`
 - `competitor-change-monitor`
+- `competitor-comparison-page-build`
+- `ai-citation-opportunity-map`
+
+## Decision Protocol
+
+Apply `skills/specialist-decision-standard.md` and this agent's exact section in `skills/specialist-depth-playbooks.md`. Require comparable dated snapshots, market/query alignment, and business-model fit before declaring a material gap or change. Observed movement does not prove cause or competitor intent; propose verification instead of copying reactions.
 
 ## Output
 
-Use `templates/competitive-intelligence-brief.md`.
+Use `templates/audit-report.md`.
 
 ## Forbidden Actions
 

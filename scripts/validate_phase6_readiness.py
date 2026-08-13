@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -16,9 +17,9 @@ REQUIRED = [
 ]
 
 
-def validate() -> list[str]:
-    failures = [f"missing required Phase 6 artifact: {path}" for path in REQUIRED if not (ROOT / path).is_file()]
-    readiness_path = ROOT / "evaluation/comparative/final-release-readiness.json"
+def validate(*, require_approved: bool = False, root: Path = ROOT) -> list[str]:
+    failures = [f"missing required Phase 6 artifact: {path}" for path in REQUIRED if not (root / path).is_file()]
+    readiness_path = root / "evaluation/comparative/final-release-readiness.json"
     if readiness_path.is_file():
         data = json.loads(readiness_path.read_text(encoding="utf-8"))
         if data.get("release_decision") not in {"APPROVED", "BLOCKED"}:
@@ -26,11 +27,20 @@ def validate() -> list[str]:
         gates = data.get("gates", {})
         if data.get("release_decision") == "APPROVED" and any(value != "PASS" and value != "APPROVE_GREAT" for value in gates.values()):
             failures.append("APPROVED release contains an unresolved gate")
+        if require_approved and data.get("release_decision") != "APPROVED":
+            failures.append("release publication requires release_decision APPROVED")
     return failures
 
 
 def main() -> int:
-    failures = validate()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--require-approved",
+        action="store_true",
+        help="Fail unless the release decision is APPROVED and every gate is resolved.",
+    )
+    arguments = parser.parse_args()
+    failures = validate(require_approved=arguments.require_approved)
     if failures:
         print("Phase 6 readiness validation failed:")
         for failure in failures:

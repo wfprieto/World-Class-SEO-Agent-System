@@ -1,0 +1,23 @@
+{
+  "schema_version": "3.0.0",
+  "phase_id": "P0",
+  "strategy": "DYNAMIC_EXACT_SNAPSHOT",
+  "baseline_commit": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+  "candidate_selector": "review_snapshot_commit",
+  "commit_range": "baseline_commit..review_snapshot_commit",
+  "revert_order": "newest_first",
+  "expected_baseline_tree": "f998720c9d97180902eb6493f76265f55b3010b9",
+  "workflow": ".github/workflows/validate.yml",
+  "job": "phase0-rollback-certification",
+  "required_assertions": [
+    "candidate_equals_review_snapshot_commit",
+    "all_commits_in_baseline_exclusive_range_reverted",
+    "post_revert_tree_equals_baseline_tree",
+    "baseline_validation_passes"
+  ],
+  "recovery_position": "Resolve review_snapshot_commit from the canonical program, enumerate git rev-list <baseline_commit>..<review_snapshot_commit>, and revert every returned commit newest-to-oldest as one bounded operation.",
+  "limitations": [
+    "The durable artifact defines the current-boundary-safe recovery algorithm; the canonical CI job supplies the authenticated exact-head execution receipt.",
+    "Recovery certification proves deterministic source restoration and baseline validation, not public release or real-world SEO outcomes."
+  ]
+}

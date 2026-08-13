@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "wfprieto/World-Class-SEO-Agent-System",
+  "state": "BLOCKED_OWNER_ACTION",
+  "accountable_role": "Repository maintainer",
+  "destination": null,
+  "owner_authorized_publication": false,
+  "repository_controlled": false,
+  "distinct_from_security_intake": false,
+  "monitoring": {
+    "status": "PENDING_OWNER_ACTION",
+    "monitor_role": null,
+    "attested_at": null,
+    "attestation_ref": null
+  },
+  "access_test": {
+    "status": "NOT_RUN",
+    "tested_at": null,
+    "method": null
+  },
+  "acknowledgement_target_hours": null,
+  "activation_requirements": {
+    "status": "PROVIDER_VERIFICATION_REQUIRED",
+    "required_disclosures": [
+      "acknowledgement target",
+      "monitoring role",
+      "confidentiality limits",
+      "conflict handling"
+    ],
+    "prohibited_evidence": [
+      "repository issue comments",
+      "repository commits",
+      "self-authored assertions",
+      "example or test destinations"
+    ]
+  },
+  "review_due": "2026-08-10",
+  "rollback_rule": "Remove invalid public instructions, set this contract and linked governance controls to BLOCKED_OWNER_ACTION, and preserve no report contents in repository evidence.",
+  "prohibited_repository_data": [
+    "credentials",
+    "mailbox contents",
+    "reporter identity",
+    "report contents",
+    "private access URLs"
+  ]
+}

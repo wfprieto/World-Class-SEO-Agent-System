@@ -2,25 +2,12 @@
 
 from __future__ import annotations
 
-import re
 import time
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
-_SENSITIVE = re.compile(r"(?i)(authorization|api[_-]?key|access[_-]?token|password|secret|cookie|session)")
-
-
-def redact(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        return {
-            str(key): ("[REDACTED]" if _SENSITIVE.search(str(key)) else redact(item))
-            for key, item in value.items()
-        }
-    if isinstance(value, (list, tuple)):
-        return [redact(item) for item in value]
-    if isinstance(value, str) and re.search(r"(?:sk-(?:proj-)?|gh[pousr]_|AIza)[A-Za-z0-9_-]{12,}", value):
-        return "[REDACTED]"
-    return value
+from sensitive_data import redact
 
 
 @dataclass
@@ -41,5 +28,7 @@ class OperationTelemetry:
         payload = asdict(self)
         payload.pop("started_monotonic", None)
         payload["duration_ms"] = round((time.monotonic() - self.started_monotonic) * 1000, 3)
-        payload["metadata"] = redact(payload["metadata"])
-        return payload
+        sanitized = redact(payload)
+        if not isinstance(sanitized, dict):
+            raise TypeError("telemetry redaction must preserve mapping shape")
+        return sanitized

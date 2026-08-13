@@ -73,7 +73,8 @@ async def test_dispatch_enforces_timeout() -> None:
     dispatcher = ToolDispatcher({"slow": SlowAdapter()}, default_timeout_seconds=0.1)
     result = await dispatcher.dispatch(ToolRequest("slow", {}))
     assert result.status == "failed"
-    assert result.error_type == "ToolTimeout"
+    assert result.error_type == "ToolDeadlineExceededWorkMayContinue"
+    assert "side-effect outcome is unknown" in (result.sanitized_error or "")
     assert result.evidence_state == "INVALID"
 
 

@@ -1,0 +1,469 @@
+from __future__ import annotations
+
+from copy import deepcopy
+
+import pytest
+
+from runtime.handoff_governance import (
+    reconcile_required_handoffs,
+    resolve_handoff_acknowledgements,
+)
+from runtime.handoff_receipts import seal_terminal_handoff, terminal_receipt_is_valid
+from runtime.routing import RouteResult
+from runtime.state import Handoff, SessionState
+from runtime.workflow_graph import WorkflowGraph, WorkflowNode, build_workflow_graph
+from runtime.workflow_run_support import append_risk_handoff
+
+SESSION = "seo-session-fixture"
+HANDOFF_ID = f"{SESSION}-receiver-handoff-01"
+
+
+def _graph() -> WorkflowGraph:
+    return WorkflowGraph(
+        id="handoff-fixture",
+        nodes=[
+            WorkflowNode(id="source", agent="Source Agent"),
+            WorkflowNode(
+                id="receiver",
+                agent="Receiver Agent",
+                depends_on=("source",),
+            ),
+        ],
+        deliverable_node_id="receiver",
+    )
+
+
+def _handoff() -> Handoff:
+    handoff = _pending()
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff)],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    return handoff
+
+
+def _pending() -> Handoff:
+    return Handoff(
+        handoff_id=HANDOFF_ID,
+        from_agent="Source Agent",
+        to_agent="Receiver Agent",
+        reason="Required dependency.",
+        context_summary="Bounded fixture.",
+        evidence_refs=["evidence-1"],
+        requested_action="Consume the evidence.",
+        risk_level="Medium",
+        acceptance_criteria=["Reference the evidence."],
+        due_trigger="Before receiver completion.",
+        source_node_id="source",
+        target_node_id="receiver",
+    )
+
+
+def _audit(handoffs: list[Handoff]) -> dict:
+    return reconcile_required_handoffs(
+        session_id=SESSION,
+        graph=_graph(),
+        node_states={"source": "COMPLETE", "receiver": "COMPLETE"},
+        outputs_by_node={
+            "source": {"output_id": "source-output", "agent": "Source Agent"},
+            "receiver": {"output_id": "receiver-output", "agent": "Receiver Agent"},
+        },
+        handoffs=handoffs,
+    )
+
+
+def _codes(report: dict) -> set[str]:
+    return {item["code"] for item in report["issues"]}
+
+
+def _ack(handoff: Handoff, disposition: str = "ACCEPTED") -> dict:
+    return {
+        "handoff_id": handoff.handoff_id,
+        "disposition": disposition,
+        "requested_action_addressed": handoff.requested_action,
+        "evidence_refs_addressed": list(handoff.evidence_refs),
+        "acceptance_criteria_addressed": list(handoff.acceptance_criteria),
+        "resolution_note": "Fixture resolution.",
+    }
+
+
+def test_valid_required_handoff_is_consumed_without_false_positive() -> None:
+    report = _audit([_handoff()])
+    assert report["status"] == "PASS"
+    assert report["expected_dependency_handoffs"] == 1
+    assert report["consumed_dependency_handoffs"] == 1
+    assert report["expected_required"] == 1
+    assert report["consumed_required"] == 1
+    assert report["issues"] == []
+    assert report["unresolved"] == []
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_code"),
+    [
+        ("missing", "MISSING_HANDOFF"),
+        ("duplicate", "DUPLICATE_HANDOFF"),
+        ("stale", "STALE_HANDOFF"),
+        ("wrong-recipient", "WRONG_RECIPIENT"),
+        ("wrong-consumer", "WRONG_CONSUMER"),
+        ("silently-dropped", "SILENTLY_DROPPED_HANDOFF"),
+        ("unexpected", "UNEXPECTED_HANDOFF"),
+    ],
+)
+def test_fixed_handoff_mutation_catalog_fails_closed(
+    mutation: str,
+    expected_code: str,
+) -> None:
+    handoff = _handoff()
+    records = [handoff]
+    if mutation == "missing":
+        records = []
+    elif mutation == "duplicate":
+        records.append(deepcopy(handoff))
+    elif mutation == "stale":
+        stale = deepcopy(handoff)
+        stale.handoff_id = "seo-session-prior-risk-escalation-001"
+        records.append(stale)
+    elif mutation == "wrong-recipient":
+        handoff.to_agent = "Unaddressed Agent"
+    elif mutation == "wrong-consumer":
+        handoff.receiving_output_id = "source-output"
+    elif mutation == "silently-dropped":
+        handoff.status = "CREATED"
+        handoff.receiving_output_id = ""
+        handoff.consumed_at = ""
+    elif mutation == "unexpected":
+        unexpected = deepcopy(handoff)
+        unexpected.handoff_id = f"{SESSION}-unexpected-control-01"
+        records.append(unexpected)
+
+    report = _audit(records)
+    assert report["status"] == "FAIL"
+    assert expected_code in _codes(report)
+    if mutation == "silently-dropped":
+        assert handoff.status == "BLOCKED"
+        assert handoff.unresolved_reason
+        assert report["unresolved"][0]["reason"]
+
+
+def test_blocked_handoff_is_explicitly_reported_without_silent_drop_issue() -> None:
+    handoff = _handoff()
+    handoff.block("Receiver failed schema validation.")
+    report = _audit([handoff])
+    assert report["status"] == "FAIL"
+    assert "SILENTLY_DROPPED_HANDOFF" not in _codes(report)
+    assert report["unresolved"] == [
+        {
+            "handoff_id": HANDOFF_ID,
+            "status": "BLOCKED",
+            "reason": "Receiver failed schema validation.",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["partial-ref", "forged-ref", "wrong-action", "wrong-disposition", "wrong-node"],
+)
+def test_acknowledgement_contract_mutations_cannot_consume(mutation: str) -> None:
+    handoff = _pending()
+    handoff.evidence_refs = ["evidence-1", "evidence-2"]
+    acknowledgement = _ack(handoff)
+    node_id = "receiver"
+    if mutation == "partial-ref":
+        acknowledgement["evidence_refs_addressed"] = ["evidence-1"]
+    elif mutation == "forged-ref":
+        acknowledgement["evidence_refs_addressed"] = ["evidence-1", "foreign-evidence"]
+    elif mutation == "wrong-action":
+        acknowledgement["requested_action_addressed"] = "Perform unrelated work."
+    elif mutation == "wrong-disposition":
+        acknowledgement["disposition"] = "IGNORED"
+    elif mutation == "wrong-node":
+        node_id = "same-agent-other-node"
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id="receiver-output",
+        node_id=node_id,
+        output_agent="Receiver Agent",
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.resolution == "UNRESOLVED"
+    assert handoff.unresolved_reason
+
+
+def test_zero_evidence_control_handoff_supports_explicit_challenge() -> None:
+    handoff = _pending()
+    handoff.evidence_refs = []
+    acknowledgement = _ack(handoff, "CHALLENGED")
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    assert handoff.status == "CONSUMED"
+    assert handoff.resolution == "CHALLENGED"
+    assert handoff.receiving_node_id == "receiver"
+
+
+def test_explicit_unresolved_ack_is_terminal_and_reasoned() -> None:
+    handoff = _pending()
+    acknowledgement = _ack(handoff, "UNRESOLVED")
+    acknowledgement["resolution_note"] = "Required source is unavailable."
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.resolution == "UNRESOLVED"
+    assert handoff.unresolved_reason == "Required source is unavailable."
+    assert handoff.terminal_receipt
+
+
+def test_unresolved_terminal_receipt_is_bound_to_exact_receiver_output() -> None:
+    handoff = _pending()
+    acknowledgement = _ack(handoff, "UNRESOLVED")
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id="foreign-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    report = _audit([handoff])
+    assert "WRONG_CONSUMER" in _codes(report)
+
+
+def test_zero_evidence_control_handoff_rejects_accepted_disposition() -> None:
+    handoff = _pending()
+    handoff.evidence_refs = []
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff, "ACCEPTED")],
+        output_id="receiver-output",
+        node_id="receiver",
+        output_agent="Receiver Agent",
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.unresolved_reason.startswith("Invalid acknowledgement:")
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["wrong-node", "blank-output", "wrong-recipient", "wrong-action", "wrong-ref", "wrong-criteria", "blank-note"],
+)
+def test_unresolved_ack_requires_exact_terminal_context(mutation: str) -> None:
+    handoff = _pending()
+    acknowledgement = _ack(handoff, "UNRESOLVED")
+    node_id = "receiver"
+    output_id = "receiver-output"
+    output_agent = "Receiver Agent"
+    if mutation == "wrong-node":
+        node_id = "other-node"
+    elif mutation == "blank-output":
+        output_id = ""
+    elif mutation == "wrong-recipient":
+        output_agent = "Other Agent"
+    elif mutation == "wrong-action":
+        acknowledgement["requested_action_addressed"] = "Other action"
+    elif mutation == "wrong-ref":
+        acknowledgement["evidence_refs_addressed"] = ["other-evidence"]
+    elif mutation == "wrong-criteria":
+        acknowledgement["acceptance_criteria_addressed"] = ["Other criterion"]
+    elif mutation == "blank-note":
+        acknowledgement["resolution_note"] = "   "
+    resolve_handoff_acknowledgements(
+        handoff,
+        [acknowledgement],
+        output_id=output_id,
+        node_id=node_id,
+        output_agent=output_agent,
+    )
+    assert handoff.status == "BLOCKED"
+    assert handoff.unresolved_reason.startswith("Invalid acknowledgement:")
+    assert handoff.terminal_receipt
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["direct-consume", "action-after-seal", "resolution-after-seal", "time-after-seal"],
+)
+def test_terminal_receipt_rejects_direct_or_post_resolution_mutation(mutation: str) -> None:
+    handoff = _pending() if mutation == "direct-consume" else _handoff()
+    if mutation == "direct-consume":
+        handoff.consume("receiver-output", "receiver")
+    elif mutation == "action-after-seal":
+        handoff.requested_action = "Tampered action"
+    elif mutation == "resolution-after-seal":
+        handoff.resolution = "CHALLENGED"
+    else:
+        handoff.consumed_at = "2099-01-01T00:00:00+00:00"
+    report = _audit([handoff])
+    assert report["status"] == "FAIL"
+    assert "INVALID_TERMINAL_RECEIPT" in _codes(report)
+
+
+def test_vertical_capacity_exclusion_is_explicit_not_silently_truncated() -> None:
+    session = SessionState.create(
+        request="Run a complete SEO audit",
+        mode="Audit",
+        domain="https://example.com",
+        business_type="ecommerce local international",
+    )
+    route = RouteResult(
+        lead_agent="SEO Full Audit/Analyst Agent",
+        supporting_agents=[],
+        workflow="workflows/full-audit-workflow.md",
+        required_evidence=[],
+        confidence="High",
+        escalation="fixture",
+    )
+    graph = build_workflow_graph(route, session)
+    assert graph.capacity_exclusions == [
+        {
+            "agent": "International & Multilingual SEO Agent",
+            "reason": "vertical specialist capacity is bounded to two agents",
+            "status": "NOT_EXECUTED_CAPACITY",
+        }
+    ]
+    assert graph.to_dict()["capacity_exclusions"] == graph.capacity_exclusions
+
+
+def test_exact_resolved_declared_risk_control_is_not_unexpected() -> None:
+    session = SessionState.create(
+        request="Review an open risk",
+        mode="Audit",
+        domain="https://example.com",
+        business_type="generic",
+    )
+    session.open_risks.append("Required evidence is unavailable.")
+    graph = WorkflowGraph(
+        id="declared-risk-control",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        lead_agent="Source Agent",
+        supporting_agents=["SEO Scrummaster Agent"],
+        workflow="workflows/request-routing.md",
+        required_evidence=[],
+        escalation="Review the open risk.",
+        confidence="Low",
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    resolve_handoff_acknowledgements(
+        handoff,
+        [_ack(handoff, "CHALLENGED")],
+        output_id="scrum-output",
+        node_id="scrum",
+        output_agent="SEO Scrummaster Agent",
+    )
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={
+            "scrum": {
+                "output_id": "scrum-output",
+                "agent": "SEO Scrummaster Agent",
+            }
+        },
+        handoffs=session.handoffs,
+    )
+    assert report["status"] == "PASS"
+    assert report["declared_risk_control_handoffs"] == 1
+    assert "UNEXPECTED_HANDOFF" not in _codes(report)
+
+
+def test_declared_control_does_not_exempt_an_extra_current_session_handoff() -> None:
+    session = SessionState.create("risk", "Audit", "https://example.com", "generic")
+    session.open_risks.append("Risk")
+    graph = WorkflowGraph(
+        id="declared-risk-plus-forgery",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        "Source Agent", ["SEO Scrummaster Agent"], "workflows/request-routing.md",
+        [], "Review risk.", "Low"
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    resolve_handoff_acknowledgements(
+        handoff, [_ack(handoff, "CHALLENGED")], output_id="scrum-output",
+        node_id="scrum", output_agent="SEO Scrummaster Agent"
+    )
+    forged = deepcopy(handoff)
+    forged.handoff_id = f"{session.session_id}-risk-escalation-forged"
+    forged.status = "CREATED"
+    forged.receiving_output_id = ""
+    forged.receiving_node_id = ""
+    forged.consumed_at = ""
+    forged.unresolved_reason = ""
+    forged.resolution = "PENDING"
+    forged.terminal_receipt = ""
+    resolve_handoff_acknowledgements(
+        forged,
+        [_ack(forged, "CHALLENGED")],
+        output_id="scrum-output",
+        node_id="scrum",
+        output_agent="SEO Scrummaster Agent",
+    )
+    assert terminal_receipt_is_valid(forged)
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={"scrum": {"output_id": "scrum-output", "agent": "SEO Scrummaster Agent"}},
+        handoffs=[handoff, forged],
+    )
+    assert "UNEXPECTED_HANDOFF" in _codes(report)
+
+
+def test_resealed_declared_zero_evidence_acceptance_fails_reconciliation() -> None:
+    session = SessionState.create("risk", "Audit", "https://example.com", "generic")
+    session.open_risks.append("Risk")
+    graph = WorkflowGraph(
+        id="declared-risk-resealed",
+        nodes=[WorkflowNode(id="scrum", agent="SEO Scrummaster Agent")],
+        deliverable_node_id="scrum",
+    )
+    route = RouteResult(
+        "Source Agent", ["SEO Scrummaster Agent"], "workflows/request-routing.md",
+        [], "Review risk.", "Low"
+    )
+    append_risk_handoff(session, route, graph)
+    handoff = session.handoffs[0]
+    assert handoff.evidence_refs == []
+    handoff.consume("scrum-output", "scrum", "ACCEPTED")
+    seal_terminal_handoff(handoff)
+    assert terminal_receipt_is_valid(handoff)
+    report = reconcile_required_handoffs(
+        session_id=session.session_id,
+        graph=graph,
+        node_states={"scrum": "COMPLETE"},
+        outputs_by_node={"scrum": {"output_id": "scrum-output", "agent": "SEO Scrummaster Agent"}},
+        handoffs=[handoff],
+    )
+    assert report["status"] == "FAIL"
+    assert "EVIDENCE_FREE_ACCEPTANCE" in _codes(report)
+
+
+def test_resealed_dependency_zero_evidence_acceptance_fails_reconciliation() -> None:
+    handoff = _handoff()
+    handoff.evidence_refs = []
+    handoff.consume("receiver-output", "receiver", "ACCEPTED")
+    seal_terminal_handoff(handoff)
+    assert terminal_receipt_is_valid(handoff)
+    report = _audit([handoff])
+    assert report["status"] == "FAIL"
+    assert "EVIDENCE_FREE_ACCEPTANCE" in _codes(report)

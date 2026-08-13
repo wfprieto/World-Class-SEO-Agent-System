@@ -9,7 +9,7 @@
     "pages_crawled": 5,
     "findings": 18,
     "critical_findings": 3,
-    "agents_executed": 7,
+    "agents_executed": 0,
     "external_changes_made": "NONE",
     "unsupported_material_findings": 0,
     "fixture_is_live_proof": false

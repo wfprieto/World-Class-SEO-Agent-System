@@ -12,7 +12,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
 
-from adapters.base import AdapterNotConfigured, AdapterResult
+from contracts.adapter import AdapterNotConfigured, AdapterResult
 
 MAX_URLS = 10_000
 MAX_RESPONSE_BYTES = 65_536

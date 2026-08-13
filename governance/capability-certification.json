@@ -1,0 +1,73 @@
+{
+  "$schema": "../schemas/capability-certification.schema.json",
+  "schema_version": "1.0.0",
+  "max_receipt_age_days": 30,
+  "required_checks": ["prerequisites", "auth_preflight", "fixture_replay", "adverse_cases", "live_probe", "redaction"],
+  "trusted_issuers": [],
+  "profiles": [
+    {
+      "id": "google-search-console-read-only", "version": 1,
+      "capabilities": ["google.gsc-aggregate", "google.gsc-query", "google.sitemap-status", "google.url-inspection"],
+      "provider_id": "google-search-console", "provider": "Google Search Console", "transport": "bounded_https", "side_effect": "read_only", "owner": "SEO Technical Agent",
+      "relevant_sources": ["governance/capability-certification.json", "integrations/google/client.py", "integrations/google/gsc.py", "integrations/google/sitemaps.py", "seoctl/google_cli.py"],
+      "credential_env_sets": [["GSC_ACCESS_TOKEN"], ["GSC_CLIENT_ID", "GSC_CLIENT_SECRET", "GSC_REFRESH_TOKEN"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": false}
+    },
+    {
+      "id": "google-analytics-read-only", "version": 1,
+      "capabilities": ["google.ga4-report"],
+      "provider_id": "google-analytics-data", "provider": "Google Analytics Data API", "transport": "bounded_https", "side_effect": "read_only", "owner": "SEO Full Audit/Analyst Agent",
+      "relevant_sources": ["governance/capability-certification.json", "integrations/google/client.py", "integrations/google/ga4.py", "seoctl/google_cli.py"],
+      "credential_env_sets": [["GA4_ACCESS_TOKEN"], ["GA4_CLIENT_ID", "GA4_CLIENT_SECRET", "GA4_REFRESH_TOKEN"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": false}
+    },
+    {
+      "id": "google-performance-read-only", "version": 1,
+      "capabilities": ["google.crux-current", "google.crux-history", "google.lcp-subparts", "google.pagespeed"],
+      "provider_id": "google-performance-apis", "provider": "Google PageSpeed and CrUX APIs", "transport": "bounded_https", "side_effect": "read_only", "owner": "SEO Technical Agent",
+      "relevant_sources": ["adapters/google_pagespeed_live.py", "governance/capability-certification.json", "integrations/google/client.py", "integrations/google/crux.py", "seoctl/google_cli.py"],
+      "credential_env_sets": [["GOOGLE_CRUX_API_KEY"], ["GOOGLE_PAGESPEED_API_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": false}
+    },
+    {
+      "id": "controlled-public-web-read-only", "version": 1,
+      "capabilities": ["audit.technical", "render.page", "render.screenshot", "schema.detect", "technical.cwv", "technical.hreflang", "technical.indexability", "technical.preload", "technical.redirect-chain", "technical.robots", "technical.sitemap"],
+      "provider_id": "authorized-public-web", "provider": "authorized public web target", "transport": "browser", "side_effect": "read_only", "owner": "SEO Technical Agent",
+      "relevant_sources": ["adapters/rendered_page.py", "adapters/url_safety.py", "governance/capability-certification.json", "integrations/product_proof/service.py", "integrations/technical/browser.py", "integrations/technical/http.py", "integrations/technical/inspection.py", "seoctl/audit_cli.py", "seoctl/technical_cli.py"],
+      "credential_env_sets": [], "required_binaries": ["playwright"],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": false}
+    },
+    {
+      "id": "public-authority-media-read-only", "version": 1,
+      "capabilities": ["domain.history", "links.commoncrawl"],
+      "provider_id": "rdap-common-crawl", "provider": "RDAP and Common Crawl", "transport": "bounded_https", "side_effect": "read_only", "owner": "Negative SEO & Security Agent",
+      "relevant_sources": ["governance/capability-certification.json", "integrations/authority_media/services.py", "integrations/authority_media/transport.py"],
+      "credential_env_sets": [], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": false}
+    },
+    {
+      "id": "youtube-read-only", "version": 1,
+      "capabilities": ["media.youtube-search"],
+      "provider_id": "youtube-data", "provider": "YouTube Data API", "transport": "bounded_https", "side_effect": "read_only", "owner": "Visual & Video Search Agent",
+      "relevant_sources": ["governance/capability-certification.json", "integrations/authority_media/services.py", "integrations/authority_media/transport.py"],
+      "credential_env_sets": [["YOUTUBE_API_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": true, "write_approval_required": false}
+    },
+    {
+      "id": "indexnow-write", "version": 1,
+      "capabilities": ["indexnow.submit"],
+      "provider_id": "indexnow", "provider": "IndexNow", "transport": "bounded_https", "side_effect": "write", "owner": "Senior SEO Engineer Agent",
+      "relevant_sources": ["governance/capability-certification.json", "integrations/extensions/indexnow.py", "seoctl/extensions_cli.py"],
+      "credential_env_sets": [["INDEXNOW_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": false, "write_approval_required": true}
+    },
+    {
+      "id": "llm-provider-execution", "version": 1,
+      "capabilities": ["system.run"],
+      "provider_id": "operator-selected-llm", "provider": "operator-selected LLM provider", "transport": "llm_provider", "side_effect": "read_only", "owner": "SEO Full Audit/Analyst Agent",
+      "relevant_sources": ["governance/capability-certification.json", "runtime/executor.py", "runtime/llm.py", "runtime/tools.py"],
+      "credential_env_sets": [["OPENAI_API_KEY"], ["OPENAI_COMPATIBLE_API_KEY"], ["ANTHROPIC_API_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": true, "write_approval_required": false}
+    }
+  ]
+}

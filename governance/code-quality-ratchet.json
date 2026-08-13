@@ -1,0 +1,1685 @@
+{
+  "schema_version": "1.0.0",
+  "packages": [
+    "runtime",
+    "adapters",
+    "integrations",
+    "seoctl",
+    "scripts"
+  ],
+  "file_defaults": {
+    "max_lines": 400,
+    "max_complexity_total": 180,
+    "max_missing_annotations": 0
+  },
+  "function_defaults": {
+    "max_span": 75,
+    "max_complexity": 15,
+    "max_missing_annotations": 0
+  },
+  "file_exceptions": {
+    "adapters/evidence_store.py": {
+      "max_lines": 637,
+      "max_complexity_total": 115,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters/google_pagespeed_live.py": {
+      "max_lines": 248,
+      "max_complexity_total": 56,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/authority_media/services.py": {
+      "max_lines": 628,
+      "max_complexity_total": 187,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/authority_media/transport.py": {
+      "max_lines": 173,
+      "max_complexity_total": 43,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/content_intelligence/service.py": {
+      "max_lines": 604,
+      "max_complexity_total": 130,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/extensions/indexnow.py": {
+      "max_lines": 210,
+      "max_complexity_total": 45,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/google/client.py": {
+      "max_lines": 453,
+      "max_complexity_total": 85,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/google/crux.py": {
+      "max_lines": 407,
+      "max_complexity_total": 92,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/product_proof/crawler.py": {
+      "max_lines": 309,
+      "max_complexity_total": 161,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/product_proof/rules.py": {
+      "max_lines": 118,
+      "max_complexity_total": 146,
+      "max_missing_annotations": 45,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/technical/browser.py": {
+      "max_lines": 421,
+      "max_complexity_total": 53,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/technical/http.py": {
+      "max_lines": 198,
+      "max_complexity_total": 47,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations/technical/inspection.py": {
+      "max_lines": 616,
+      "max_complexity_total": 128,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/audit_cli.py": {
+      "max_lines": 189,
+      "max_complexity_total": 31,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/authority_cli.py": {
+      "max_lines": 239,
+      "max_complexity_total": 30,
+      "max_missing_annotations": 15,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/content_cli.py": {
+      "max_lines": 276,
+      "max_complexity_total": 27,
+      "max_missing_annotations": 10,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/extensions_cli.py": {
+      "max_lines": 227,
+      "max_complexity_total": 36,
+      "max_missing_annotations": 10,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/google_cli.py": {
+      "max_lines": 299,
+      "max_complexity_total": 26,
+      "max_missing_annotations": 10,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/intelligence_cli.py": {
+      "max_lines": 89,
+      "max_complexity_total": 16,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl/technical_cli.py": {
+      "max_lines": 287,
+      "max_complexity_total": 44,
+      "max_missing_annotations": 16,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/consent_mode_diagnostic.py": {
+      "max_lines": 412,
+      "max_complexity_total": 69,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/run_performance_benchmarks.py": {
+      "max_lines": 74,
+      "max_complexity_total": 10,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/serp_cluster.py": {
+      "max_lines": 135,
+      "max_complexity_total": 32,
+      "max_missing_annotations": 5,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/validate_canonical_skill_consistency.py": {
+      "max_lines": 35,
+      "max_complexity_total": 19,
+      "max_missing_annotations": 4,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/validate_product_claims.py": {
+      "max_lines": 23,
+      "max_complexity_total": 14,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/validate_remediation_program.py": {
+      "max_lines": 950,
+      "max_complexity_total": 266,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts/validate_seo_claims.py": {
+      "max_lines": 42,
+      "max_complexity_total": 27,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    }
+  },
+  "function_exceptions": {
+    "runtime.structured_output::StructuredOutputService.complete_agent_output": {
+      "max_span": 85,
+      "max_complexity": 9,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "runtime.tools::ToolDispatcher.dispatch": {
+      "max_span": 80,
+      "max_complexity": 13,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "runtime.workflow_graph::WorkflowGraph.validate": {
+      "max_span": 53,
+      "max_complexity": 21,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "runtime.workflow_graph::build_workflow_graph": {
+      "max_span": 117,
+      "max_complexity": 12,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters.evidence_store::EvidenceStore._migrate_schema": {
+      "max_span": 116,
+      "max_complexity": 16,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters.google_pagespeed_live::GooglePageSpeedLiveAdapter.__init__": {
+      "max_span": 29,
+      "max_complexity": 6,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters.google_pagespeed_live::GooglePageSpeedLiveAdapter.fetch": {
+      "max_span": 94,
+      "max_complexity": 13,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters.mcp_extensions::estimate_cost": {
+      "max_span": 42,
+      "max_complexity": 16,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "adapters.mcp_extensions::validate_registry": {
+      "max_span": 40,
+      "max_complexity": 23,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::CommonCrawlService.search": {
+      "max_span": 81,
+      "max_complexity": 20,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::DomainHistoryService.normalize": {
+      "max_span": 40,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::DomainHistoryService.history": {
+      "max_span": 35,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::YouTubeSearchService.search": {
+      "max_span": 61,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::IPTCLabelService.inspect": {
+      "max_span": 63,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.services::TranscriptService.check": {
+      "max_span": 35,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.transport::_NoRedirect.redirect_request": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.authority_media.transport::BoundedTransport.get": {
+      "max_span": 55,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.content_intelligence.service::ContentIntelligenceService.quality": {
+      "max_span": 102,
+      "max_complexity": 22,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.content_intelligence.service::ContentIntelligenceService.verify": {
+      "max_span": 143,
+      "max_complexity": 37,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.content_intelligence.service::ContentIntelligenceService.brief": {
+      "max_span": 63,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.content_intelligence.service::ContentIntelligenceService.decay": {
+      "max_span": 99,
+      "max_complexity": 28,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.extensions.indexnow::NoRedirect.redirect_request": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.extensions.indexnow::IndexNowService.submit": {
+      "max_span": 89,
+      "max_complexity": 10,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.client::_NoCrossHostRedirects.redirect_request": {
+      "max_span": 15,
+      "max_complexity": 4,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.client::GoogleOAuthProvider.token": {
+      "max_span": 106,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.client::GoogleJsonClient.request": {
+      "max_span": 147,
+      "max_complexity": 28,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.crux::CrUXHistoryAdapter.fetch": {
+      "max_span": 87,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.crux::decompose_lcp_history": {
+      "max_span": 55,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.ga4::GoogleAnalyticsDataAdapter.fetch": {
+      "max_span": 111,
+      "max_complexity": 32,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.gsc::GoogleSearchConsoleAdapter.query": {
+      "max_span": 182,
+      "max_complexity": 39,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.google.sitemaps::GoogleSitemapsAdapter.fetch": {
+      "max_span": 74,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.crawler::_HTMLAuditParser.handle_starttag": {
+      "max_span": 33,
+      "max_complexity": 20,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.crawler::RobotsPolicy.allowed": {
+      "max_span": 30,
+      "max_complexity": 23,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.crawler::SiteCrawler._page": {
+      "max_span": 35,
+      "max_complexity": 33,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.crawler::SiteCrawler.crawl": {
+      "max_span": 19,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.intelligence::AITimeoutAnalyzer.analyze": {
+      "max_span": 46,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.intelligence::AICitationOpportunityAnalyzer.analyze": {
+      "max_span": 39,
+      "max_complexity": 29,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::ClaimPolicy.__init__": {
+      "max_span": 2,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::ClaimPolicy.claim": {
+      "max_span": 3,
+      "max_complexity": 2,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::ClaimPolicy.strongest_class": {
+      "max_span": 2,
+      "max_complexity": 3,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::ClaimPolicy.approved_for_recommendation": {
+      "max_span": 1,
+      "max_complexity": 2,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.__init__": {
+      "max_span": 1,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.add": {
+      "max_span": 4,
+      "max_complexity": 5,
+      "max_missing_annotations": 15,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.dirs": {
+      "max_span": 2,
+      "max_complexity": 4,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.paged": {
+      "max_span": 2,
+      "max_complexity": 3,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.page1": {
+      "max_span": 2,
+      "max_complexity": 3,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.facet": {
+      "max_span": 1,
+      "max_complexity": 2,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.robots": {
+      "max_span": 18,
+      "max_complexity": 25,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.statuses": {
+      "max_span": 6,
+      "max_complexity": 18,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.canon": {
+      "max_span": 22,
+      "max_complexity": 33,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.ai_cwv_facets": {
+      "max_span": 18,
+      "max_complexity": 30,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::TechnicalAuditRules.evaluate": {
+      "max_span": 4,
+      "max_complexity": 4,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.product_proof.rules::build_contributions": {
+      "max_span": 11,
+      "max_complexity": 9,
+      "max_missing_annotations": 3,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.browser::PlaywrightRenderer.render": {
+      "max_span": 128,
+      "max_complexity": 21,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.browser::PlaywrightRenderer.render.guard": {
+      "max_span": 12,
+      "max_complexity": 6,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.browser::RenderedPageService.screenshot": {
+      "max_span": 109,
+      "max_complexity": 7,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.http::_NoRedirects.redirect_request": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 7,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.inspection::TechnicalInspectionService.sitemap": {
+      "max_span": 77,
+      "max_complexity": 20,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.inspection::TechnicalInspectionService.hreflang": {
+      "max_span": 77,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.inspection::TechnicalInspectionService.preload": {
+      "max_span": 52,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "integrations.technical.inspection::TechnicalInspectionService.indexability": {
+      "max_span": 63,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::_result": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::_technical": {
+      "max_span": 12,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::_claims": {
+      "max_span": 19,
+      "max_complexity": 7,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::_product_claims": {
+      "max_span": 12,
+      "max_complexity": 4,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::_knowledge_validate": {
+      "max_span": 13,
+      "max_complexity": 4,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.audit_cli::run": {
+      "max_span": 41,
+      "max_complexity": 9,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_result": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_links_commoncrawl": {
+      "max_span": 11,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_links_profile": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_links_gap": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_domain_history": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_youtube_search": {
+      "max_span": 14,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_iptc_label": {
+      "max_span": 11,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_transcript_check": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_drift_baseline": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_drift_compare": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_drift_history": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_drift_report": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::_drift_watch": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.authority_cli::run": {
+      "max_span": 41,
+      "max_complexity": 9,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_result": {
+      "max_span": 7,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_quality": {
+      "max_span": 13,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_verify": {
+      "max_span": 6,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_entities": {
+      "max_span": 7,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_brief": {
+      "max_span": 13,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_decay": {
+      "max_span": 7,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_compare": {
+      "max_span": 8,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::_humanize": {
+      "max_span": 17,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::build_parser": {
+      "max_span": 92,
+      "max_complexity": 1,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.content_cli::run": {
+      "max_span": 38,
+      "max_complexity": 11,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_result": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_integrations_list": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_integrations_preflight": {
+      "max_span": 5,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_integrations_config": {
+      "max_span": 5,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_integrations_estimate": {
+      "max_span": 11,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_bing_preflight": {
+      "max_span": 5,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_indexnow_validate": {
+      "max_span": 8,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::_indexnow_submit": {
+      "max_span": 11,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.extensions_cli::run": {
+      "max_span": 47,
+      "max_complexity": 10,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_gsc_query": {
+      "max_span": 13,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_gsc_aggregate": {
+      "max_span": 10,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_url_inspection": {
+      "max_span": 7,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_sitemap_status": {
+      "max_span": 7,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_ga4_report": {
+      "max_span": 12,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_pagespeed": {
+      "max_span": 7,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_crux_current": {
+      "max_span": 8,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_crux_history": {
+      "max_span": 9,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::_lcp_subparts": {
+      "max_span": 36,
+      "max_complexity": 4,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.google_cli::run": {
+      "max_span": 43,
+      "max_complexity": 8,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::_wrap": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::_timeouts": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::_citations": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::_reviews": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::_narrative": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.intelligence_cli::run": {
+      "max_span": 20,
+      "max_complexity": 9,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.registry::validate_registry": {
+      "max_span": 60,
+      "max_complexity": 24,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_result": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_render_health": {
+      "max_span": 5,
+      "max_complexity": 3,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_render_page": {
+      "max_span": 10,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_render_screenshot": {
+      "max_span": 12,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_robots": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_sitemap": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_hreflang": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_preload": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_redirect_chain": {
+      "max_span": 5,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_indexability": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_cwv": {
+      "max_span": 9,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_schema_detect": {
+      "max_span": 10,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_schema_validate": {
+      "max_span": 3,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::_schema_generate": {
+      "max_span": 8,
+      "max_complexity": 1,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "seoctl.technical_cli::run": {
+      "max_span": 47,
+      "max_complexity": 10,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.capture_github_controls::capture": {
+      "max_span": 77,
+      "max_complexity": 9,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.consent_mode_diagnostic::diagnose": {
+      "max_span": 303,
+      "max_complexity": 49,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.content_brief_evidence::assess_relevance": {
+      "max_span": 71,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.content_brief_evidence::assess_serp": {
+      "max_span": 135,
+      "max_complexity": 35,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.generate_capability_evidence_registry::_effective_command_registry": {
+      "max_span": 52,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.run_improvement_cycle::evaluate_cycle": {
+      "max_span": 89,
+      "max_complexity": 23,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.run_performance_benchmarks::_measure": {
+      "max_span": 10,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.scan_secrets::scan": {
+      "max_span": 27,
+      "max_complexity": 17,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.serp_cluster::_DisjointSet.__init__": {
+      "max_span": 2,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.serp_cluster::_DisjointSet.find": {
+      "max_span": 5,
+      "max_complexity": 2,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.serp_cluster::_DisjointSet.union": {
+      "max_span": 2,
+      "max_complexity": 1,
+      "max_missing_annotations": 2,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.serp_cluster::cluster": {
+      "max_span": 49,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_architecture_contract::validate": {
+      "max_span": 57,
+      "max_complexity": 22,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_canonical_skill_consistency::indexed_skills": {
+      "max_span": 2,
+      "max_complexity": 3,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_canonical_skill_consistency::procedure_sections": {
+      "max_span": 8,
+      "max_complexity": 5,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_canonical_skill_consistency::validate": {
+      "max_span": 11,
+      "max_complexity": 8,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_canonical_skill_consistency::main": {
+      "max_span": 5,
+      "max_complexity": 3,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_improvement_evidence::validate_reviewer_registry": {
+      "max_span": 53,
+      "max_complexity": 16,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_product_claims::main": {
+      "max_span": 2,
+      "max_complexity": 3,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_product_contract::validate": {
+      "max_span": 91,
+      "max_complexity": 30,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_product_proof_program::validate": {
+      "max_span": 149,
+      "max_complexity": 22,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_release_artifacts::validate": {
+      "max_span": 55,
+      "max_complexity": 21,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_evidence_errors": {
+      "max_span": 98,
+      "max_complexity": 38,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_validate_sequence": {
+      "max_span": 36,
+      "max_complexity": 19,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_rollback_evidence_errors": {
+      "max_span": 77,
+      "max_complexity": 18,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_validate_complete_phase": {
+      "max_span": 318,
+      "max_complexity": 98,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_closure_delta_errors": {
+      "max_span": 54,
+      "max_complexity": 16,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_remediation_program::_validate_program_rules": {
+      "max_span": 53,
+      "max_complexity": 23,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_repository_governance::local_errors": {
+      "max_span": 136,
+      "max_complexity": 53,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_seo_claims::validate": {
+      "max_span": 28,
+      "max_complexity": 24,
+      "max_missing_annotations": 0,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    },
+    "scripts.validate_seo_claims::main": {
+      "max_span": 4,
+      "max_complexity": 2,
+      "max_missing_annotations": 1,
+      "owner": "Quality owner",
+      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
+      "removal_phase": "P7"
+    }
+  },
+  "ruff": {
+    "rules": [
+      "E4",
+      "E7",
+      "E9",
+      "F",
+      "I",
+      "B",
+      "UP",
+      "C4",
+      "SIM",
+      "C90"
+    ],
+    "violation_counts": {
+      "adapters/ai_citation_monitor.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/backlinks.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/evidence_store.py|SIM105|Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`": 2,
+      "adapters/ga4.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/google_pagespeed_live.py|UP017|Use `datetime.UTC` alias": 1,
+      "adapters/gsc.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/hreflang_validator.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/log_parser.py|C420|Unnecessary dict comprehension for iterable; use `dict.fromkeys` instead": 1,
+      "adapters/mcp_extensions.py|C901|`validate_registry` is too complex (15 > 10)": 1,
+      "adapters/page_drift.py|I001|Import block is un-sorted or un-formatted": 1,
+      "adapters/page_drift.py|UP037|Remove quotes from type annotation": 1,
+      "adapters/rank_tracking.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/redirect_chain.py|SIM115|Use a context manager for opening files": 1,
+      "adapters/registry.py|I001|Import block is un-sorted or un-formatted": 1,
+      "integrations/authority_media/services.py|C901|`history` is too complex (11 > 10)": 1,
+      "integrations/authority_media/services.py|C901|`inspect` is too complex (12 > 10)": 1,
+      "integrations/authority_media/services.py|C901|`search` is too complex (11 > 10)": 1,
+      "integrations/authority_media/services.py|C901|`search` is too complex (14 > 10)": 1,
+      "integrations/authority_media/services.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
+      "integrations/authority_media/transport.py|UP035|Import from `collections.abc` instead: `Mapping`": 1,
+      "integrations/content_intelligence/service.py|C901|`decay` is too complex (12 > 10)": 1,
+      "integrations/content_intelligence/service.py|C901|`verify` is too complex (20 > 10)": 1,
+      "integrations/extensions/indexnow.py|UP035|Import from `collections.abc` instead: `Callable`, `Iterable`": 1,
+      "integrations/google/client.py|C901|`request` is too complex (20 > 10)": 1,
+      "integrations/google/client.py|C901|`token` is too complex (13 > 10)": 1,
+      "integrations/google/client.py|I001|Import block is un-sorted or un-formatted": 1,
+      "integrations/google/client.py|UP037|Remove quotes from type annotation": 1,
+      "integrations/google/gsc.py|C901|`query` is too complex (19 > 10)": 1,
+      "integrations/product_proof/crawler.py|C901|`_page` is too complex (13 > 10)": 1,
+      "integrations/product_proof/crawler.py|C901|`allowed` is too complex (11 > 10)": 1,
+      "integrations/product_proof/crawler.py|C901|`handle_starttag` is too complex (16 > 10)": 1,
+      "integrations/product_proof/crawler.py|C901|`parse_robots` is too complex (11 > 10)": 1,
+      "integrations/product_proof/crawler.py|E701|Multiple statements on one line (colon)": 19,
+      "integrations/product_proof/crawler.py|E702|Multiple statements on one line (semicolon)": 15,
+      "integrations/product_proof/crawler.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "integrations/product_proof/intelligence.py|C901|`analyze` is too complex (11 > 10)": 1,
+      "integrations/product_proof/intelligence.py|E701|Multiple statements on one line (colon)": 20,
+      "integrations/product_proof/intelligence.py|E702|Multiple statements on one line (semicolon)": 32,
+      "integrations/product_proof/rules.py|C901|`ai_cwv_facets` is too complex (12 > 10)": 1,
+      "integrations/product_proof/rules.py|C901|`canon` is too complex (13 > 10)": 1,
+      "integrations/product_proof/rules.py|C901|`robots` is too complex (13 > 10)": 1,
+      "integrations/product_proof/rules.py|E401|Multiple imports on one line": 1,
+      "integrations/product_proof/rules.py|E701|Multiple statements on one line (colon)": 35,
+      "integrations/product_proof/rules.py|E702|Multiple statements on one line (semicolon)": 48,
+      "integrations/product_proof/rules.py|F401|`typing.Any` imported but unused": 1,
+      "integrations/product_proof/rules.py|I001|Import block is un-sorted or un-formatted": 1,
+      "integrations/technical/browser.py|C901|`render` is too complex (14 > 10)": 1,
+      "integrations/technical/http.py|I001|Import block is un-sorted or un-formatted": 1,
+      "integrations/technical/http.py|SIM108|Use ternary operator `final_url = validate_public_url(final_url) if final_url else safe` instead of `if`-`else`-block": 1,
+      "integrations/technical/parsing.py|C901|`parse_robots` is too complex (12 > 10)": 1,
+      "runtime/business_profile_resolver.py|C420|Unnecessary dict comprehension for iterable; use `dict.fromkeys` instead": 1,
+      "runtime/business_profile_resolver.py|C901|`_explicit_profiles` is too complex (13 > 10)": 1,
+      "runtime/business_profile_resolver.py|I001|Import block is un-sorted or un-formatted": 1,
+      "runtime/business_profile_resolver.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
+      "runtime/routing.py|I001|Import block is un-sorted or un-formatted": 1,
+      "runtime/state.py|UP017|Use `datetime.UTC` alias": 3,
+      "runtime/state.py|UP037|Remove quotes from type annotation": 1,
+      "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
+      "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
+      "scripts/consent_mode_diagnostic.py|C901|`diagnose` is too complex (25 > 10)": 1,
+      "scripts/content_brief_evidence.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
+      "scripts/generate_command_docs.py|E402|Module level import not at top of file": 1,
+      "scripts/plan_github_controls_rollback.py|C901|`restored_state_errors` is too complex (11 > 10)": 1,
+      "scripts/plan_github_controls_rollback.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/run_improvement_cycle.py|C901|`evaluate_cycle` is too complex (15 > 10)": 1,
+      "scripts/run_improvement_cycle.py|C901|`validate_reviewer_independence` is too complex (11 > 10)": 1,
+      "scripts/run_improvement_cycle.py|E402|Module level import not at top of file": 1,
+      "scripts/run_security_mutation_checks.py|E402|Module level import not at top of file": 1,
+      "scripts/run_security_mutation_checks.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "scripts/scan_secrets.py|C901|`scan` is too complex (11 > 10)": 1,
+      "scripts/scan_secrets.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
+      "scripts/validate_canonical_skill_consistency.py|E401|Multiple imports on one line": 1,
+      "scripts/validate_canonical_skill_consistency.py|E701|Multiple statements on one line (colon)": 6,
+      "scripts/validate_canonical_skill_consistency.py|E702|Multiple statements on one line (semicolon)": 11,
+      "scripts/validate_canonical_skill_consistency.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/validate_improvement_evidence.py|C901|`validate_reviewer_registry` is too complex (15 > 10)": 1,
+      "scripts/validate_improvement_evidence.py|E402|Module level import not at top of file": 2,
+      "scripts/validate_product_claims.py|E701|Multiple statements on one line (colon)": 6,
+      "scripts/validate_product_claims.py|E702|Multiple statements on one line (semicolon)": 5,
+      "scripts/validate_product_claims.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/validate_product_proof_program.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "scripts/validate_pytest_temp_isolation.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/validate_release_artifacts.py|C901|`validate` is too complex (12 > 10)": 1,
+      "scripts/validate_release_version.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/validate_remediation_program.py|C901|`_evidence_errors` is too complex (22 > 10)": 1,
+      "scripts/validate_remediation_program.py|C901|`_rollback_evidence_errors` is too complex (12 > 10)": 1,
+      "scripts/validate_remediation_program.py|C901|`_validate_complete_phase` is too complex (57 > 10)": 1,
+      "scripts/validate_remediation_program.py|C901|`_validate_program_rules` is too complex (13 > 10)": 1,
+      "scripts/validate_repository_governance.py|C901|`local_errors` is too complex (41 > 10)": 1,
+      "scripts/validate_schema_examples.py|I001|Import block is un-sorted or un-formatted": 1,
+      "scripts/validate_seo_claims.py|C901|`validate` is too complex (17 > 10)": 1,
+      "scripts/validate_seo_claims.py|E401|Multiple imports on one line": 1,
+      "scripts/validate_seo_claims.py|E701|Multiple statements on one line (colon)": 13,
+      "scripts/validate_seo_claims.py|E702|Multiple statements on one line (semicolon)": 11,
+      "scripts/validate_seo_claims.py|I001|Import block is un-sorted or un-formatted": 1,
+      "seoctl/__main__.py|I001|Import block is un-sorted or un-formatted": 1,
+      "seoctl/audit_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/authority_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/cli.py|E402|Module level import not at top of file": 11,
+      "seoctl/cli.py|I001|Import block is un-sorted or un-formatted": 1,
+      "seoctl/content_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/extensions_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/google_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/intelligence_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
+      "seoctl/registry.py|C401|Unnecessary generator (rewrite as a set comprehension)": 1,
+      "seoctl/registry.py|C901|`validate_registry` is too complex (18 > 10)": 1,
+      "seoctl/technical_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1
+    }
+  },
+  "coverage": {
+    "repository_floor": 78.0,
+    "critical_file_floors": {
+      "adapters/evidence_store.py": 67.0,
+      "adapters/google_pagespeed_live.py": 83.0,
+      "adapters/url_safety.py": 87.0,
+      "integrations/authority_media/transport.py": 67.0,
+      "integrations/google/client.py": 68.0,
+      "integrations/google/gsc.py": 62.0,
+      "integrations/technical/browser.py": 45.0,
+      "integrations/technical/http.py": 72.0,
+      "runtime/executor.py": 96.0,
+      "runtime/llm.py": 64.0,
+      "runtime/structured_output.py": 89.0,
+      "runtime/tools.py": 83.0,
+      "runtime/workflow_runner.py": 93.0
+    }
+  }
+}

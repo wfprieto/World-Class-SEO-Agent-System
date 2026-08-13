@@ -6,23 +6,26 @@ import asyncio
 import ipaddress
 import os
 import urllib.parse
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
-from adapters.base import AdapterNotConfigured, AdapterResult
 from adapters.registry import default_adapters
+from runtime.adapter_contracts import (
+    BLOCKING_ADAPTER_STATUSES,
+    INVALID_ADAPTER_STATUSES,
+    MISSING_ADAPTER_STATUSES,
+    PARTIAL_ADAPTER_STATUSES,
+    SUCCESS_ADAPTER_STATUSES,
+    AdapterNotConfigured,
+    RuntimeAdapter,
+    validate_adapter_result,
+)
 from runtime.telemetry import OperationTelemetry, redact
 
 
 class ToolDispatchError(RuntimeError):
     """Raised when a runtime tool cannot be dispatched."""
-
-
-@runtime_checkable
-class RuntimeAdapter(Protocol):
-    """Canonical runtime adapter contract."""
-
-    def fetch(self, **kwargs: Any) -> AdapterResult: ...
 
 
 @dataclass
@@ -131,10 +134,36 @@ SENSITIVE_QUERY_KEYS = {
 }
 
 
+REQUIRED_TOOL_FAILURE_STATES = frozenset({"BLOCKED", "INVALID", "MISSING"})
+
+
+def _adapter_evidence_state(status: str, *, required: bool) -> str:
+    """Map one validated status to its fail-closed workflow evidence state."""
+
+    if status in SUCCESS_ADAPTER_STATUSES:
+        return "AVAILABLE"
+    if status in INVALID_ADAPTER_STATUSES:
+        return "INVALID"
+    if status in MISSING_ADAPTER_STATUSES:
+        return "MISSING"
+    if required and status in PARTIAL_ADAPTER_STATUSES | BLOCKING_ADAPTER_STATUSES:
+        return "BLOCKED"
+    if status in BLOCKING_ADAPTER_STATUSES:
+        return "INVALID"
+    return "PARTIAL"
+
+
+def _indeterminate_timeout_message(tool: str, timeout: float) -> str:
+    return (
+        f"Tool {tool} exceeded its {timeout:g}-second response deadline; "
+        "thread-backed work may still be running, so side-effect outcome is unknown."
+    )
+
+
 class ToolDispatcher:
     def __init__(
         self,
-        adapters: dict[str, Any] | None = None,
+        adapters: Mapping[str, RuntimeAdapter] | None = None,
         *,
         max_telemetry_events: int = 1_000,
         default_timeout_seconds: float = 60.0,
@@ -291,12 +320,11 @@ class ToolDispatcher:
             )
 
         try:
-            result = await asyncio.wait_for(
+            raw_result = await asyncio.wait_for(
                 asyncio.to_thread(adapter.fetch, **request.arguments),
                 timeout=timeout,
             )
-            if not isinstance(result, AdapterResult):
-                raise TypeError("adapter fetch() must return AdapterResult")
+            result = validate_adapter_result(raw_result)
         except AdapterNotConfigured as exc:
             return self._failure(
                 request,
@@ -310,9 +338,9 @@ class ToolDispatcher:
             return self._failure(
                 request,
                 trace,
-                status="TIMEOUT",
-                error_type="ToolTimeout",
-                message=f"Tool {request.tool} exceeded its {timeout:g}-second execution limit.",
+                status="DEADLINE_EXCEEDED_INDETERMINATE",
+                error_type="ToolDeadlineExceededWorkMayContinue",
+                message=_indeterminate_timeout_message(request.tool, timeout),
                 evidence_state="BLOCKED" if request.required else "INVALID",
             )
         except asyncio.CancelledError:
@@ -328,7 +356,7 @@ class ToolDispatcher:
                 evidence_state="BLOCKED" if request.required else "INVALID",
             )
 
-        evidence_state = "AVAILABLE" if result.status in {"ok", "complete", "success"} else "PARTIAL"
+        evidence_state = _adapter_evidence_state(result.status, required=request.required)
         self._record(
             trace,
             status=str(result.status).upper(),

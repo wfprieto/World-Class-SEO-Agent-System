@@ -2,6 +2,21 @@ name: Bug report
 description: Report reproducible incorrect behavior
 title: "[Bug]: "
 body:
+  - type: input
+    id: control_id
+    attributes:
+      label: Operations control ID
+      description: "Registry IDs: security-intake, repository-governance, certification-supply-chain, runtime-evidence-integrity, network-provider-boundaries, documentation-knowledge-truth, architecture-quality-debt; or UNMAPPED."
+      placeholder: runtime-evidence-integrity
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Accountable owner and backup status
+      description: Name the owner role and verified backup, or state OWNER_ACTION_REQUIRED.
+    validations:
+      required: true
   - type: textarea
     id: observed
     attributes:
@@ -20,10 +35,31 @@ body:
       label: Expected behavior
     validations:
       required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Non-sensitive evidence
+      description: Provide exact source, commit, logs, or a minimal sanitized reproduction.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification attempted
+      description: Include the command or review method and observed result.
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback trigger and recovery
+      description: State the trigger and recovery or containment procedure; use not applicable only with a reason.
+    validations:
+      required: true
   - type: checkboxes
     id: safety
     attributes:
       label: Safety
       options:
-        - label: I removed credentials and private client data
+        - label: I removed credentials, tokens, private URLs, client data, vulnerability details, and private conduct reports
           required: true
