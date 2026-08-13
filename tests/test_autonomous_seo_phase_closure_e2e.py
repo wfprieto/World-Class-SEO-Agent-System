@@ -211,8 +211,8 @@ def test_full_phase_closure_advances_program_end_to_end(tmp_path: Path) -> None:
     closure_payload["evidence_package_hash"] = closure.canonical_hash(
         closure.closure_evidence_payload(closure_payload)
     )
-    evidence_hash = closure_payload["evidence_package_hash"]
-    reviewers = [
+    evidence_hash = str(closure_payload["evidence_package_hash"])
+    reviewers: list[tuple[str, str, str, str, str, str, int, str, int, str]] = [
         (
             "senior-scrummaster-3",
             "SENIOR_SCRUMMASTER_3",
