@@ -73,6 +73,7 @@ def test_rollback_preserves_post_authority_main_commit(tmp_path: Path, monkeypat
     assert receipt["candidate_commit"] == candidate
     assert receipt["authority_baseline_commit"] == authority
     assert receipt["baseline_commit"] == integration_base
+    assert receipt["rollback_method"] == "reverse-binary-diff"
     assert receipt["result"] == "TREE_MATCH"
     assert _git(root, "rev-parse", "HEAD") == integration_base
     assert (root / "main.txt").read_text(encoding="utf-8") == "preserve me\n"

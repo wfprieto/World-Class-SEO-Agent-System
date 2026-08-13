@@ -27,6 +27,23 @@ def _git(*args: str) -> str:
     return result.stdout.strip()
 
 
+def _git_bytes(*args: str) -> bytes:
+    return subprocess.run(["git", *args], cwd=ROOT, check=True, capture_output=True).stdout
+
+
+def _git_clean(*args: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            timeout=20,
+        ).returncode
+        == 0
+    )
+
+
 def _load(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -74,6 +91,8 @@ def _recovery_baseline(program: dict[str, Any], candidate: str) -> tuple[str, st
 def rehearse(receipt_path: Path) -> dict[str, Any]:
     if not (ROOT / ".git").exists():
         raise RuntimeError("autonomous SEO rollback certification requires Git history")
+    if not _git_clean("diff", "--quiet") or not _git_clean("diff", "--cached", "--quiet"):
+        raise RuntimeError("autonomous SEO rollback certification requires a clean worktree and index")
     program = _load(PROGRAM)
     finalization_head = _git("rev-parse", "HEAD")
     candidate = _rollback_candidate(program, finalization_head)
@@ -91,14 +110,18 @@ def rehearse(receipt_path: Path) -> dict[str, Any]:
         raise RuntimeError("autonomous SEO P0 rollback has no candidate commits to rehearse")
     _git("config", "user.name", "Autonomous SEO rollback verifier")
     _git("config", "user.email", "autonomous-seo-rollback@users.noreply.github.com")
-    subprocess.run(
-        ["git", "revert", "--no-commit", *commits],
+    reverse_patch = _git_bytes("diff", "--binary", baseline, candidate)
+    apply_result = subprocess.run(
+        ["git", "apply", "--reverse", "--index", "--binary", "--whitespace=nowarn"],
         cwd=ROOT,
-        check=True,
+        input=reverse_patch,
         capture_output=True,
-        text=True,
+        check=False,
         timeout=120,
     )
+    if apply_result.returncode:
+        error = (apply_result.stderr or apply_result.stdout).decode("utf-8", errors="replace")
+        raise RuntimeError(f"autonomous SEO reverse patch failed: {error.strip()}")
     baseline_tree = _git("rev-parse", f"{baseline}^{{tree}}")
     post_revert_tree = _git("write-tree")
     if baseline_tree != post_revert_tree:
@@ -114,6 +137,7 @@ def rehearse(receipt_path: Path) -> dict[str, Any]:
         "commit_count": len(commits),
         "baseline_tree": baseline_tree,
         "post_revert_tree": post_revert_tree,
+        "rollback_method": "reverse-binary-diff",
         "result": "TREE_MATCH",
     }
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
