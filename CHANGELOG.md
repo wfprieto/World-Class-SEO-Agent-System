@@ -54,6 +54,7 @@ This project follows semantic versioning where possible:
 - Packaged the support files required by `seoctl system doctor`, including governance contracts, schemas, knowledge files, dependency locks, static source snapshots, and offline evaluation metadata.
 - Made installed asset discovery use the Python installation data path and verified clean-wheel commands from outside the source checkout.
 - Extended clean-wheel verification to run `seoctl --help`, command-registry validation, `seoctl system doctor`, packaged-resource checks, and no-network/no-provider-auth assertions.
+- Repaired the autonomous SEO rollback certification so the restored historical baseline receives its explicit Python package root before repository validation.
 
 ## [1.7.0] - 2026-07-11
 
