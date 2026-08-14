@@ -100,6 +100,9 @@ jobs:
       - name: Validate restored baseline repository
         shell: pwsh
         run: ./scripts/validate-repository.ps1
+        env:
+          # The restored baseline invokes validators that import the repository's scripts namespace.
+          PYTHONPATH: ${{ github.workspace }}
       - name: Seal autonomous rollback receipt
         shell: python
         run: |
