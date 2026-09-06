@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from scripts import validate_quality_ratchets as ratchets
 from scripts.validate_quality_ratchets import (
     FILE_DEFAULTS,
@@ -628,7 +630,8 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
 
 def test_trusted_tool_capture_emits_one_executable_path_per_output(tmp_path: Path) -> None:
     pwsh = shutil.which("pwsh") or shutil.which("powershell")
-    assert pwsh is not None
+    if pwsh is None:
+        pytest.skip("PowerShell is unavailable; the GitHub Actions runner executes this check")
     output = tmp_path / "github-output.txt"
     completed = subprocess.run(
         [pwsh, "-NoProfile", "-NonInteractive", "-Command", TRUSTED_PYTHON_COMMAND],

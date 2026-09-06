@@ -75,11 +75,13 @@ def _assert_public_host(host: str, port: int, resolver: Resolver) -> None:
             )
 
 
-def validate_public_url(url: str, *, resolver: Resolver = socket.getaddrinfo) -> str:
+def validate_public_url(url: str, *, resolver: Resolver | None = None) -> str:
     """Canonicalize a public target and reject common SSRF/privacy hazards.
 
     Literal IP hosts are validated before resolution. Hostnames are then resolved through
     an injectable resolver so tests remain hermetic without weakening production policy.
+    The system resolver is selected at invocation time so a process-level network policy
+    or test boundary cannot be bypassed by an import-time default binding.
     """
     parsed, scheme, host, port = _parse_target(url)
     if scheme not in ALLOWED_SCHEMES or not host:
@@ -95,7 +97,11 @@ def validate_public_url(url: str, *, resolver: Resolver = socket.getaddrinfo) ->
     if query_keys & SENSITIVE_QUERY_KEYS:
         raise ValueError("URL query contains credential-like fields and cannot be sent")
 
-    _assert_public_host(host, port or (443 if scheme == "https" else 80), resolver)
+    _assert_public_host(
+        host,
+        port or (443 if scheme == "https" else 80),
+        resolver or socket.getaddrinfo,
+    )
     if port == (443 if scheme == "https" else 80):
         port = None
     display_host = f"[{host}]" if ":" in host else host
@@ -103,7 +109,7 @@ def validate_public_url(url: str, *, resolver: Resolver = socket.getaddrinfo) ->
     return urllib.parse.urlunsplit((scheme, netloc, parsed.path or "/", parsed.query, ""))
 
 
-def host_is_public(host: str, *, resolver: Resolver = socket.getaddrinfo) -> bool:
+def host_is_public(host: str, *, resolver: Resolver | None = None) -> bool:
     """Return true only when a literal or every resolved address is globally routable."""
     if not host:
         return False
@@ -115,7 +121,7 @@ def host_is_public(host: str, *, resolver: Resolver = socket.getaddrinfo) -> boo
     if literal is not None:
         return literal.is_global
     try:
-        infos = resolver(normalized, None, type=socket.SOCK_STREAM)
+        infos = (resolver or socket.getaddrinfo)(normalized, None, type=socket.SOCK_STREAM)
     except socket.gaierror:
         return False
     return bool(infos) and all(_address_is_public(str(info[4][0])) for info in infos)
