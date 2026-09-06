@@ -91,3 +91,35 @@ def test_rollback_rejects_candidate_behind_target(tmp_path: Path, monkeypatch: p
 
     with pytest.raises(RuntimeError, match="behind the integration target"):
         rollback._recovery_baseline(program, candidate)
+
+
+def test_founder_approval_supplies_completed_p0_rollback_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _authority, _integration_base, candidate = _repo(tmp_path)
+    approval_path = root / "evaluation" / "remediation" / "autonomous-seo-expansion-p0-founder-approval.json"
+    approval_path.write_text(
+        json.dumps(
+            {
+                "phase_id": "P0",
+                "approval_model": "FOUNDER_CONTROLLED",
+                "approval_state": "APPROVED",
+                "external_write_authorized": False,
+                "candidate_commit": candidate,
+            }
+        ),
+        encoding="utf-8",
+    )
+    _git(root, "add", approval_path.relative_to(root).as_posix())
+    _git(root, "commit", "-m", "add founder approval")
+    finalization_head = _git(root, "rev-parse", "HEAD")
+    monkeypatch.setattr(rollback, "ROOT", root)
+    monkeypatch.setattr(rollback, "P0_FOUNDER_APPROVAL", approval_path)
+
+    assert rollback._rollback_candidate(
+        {
+            "approval_model": "FOUNDER_CONTROLLED",
+            "phases": [{"id": "P0", "status": "COMPLETE"}],
+        },
+        finalization_head,
+    ) == candidate
