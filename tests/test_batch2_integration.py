@@ -9,23 +9,23 @@ baseline/compare/schema-drift, MCP registry without credentials + secret redacti
 from __future__ import annotations
 
 import json
+import socket
 import sqlite3
+import sys
 from contextlib import closing
 from pathlib import Path
 
 import pytest
 
-from adapters.url_safety import validate_public_url
-from adapters import rendered_page
-from adapters.rendered_page import RenderedPageAdapter
-from adapters.page_drift import PageDrift, fingerprint
-from adapters import mcp_extensions
+from adapters import mcp_extensions, rendered_page
 from adapters.base import AdapterResult
+from adapters.page_drift import PageDrift, fingerprint
+from adapters.rendered_page import RenderedPageAdapter
+from adapters.url_safety import validate_public_url
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import serp_cluster  # noqa: E402
 import seo_pdf_report  # noqa: E402
+import serp_cluster  # noqa: E402
 
 
 @pytest.mark.parametrize("bad", [
@@ -41,6 +41,19 @@ def test_validate_public_url_rejects_hazards(bad):
 
 def test_validate_public_url_accepts_public_https():
     assert validate_public_url("https://example.com").startswith("https://example.com")
+
+
+def test_validate_public_url_selects_the_default_resolver_at_invocation(monkeypatch):
+    calls = []
+
+    def resolver(host, port, *args, **kwargs):
+        calls.append((host, port, kwargs.get("type")))
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", port))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", resolver)
+
+    assert validate_public_url("https://example.com/path") == "https://example.com/path"
+    assert calls == [("example.com", 443, socket.SOCK_STREAM)]
 
 
 def test_rendered_page_blocks_ssrf_and_returns_adapter_result():
