@@ -1,0 +1,25 @@
+{
+  "$schema": "../../schemas/autonomous-seo-founder-approval.schema.json",
+  "schema_version": "1.0.0",
+  "approval_id": "p0-founder-approval-2026-09-06",
+  "program_id": "autonomous-seo-expansion",
+  "phase_id": "P0",
+  "approval_model": "FOUNDER_CONTROLLED",
+  "approved_by": "wfprieto",
+  "approval_recorded_on": "2026-09-06",
+  "approval_source": "Repository founder authorization recorded in the ChatGPT Work conversation.",
+  "candidate_commit": "4350c3716f6da11e0f57ddf85997c096b2e0c8fd",
+  "approval_state": "APPROVED",
+  "authorized_next_phase": "P1",
+  "external_write_authorized": false,
+  "required_external_write_controls": [
+    "Founder approval for each external action queue item",
+    "Affected URLs or systems, rollback plan, and verification method",
+    "No unreviewed publishing, provider write, outreach, GBP, or spend changes"
+  ],
+  "verification_summary": [
+    "Full local suite passed: 1,152 passed and 1 environment-specific skip",
+    "GitHub Validate repository workflow completed successfully",
+    "GitHub Autonomous SEO certification workflow completed successfully"
+  ]
+}

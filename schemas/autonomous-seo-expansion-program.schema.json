@@ -11,6 +11,7 @@
     "objective",
     "baseline",
     "apivr_tier",
+    "approval_model",
     "current_phase",
     "direct_merge_permitted",
     "capability_maturity_order",
@@ -38,6 +39,7 @@
       }
     },
     "apivr_tier": {"const": "COMPREHENSIVE"},
+    "approval_model": {"enum": ["FOUNDER_CONTROLLED", "INDEPENDENT_REVIEW"]},
     "current_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "direct_merge_permitted": {"const": false},
     "capability_maturity_order": {

@@ -2,6 +2,8 @@
   "$schema": "../../schemas/autonomous-seo-expansion-policy.schema.json",
   "schema_version": "1.0.0",
   "policy_id": "autonomous-seo-expansion-lifecycle",
+  "approval_model": "FOUNDER_CONTROLLED",
+  "founder_approval_required_for_external_writes": true,
   "phase_order": ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13"],
   "extension_lane_order": ["L-A", "L-B", "L-C", "L-D"],
   "maturity_order": [

@@ -45,6 +45,17 @@ Any mutation-capable recommendation must become an action queue item with:
 - verification method
 - follow-up trigger or date
 
+## Founder-Controlled Approval
+
+This repository is operated by a single founder. A founder approval recorded against the
+exact phase, candidate commit, and verification evidence can close a non-write phase and
+start its next approved phase. It is not a substitute for evidence, tests, rollback, or
+repository certification.
+
+Founder approval never authorizes an external change by itself. Every website, CMS, GBP,
+provider, outreach, spend, or publication action still requires a separate action-queue
+item with explicit founder approval, a rollback plan, and a verification method.
+
 ## Public Repo Boundary
 
 The public repo may demonstrate autonomy through safe fixtures and local outputs. It must not claim that fixture execution proves live rankings, live indexing, provider authentication, or live website mutation.

@@ -10,7 +10,8 @@
     "captured_at": "2026-08-10T15:57:00Z"
   },
   "apivr_tier": "COMPREHENSIVE",
-  "current_phase": "P0",
+  "approval_model": "FOUNDER_CONTROLLED",
+  "current_phase": "P1",
   "direct_merge_permitted": false,
   "capability_maturity_order": [
     "G0_DOCUMENTED",
@@ -28,8 +29,8 @@
     "repository and schema validators pass",
     "security and adverse-state checks pass where applicable",
     "rollback or safe containment is demonstrated",
-    "Senior ScrumMaster 3 returns APPROVE_GREAT",
-    "VP Engineering independently approves",
+    "Founder approval is recorded against the exact non-write phase and its verification evidence",
+    "Every external write remains separately approval-gated",
     "technical verification is complete",
     "outcome verification is recorded as PASS, PENDING, or NOT_RUN only when the horizon is not yet observable",
     "phase re-audit is complete"
@@ -52,7 +53,7 @@
     {
       "id": "P0",
       "title": "Authority, baseline, and expansion contract",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "apivr_tier": "COMPREHENSIVE",
       "objective": "Establish one machine-validated expansion program anchored to the current repository authority without changing the flagship product proof boundary or permitting direct merge.",
       "depends_on": [],
@@ -85,13 +86,13 @@
         "The new program requires weakening an existing product, security, evidence, reviewer, or rollback gate.",
         "Repository validation cannot run the new control without breaking existing validation semantics."
       ],
-      "technical_verification": "NOT_RUN",
-      "outcome_verification": "NOT_RUN"
+      "technical_verification": "PASS",
+      "outcome_verification": "NOT_REQUIRED"
     },
     {
       "id": "P1",
       "title": "Site profile and Brand Truth contracts",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "apivr_tier": "COMPREHENSIVE",
       "objective": "Create evidence-governed site identity, Brand Truth, site-state, action, outcome, hypothesis, and experiment contracts before introducing persistent behavior.",
       "depends_on": ["P0"],

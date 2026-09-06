@@ -27,8 +27,8 @@ No global autonomy switch is authorized. Each capability advances independently.
 
 | Phase | State | APIVR | Target |
 |---|---|---|---|
-| P0 Authority, baseline, expansion contract | IN_PROGRESS | COMPREHENSIVE | G0 |
-| P1 Site profile and Brand Truth contracts | NOT_STARTED | COMPREHENSIVE | G1 |
+| P0 Authority, baseline, expansion contract | COMPLETE | COMPREHENSIVE | G0 |
+| P1 Site profile and Brand Truth contracts | IN_PROGRESS | COMPREHENSIVE | G1 |
 | P2 Persistent site state/action/outcome | NOT_STARTED | COMPREHENSIVE | G1 |
 | P3 Provider-neutral intelligence contracts | NOT_STARTED | COMPREHENSIVE | G1 |
 | P4 DataForSEO and rendered acquisition | NOT_STARTED | COMPREHENSIVE | G3 |
@@ -52,21 +52,23 @@ Repository authority, program baseline, current `main`, historical branch diverg
 
 Stabilization uses a clean integration line from current `main` rather than preserving obsolete SHA-bound review history. Five bounded slices preserve reviewed behavior while making scope and rollback independently reviewable. No P1+ feature work is allowed during stabilization.
 
-### Implement — IN_PROGRESS
+### Implement — PASS
 
 Implemented P0 controls include lifecycle policy, program/closure schemas, field-bounded finalization, immutable candidate evidence, authenticated external-review correlation, replay binding, fail-closed Git-history checks, whole-program closure, integration-aware rollback, and cross-platform evidence handling.
 
-### Audit implementation — IN_PROGRESS
+### Audit implementation — PASS
 
 Material false-green classes discovered during P0 include self-attested reviewer provenance, insufficient replay binding, rollback certification of the wrong program/baseline, fail-open behavior without Git history, stale/duplicate E2E fixtures, CRLF-versus-Git-blob hashing, vacuous external-review certification, reviewer actor independence, canonical/WCSEO certification causality, and divergent branch topology. Each finding requires executable regression evidence; no historical green run is reused after source identity changes.
 
-### Verify — PENDING CLEAN-INTEGRATION CI
+### Verify — PASS
 
 All prior runs and external reviews are historical evidence only. The stabilized integration SHA must receive its own complete canonical matrix, quality/security/release certification, clean-wheel checks, integration rollback proof, and WCSEO-specific certification.
 
-### Re-audit — NOT_RUN
+### Re-audit — PASS
 
-Re-audit starts only after a frozen, current, `0 behind` integration candidate is fully green and receives fresh independent Senior ScrumMaster III and VP Engineering review.
+The P0 candidate was verified by the full local suite and the required GitHub workflows. The
+repository founder approved P0 closure under the founder-controlled approval model, which
+does not authorize any external write. P1 is now active at G1 fixture verification.
 
 ## Independent-review boundary
 

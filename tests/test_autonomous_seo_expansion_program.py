@@ -11,6 +11,7 @@ from scripts.validate_autonomous_seo_expansion_program import (
     PROGRAM_PATH,
     ROOT,
     SCHEMA_PATH,
+    _founder_approval_errors,
     validate_program,
 )
 
@@ -44,8 +45,24 @@ def _git_evidence_fixture(root: Path) -> tuple[str, Path]:
     return _git(root, "rev-parse", "HEAD"), evidence
 
 
-def test_canonical_program_passes_while_p0_is_in_progress() -> None:
+def test_canonical_program_passes_after_founder_closes_p0() -> None:
     assert _errors(_load(PROGRAM_PATH)) == []
+
+
+def test_founder_approval_cannot_authorize_external_writes() -> None:
+    approval = _load(
+        ROOT / "evaluation/remediation/autonomous-seo-expansion-p0-founder-approval.json"
+    )
+    approval["external_write_authorized"] = True
+    schema = _load(ROOT / "schemas/autonomous-seo-founder-approval.schema.json")
+    errors = closure.schema_errors(approval, schema, "founder approval")
+    assert any("external_write_authorized" in error for error in errors)
+
+
+def test_founder_controlled_completion_requires_a_phase_approval_record(tmp_path: Path) -> None:
+    phase = {"id": "P1"}
+    errors = _founder_approval_errors(phase, tmp_path, {"approval_model": "FOUNDER_CONTROLLED"})
+    assert any("founder-approval.json" in error for error in errors)
 
 
 def test_rejects_direct_merge() -> None:
@@ -66,7 +83,7 @@ def test_rejects_phase_skipping() -> None:
 
 def test_rejects_multiple_active_phases() -> None:
     program = _load(PROGRAM_PATH)
-    program["phases"][1]["status"] = "BLOCKED"
+    program["phases"][2]["status"] = "BLOCKED"
     assert any("exactly one phase" in error for error in _errors(program))
 
 
@@ -116,6 +133,11 @@ def test_program_verified_requires_final_program_closure() -> None:
 
 def test_field_bounded_transition_accepts_only_phase_finalization() -> None:
     before = _load(PROGRAM_PATH)
+    before["phases"][0]["status"] = "IN_PROGRESS"
+    before["phases"][0]["technical_verification"] = "NOT_RUN"
+    before["phases"][0]["outcome_verification"] = "NOT_RUN"
+    before["current_phase"] = "P0"
+    before["phases"][1]["status"] = "NOT_STARTED"
     after = copy.deepcopy(before)
     after["phases"][0]["status"] = "COMPLETE"
     after["phases"][0]["technical_verification"] = "PASS"

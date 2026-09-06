@@ -105,4 +105,4 @@ VERIFY MAIN IS SOLE SOURCE OF TRUTH
 
 ## Final verdict rule
 
-P0 is eligible for merge only when exact-head canonical CI, WCSEO certification, rollback proof, independent Senior ScrumMaster III review, independent VP Engineering review, Learning Agent record, closure validation, and final source-drift verification all pass. One material `REWORK_GOOD` or `REJECT_BAD` restarts the remediation loop.
+P0 is eligible for merge only when exact-head canonical CI, WCSEO certification, rollback proof, founder approval recorded against the candidate, closure validation, and final source-drift verification all pass. Founder approval does not authorize external writes. One material `REWORK_GOOD` or `REJECT_BAD` restarts the remediation loop.
