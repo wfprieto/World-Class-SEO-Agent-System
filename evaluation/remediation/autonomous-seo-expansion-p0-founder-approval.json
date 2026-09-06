@@ -8,7 +8,7 @@
   "approved_by": "wfprieto",
   "approval_recorded_on": "2026-09-06",
   "approval_source": "Repository founder authorization recorded in the ChatGPT Work conversation.",
-  "candidate_commit": "4350c3716f6da11e0f57ddf85997c096b2e0c8fd",
+  "candidate_commit": "9fe5acc90d45fb069b5157a04287c46a098e64ef",
   "approval_state": "APPROVED",
   "authorized_next_phase": "P1",
   "external_write_authorized": false,
@@ -18,8 +18,8 @@
     "No unreviewed publishing, provider write, outreach, GBP, or spend changes"
   ],
   "verification_summary": [
-    "Full local suite passed: 1,152 passed and 1 environment-specific skip",
-    "GitHub Validate repository workflow completed successfully",
-    "GitHub Autonomous SEO certification workflow completed successfully"
+    "The exact pull-request head must pass the full local suite and both required GitHub workflows before merge.",
+    "No external SEO action is authorized by this record.",
+    "Founder approval does not bypass repository validation, rollback certification, or per-action external approval."
   ]
 }
