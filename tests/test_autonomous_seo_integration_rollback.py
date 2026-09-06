@@ -163,3 +163,47 @@ def test_founder_approval_rehearses_a_completed_p0_rollback(
     assert receipt["candidate_commit"] == candidate
     assert receipt["baseline_commit"] == integration_base
     assert receipt["result"] == "TREE_MATCH"
+
+
+def test_founder_approval_rehearses_a_merged_p0_closure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _authority, integration_base, _candidate = _repo(tmp_path)
+    _git(root, "checkout", "main")
+    _git(root, "merge", "--squash", "candidate")
+    _git(root, "commit", "-m", "merge P0 closure")
+    merged_candidate = _git(root, "rev-parse", "HEAD")
+    program_path = root / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json"
+    program = json.loads(program_path.read_text(encoding="utf-8"))
+    program["approval_model"] = "FOUNDER_CONTROLLED"
+    program["phases"][0]["status"] = "COMPLETE"
+    program_path.write_text(json.dumps(program), encoding="utf-8")
+    approval_path = root / "evaluation" / "remediation" / "autonomous-seo-expansion-p0-founder-approval.json"
+    approval_path.write_text(
+        json.dumps(
+            {
+                "phase_id": "P0",
+                "approval_model": "FOUNDER_CONTROLLED",
+                "approval_state": "APPROVED",
+                "external_write_authorized": False,
+                "candidate_commit": merged_candidate,
+            }
+        ),
+        encoding="utf-8",
+    )
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "record founder approval")
+    monkeypatch.setattr(rollback, "ROOT", root)
+    monkeypatch.setattr(
+        rollback,
+        "PROGRAM",
+        root / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json",
+    )
+    monkeypatch.setattr(rollback, "P0_FOUNDER_APPROVAL", approval_path)
+    monkeypatch.setenv("WCSEO_INTEGRATION_BASE_REF", "main")
+
+    receipt = rollback.rehearse(root / "rollback-receipt.json")
+
+    assert receipt["candidate_commit"] == merged_candidate
+    assert receipt["baseline_commit"] == integration_base
+    assert receipt["result"] == "TREE_MATCH"

@@ -8,7 +8,7 @@
   "approved_by": "wfprieto",
   "approval_recorded_on": "2026-09-06",
   "approval_source": "Repository founder authorization recorded in the ChatGPT Work conversation.",
-  "candidate_commit": "9fe5acc90d45fb069b5157a04287c46a098e64ef",
+  "candidate_commit": "9585dd525d9b0eb6c9c986b1356075064c61b7ca",
   "approval_state": "APPROVED",
   "authorized_next_phase": "P1",
   "external_write_authorized": false,
@@ -18,7 +18,7 @@
     "No unreviewed publishing, provider write, outreach, GBP, or spend changes"
   ],
   "verification_summary": [
-    "The exact pull-request head must pass the full local suite and both required GitHub workflows before merge.",
+    "The merged P0 closure commit passed the full local suite and both required GitHub workflows before approval was finalized.",
     "No external SEO action is authorized by this record.",
     "Founder approval does not bypass repository validation, rollback certification, or per-action external approval."
   ]
