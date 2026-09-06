@@ -89,7 +89,17 @@ def _recovery_baseline(program: dict[str, Any], candidate: str) -> tuple[str, st
     authority_baseline = str(program["baseline"]["commit"])
     target_ref = os.environ.get("WCSEO_INTEGRATION_BASE_REF", "origin/main")
     target_commit = _git("rev-parse", f"{target_ref}^{{commit}}")
-    recovery_baseline = _git("merge-base", candidate, target_commit)
+    candidate_is_merged_p0_closure = (
+        program.get("approval_model") == "FOUNDER_CONTROLLED"
+        and _git_clean("merge-base", "--is-ancestor", candidate, target_commit)
+    )
+    if candidate_is_merged_p0_closure:
+        # P0 is squash-merged before later PRs run this certification.  Its
+        # rollback boundary is therefore the parent of that immutable closure,
+        # rather than the current main tip which already contains it.
+        recovery_baseline = _git("rev-parse", f"{candidate}^")
+    else:
+        recovery_baseline = _git("merge-base", candidate, target_commit)
     subprocess.run(
         ["git", "merge-base", "--is-ancestor", authority_baseline, recovery_baseline],
         cwd=ROOT,
@@ -97,7 +107,7 @@ def _recovery_baseline(program: dict[str, Any], candidate: str) -> tuple[str, st
         capture_output=True,
         timeout=20,
     )
-    if recovery_baseline != target_commit:
+    if not candidate_is_merged_p0_closure and recovery_baseline != target_commit:
         raise RuntimeError(
             "autonomous SEO candidate is behind the integration target; rebase before rollback certification"
         )
