@@ -262,7 +262,19 @@ def _completed_phases(root: Path) -> list[dict[str, Any]]:
     return [phase for phase in program.get("phases", []) if phase.get("status") == "COMPLETE"]
 
 
+def _approval_model(root: Path) -> str:
+    program_path = root / phase_closure.PROGRAM_RELATIVE
+    if not program_path.is_file():
+        raise ValueError("autonomous SEO program is missing")
+    return str(_load(program_path).get("approval_model", "INDEPENDENT_REVIEW"))
+
+
 def validate_live_external_reviews(root: Path, token: str) -> list[str]:
+    if _approval_model(root) == "FOUNDER_CONTROLLED":
+        # Founder approval is validated by the expansion-program validator. It is
+        # deliberately limited to non-write phase progression and therefore has
+        # no GitHub reviewer receipt to authenticate here.
+        return []
     completed = _completed_phases(root)
     if not completed:
         return []
@@ -290,13 +302,20 @@ def main() -> int:
         return 1
     try:
         completed = _completed_phases(ROOT)
-        if not completed:
+        approval_model = _approval_model(ROOT)
+        if not completed or approval_model == "FOUNDER_CONTROLLED":
+            reason = (
+                "Founder-controlled approvals are validated by the expansion-program validator; "
+                "they do not authorize external writes or require external reviewer receipts."
+                if approval_model == "FOUNDER_CONTROLLED"
+                else "No autonomous SEO phase is COMPLETE; there are no external review receipts to authenticate yet."
+            )
             print(
                 json.dumps(
                     {
                         "status": "NOT_APPLICABLE",
                         "authenticated_reviews": 0,
-                        "reason": "No autonomous SEO phase is COMPLETE; there are no external review receipts to authenticate yet.",
+                        "reason": reason,
                     },
                     indent=2,
                 )

@@ -11,7 +11,7 @@ A pass counts only when it produces a concrete useful improvement or verifies a 
 | Pass | Focus | Concrete improvement / invariant |
 |---:|---|---|
 | 1 | Objective | Autonomous expansion is governed as a capability-maturity program; the read-only flagship remains unchanged. |
-| 2 | Operator | Each phase has one lead plus Senior ScrumMaster III and independent VP Engineering review authority. |
+| 2 | Operator | The repository founder approves each phase; independent review remains available as an optional additional control. |
 | 3 | Scope | P0-P13 critical path is separate from Local/GBP, GEO/AIO, Authority, and Social extension lanes. |
 | 4 | Truth source | Authority baseline is immutable provenance; current integration topology is resolved independently from GitHub. |
 | 5 | Input completeness | Dependencies, acceptance criteria, blockers, stop conditions, and authorization boundaries are explicit. |
@@ -20,7 +20,7 @@ A pass counts only when it produces a concrete useful improvement or verifies a 
 | 8 | Security/integrity | No write maturity is possible before P10; spam/cloaking/fake-review boundaries remain explicit. |
 | 9 | External systems | Credentials, live reads, draft writes, canaries, and bounded autonomy are separate gates. |
 | 10 | Source precision | Policy, program, phase closure, program closure, and reviewer provenance have explicit schemas/validators. |
-| 11 | Verification | Closure requires APIVR, technical/outcome disposition, immutable evidence, reviewers, rollback, and final source freeze. |
+| 11 | Verification | Closure requires APIVR, technical/outcome disposition, immutable evidence, founder approval, rollback, and final source freeze. |
 | 12 | Adverse states | Tests cover phase skipping, state spoofing, evidence tamper, candidate mismatch, review spoofing, source drift, and missing Git history. |
 | 13 | Rollback | Integration rollback separates historical authority from current recovery baseline and rejects a branch behind target `main`. |
 | 14 | Agent cooperation | Reviewer roles are distinct, provider-authenticated, candidate/run/evidence-bound, and cannot be satisfied by builder-authored `VERIFIED` JSON. |

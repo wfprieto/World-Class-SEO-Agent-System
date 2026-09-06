@@ -18,11 +18,36 @@ ESSENTIAL_CLOSE_CONTROLS = (
     "regression tests",
     "repository and schema validators",
     "rollback",
-    "Senior ScrumMaster 3",
-    "VP Engineering",
+    "Founder approval",
+    "external write",
     "technical verification",
     "re-audit",
 )
+FOUNDER_APPROVAL_SCHEMA_RELATIVE = "schemas/autonomous-seo-founder-approval.schema.json"
+
+
+def _founder_approval_errors(
+    phase: dict[str, Any], root: Path, program: dict[str, Any]
+) -> list[str]:
+    """Validate the founder's explicit non-write authorization for one phase."""
+    phase_id = str(phase.get("id"))
+    relative = f"evaluation/remediation/autonomous-seo-expansion-{phase_id.lower()}-founder-approval.json"
+    path = root / relative
+    if not path.is_file():
+        return [f"{phase_id} cannot be COMPLETE without {relative}"]
+    approval = closure.load_object(path)
+    schema = closure.load_object(root / FOUNDER_APPROVAL_SCHEMA_RELATIVE)
+    errors = closure.schema_errors(approval, schema, f"{phase_id} founder approval")
+    if errors:
+        return errors
+    if approval.get("phase_id") != phase_id:
+        errors.append(f"{phase_id} founder approval phase_id does not match")
+    candidate = str(approval.get("candidate_commit"))
+    if (root / ".git").exists() and not closure.git_command_ok(
+        root, ["merge-base", "--is-ancestor", candidate, "HEAD"]
+    ):
+        errors.append(f"{phase_id} founder approval candidate_commit must be an ancestor of HEAD")
+    return errors
 
 
 def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:
@@ -174,13 +199,13 @@ def _completion_errors(
     errors: list[str] = []
     for phase in program.get("phases", []):
         if isinstance(phase, dict) and phase.get("status") == "COMPLETE":
-            errors.extend(_one_completed_phase_errors(phase, root, policy))
+            errors.extend(_one_completed_phase_errors(phase, root, policy, program))
     errors.extend(_program_terminal_errors(program, root, policy))
     return errors
 
 
 def _one_completed_phase_errors(
-    phase: dict[str, Any], root: Path, policy: dict[str, Any]
+    phase: dict[str, Any], root: Path, policy: dict[str, Any], program: dict[str, Any]
 ) -> list[str]:
     phase_id = str(phase.get("id"))
     errors: list[str] = []
@@ -190,7 +215,10 @@ def _one_completed_phase_errors(
         errors.append(f"{phase_id} COMPLETE requires explicit PASS, NOT_REQUIRED, or PENDING outcome state")
     if phase_id in set(policy["outcome_pass_required_phases"]) and phase.get("outcome_verification") != "PASS":
         errors.append(f"{phase_id} requires outcome_verification PASS")
-    errors.extend(closure.phase_closure_errors(phase, root, policy))
+    if program.get("approval_model") == "FOUNDER_CONTROLLED":
+        errors.extend(_founder_approval_errors(phase, root, program))
+    else:
+        errors.extend(closure.phase_closure_errors(phase, root, policy))
     return errors
 
 
@@ -272,6 +300,8 @@ def _governance_errors(program: dict[str, Any]) -> list[str]:
     for marker in ESSENTIAL_CLOSE_CONTROLS:
         if marker.lower() not in close_blob:
             errors.append(f"phase_close_requires is missing essential control: {marker}")
+    if program.get("approval_model") not in {"FOUNDER_CONTROLLED", "INDEPENDENT_REVIEW"}:
+        errors.append("the autonomous expansion program must declare a supported approval model")
     exclusion_blob = "\n".join(str(item) for item in program.get("exclusions", [])).lower()
     for marker in ("read-only flagship", "ranking", "pbn", "global autonomy"):
         if marker not in exclusion_blob:

@@ -13,6 +13,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAM = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json"
 P0_CLOSURE = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-p0-closure.json"
+P0_FOUNDER_APPROVAL = (
+    ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-p0-founder-approval.json"
+)
 
 
 def _git(*args: str) -> str:
@@ -55,10 +58,23 @@ def _rollback_candidate(program: dict[str, Any], finalization_head: str) -> str:
     p0 = next(phase for phase in program["phases"] if phase["id"] == "P0")
     if p0["status"] != "COMPLETE":
         return finalization_head
-    if not P0_CLOSURE.is_file():
-        raise RuntimeError("completed P0 requires its closure before rollback certification")
-    closure = _load(P0_CLOSURE)
-    candidate = str(closure["candidate_commit"])
+    if program.get("approval_model") == "FOUNDER_CONTROLLED":
+        if not P0_FOUNDER_APPROVAL.is_file():
+            raise RuntimeError("completed P0 requires founder approval before rollback certification")
+        approval = _load(P0_FOUNDER_APPROVAL)
+        if (
+            approval.get("phase_id") != "P0"
+            or approval.get("approval_model") != "FOUNDER_CONTROLLED"
+            or approval.get("approval_state") != "APPROVED"
+            or approval.get("external_write_authorized") is not False
+        ):
+            raise RuntimeError("P0 founder approval is not a valid non-write approval record")
+        candidate = str(approval["candidate_commit"])
+    else:
+        if not P0_CLOSURE.is_file():
+            raise RuntimeError("completed P0 requires its closure before rollback certification")
+        closure = _load(P0_CLOSURE)
+        candidate = str(closure["candidate_commit"])
     subprocess.run(
         ["git", "merge-base", "--is-ancestor", candidate, finalization_head],
         cwd=ROOT,

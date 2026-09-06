@@ -1,0 +1,25 @@
+{
+  "$schema": "../../schemas/autonomous-seo-founder-approval.schema.json",
+  "schema_version": "1.0.0",
+  "approval_id": "p0-founder-approval-2026-09-06",
+  "program_id": "autonomous-seo-expansion",
+  "phase_id": "P0",
+  "approval_model": "FOUNDER_CONTROLLED",
+  "approved_by": "wfprieto",
+  "approval_recorded_on": "2026-09-06",
+  "approval_source": "Repository founder authorization recorded in the ChatGPT Work conversation.",
+  "candidate_commit": "9fe5acc90d45fb069b5157a04287c46a098e64ef",
+  "approval_state": "APPROVED",
+  "authorized_next_phase": "P1",
+  "external_write_authorized": false,
+  "required_external_write_controls": [
+    "Founder approval for each external action queue item",
+    "Affected URLs or systems, rollback plan, and verification method",
+    "No unreviewed publishing, provider write, outreach, GBP, or spend changes"
+  ],
+  "verification_summary": [
+    "The exact pull-request head must pass the full local suite and both required GitHub workflows before merge.",
+    "No external SEO action is authorized by this record.",
+    "Founder approval does not bypass repository validation, rollback certification, or per-action external approval."
+  ]
+}

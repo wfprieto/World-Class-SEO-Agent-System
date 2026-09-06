@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wfprieto/World-Class-SEO-Agent-System/schemas/autonomous-seo-founder-approval.schema.json",
+  "title": "WCSEO Founder-Controlled Phase Approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "approval_id",
+    "program_id",
+    "phase_id",
+    "approval_model",
+    "approved_by",
+    "approval_recorded_on",
+    "approval_source",
+    "candidate_commit",
+    "approval_state",
+    "authorized_next_phase",
+    "external_write_authorized",
+    "required_external_write_controls",
+    "verification_summary"
+  ],
+  "properties": {
+    "$schema": {"const": "../../schemas/autonomous-seo-founder-approval.schema.json"},
+    "schema_version": {"const": "1.0.0"},
+    "approval_id": {"type": "string", "minLength": 12},
+    "program_id": {"const": "autonomous-seo-expansion"},
+    "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "approval_model": {"const": "FOUNDER_CONTROLLED"},
+    "approved_by": {"const": "wfprieto"},
+    "approval_recorded_on": {"type": "string", "format": "date"},
+    "approval_source": {"type": "string", "minLength": 20},
+    "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "approval_state": {"const": "APPROVED"},
+    "authorized_next_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
+    "external_write_authorized": {"const": false},
+    "required_external_write_controls": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 12}
+    },
+    "verification_summary": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 12}
+    }
+  }
+}

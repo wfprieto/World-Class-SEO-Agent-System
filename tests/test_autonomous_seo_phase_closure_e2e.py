@@ -128,6 +128,14 @@ def _prepare_candidate(root: Path) -> tuple[dict, str, str, list[dict]]:
             encoding="utf-8"
         )
     )
+    # Keep this fixture on the legacy independent-review route so that the
+    # founder-controlled production configuration does not erase its coverage.
+    program["approval_model"] = "INDEPENDENT_REVIEW"
+    program["current_phase"] = "P0"
+    program["phases"][0]["status"] = "IN_PROGRESS"
+    program["phases"][0]["technical_verification"] = "NOT_RUN"
+    program["phases"][0]["outcome_verification"] = "NOT_RUN"
+    program["phases"][1]["status"] = "NOT_STARTED"
     program["baseline"]["commit"] = baseline
     program_path = root / "evaluation/remediation/autonomous-seo-expansion-program.json"
     _write(program_path, program)
