@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from scripts import autonomous_seo_review_trust as trust
 from scripts import validate_autonomous_seo_external_reviews as external_review
 
@@ -77,3 +79,19 @@ def test_reviewer_receipts_reject_cross_pr_evidence() -> None:
     ]
     errors = trust._execution_identity_errors(receipts)
     assert any("one positive pull request" in error for error in errors)
+
+
+def test_founder_controlled_phase_does_not_require_external_reviewer_receipts(tmp_path) -> None:
+    program_path = tmp_path / external_review.phase_closure.PROGRAM_RELATIVE
+    program_path.parent.mkdir(parents=True)
+    program_path.write_text(
+        json.dumps(
+            {
+                "approval_model": "FOUNDER_CONTROLLED",
+                "phases": [{"id": "P0", "status": "COMPLETE"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert external_review.validate_live_external_reviews(tmp_path, "unused") == []
