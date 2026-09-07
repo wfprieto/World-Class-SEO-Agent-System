@@ -12,4 +12,5 @@ ruff>=0.9,<1
 mypy>=1.15,<3
 pip-audit>=2.7,<3
 build>=1.2,<2
+colorama>=0.4.6,<0.5
 pip-tools>=7.5,<8
