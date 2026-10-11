@@ -162,7 +162,7 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload improvement governance result
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: improvement-governance-${{ matrix.os }}-${{ matrix.python-version }}
           path: improvement-governance.json
@@ -260,7 +260,7 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload pytest result
         if: steps.pytest.outcome == 'success' || steps.pytest.outcome == 'failure'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: pytest-${{ matrix.os }}-${{ matrix.python-version }}
           path: pytest-results.xml
@@ -556,7 +556,7 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Upload quality and release evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: quality-security-release
           path: |
@@ -714,7 +714,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
       - name: Upload authenticated rollback receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: phase0-rollback-receipt
           path: phase0-rollback-receipt.json
@@ -812,7 +812,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
       - name: Upload authenticated phase rollback receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: phase-rollback-receipt
           path: phase-rollback-receipt.json
