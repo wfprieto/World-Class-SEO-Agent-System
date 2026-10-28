@@ -613,12 +613,13 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     mutations = (
         workflow.replace("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "actions/upload-artifact@v7", 1),
-        workflow.replace("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", 1),
+        workflow.replace("actions/setup-python@", "attacker/setup-python@", 1),
         workflow.replace(" -I -E -S scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
         workflow.replace("${{ steps.trusted_python.outputs.path }}", "python", 1),
         workflow.replace("Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source", "'C:\\\\attacker\\python.exe'", 1),
     )
     for mutated in mutations:
+        assert mutated != workflow
         assert _workflow_errors(mutated, 78.0)
     action_without_proof = workflow.replace(
         "      - name: Prove exact source integrity\n        shell: pwsh\n",
@@ -626,6 +627,21 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
         1,
     )
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(action_without_proof, 78.0))
+
+
+@pytest.mark.parametrize("filename", ("validate.yml", "release.yml"))
+@pytest.mark.parametrize("revision", ("v7", "0" * 40, "5fda3b95a4ea91299a34e894583c3862153e4b97"))
+def test_setup_python_revision_requires_reviewed_workflow_contract(filename: str, revision: str) -> None:
+    workflows = {
+        name: (ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
+        for name in ("validate.yml", "release.yml")
+    }
+    approved = "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
+    assert _workflow_errors(workflows["validate.yml"], 78.0, workflows["release.yml"]) == []
+    assert approved in workflows[filename]
+    workflows[filename] = workflows[filename].replace(approved, f"actions/setup-python@{revision}", 1)
+    errors = _workflow_errors(workflows["validate.yml"], 78.0, workflows["release.yml"])
+    assert "workflow certification metadata must equal its approved finite contract" in errors
 
 
 def test_trusted_tool_capture_emits_one_executable_path_per_output(tmp_path: Path) -> None:

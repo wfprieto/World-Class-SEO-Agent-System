@@ -34,7 +34,7 @@ def test_permissions_cannot_be_elevated(tmp_path: Path) -> None:
 def test_actions_must_use_immutable_commits(tmp_path: Path) -> None:
     errors = _mutate(
         tmp_path,
-        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
         "actions/setup-python@v7",
     )
     assert any("action is mutable" in error for error in errors)
