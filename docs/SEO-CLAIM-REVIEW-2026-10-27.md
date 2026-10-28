@@ -31,4 +31,3 @@ The sources were inspected as primary documentation. No observational, consensus
 ## Verification
 
 Run `python scripts/validate_seo_claims.py`, `python scripts/validate_reference_freshness.py`, and the existing reference, technical-audit, and metadata tests. Hosted canonical and autonomous certification must then pass at the updated PR head. A passing date check alone is not evidence that the source review occurred; the claim mapping above records the review scope.
-
