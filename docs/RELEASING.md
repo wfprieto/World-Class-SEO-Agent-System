@@ -65,6 +65,18 @@ Local source-only regression results do not replace the complete hosted matrix:
 Windows and Ubuntu on Python 3.11, 3.12, and 3.13 must all certify the final head
 before merge. Source-only CI does not approve a public release.
 
+Autonomous rollback freshness is scoped to the recovery baseline in its receipt.
+Only the three exact commits in `APPROVED_BOUNDARIES` may use the historical
+claim-validation wrapper and its pinned review date. An unlisted full commit SHA
+uses the original restored `validate-repository.ps1` with current-date freshness;
+stale claims must still fail. The copied trusted helper's pure mode selector must
+return exactly one recognized mode with a successful native exit before either
+path runs. Classification does not replace the adjacent exact-tree/source proofs,
+authorize a new date exception, certify current main, or approve P0 progression.
+Historical substitution and environment overrides are restored/removed in
+`finally`, including validation failures. The existing package-root bridge is
+not a historical-date override.
+
 Consumers can verify a downloaded artifact with:
 
 ```powershell

@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from scripts.validate_historical_rollback_claims import APPROVED_BOUNDARIES
 
+from scripts.validate_historical_rollback_claims import APPROVED_BOUNDARIES
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "autonomous-seo-certification.yml"
@@ -24,7 +24,7 @@ def _rollback_steps() -> list[dict]:
 
 def test_restored_baseline_validation_has_an_explicit_package_root() -> None:
     steps = _rollback_steps()
-    name = "Validate restored baseline repository at historical review boundary"
+    name = "Validate restored baseline repository with scoped freshness"
     index = next(index for index, step in enumerate(steps) if step.get("name") == name)
     step = steps[index]
 
