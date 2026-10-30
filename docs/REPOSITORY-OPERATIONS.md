@@ -10,8 +10,11 @@ The six open-issue implementation contracts and closure boundaries are separatel
 
 Run verification from a clean checkout at the repository root. Preserve command output and the
 exact commit SHA. A role records accountability; it does not prove that a second person exists.
-Until GitHub confirms a distinct eligible collaborator, independent merge availability remains
-`OWNER_ACTION_REQUIRED`.
+The owner-selected solo-maintainer policy in `governance/github-controls.json` permits normal
+squash-only PR merges after exact-head `repository-certification` passes and all review threads
+are resolved; it does not claim a second human approval. Backup ownership remains
+`OWNER_ACTION_REQUIRED` until provider evidence verifies an eligible backup. That backup gap
+is distinct from the approved merge policy, and release authorization remains separate.
 
 ## Operating rules
 

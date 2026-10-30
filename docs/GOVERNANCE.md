@@ -23,8 +23,11 @@ One rejection blocks release approval. Reviewer verdicts are never averaged.
 The bounded operational procedures are in
 [`REPOSITORY-OPERATIONS.md`](REPOSITORY-OPERATIONS.md). The machine-readable operations registry
 is authoritative for control ownership, backup status, issue bindings, metrics, thresholds, and
-rollback triggers. Until fresh GitHub evidence confirms a distinct eligible collaborator, backup
-ownership and independent merge availability remain `OWNER_ACTION_REQUIRED`.
+rollback triggers. The owner-selected solo-maintainer policy in `governance/github-controls.json`
+allows normal squash-only PR merges after exact-head `repository-certification` passes and all
+review threads are resolved, without claiming a nonexistent second human approval. Backup
+ownership remains `OWNER_ACTION_REQUIRED` until fresh provider evidence verifies an eligible
+backup; release authorization and the separate release gate remain unchanged.
 
 Every material change must name its operations control ID, accountable owner, evidence class,
 verification result, and rollback trigger. Public intake must contain no credentials, private

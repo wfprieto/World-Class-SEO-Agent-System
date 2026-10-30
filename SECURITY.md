@@ -50,8 +50,10 @@ workflow supply-chain compromise, evidence forgery, denial of service, or unsafe
   approval gates remain authoritative.
 - Schema, provenance, and remediation evidence must fail closed when required fields, hashes,
   identities, or provider observations are missing or inconsistent.
-- Material changes must pass `repository-certification` and receive an approval from someone other
-  than the last pusher before they enter `main`.
+- Material changes must pass exact-head `repository-certification`, have all review threads
+  resolved, and enter `main` through a normal squash-only pull request under the owner-selected
+  solo-maintainer policy in `governance/github-controls.json`. A nonexistent second human
+  approval must not be claimed; independent engineering-agent review is not a GitHub human approval.
 - Workflows use least-privilege permissions; release authority is separate and is not granted to
   ordinary pull-request validation.
 

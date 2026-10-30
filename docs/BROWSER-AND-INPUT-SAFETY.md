@@ -124,8 +124,10 @@ through squash merges. Remaining dependency changes are ported onto current main
 not merged as stale whole-file snapshots. Historical rollback proof steps, current
 SEO claim evidence, source-integrity gates, and coverage floors must remain intact.
 
-Changes enter main through a normally reviewed PR and `repository-certification`.
-The independent approval requirement in SECURITY.md remains applicable. No force
-push, historical-branch deletion, or approval bypass is part of consolidation.
+Changes enter main through a normal squash-only PR after exact-head
+`repository-certification` passes and all review threads are resolved, under the
+owner-selected solo-maintainer policy in `governance/github-controls.json` and
+SECURITY.md. Independent engineering review is not a GitHub human approval. No
+force push, historical-branch deletion, or required-check bypass is part of consolidation.
 Rollback is a reviewed revert of the integration commit; rerun the same validation
 matrix and preserve pre/post source-integrity and evidence receipts.

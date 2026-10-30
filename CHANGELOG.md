@@ -17,6 +17,7 @@ This project follows semantic versioning where possible:
 - Whole-report consent signal/region projection and authoritative workflow provenance validation.
 - Actual Chromium, TLS, proxy, screenshot, accessibility, and adverse-state certification in the supported Python/OS matrix; see [browser and input safety](docs/BROWSER-AND-INPUT-SAFETY.md).
 - Reconciled setup-python 7.1.0 and pip-tools 7.6.2 updates without reverting newer rollback or SEO evidence safeguards.
+- Aligned security and review guidance with the owner-approved solo-maintainer policy without changing required checks, branch protections, or separate release authority.
 
 ### Added
 
