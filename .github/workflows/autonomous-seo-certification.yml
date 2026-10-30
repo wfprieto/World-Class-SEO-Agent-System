@@ -78,7 +78,9 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof failed' }
       - name: Preserve trusted source-integrity validator
         shell: pwsh
-        run: Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+        run: |-
+          Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+          Copy-Item -LiteralPath scripts/validate_historical_rollback_claims.py -Destination "$env:RUNNER_TEMP/validate_historical_rollback_claims.py"
       - name: Rehearse autonomous SEO P0 rollback
         run: python scripts/rehearse_autonomous_seo_rollback.py --receipt autonomous-seo-p0-rollback-receipt.json
       - name: Read certified baseline
@@ -97,12 +99,32 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored autonomous baseline proof failed' }
       - name: Install baseline validation dependencies
         run: python -m pip install -r requirements-dev.txt
-      - name: Validate restored baseline repository
+      - name: Validate restored baseline repository at historical review boundary
         shell: pwsh
-        run: ./scripts/validate-repository.ps1
+        run: |-
+          $baselineValidator = "$env:RUNNER_TEMP/baseline_validate_seo_claims.py"
+          Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination $baselineValidator
+          try {
+            Copy-Item -LiteralPath "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" -Destination scripts/validate_seo_claims.py
+            $env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator
+            $env:WCSEO_ROLLBACK_EXPECTED_SHA = '${{ steps.rollback.outputs.baseline }}'
+            ./scripts/validate-repository.ps1
+            if ($LASTEXITCODE -ne 0) { throw "historical autonomous baseline validation failed" }
+          } finally {
+            Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py
+            Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue
+            Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue
+          }
         env:
           # The restored baseline invokes validators that import the repository's scripts namespace.
           PYTHONPATH: ${{ github.workspace }}
+      - name: Prove exact restored autonomous baseline
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted.outputs.git }}';
+          $raw = & '${{ steps.trusted.outputs.python }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha '${{ steps.rollback.outputs.baseline }}' --proof-mode restored-baseline --allow-untracked autonomous-seo-p0-rollback-receipt.json;
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'post-validation restored autonomous baseline proof failed' }
       - name: Seal autonomous rollback receipt
         shell: python
         run: |
