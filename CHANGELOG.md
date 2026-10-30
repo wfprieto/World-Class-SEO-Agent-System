@@ -16,7 +16,7 @@ This project follows semantic versioning where possible:
 - Public result and report projections remove credential aliases across persisted/exported copies; bounded-analysis failures preserve raw evidence and explicit rendering modes.
 - Monetary ceilings reject unknown or invalid quotes before every paid execution mode; unpriced usage is reported as unknown rather than free.
 - Approval receipts, source-cache authenticity, release evidence inventories and imported brief observations now fail closed on missing or contradictory evidence. Older incomplete brief assessments must be regenerated; field validation does not authenticate provider provenance.
-- CI pytest invocations disable bytecode writes explicitly, preserving all jobs, tests, coverage floors, adjacent source proofs and the ban on inherited execution-altering environment overrides.
+- CI uses a fixed workflow-only no-bytecode-write policy for ordinary imports and subprocesses, and routes mandatory compilation output to disposable runner storage. Complete critical-step metadata, all jobs/tests/coverage floors/source proofs and the ban on other inherited execution-altering overrides remain enforced.
 - Shared public-address connection binding for HTTP and isolated Chromium, with verified TLS identity, bounded egress, and truthful optional-renderer fallback.
 - Deterministic bounded robots matching, one-pass bounded sitemap validation, and bounded SERP imports with incremental graph degree accounting.
 - Whole-report consent signal/region projection and authoritative workflow provenance validation.

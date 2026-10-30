@@ -181,3 +181,15 @@ When SPA analysis refuses an oversized or malformed tag, raw evidence is retaine
 with `is_spa: null` and an `analysis_failed` warning. Auto/never modes return
 truthful partial evidence instead of claiming a negative SPA classification;
 always mode still invokes the selected renderer. The analysis bound is not raised.
+
+## Source-only certification
+
+CI keeps routine imports and child processes from writing checkout bytecode with
+the exact workflow-level `PYTHONDONTWRITEBYTECODE: "1"` policy. Other Python
+environment overrides, including narrower job/step/container overrides of this
+setting, remain forbidden in canonical validation and release jobs. Mandatory
+`compileall -q .` still checks the entire checkout, but its explicit cache prefix
+points to disposable runner storage outside that checkout. Existing cache reads
+are not disabled; strict source proofs still reject unauthenticated caches.
+This avoids relying on every legitimate compiler serialization matching a cached
+payload byte-for-byte and does not certify the external compilation output.

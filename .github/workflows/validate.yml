@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
   validation_matrix:
     name: validate (${{ matrix.os }}, ${{ matrix.python-version }})
@@ -75,7 +78,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Compile Python sources
-        run: python -m compileall -q .
+        run: python -X "pycache_prefix=${{ runner.temp }}/wcseo-compile-cache" -m compileall -q .
       - name: Prove exact source integrity
         shell: pwsh
         run: >-

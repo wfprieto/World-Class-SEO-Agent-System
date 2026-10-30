@@ -16,7 +16,7 @@ from test_fresh_scan_brief_integrity import producer_assessments
 from adapters import rendered_page
 from integrations.content_intelligence.service import ContentIntelligenceService
 from scripts.seo_pdf_report import build_html
-from scripts.workflow_quality_contract import workflow_errors
+from scripts.workflow_quality_contract import _jobs, workflow_errors
 from seoctl import cli
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -98,3 +98,8 @@ def test_finite_ci_contract_rejects_removing_no_bytecode_flag(suffix):
 def test_report_markup_includes_a_meaningful_document_title():
     markup = build_html({"agent": "QA fixture", "summary": "Synthetic report", "findings": []})
     assert "<title>SEO Report</title>" in markup
+
+
+def test_ci_exact_no_write_policy_is_allowed_at_global_scope():
+    payload = {"env": {"PYTHONDONTWRITEBYTECODE": "1"}, "jobs": {}}
+    assert _jobs(yaml.safe_dump(payload))[1] == []

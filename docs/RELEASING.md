@@ -22,20 +22,48 @@ Those files must exist unchanged at the approved candidate. Gate labels cannot
 override contradictory files. The current BLOCKED decision remains truthful and
 does not authorize publication.
 
-Source-integrity proofs authenticate executable matching-source `__pycache__`
-payloads in candidate and restored-baseline modes against trusted compiler output.
-Cache headers/source hashes alone are not authority, and `-B` disables writes,
-not reads. Cache bytes are never unmarshaled. Normal compileall caches support
-optimization levels 0/1/2, canonical absolute or repository-relative filenames,
-normal slash variants, and normal leading-dot paths. Custom `compileall -d/-s/-p`
-filenames, unknown cache names/tags, and unauthenticated payloads fail closed.
-Use a source-only checkout or explicitly regenerate normal caches; the validator
-does not silently delete files or grant cache exceptions.
-Orphan and importable cache-directory impostors in certified repository roots are
-rejected, including `security` and `contracts`. Recognized dependency caches
-outside those roots, such as ignored `.venv` files, are not source-certified;
-dependency/toolchain trust remains a separate gate. Every cache matching tracked
-repository source is authenticated regardless of its directory.
+Certification uses a source-only checkout. The four Python workflows inherit the
+exact top-level YAML setting `PYTHONDONTWRITEBYTECODE: '1'`; job, step, and container
+overrides remain forbidden even when they repeat `'1'`. Other execution-altering
+`PYTHON*` settings remain forbidden in canonical validation/release workflows.
+The existing pinned historical rollback `PYTHONPATH` exception is not broadened.
+
+Mandatory compilation still covers the complete checkout and still fails on
+syntax errors. Only its output location changes:
+
+```text
+python -X "pycache_prefix=${{ runner.temp }}/wcseo-compile-cache" -m compileall -q .
+```
+
+The quoted runner-owned path supports spaces. The prefix applies only to this
+compiler process; it is not a global `PYTHONPYCACHEPREFIX` setting. Compilation
+must produce actual external `.pyc` artifacts and leave none in the checkout.
+Ordinary imports and child Python processes without `-B` inherit the global
+no-write policy. External compiler output is not source-authenticated evidence.
+
+`-B` and `PYTHONDONTWRITEBYTECODE` suppress import-time cache writes, not reads of
+existing caches; explicit compileall still writes its requested output.
+`-X pycache_prefix` redirects that output to a parallel cache tree. See the
+[official Python 3.13 command-line documentation](https://docs.python.org/3.13/using/cmdline.html)
+(checked 2026-10-30). Isolated `-I`/`-E` proof processes ignore Python environment
+settings; the no-write environment is not a substitute for their source checks.
+
+Warm repository caches remain conservative, not generally portable: exact trusted
+compiler byte comparison may reject genuine caches produced in another process,
+interpreter, filename, or serialization context. Do not assume ordinary compileall
+output will pass cache authentication. Candidate and restored-baseline proofs
+continue checking matching tracked-source caches; headers/source hashes alone are
+not authority, and cache bytes are never unmarshaled. Unknown, inconsistent,
+orphan, and importable cache-directory impostors in certified repository roots,
+including `security` and `contracts`, remain fail-closed. Use a clean source-only
+checkout when cache authentication fails; the validator neither silently deletes
+files nor grants cache exceptions. Recognized dependency caches outside certified
+roots, such as ignored `.venv` files, are not source-certified; dependency/toolchain
+trust remains separate.
+
+Local source-only regression results do not replace the complete hosted matrix:
+Windows and Ubuntu on Python 3.11, 3.12, and 3.13 must all certify the final head
+before merge. Source-only CI does not approve a public release.
 
 Consumers can verify a downloaded artifact with:
 

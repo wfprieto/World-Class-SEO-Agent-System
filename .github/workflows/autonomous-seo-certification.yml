@@ -10,6 +10,9 @@ permissions:
   issues: read
   pull-requests: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
   canonical-validation:
     name: canonical-validation-prerequisite
