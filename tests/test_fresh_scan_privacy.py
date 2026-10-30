@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import socket
+import subprocess
+import sys
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -48,6 +53,96 @@ def test_embedded_url_secrets_are_removed_before_persistence(tmp_path):
     assert all(marker.encode() not in db_path.read_bytes() for marker in markers)
     assert "page=2" in exported and "safe" in exported
     assert record["run_id"] == "fixture-run"
+
+
+class _PrivacyHrefParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.href = ""
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.href = dict(attrs).get("href", "")
+
+
+@pytest.mark.parametrize("sink", ["rendered", "jsonl", "sqlite", "consent", "public"])
+@pytest.mark.parametrize("encoded,credential", [
+    ("&#100;ummy-entity-secret", "dummy-entity-secret"),
+    ("&#x64;ummy-entity-secret", "dummy-entity-secret"),
+    ("&#X00064;ummy-entity-secret", "dummy-entity-secret"),
+    ("&#100ummy-entity-secret", "dummy-entity-secret"),
+    ("&sol;dummy-entity-secret", "/dummy-entity-secret"),
+    ("prefix&sol;dummy-entity-secret", "prefix/dummy-entity-secret"),
+    ("&num;dummy-entity-secret", "#dummy-entity-secret"),
+    ("&amp;#100;ummy-entity-secret", "dummy-entity-secret"),
+    ("&#38;#x64;ummy-entity-secret", "dummy-entity-secret"),
+    ("&amp;amp;#100;ummy-entity-secret", "dummy-entity-secret"),
+    ("&amp;sol;dummy-entity-secret", "/dummy-entity-secret"),
+    ("&copydummy-entity-secret", "\u00a9dummy-entity-secret"),
+    ("&amp;copydummy-entity-secret", "\u00a9dummy-entity-secret"),
+    ("".join(f"&#{ord(char)};" for char in "opaque-entity-credential"), "opaque-entity-credential"),
+])
+def test_entity_encoded_query_values_are_removed_across_privacy_sinks(tmp_path, sink, encoded, credential):
+    content = f'<a href="https://example.com/?code={encoded}&amp;page=2">&lt;safe&gt;</a>'
+    supplied = {"content": content, "deployment": "preview"}
+    original = json.dumps(supplied)
+    if sink == "rendered":
+        exported = blank_evidence("https://example.com/", content, 200, {}, is_spa=False)
+        projected = exported["content"]
+    elif sink == "jsonl":
+        memory = JsonlMemoryStore(tmp_path / "entity-memory.jsonl")
+        memory.append("entity-fixture", supplied)
+        exported = memory.load("entity-fixture")[0]
+        projected = exported["content"]
+        exported = {"loaded": exported, "bytes": memory.path.read_text(encoding="utf-8")}
+    elif sink == "sqlite":
+        with EvidenceStore(tmp_path / "entity-evidence.db") as store:
+            store.record("https://example.com/", "privacy", supplied,
+                         source=content, scope={"detail": content}, run_id="entity-fixture")
+            exported = store.latest("https://example.com/", "privacy")[0]
+        projected = exported["payload"]["content"]
+        assert exported["run_id"] == "entity-fixture"
+    elif sink == "consent":
+        exported = diagnose({"cmp": True, "region": "US-CA", "environment": supplied})
+        projected = exported["implementation_topology"]["environment"]["content"]
+        assert exported["implementation_topology"]["environment"]["deployment"] == "preview"
+    else:
+        exported = public_result_mapping(supplied)
+        projected = exported["content"]
+    decoded = json.dumps(exported)
+    parser = _PrivacyHrefParser()
+    parser.feed(projected)
+    href = parser.href
+    for _ in range(8):
+        decoded = html.unescape(decoded)
+        href = html.unescape(href)
+    assert credential not in decoded
+    query = parse_qs(urlsplit(href).query, keep_blank_values=True)
+    assert query == {"code": ["[REDACTED]"], "page": ["2"]}
+    assert projected.endswith('">&lt;safe&gt;</a>')
+    assert json.dumps(supplied) == original
+
+
+def test_entity_value_redaction_does_not_rescan_consumed_encoded_values():
+    code = (
+        "from sensitive_data import redact; "
+        "value = '<a href=\"https://example.com/?code=' + '&sol;' * 12000 + '\">safe</a>'; "
+        "assert redact(value) == '<a href=\"https://example.com/?code=[REDACTED]\">safe</a>'"
+    )
+    try:
+        completed = subprocess.run([sys.executable, "-B", "-c", code],
+                                   cwd=Path(__file__).resolve().parents[1],
+                                   capture_output=True, text=True, timeout=3)
+    except subprocess.TimeoutExpired:
+        pytest.fail("redaction rescanned a consumed entity value beyond the controlled CPU bound")
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.parametrize("separator", ["&", "&amp;", "&#38;"])
+@pytest.mark.parametrize("name", ["copy", "not", "amp"])
+def test_entity_named_query_fields_remain_distinct_from_credential_values(separator, name):
+    value = f"https://example.com/?code=opaque-private-value{separator}{name}=2&page=3"
+    assert redact(value) == f"https://example.com/?code=[REDACTED]{separator}{name}=2&page=3"
 
 
 def test_public_workflow_results_redact_echoes_without_destroying_session_schema(monkeypatch):

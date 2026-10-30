@@ -874,8 +874,8 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
             1,
         ),
         workflow.replace(
-            "        run: pytest -q --browser-security --cov=runtime",
-            "        run: |\n          exit 0\n          pytest -q --browser-security --cov=runtime",
+            "        run: python -B -m pytest -q --browser-security --cov=runtime",
+            "        run: |\n          exit 0\n          python -B -m pytest -q --browser-security --cov=runtime",
             1,
         ),
     )
@@ -885,7 +885,7 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
 
 def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    coverage_run = "        run: pytest -q --browser-security --cov=runtime"
+    coverage_run = "        run: python -B -m pytest -q --browser-security --cov=runtime"
     risk_block = (
         "      - name: Validate critical coverage\n"
         "        run: python scripts/validate_risk_coverage.py outputs/coverage.json"

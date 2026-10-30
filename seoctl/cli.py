@@ -161,7 +161,7 @@ def _content_brief_decision(args: argparse.Namespace) -> tuple[dict[str, Any], i
     result = brief_decision(
         _json(args.relevance),
         _json(args.serp),
-        [str(item) for item in gains],
+        gains,
         conditions_resolved=args.conditions_resolved,
         selected_intent=args.selected_intent,
     )

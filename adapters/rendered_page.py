@@ -86,6 +86,19 @@ def _playwright_available() -> bool:
     return True
 
 
+def _raw_evidence(
+    url: str, raw_html: str, status: int | None, headers: dict[str, str], warnings: list[str]
+) -> dict[str, Any]:
+    try:
+        spa: bool | None = is_spa(raw_html)
+    except ValueError as exc:
+        spa = None
+        warnings.append(f"analysis_failed: {sanitize_text_for_evidence(exc)}; SPA detection is Not Run.")
+    data = blank_evidence(url, raw_html, status, headers, is_spa=False)
+    data["is_spa"] = spa
+    return data
+
+
 def dependency_status() -> dict[str, str]:
     """Report optional-dependency availability without importing a browser."""
     return {"playwright": "installed" if _playwright_available() else "missing"}
@@ -144,14 +157,12 @@ def fetch(
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"{FETCH_FAILED}: {sanitize_text_for_evidence(exc)}")
 
-    data = blank_evidence(
-        safe_url, raw_html, status, headers, is_spa=is_spa(raw_html)
-    )
+    data = _raw_evidence(safe_url, raw_html, status, headers, warnings)
     wants_render = mode == "always" or (mode == "auto" and data["is_spa"])
     if not wants_render:
         return AdapterResult(
             source="rendered_page",
-            status="ok" if raw_html else "partial",
+            status="ok" if raw_html and not warnings else "partial",
             data=data,
             warnings=warnings,
         )

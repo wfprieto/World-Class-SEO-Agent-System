@@ -36,7 +36,7 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "916a01c0f9ef457856011e02d6d4680b5b263018bf74255b30a99a145edd861f"
+WORKFLOW_CONTRACT_SHA = "34dbbfc0ee221b9aac3fe28ed6a2e721d0ac00cc7c898fd270901084737f2852"
 RELEASE_CONTRACT_SHA = "ab35593dc70df786472653cb340a21a747955f92a5df61102019454cc5711a3f"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
@@ -369,7 +369,7 @@ def workflow_errors(
 ) -> list[str]:
     """Reject shallow checkout and any masked or weakened quality command."""
     coverage = (
-        "pytest -q --browser-security "
+        "python -B -m pytest -q --browser-security "
         + " ".join(f"--cov={target}" for target in COVERAGE_TARGETS)
         + " --cov-report=term-missing --cov-report=xml:outputs/coverage.xml"
         + " --cov-report=json:outputs/coverage.json "

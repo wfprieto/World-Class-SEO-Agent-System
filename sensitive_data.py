@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import re
 from collections.abc import Mapping
+from html.entities import html5
 from typing import Any
 from urllib.parse import unquote_plus
 
@@ -52,6 +53,16 @@ _LABELED_SECRET = re.compile(
 )
 _AUTH_SCHEME_SECRET = re.compile(r"(?i)(\b(?:authorization\s*:\s*)?(?:bearer|basic)\s+)([^\s,;]+)")
 _HTML_ENTITY = r"&(?:\#[0-9]+|\#x[0-9a-f]+|[a-z]+);"
+_AMP_ENTITY = r"(?:amp|\#0*38|\#x0*26)"
+_MAX_ENTITY_NAME = max(len(name.removesuffix(";")) for name in html5)
+_VALUE_ENTITY = re.compile(
+    rf"&(?:{_AMP_ENTITY};)*(?P<tail>\#x[0-9a-f]+;?|\#[0-9]+;?|[a-z][a-z0-9]{{0,{_MAX_ENTITY_NAME - 1}}};?)",
+    re.IGNORECASE,
+)
+_AMP_ENTITY_NAME = re.compile(_AMP_ENTITY, re.IGNORECASE)
+_SIMPLE_QUERY_FIELD = re.compile(
+    rf'''&(?:{_AMP_ENTITY};)*[^=&#;\s"'<>]+=''', re.IGNORECASE,
+)
 _QUERY_FIELD = re.compile(
     r"([?&](?:amp;|\#0*38;|\#x0*26;)?)"
     rf'''((?:[^=&#\s"'<>]|{_HTML_ENTITY})+)=([^&#\s"'<>]*)''',
@@ -80,9 +91,52 @@ def query_contains_credentials(query: str) -> bool:
                for field in html.unescape(query).split("&"))
 
 
-def _redact_query_field(match: re.Match[str]) -> str:
-    prefix, name, value = match.groups()
-    return f"{prefix}{name}={REDACTED if sensitive_query_key(name) else value}"
+def _value_entity_name(tail: str) -> str | None:
+    if tail.startswith("#"):
+        return tail.removesuffix(";")
+    # HTML's legacy named references may omit ';'. The name-table bound is fixed,
+    # so matching such prefixes never repeatedly decodes an arbitrarily long value.
+    for end in range(len(tail), 0, -1):
+        if tail[:end] in html5:
+            return tail[:end].removesuffix(";")
+    return None
+
+
+def _query_value_end(value: str, start: int) -> int:
+    """Walk encoded value units without decoding markup or rescheduling prior input."""
+    cursor = start
+    while cursor < len(value):
+        char = value[cursor]
+        if char == "&":
+            if _SIMPLE_QUERY_FIELD.match(value, cursor):
+                break
+            entity = _VALUE_ENTITY.match(value, cursor)
+            if entity is None:
+                break
+            name = _value_entity_name(entity.group("tail"))
+            if name is None or _AMP_ENTITY_NAME.fullmatch(name):
+                break  # Actual ampersand delimiters retain subsequent query fields.
+            cursor = entity.end()
+            continue
+        if char in "#\"'<>" or char.isspace():
+            break
+        cursor += 1
+    return cursor
+
+
+def _redact_query_values(value: str) -> str:
+    pieces: list[str] = []
+    cursor = 0
+    search_from = 0
+    while match := _QUERY_FIELD.search(value, search_from):
+        search_from = match.end()
+        if not sensitive_query_key(match.group(2)):
+            continue
+        pieces.extend((value[cursor:match.start(3)], REDACTED))
+        cursor = _query_value_end(value, match.start(3))
+        search_from = max(search_from, cursor)
+    pieces.append(value[cursor:])
+    return "".join(pieces)
 
 
 def _redact_labeled_secret(match: re.Match[str]) -> str:
@@ -120,7 +174,7 @@ def redact(value: Any, *, key: str = "") -> Any:
     if not isinstance(value, str):
         return value
     result = _URL_USERINFO.sub(r"\1", value)
-    result = _QUERY_FIELD.sub(_redact_query_field, result)
+    result = _redact_query_values(result)
     result = _AUTH_SCHEME_SECRET.sub(r"\1[REDACTED]", result)
     result = _LABELED_SECRET.sub(_redact_labeled_secret, result)
     for pattern in _TOKEN_PATTERNS:

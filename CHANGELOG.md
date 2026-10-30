@@ -12,6 +12,11 @@ This project follows semantic versioning where possible:
 
 ### Security and runtime maintenance
 
+- Fresh deep-scan remediation adds canonical asset-root containment, numeric public-only model/RDAP sockets, bounded HTML/URL/CrUX work and total HTTP response deadlines.
+- Public result and report projections remove credential aliases across persisted/exported copies; bounded-analysis failures preserve raw evidence and explicit rendering modes.
+- Monetary ceilings reject unknown or invalid quotes before every paid execution mode; unpriced usage is reported as unknown rather than free.
+- Approval receipts, source-cache authenticity, release evidence inventories and imported brief observations now fail closed on missing or contradictory evidence. Older incomplete brief assessments must be regenerated; field validation does not authenticate provider provenance.
+- CI pytest invocations disable bytecode writes explicitly, preserving all jobs, tests, coverage floors, adjacent source proofs and the ban on inherited execution-altering environment overrides.
 - Shared public-address connection binding for HTTP and isolated Chromium, with verified TLS identity, bounded egress, and truthful optional-renderer fallback.
 - Deterministic bounded robots matching, one-pass bounded sitemap validation, and bounded SERP imports with incremental graph degree accounting.
 - Whole-report consent signal/region projection and authoritative workflow provenance validation.

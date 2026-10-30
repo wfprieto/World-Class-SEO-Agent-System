@@ -174,3 +174,10 @@ SECURITY.md. Independent engineering review is not a GitHub human approval. No
 force push, historical-branch deletion, or required-check bypass is part of consolidation.
 Rollback is a reviewed revert of the integration commit; rerun the same validation
 matrix and preserve pre/post source-integrity and evidence receipts.
+
+## Bounded analysis fallback
+
+When SPA analysis refuses an oversized or malformed tag, raw evidence is retained
+with `is_spa: null` and an `analysis_failed` warning. Auto/never modes return
+truthful partial evidence instead of claiming a negative SPA classification;
+always mode still invokes the selected renderer. The analysis bound is not raised.

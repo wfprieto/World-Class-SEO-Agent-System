@@ -1230,8 +1230,8 @@
       "removal_phase": "P7"
     },
     "scripts.content_brief_evidence::assess_serp": {
-      "max_span": 135,
-      "max_complexity": 35,
+      "max_span": 129,
+      "max_complexity": 30,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",

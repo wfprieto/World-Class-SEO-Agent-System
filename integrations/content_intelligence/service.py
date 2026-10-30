@@ -377,7 +377,7 @@ class ContentIntelligenceService:
     ) -> AdapterResult:
         if not isinstance(relevance, dict) or not isinstance(serp, dict):
             raise TypeError("relevance and serp must be objects")
-        gains = [str(item).strip() for item in information_gains if str(item).strip()]
+        gains = [item.strip() if isinstance(item, str) else item for item in information_gains]
         source_rows = bounded_records(sources, "sources")
         section_rows = [str(item).strip() for item in (required_sections or []) if str(item).strip()]
         decision = brief_decision(

@@ -169,3 +169,76 @@ def test_imported_serp_summary_must_agree_with_observations(mutation) -> None:
         serp['competitors'][0]['signals']['intent_fit'] = float('nan')
     selected = 'informational' if mutation == 'duplicate_competitor' else None
     assert not brief_decision(relevance, serp, ['Field test.'], selected_intent=selected)['publish']
+
+
+def test_contradicted_observations_cannot_keep_positive_serp_signals() -> None:
+    relevance, serp = producer_assessments()
+    row = serp['competitors'][0]
+    row['observed'] = {'url': row['url'], 'inaccessible': True, 'fetch_error': 'not fetched',
+                       'entities': [], 'intent': '', 'last_updated': '1900-01-01'}
+    assert brief_decision(relevance, serp, ['First-hand maintenance test.'])['publish'] is False
+
+
+@pytest.mark.parametrize('field,value', [
+    ('inaccessible', True), ('fetch_error', 'not fetched'), ('entities', []),
+    ('intent', ''), ('last_updated', '1900-01-01'), ('first_hand_evidence', False),
+    ('sources_cited', False), ('conversion_path', True),
+])
+def test_each_observed_fact_must_agree_with_its_retained_signal(field, value) -> None:
+    relevance, serp = producer_assessments()
+    serp['competitors'][0]['observed'][field] = value
+    assert not brief_decision(relevance, serp, ['First-hand maintenance test.'])['publish']
+
+
+@pytest.mark.parametrize('field', ['first_hand_evidence', 'sources_cited'])
+def test_imported_boolean_observations_cannot_be_truthy_strings(field) -> None:
+    relevance, serp = producer_assessments()
+    serp['competitors'][0]['observed'][field] = 'false'
+    assert not brief_decision(relevance, serp, ['First-hand maintenance test.'])['publish']
+
+
+def test_producer_keeps_only_boolean_presence_facts() -> None:
+    _, original = producer_assessments()
+    row = dict(original['competitors'][0]['observed'],
+               first_hand_evidence='synthetic-private-note',
+               sources_cited=['synthetic-private-source'],
+               conversion_path='https://example.com/?token=synthetic-private-value')
+    serp = assess_serp([row], original['capture'], own_domain='ours.example')
+    observed = serp['competitors'][0]['observed']
+    assert all(observed[field] is True for field in
+               ('first_hand_evidence', 'sources_cited', 'conversion_path'))
+    assert 'synthetic-private' not in str(observed)
+
+
+def test_recorded_assessment_date_preserves_historical_scoring() -> None:
+    relevance, original = producer_assessments()
+    captured = date.today() - timedelta(days=2)
+    row = dict(original['competitors'][0]['observed'],
+               last_updated=(captured - timedelta(days=365)).isoformat())
+    serp = assess_serp([row], dict(original['capture'], date=captured.isoformat()),
+                       own_domain='ours.example', as_of=captured.isoformat())
+    assert serp['competitors'][0]['signals']['freshness'] == 1
+    assert brief_decision(relevance, serp, ['Historical field test.'])['publish']
+
+
+@pytest.mark.parametrize('assessed', [None, 'invalid', '1900-01-01'])
+def test_missing_or_contradictory_assessment_date_blocks(assessed) -> None:
+    relevance, serp = producer_assessments()
+    serp['assessed_as_of'] = assessed
+    assert not brief_decision(relevance, serp, ['Field test.'])['publish']
+
+
+def test_inaccessible_summary_cannot_also_claim_readable_competitor() -> None:
+    relevance, serp = producer_assessments()
+    serp['inaccessible'] = [{'url': serp['competitors'][0]['url'], 'reason': 'not fetched',
+                             'evidence_state': 'Not Run'}]
+    assert not brief_decision(relevance, serp, ['Field test.'])['publish']
+
+
+def test_genuine_producer_discloses_other_inaccessible_rows_without_losing_readable_evidence() -> None:
+    relevance, original = producer_assessments()
+    serp = assess_serp([original['competitors'][0]['observed'],
+                        {'url': 'https://blocked.example/hvac', 'fetch_error': 'not fetched'}],
+                       original['capture'], own_domain='ours.example')
+    assert serp['inaccessible'] and serp['result_count'] == 1
+    assert brief_decision(relevance, serp, ['Field test.'])['publish']
