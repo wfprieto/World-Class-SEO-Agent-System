@@ -13,6 +13,7 @@ from adapters.mcp_extensions import (
     validate_registry,
 )
 from integrations.extensions.indexnow import IndexNowService, normalize
+from integrations.extensions.providers import image_generation_service
 from seoctl import extensions_cli
 
 
@@ -49,6 +50,59 @@ def test_cost_gate_and_bing_contract():
     )
     assert approved["state"] == "APPROVED"
     assert preflight("bing-webmaster")["state"] == "BLOCKED_BY_CONTRACT"
+
+
+@pytest.mark.parametrize("ceiling", [float("nan"), float("inf")])
+def test_cost_gate_rejects_non_finite_ceiling(ceiling):
+    with pytest.raises(ValueError, match="approved_ceiling must be a finite"):
+        estimate_cost(
+            "image-gen",
+            units=1,
+            unit_cost=0.25,
+            approved_ceiling=ceiling,
+            approved=True,
+        )
+
+
+def test_image_generation_plan_requires_provider_cost_rights_and_review(monkeypatch):
+    monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
+    result = image_generation_service().plan(
+        request={
+            "prompt": "A truthful editorial illustration of a technical SEO audit.",
+            "alt_text": "Analyst reviewing a technical SEO audit dashboard.",
+            "rights_basis": "Repository owner authorized generation for project use.",
+            "digital_source_type": "trainedAlgorithmicMedia",
+            "optimization": {"format": "webp", "width": 1600, "height": 900},
+        },
+        units=1,
+        unit_cost=0.25,
+        approved_ceiling=0.25,
+        approved=True,
+    )
+    assert result.status == "ok"
+    assert result.data["state"] == "AUTHORIZED_PROVIDER_REQUEST"
+    assert result.data["publish_state"] == "BLOCKED_PENDING_HUMAN_REVIEW"
+    assert result.data["auto_publish"] is False
+    assert result.data["provenance"]["provider"] == "image-gen"
+    assert result.data["rollback"]["action"] == "remove_generated_asset"
+    assert "provider-secret" not in json.dumps(result.data)
+
+
+def test_image_generation_plan_fails_closed_without_rights_or_cost(monkeypatch):
+    monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
+    with pytest.raises(ValueError, match="rights_basis"):
+        image_generation_service().plan(
+            request={
+                "prompt": "Image",
+                "alt_text": "Description",
+                "digital_source_type": "trainedAlgorithmicMedia",
+                "optimization": {"format": "webp", "width": 1200, "height": 675},
+            },
+            units=1,
+            unit_cost=0.25,
+            approved_ceiling=0.25,
+            approved=True,
+        )
 
 
 def test_indexnow_validation_scope():

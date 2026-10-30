@@ -13,8 +13,11 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = Path("governance/private-conduct-intake.json")
 SCHEMA = Path("schemas/private-conduct-intake.schema.json")
-BLOCKED_TEXT = "has not yet been designated"
-OWNER_ACTION_TEXT = "OWNER_ACTION_REQUIRED"
+DESTINATION = "mailto:wfprieto@gmail.com"
+EXPECTED_PROVIDER_ATTESTATION = (
+    "gmail-profile-sha256:"
+    "cffaef28ce43210066ebf9dbbe3f5922091a22c253d7035c423a7c7dedd43395"
+)
 REQUIRED_DISCLOSURES = {
     "acknowledgement target",
     "monitoring role",
@@ -75,8 +78,8 @@ def _activation_requirement_errors(contract: dict[str, Any]) -> list[str]:
     if not isinstance(activation, dict):
         return ["private intake must declare provider-verification activation requirements"]
     errors: list[str] = []
-    if activation.get("status") != "PROVIDER_VERIFICATION_REQUIRED":
-        errors.append("private intake must remain gated on provider-verified evidence")
+    if activation.get("status") != "PROVIDER_VERIFIED":
+        errors.append("private intake requires provider-verified evidence")
     if _string_set(activation.get("required_disclosures")) != REQUIRED_DISCLOSURES:
         errors.append("private intake must preserve every required public disclosure")
     if _string_set(activation.get("prohibited_evidence")) != PROHIBITED_EVIDENCE:
@@ -86,17 +89,22 @@ def _activation_requirement_errors(contract: dict[str, Any]) -> list[str]:
 
 def _registry_errors(operation: dict[str, Any], issue: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if operation.get("status") != "BLOCKED_OWNER_ACTION":
-        errors.append("security-intake must remain BLOCKED_OWNER_ACTION")
-    if issue.get("state") != "BLOCKED_OWNER_ACTION":
-        errors.append("issue 30 must remain BLOCKED_OWNER_ACTION")
-    if operation.get("closure_evidence") != {
-        "status": "PENDING_OWNER_ACTION",
-        "refs": [],
-    }:
-        errors.append("blocked security-intake requires pending empty closure evidence")
-    if not operation.get("blocker") or not issue.get("blocked_by"):
-        errors.append("blocked private intake requires explicit owner blockers")
+    if operation.get("status") != "READY":
+        errors.append("security-intake must remain READY while provider evidence is current")
+    if issue.get("state") != "ACTIVE" or issue.get("implementation_state") != "ACCEPTANCE_READY":
+        errors.append("issue 30 must remain acceptance-ready with an active control")
+    closure = operation.get("closure_evidence")
+    refs = closure.get("refs") if isinstance(closure, dict) else None
+    if (
+        not isinstance(closure, dict)
+        or closure.get("status") != "VERIFIED"
+        or not isinstance(refs, list)
+        or len(refs) != 1
+        or refs[0] != EXPECTED_PROVIDER_ATTESTATION
+    ):
+        errors.append("ready security-intake requires one authenticated provider attestation")
+    if operation.get("blocker") is not None or issue.get("blocked_by") is not None:
+        errors.append("ready private intake cannot retain an owner blocker")
     return errors
 
 
@@ -106,10 +114,10 @@ def _documentation_errors(root: Path) -> list[str]:
         content = (root / relative).read_text(encoding="utf-8")
         normalized = " ".join(content.split())
         lowered = normalized.lower()
-        if BLOCKED_TEXT not in normalized:
-            errors.append(f"blocked intake status is not stated in {relative}")
-        if OWNER_ACTION_TEXT not in content:
-            errors.append(f"blocked intake owner action is not stated in {relative}")
+        if "wfprieto@gmail.com" not in normalized:
+            errors.append(f"private intake destination is not stated in {relative}")
+        if "72 hours" not in lowered:
+            errors.append(f"private intake acknowledgement target is not stated in {relative}")
         if "not a substitute for conduct reporting" not in lowered:
             errors.append(f"blocked intake must remain distinct from vulnerability intake in {relative}")
         for disclosure in REQUIRED_DISCLOSURES:
@@ -118,45 +126,32 @@ def _documentation_errors(root: Path) -> list[str]:
     return errors
 
 
-def _blocked_contract_errors(contract: dict[str, Any]) -> list[str]:
+def _ready_contract_errors(contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if contract.get("state") != "BLOCKED_OWNER_ACTION":
-        errors.append("repository-only evidence cannot promote conduct intake to READY")
-    if contract.get("destination") is not None:
-        destination = json.dumps(contract.get("destination"), sort_keys=True).lower()
-        if any(marker in destination for marker in ("example.", ".test", ".invalid", "localhost")):
+    if contract.get("state") != "READY":
+        errors.append("private conduct intake must remain READY while provider evidence is current")
+    destination = contract.get("destination")
+    instructions = destination.get("public_instructions") if isinstance(destination, dict) else None
+    if instructions != DESTINATION:
+        serialized = json.dumps(destination, sort_keys=True).lower()
+        if any(marker in serialized for marker in ("example.", ".test", ".invalid", "localhost")):
             errors.append("example or test destinations cannot satisfy conduct intake")
-        errors.append("BLOCKED_OWNER_ACTION requires a null destination")
-    if any(
-        contract.get(field) is not False
-        for field in (
-            "owner_authorized_publication",
-            "repository_controlled",
-            "distinct_from_security_intake",
-        )
-    ):
-        errors.append("blocked intake must not claim owner authorization or destination verification")
-    if contract.get("monitoring") != {
-        "status": "PENDING_OWNER_ACTION",
-        "monitor_role": None,
-        "attested_at": None,
-        "attestation_ref": None,
-    }:
-        errors.append("repository attestations cannot establish verified conduct monitoring")
-    if contract.get("access_test") != {
-        "status": "NOT_RUN",
-        "tested_at": None,
-        "method": None,
-    }:
-        errors.append("repository assertions cannot establish a provider access test")
-    if contract.get("acknowledgement_target_hours") is not None:
-        errors.append("blocked intake must not invent an acknowledgement target")
+        errors.append("ready conduct intake must publish the owner-authorized destination")
+    monitoring = contract.get("monitoring")
+    ref = monitoring.get("attestation_ref") if isinstance(monitoring, dict) else None
+    if ref != EXPECTED_PROVIDER_ATTESTATION:
+        errors.append("ready conduct intake requires an authenticated provider attestation")
+    access_test = contract.get("access_test")
+    method = access_test.get("method") if isinstance(access_test, dict) else None
+    if not isinstance(method, str) or "Authenticated Gmail profile lookup" not in method:
+        errors.append("ready conduct intake requires an authenticated provider access test")
+    if contract.get("acknowledgement_target_hours") != 72:
+        errors.append("ready conduct intake acknowledgement target must be 72 hours")
     return errors
 
 
 def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
-    """Validate static blocked state; ``as_of`` is retained for caller compatibility."""
-    del as_of
+    """Validate provider-bound readiness and its time-bounded review obligation."""
     try:
         contract = _load(root / CONTRACT)
         schema = _load(root / SCHEMA)
@@ -164,11 +159,28 @@ def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return [str(exc)]
     errors = _schema_errors(schema, contract)
+    review_due = contract.get("review_due")
+    if isinstance(review_due, str):
+        try:
+            if date.fromisoformat(review_due) < (as_of or date.today()):
+                errors.append("private conduct intake provider attestation review is overdue")
+        except ValueError:
+            pass  # The schema reports malformed dates.
     if _string_set(contract.get("prohibited_repository_data")) != EXPECTED_PROHIBITED_DATA:
         errors.append("private intake must preserve the exact prohibited repository-data set")
     errors.extend(_activation_requirement_errors(contract))
-    errors.extend(_blocked_contract_errors(contract))
+    errors.extend(_ready_contract_errors(contract))
     errors.extend(_registry_errors(operation, issue))
+    monitoring = contract.get("monitoring")
+    monitoring_ref = monitoring.get("attestation_ref") if isinstance(monitoring, dict) else None
+    closure = operation.get("closure_evidence")
+    closure_refs = closure.get("refs") if isinstance(closure, dict) else None
+    if (
+        isinstance(closure_refs, list)
+        and len(closure_refs) == 1
+        and monitoring_ref != closure_refs[0]
+    ):
+        errors.append("private intake monitoring and closure attestations must match")
     errors.extend(_documentation_errors(root))
     return sorted(set(errors))
 

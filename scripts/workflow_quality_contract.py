@@ -36,12 +36,13 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "75b1c0825fa77a6409fb615a53f6d5b5f863176f6d69cf69d287f44f2089ac9c"
+WORKFLOW_CONTRACT_SHA = "7c48c51f8f595e7c7e28648df9a588e151fa100b8bdede5128231f2dc06165eb"
 RELEASE_CONTRACT_SHA = "0bbd415a39319a18621ee5bf726e7771afbd3fd92049013d3a23af7ea5596056"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
     "Seal successful receipt", "Preserve trusted source-integrity validator", "Prove exact restored baseline",
+    "Validate restored baseline tree at historical review boundary",
 }
 PHASE0_BASELINE = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
 PHASE0_ROLLBACK_SHA = "a6949648241634c21ec14d1ddc64323de1d477240a652b762cd563644aef4be1"

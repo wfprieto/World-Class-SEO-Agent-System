@@ -27,18 +27,16 @@ Maintainers may remove comments, close issues, reject pull requests, or block co
 ## Reporting
 
 Do not publish conduct concerns, identifying details, or safety information in an issue, pull
-request, or Discussion. A monitored repository-controlled private conduct destination has not yet
-been designated and remains `OWNER_ACTION_REQUIRED` in issue #30. The private vulnerability form
-is for security vulnerabilities and is not a substitute for conduct reporting. Until the owner
-attests a private destination, preserve the concern privately and do not disclose it through a
-public repository channel.
+request, or Discussion. Email private reports to
+[wfprieto@gmail.com](mailto:wfprieto@gmail.com). The private vulnerability form is for security
+vulnerabilities and is not a substitute for conduct reporting.
 
 The current status and transition requirements are documented in
 [`docs/OPEN-ISSUE-REMEDIATION.md`](docs/OPEN-ISSUE-REMEDIATION.md#private-conduct-prerequisite).
 
-Any future route must publish all four required disclosures: its acknowledgement target, the
-monitoring role, confidentiality limits, and conflict handling when the normal decision-maker is
-involved. Until provider-controlled evidence verifies the destination and access test, repository
-commits, issue comments, self-authored assertions, and example or test destinations cannot activate
-the route or change this status.
+The acknowledgement target is 72 hours. The monitoring role is the repository maintainer. The
+confidentiality limits allow sharing only as needed for safety, legal obligations, and a fair
+investigation; absolute confidentiality cannot be promised. The conflict handling rule: if the report
+concerns the maintainer, identify the conflict in the email subject so the report can be preserved
+and referred to a neutral external reviewer before an enforcement decision.
 

@@ -45,9 +45,9 @@ def _phase8_local_errors(
 ) -> list[str]:
     errors: list[str] = []
     expected_pull = {
-        "number": 24,
+        "number": 67,
         "base": "main",
-        "head": "agent/owner-controlled-remediation-loop",
+        "head": "codex/resolve-open-issues-26-32",
         "allowed_states": ["OPEN", "CLOSED"],
     }
     if contract.get("phase8_pull_request") != expected_pull:

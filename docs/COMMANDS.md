@@ -15,7 +15,7 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl content brief-decision` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl content compare` | Competitive Intelligence Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl content decay` | Predictive SEO Trend Agent | `content-decay` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
-| `seoctl content entities` | SEO Knowledge Graph Sync Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl content entities` | SEO Knowledge Graph Sync Agent | `content-audit` | `provider_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 | `seoctl content humanize` | SEO Copywriter/Content Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl content quality` | SEO Copywriter/Content Agent | `content-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl content relevance` | SEO Copywriter/Content Agent | `content-brief` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
@@ -52,6 +52,7 @@ Run `python -m seoctl --help` for interactive argument details.
 | `seoctl links commoncrawl` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 | `seoctl links gap` | Digital PR & Programmatic Link Outreach Agent | `backlink-gap` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl links profile` | Digital PR & Programmatic Link Outreach Agent | `backlink-profile` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
+| `seoctl media image-plan` | Visual & Video Search Agent | `image-seo-audit` | `provider_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |
 | `seoctl media iptc-label` | Visual & Video Search Agent | `image-seo-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl media transcript-check` | Visual & Video Search Agent | `video-seo-audit` | `none` | `COMMAND_BACKED` | `DETERMINISTIC` | `REGISTRY_VERIFIED` |
 | `seoctl media youtube-search` | Visual & Video Search Agent | `video-seo-audit` | `live_optional` | `COMMAND_BACKED` | `LIVE_CAPABLE` | `LIVE_CAPABLE_NOT_VERIFIED` |

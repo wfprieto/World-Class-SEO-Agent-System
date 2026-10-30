@@ -16,11 +16,11 @@ from integrations.authority_media.services import (
     YouTubeSearchService,
 )
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, envelope, exit_code_for_status
+from seoctl.media_image_cli import add_image_plan_parser, image_plan
 
 
 def _result(command: str, result):
     return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
-
 
 def _links_commoncrawl(args: argparse.Namespace):
     return _result(
@@ -37,7 +37,6 @@ def _links_commoncrawl(args: argparse.Namespace):
 
 def _links_profile(args: argparse.Namespace):
     return _result("links.profile", BacklinkProfileService().profile(args.input))
-
 
 def _links_gap(args: argparse.Namespace):
     return _result("links.gap", BacklinkProfileService().gap(args.target, args.competitor))
@@ -79,7 +78,6 @@ def _iptc_label(args: argparse.Namespace):
 def _transcript_check(args: argparse.Namespace):
     return _result("media.transcript-check", TranscriptService().check(args.input, video_id=args.video_id))
 
-
 def _drift_baseline(args: argparse.Namespace):
     return _result("drift.baseline", DriftService().baseline(args.url, args.state, db_path=args.db))
 
@@ -108,6 +106,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], tuple[dict[str, Any], int]]] 
     "media_youtube_search": _youtube_search,
     "media_iptc_label": _iptc_label,
     "media_transcript_check": _transcript_check,
+    "media_image_plan": image_plan,
     "drift_baseline": _drift_baseline,
     "drift_compare": _drift_compare,
     "drift_history": _drift_history,
@@ -161,6 +160,7 @@ def build_parser(family: str) -> argparse.ArgumentParser:
         transcript.add_argument("--input", required=True)
         transcript.add_argument("--video-id")
         transcript.set_defaults(handler="media_transcript_check")
+        add_image_plan_parser(sub)
     elif family == "drift":
         for name, help_text, handler in (
             ("baseline", "Record a page-state baseline in the canonical EvidenceStore", "drift_baseline"),

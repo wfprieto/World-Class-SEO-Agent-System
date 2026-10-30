@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 from scripts import autonomous_seo_expansion_closure as closure
@@ -47,6 +48,18 @@ def _git_evidence_fixture(root: Path) -> tuple[str, Path]:
 
 def test_canonical_program_passes_after_founder_closes_p0() -> None:
     assert _errors(_load(PROGRAM_PATH)) == []
+
+
+def test_validator_runs_as_a_direct_script() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/validate_autonomous_seo_expansion_program.py")],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "validation passed" in completed.stdout
 
 
 def test_founder_approval_cannot_authorize_external_writes() -> None:

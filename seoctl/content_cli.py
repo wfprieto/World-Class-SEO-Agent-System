@@ -66,8 +66,8 @@ def _verify(args: argparse.Namespace):
 def _entities(args: argparse.Namespace):
     catalog = _read_json(args.catalog) if args.catalog else []
     result = _service().entities(
-        text=_read_text(args.input),
-        catalog=catalog,
+        text=_read_text(args.input), catalog=catalog,
+        provider_analysis=json.loads(args.provider_analysis),
     )
     return _result("content.entities", result)
 
@@ -184,8 +184,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     entities.add_argument("--input", required=True)
     entities.add_argument("--catalog")
+    entities.add_argument("--provider-analysis", default="null", help="Provider-result JSON with provenance and an approved cost receipt")
     entities.set_defaults(handler="content_entities")
-
     brief = sub.add_parser(
         "brief",
         help="Build an evidence-gated content brief from canonical decisions",

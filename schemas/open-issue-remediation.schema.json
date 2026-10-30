@@ -38,7 +38,8 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "number", "control_id", "classification", "state", "objective",
+        "number", "control_id", "classification", "control_lifecycle",
+        "implementation_state", "state", "objective",
         "scope_boundary", "deliverables", "acceptance_commands", "evidence_paths",
         "close_policy", "blocked_by", "rollback"
       ],
@@ -47,6 +48,10 @@
         "control_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "classification": {
           "enum": ["BOUNDED_DEBT", "CODE_CAPABILITY", "RECURRING_CONTROL", "OWNER_ACTION"]
+        },
+        "control_lifecycle": {"enum": ["BOUNDED", "CONTINUOUS"]},
+        "implementation_state": {
+          "enum": ["IN_PROGRESS", "ACCEPTANCE_READY", "BLOCKED_OWNER_ACTION"]
         },
         "state": {"enum": ["ACTIVE", "BLOCKED_OWNER_ACTION"]},
         "objective": {"$ref": "#/$defs/non_empty"},
@@ -66,7 +71,22 @@
         },
         {
           "if": {"properties": {"classification": {"const": "RECURRING_CONTROL"}}},
-          "then": {"properties": {"close_policy": {"const": "KEEP_OPEN_RECURRING"}}}
+          "then": {"properties": {"control_lifecycle": {"const": "CONTINUOUS"}}},
+          "else": {"properties": {"control_lifecycle": {"const": "BOUNDED"}}}
+        },
+        {
+          "if": {"properties": {"implementation_state": {"const": "ACCEPTANCE_READY"}}},
+          "then": {
+            "properties": {
+              "state": {"const": "ACTIVE"},
+              "blocked_by": {"type": "null"},
+              "close_policy": {"const": "CLOSE_ON_ACCEPTANCE"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"implementation_state": {"const": "BLOCKED_OWNER_ACTION"}}},
+          "then": {"properties": {"state": {"const": "BLOCKED_OWNER_ACTION"}}}
         }
       ]
     }

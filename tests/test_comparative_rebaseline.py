@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts import inventory_comparator
 from scripts.inventory_comparator import (
     COMPARATIVE,
     _catalog_skill_ids,
@@ -79,6 +80,18 @@ def test_comparative_rebaseline_is_valid_and_reproducible():
         "target": 92.0,
     }
     assert result["open_capabilities"] > 0
+
+
+def test_validate_all_checks_receipts_against_supplied_root(monkeypatch, tmp_path: Path):
+    shutil.copytree(COMPARATIVE, tmp_path / "evaluation/comparative")
+    monkeypatch.setattr(inventory_comparator, "validate_current_target_commits", lambda *args: [])
+    monkeypatch.setattr(inventory_comparator, "validate_capability_inventory", lambda *args: [])
+    monkeypatch.setattr(inventory_comparator, "inventory_repo", lambda root: {})
+
+    result = inventory_comparator.validate_all(tmp_path)
+
+    assert any("source receipt is missing" in error for error in result["errors"])
+    assert any("automated test receipt is missing" in error for error in result["errors"])
 
 
 def test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts():
@@ -168,7 +181,7 @@ def test_scorecard_validation_requires_reviewed_source_authority() -> None:
     assert validate_scorecard(scorecard) == ["reviewed source authority is required"]
 
 
-def test_every_open_capability_has_owner_pr_and_acceptance_criteria():
+def test_every_open_capability_has_owned_testable_rollback_contract():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
     assert validate_parity_ledger(ledger) == []
     for row in ledger["capabilities"]:
@@ -178,15 +191,37 @@ def test_every_open_capability_has_owner_pr_and_acceptance_criteria():
             assert row["gap_disposition"] in ledger["allowed_gap_dispositions"]
             assert row["owner"]
             assert row["next_action"]
+            assert row["implementation_refs"]
+            assert row["test_refs"]
+            assert row["rollback_trigger"]
 
 
-def test_open_gap_requires_typed_disposition_owner_and_next_action():
+def test_open_gap_requires_typed_disposition_owner_tests_and_rollback():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
-    for field in ("gap_disposition", "owner", "next_action"):
+    for field in (
+        "gap_disposition",
+        "owner",
+        "next_action",
+        "implementation_refs",
+        "test_refs",
+        "rollback_trigger",
+    ):
         broken = copy.deepcopy(ledger)
         row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
         row.pop(field)
         assert validate_parity_ledger(broken), field
+
+
+@pytest.mark.parametrize("field", ["implementation_refs", "test_refs"])
+def test_open_gap_references_must_exist_in_the_validated_root(field: str):
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
+    row[field] = ["does/not/exist.py"]
+
+    errors = validate_parity_ledger(broken, ROOT)
+
+    assert any(f"{field} is missing" in error for error in errors)
 
 
 def test_gap_disposition_vocabulary_is_fail_closed():
@@ -217,6 +252,33 @@ def test_closed_capability_requires_evidence():
     row["evidence"] = []
     errors = validate_parity_ledger(broken)
     assert any("claims closure without evidence" in error for error in errors)
+
+
+def test_every_repository_controlled_gap_is_resolved_with_code_evidence() -> None:
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    open_code_gaps = [
+        row["id"]
+        for row in ledger["capabilities"]
+        if row["status"] == "GAP_OPEN"
+        and row.get("gap_disposition") == "CODE_REMEDIATION"
+    ]
+    assert open_code_gaps == []
+    assert validate_parity_ledger(ledger, ROOT) == []
+
+
+def test_resolved_code_gap_requires_existing_source_and_test_receipts() -> None:
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(
+        item
+        for item in broken["capabilities"]
+        if item.get("resolution", {}).get("kind") == "CODE_REMEDIATION"
+    )
+    row["resolution"]["source_refs"] = ["does/not/exist.py"]
+    row["resolution"]["test_refs"] = []
+    errors = validate_parity_ledger(broken, ROOT)
+    assert any("source receipt is missing" in error for error in errors)
+    assert any("automated test receipts" in error for error in errors)
 
 
 def test_capability_ids_are_unique():

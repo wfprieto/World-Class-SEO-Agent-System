@@ -17,6 +17,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from scripts.comparative_receipts import code_remediation_errors, open_gap_contract_errors
+
 effective_inventory = importlib.import_module(
     "scripts.effective_inventory" if __package__ else "effective_inventory"
 )
@@ -241,32 +243,25 @@ GAP_DISPOSITIONS = {
 }
 
 
-def _gap_disposition_errors(row_id: str, row: dict[str, Any], status: str) -> list[str]:
-    if status != "GAP_OPEN":
-        return (
-            [f"{row_id} closed capability must not retain open-gap disposition"]
-            if any(field in row for field in ("gap_disposition", "next_action"))
-            else []
-        )
-    errors = []
-    if row.get("gap_disposition") not in GAP_DISPOSITIONS:
-        errors.append(f"{row_id} has invalid or missing gap disposition")
-    for field in ("owner", "next_action"):
-        value = row.get(field)
-        if not isinstance(value, str) or not value.strip():
-            errors.append(f"{row_id} open gap requires {field}")
-    return errors
+def _gap_disposition_errors(
+    row_id: str, row: dict[str, Any], status: str, root: Path
+) -> list[str]:
+    return open_gap_contract_errors(row_id, row, status, root, GAP_DISPOSITIONS)
 
 
 def _parity_row_errors(
-    row_id: str, row: dict[str, Any], status: str, allowed: set[object]
+    row_id: str,
+    row: dict[str, Any],
+    status: str,
+    allowed: set[object],
+    root: Path,
 ) -> list[str]:
     errors: list[str] = []
     if status not in allowed:
         errors.append(f"{row_id} has invalid status {status!r}")
     if status == "GAP_OPEN" and not row.get("target_pr"):
         errors.append(f"{row_id} is open without a target PR")
-    errors.extend(_gap_disposition_errors(row_id, row, status))
+    errors.extend(_gap_disposition_errors(row_id, row, status, root))
     if status != "GAP_OPEN" and not row.get("evidence"):
         errors.append(f"{row_id} claims closure without evidence")
     acceptance = row.get("acceptance")
@@ -275,7 +270,7 @@ def _parity_row_errors(
     return errors
 
 
-def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
+def validate_parity_ledger(ledger: dict[str, Any], root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     allowed = set(ledger.get("allowed_statuses", []))
     allowed_gap_dispositions = set(ledger.get("allowed_gap_dispositions", []))
@@ -296,7 +291,8 @@ def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
             errors.append(f"duplicate parity id: {row_id}")
         seen.add(row_id)
         status = str(row.get("status", ""))
-        errors.extend(_parity_row_errors(row_id, row, status, allowed))
+        errors.extend(_parity_row_errors(row_id, row, status, allowed, root))
+    errors.extend(code_remediation_errors(rows, root))
     return errors
 
 
@@ -320,7 +316,7 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
                 claude, "claude-seo-baseline.json", authority
             )
         ],
-        *[f"parity: {item}" for item in validate_parity_ledger(parity)],
+        *[f"parity: {item}" for item in validate_parity_ledger(parity, root)],
         *[
             f"freshness: {item}"
             for item in validate_current_target_commits(world, parity, readiness, root)

@@ -42,22 +42,20 @@ def test_operations_docs_preserve_truthful_conduct_and_backup_status() -> None:
     governance = (ROOT / "docs/GOVERNANCE.md").read_text(encoding="utf-8")
 
     assert "OWNER_ACTION_REQUIRED" in runbook
-    assert "OWNER_ACTION_REQUIRED" in support
+    assert "wfprieto@gmail.com" in support
     assert "OWNER_ACTION_REQUIRED" in governance
-    assert "has not yet been designated" in support
-    assert "must not be represented as a completed conduct-reporting channel" in support
+    assert "acknowledgement target is 72 hours" in support
+    assert "monitoring role is the repository maintainer" in support
 
 
 def test_conduct_owner_checklist_preserves_owner_boundary_and_sensitive_data_rules() -> None:
     runbook = " ".join(RUNBOOK.read_text(encoding="utf-8").split())
     required = (
-        "Owner provisioning checklist",
-        "Select and provision one repository-controlled route",
-        "Explicitly authorize publication",
-        "Send a benign access test",
-        "provider-controlled, immutable verification",
-        "repository issue comment, repository commit, self-authored assertion",
-        "acknowledgement target, monitoring role, confidentiality limits, and conflict handling",
+        "Owner verification and recovery checklist",
+        "completed the provisioning and provider-profile access check",
+        "Revalidate authenticated provider-profile access",
+        "Keep the 72-hour acknowledgement target",
+        "acknowledgement target, monitoring role, confidentiality limits, and conflict-handling instructions",
         "restore `BLOCKED_OWNER_ACTION`",
     )
     assert all(text in runbook for text in required)

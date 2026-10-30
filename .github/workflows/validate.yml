@@ -653,7 +653,9 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Preserve trusted source-integrity validator
         shell: pwsh
-        run: Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+        run: |-
+          Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+          Copy-Item -LiteralPath scripts/validate_historical_rollback_claims.py -Destination "$env:RUNNER_TEMP/validate_historical_rollback_claims.py"
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -683,9 +685,22 @@ jobs:
           $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase0-rollback-receipt.json
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
-      - name: Validate restored baseline tree
+      - name: Validate restored baseline tree at historical review boundary
         shell: pwsh
-        run: ./scripts/validate-repository.ps1
+        run: |-
+          $baselineValidator = "$env:RUNNER_TEMP/baseline_validate_seo_claims.py"
+          Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination $baselineValidator
+          try {
+            Copy-Item -LiteralPath "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" -Destination scripts/validate_seo_claims.py
+            $env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator
+            $env:WCSEO_ROLLBACK_EXPECTED_SHA = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
+            ./scripts/validate-repository.ps1
+            if ($LASTEXITCODE -ne 0) { throw "historical baseline validation failed" }
+          } finally {
+            Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py
+            Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue
+            Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue
+          }
       - name: Prove exact restored baseline
         shell: /usr/bin/pwsh -command ". '{0}'"
         run: |-
@@ -755,7 +770,9 @@ jobs:
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Preserve trusted source-integrity validator
         shell: pwsh
-        run: Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+        run: |-
+          Copy-Item -LiteralPath scripts/validate_source_integrity.py -Destination "$env:RUNNER_TEMP/validate_source_integrity.py"
+          Copy-Item -LiteralPath scripts/validate_historical_rollback_claims.py -Destination "$env:RUNNER_TEMP/validate_historical_rollback_claims.py"
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -781,9 +798,22 @@ jobs:
           $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha $expectedCommit --proof-mode restored-baseline --allow-untracked phase-rollback-receipt.json
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
-      - name: Validate restored baseline tree
+      - name: Validate restored baseline tree at historical review boundary
         shell: pwsh
-        run: ./scripts/validate-repository.ps1
+        run: |-
+          $baselineValidator = "$env:RUNNER_TEMP/baseline_validate_seo_claims.py"
+          Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination $baselineValidator
+          try {
+            Copy-Item -LiteralPath "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" -Destination scripts/validate_seo_claims.py
+            $env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator
+            $env:WCSEO_ROLLBACK_EXPECTED_SHA = (& '${{ steps.trusted_python.outputs.path }}' -I -E -S -c "import json; print(json.load(open('phase-rollback-receipt.json', encoding='utf-8'))['baseline_commit'])")
+            ./scripts/validate-repository.ps1
+            if ($LASTEXITCODE -ne 0) { throw "historical baseline validation failed" }
+          } finally {
+            Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py
+            Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue
+            Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue
+          }
       - name: Prove exact restored baseline
         shell: /usr/bin/pwsh -command ". '{0}'"
         run: |-

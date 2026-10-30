@@ -7,6 +7,7 @@ never return secret values.
 
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -114,13 +115,22 @@ REGISTRY: dict[str, Extension] = {
             "Remove the Bing Webmaster key and connector configuration.",
         ),
         Extension(
+            "entity-analysis", "Entity analysis", "metered",
+            "Optional provider-backed entity identity, type, and salience evidence",
+            ("geo-aio-citation-audit", "content-audit"),
+            ("entity_analysis",), _READ_ONLY_FORBIDDEN,
+            ("ENTITY_ANALYSIS_API_KEY",), "entity-analysis", False,
+            "", "", "provider_specific", "provider_specific",
+            "2026-10-29", "CONFIGURABLE",
+        ),
+        Extension(
             "image-gen", "Image generation", "metered",
             "On-brand media generation with provenance and labeling gates",
             ("image-seo-audit",),
             ("generate_image",), _READ_ONLY_FORBIDDEN + ("publish_asset",),
             ("IMAGE_GEN_API_KEY",), "image-gen", False,
             "", "", "provider_specific", "provider_specific",
-            "2026-07-12", "CONFIGURABLE",
+            "2026-10-29", "CONFIGURABLE",
         ),
     ]
 }
@@ -233,6 +243,17 @@ def render_config(provider_id: str, client: str = "generic") -> dict[str, Any]:
     }
 
 
+def _finite_nonnegative(value: object, field: str) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+        or float(value) < 0
+    ):
+        raise ValueError(f"{field} must be a finite non-negative number")
+    return float(value)
+
+
 def estimate_cost(
     provider_id: str,
     *,
@@ -258,18 +279,24 @@ def estimate_cost(
             "estimated_cost": None, "currency": "USD", "approved": False,
             "reason": "A current operator-verified unit cost is required; pricing is not hard-coded.",
         }
-    cost = float(unit_cost) * units
-    if unit_cost < 0 or not (cost >= 0 and cost < float("inf")):
+    unit_cost_value = _finite_nonnegative(unit_cost, "unit_cost")
+    cost = unit_cost_value * units
+    if not math.isfinite(cost):
         raise ValueError("unit_cost must be a finite non-negative number")
-    ceiling_ok = approved_ceiling is not None and approved_ceiling >= cost
+    ceiling_value = (
+        _finite_nonnegative(approved_ceiling, "approved_ceiling")
+        if approved_ceiling is not None
+        else None
+    )
+    ceiling_ok = ceiling_value is not None and ceiling_value >= cost
     return {
         "provider": provider_id,
         "state": "APPROVED" if approved and ceiling_ok else "BLOCKED",
         "units": units,
-        "unit_cost": float(unit_cost),
+        "unit_cost": unit_cost_value,
         "estimated_cost": round(cost, 6),
         "currency": "USD",
-        "approved_ceiling": approved_ceiling,
+        "approved_ceiling": ceiling_value,
         "approved": bool(approved and ceiling_ok),
         "reason": None if approved and ceiling_ok else (
             "Explicit approval and a ceiling at or above the estimate are required."

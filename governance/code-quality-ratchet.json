@@ -292,14 +292,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "adapters.mcp_extensions::estimate_cost": {
-      "max_span": 42,
-      "max_complexity": 16,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "adapters.mcp_extensions::validate_registry": {
       "max_span": 40,
       "max_complexity": 23,

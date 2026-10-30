@@ -31,6 +31,7 @@ from integrations.content_intelligence.analysis import (
     safe_registry_url,
     validate_text,
 )
+from integrations.extensions.providers import normalize_entity_analysis
 from scripts.content_brief_evidence import brief_decision
 
 _ALLOWED_RELATIONS = {"supports", "contradicts", "partial", "context_only", "not_checked"}
@@ -143,7 +144,6 @@ class ContentIntelligenceService:
             },
             warnings=warnings,
         )
-
     def verify(
         self,
         *,
@@ -287,7 +287,6 @@ class ContentIntelligenceService:
             },
             warnings=warnings,
         )
-
     def entities(
         self,
         *,
@@ -347,6 +346,7 @@ class ContentIntelligenceService:
                 "catalog_matches": matches,
                 "catalog_match_count": len(matches),
                 "heuristic_candidates": candidates[:500],
+                "provider_analysis": normalize_entity_analysis(_.get("provider_analysis")),
                 "knowledge_graph_verification": "NOT_RUN",
                 "entity_identity_verification": "NOT_RUN",
                 "limitations": [

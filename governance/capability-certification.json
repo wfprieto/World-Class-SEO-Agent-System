@@ -54,6 +54,22 @@
       "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": true, "write_approval_required": false}
     },
     {
+      "id": "entity-analysis-optional", "version": 1,
+      "capabilities": ["content.entities"],
+      "provider_id": "entity-analysis", "provider": "operator-selected entity analysis provider", "transport": "bounded_https", "side_effect": "read_only", "owner": "SEO Knowledge Graph Sync Agent",
+      "relevant_sources": ["adapters/mcp_extensions.py", "governance/capability-certification.json", "integrations/content_intelligence/service.py", "integrations/extensions/providers.py", "seoctl/content_cli.py"],
+      "credential_env_sets": [["ENTITY_ANALYSIS_API_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": true, "write_approval_required": false}
+    },
+    {
+      "id": "image-generation-optional", "version": 1,
+      "capabilities": ["media.image-plan"],
+      "provider_id": "image-gen", "provider": "operator-selected image generation provider", "transport": "bounded_https", "side_effect": "read_only", "owner": "Visual & Video Search Agent",
+      "relevant_sources": ["adapters/mcp_extensions.py", "governance/capability-certification.json", "integrations/extensions/providers.py", "seoctl/authority_cli.py"],
+      "credential_env_sets": [["IMAGE_GEN_API_KEY"]], "required_binaries": [],
+      "live_authorization": {"execute_flag": "--execute-live", "confirmation": "LIVE_CERTIFY", "authorized_target_required": true, "cost_approval_required": true, "write_approval_required": false}
+    },
+    {
       "id": "indexnow-write", "version": 1,
       "capabilities": ["indexnow.submit"],
       "provider_id": "indexnow", "provider": "IndexNow", "transport": "bounded_https", "side_effect": "write", "owner": "Senior SEO Engineer Agent",

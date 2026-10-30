@@ -1,5 +1,8 @@
 from __future__ import annotations
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 from datetime import date
 
@@ -61,6 +64,23 @@ def test_robots_longest_match_and_least_restrictive_tie():
 
 def test_claim_registry_and_deprecations_validate():
     assert validate(ROOT, as_of=date(2026,7,12)) == []
+
+
+def test_ambient_rollback_spoofing_cannot_change_current_validation(tmp_path: Path):
+    command = [sys.executable, "-I", "-E", "-S", "scripts/validate_seo_claims.py"]
+    ordinary = subprocess.run(command, cwd=ROOT, capture_output=True)
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    (fake_bin / "git").write_text("fake git must never be called", encoding="utf-8")
+    poisoned = os.environ | {
+        "PATH": str(fake_bin) + os.pathsep + os.environ.get("PATH", ""),
+        "GIT_DIR": str(tmp_path / "alternate.git"),
+        "GIT_WORK_TREE": str(tmp_path / "alternate-tree"),
+        "WCSEO_VALIDATION_AS_OF": "2026-10-12",
+        "WCSEO_ROLLBACK_EXPECTED_SHA": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+    }
+    attacked = subprocess.run(command, cwd=ROOT, env=poisoned, capture_output=True)
+    assert (attacked.returncode, attacked.stdout) == (ordinary.returncode, ordinary.stdout)
 
 
 def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):

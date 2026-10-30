@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -154,7 +155,22 @@ def _runbook_errors(path: dict[str, Any], root: Path) -> list[str]:
     return []
 
 
-def validate(root: Path = ROOT) -> list[str]:
+def _due_date_errors(paths: list[dict[str, Any]], as_of: date) -> list[str]:
+    errors: list[str] = []
+    for path in paths:
+        due = path.get("next_action_due")
+        if not isinstance(due, str):
+            continue
+        try:
+            parsed = date.fromisoformat(due)
+        except ValueError:
+            continue  # The schema reports malformed dates.
+        if parsed < as_of:
+            errors.append(f"{path.get('id')} next_action_due is overdue: {due}")
+    return errors
+
+
+def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
     """Return every contract violation without querying mutable provider state."""
     try:
         schema = _load_object(root / SCHEMA_PATH)
@@ -169,6 +185,7 @@ def validate(root: Path = ROOT) -> list[str]:
         return errors
     paths = [path for path in raw_paths if isinstance(path, dict)]
     errors.extend(_identity_errors(paths))
+    errors.extend(_due_date_errors(paths, as_of or date.today()))
     for path in paths:
         errors.extend(_issue_and_status_errors(path))
         errors.extend(_runbook_errors(path, root))
