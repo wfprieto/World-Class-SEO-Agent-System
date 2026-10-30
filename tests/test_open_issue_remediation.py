@@ -54,14 +54,15 @@ def test_issue_identity_and_classification_cannot_drift(tmp_path: Path) -> None:
     assert any("issue 26 classification" in error for error in errors)
 
 
-def test_owner_only_conduct_blocker_cannot_be_erased(tmp_path: Path) -> None:
+def test_verified_conduct_control_cannot_regress_to_an_owner_blocker(tmp_path: Path) -> None:
     def mutate(payload):
         row = next(row for row in payload["issues"] if row["number"] == 30)
-        row["state"] = "ACTIVE"
-        row["blocked_by"] = None
+        row["implementation_state"] = "BLOCKED_OWNER_ACTION"
+        row["state"] = "BLOCKED_OWNER_ACTION"
+        row["blocked_by"] = "Synthetic regression"
 
     errors = _mutate(tmp_path, mutate)
-    assert any("issue 30 cannot claim remediation" in error for error in errors)
+    assert any("blocker must agree" in error for error in errors)
 
 
 def test_evidence_path_must_exist_inside_repository(tmp_path: Path) -> None:
@@ -72,13 +73,32 @@ def test_evidence_path_must_exist_inside_repository(tmp_path: Path) -> None:
     assert any("missing or unsafe" in error for error in errors)
 
 
-def test_recurring_control_cannot_claim_one_time_closure(tmp_path: Path) -> None:
+def test_recurring_ticket_can_close_without_ending_continuous_control(tmp_path: Path) -> None:
     def mutate(payload):
         row = next(row for row in payload["issues"] if row["number"] == 29)
-        row["close_policy"] = "CLOSE_ON_ACCEPTANCE"
+        row["control_lifecycle"] = "BOUNDED"
 
     errors = _mutate(tmp_path, mutate)
-    assert any("KEEP_OPEN_RECURRING" in error for error in errors)
+    assert any("CONTINUOUS" in error for error in errors)
+
+
+def test_acceptance_ready_ticket_requires_close_on_acceptance(tmp_path: Path) -> None:
+    def mutate(payload):
+        row = next(row for row in payload["issues"] if row["number"] == 29)
+        row["close_policy"] = "KEEP_OPEN_RECURRING"
+
+    errors = _mutate(tmp_path, mutate)
+    assert any("CLOSE_ON_ACCEPTANCE" in error for error in errors)
+
+
+def test_acceptance_ready_ticket_cannot_claim_a_blocked_control(tmp_path: Path) -> None:
+    def mutate(payload):
+        row = next(row for row in payload["issues"] if row["number"] == 29)
+        row["state"] = "BLOCKED_OWNER_ACTION"
+        row["blocked_by"] = "Synthetic blocker"
+
+    errors = _mutate(tmp_path, mutate)
+    assert any("acceptance-ready" in error for error in errors)
 
 
 def test_unknown_fields_fail_closed(tmp_path: Path) -> None:

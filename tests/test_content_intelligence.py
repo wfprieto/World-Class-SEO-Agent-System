@@ -137,6 +137,54 @@ def test_entities_separate_catalog_matches_from_heuristic_candidates(service):
     assert result.data["knowledge_graph_verification"] == "NOT_RUN"
 
 
+def test_entities_normalize_optional_provider_evidence_with_cost_and_provenance(
+    service, monkeypatch
+):
+    monkeypatch.setenv("ENTITY_ANALYSIS_API_KEY", "provider-secret")
+    result = service.entities(
+        text="OpenAI announced a project in Buffalo.",
+        catalog=[{"id": "openai", "name": "OpenAI", "aliases": []}],
+        provider_analysis={
+            "provider": "entity-analysis",
+            "captured_at": "2026-10-29T12:00:00Z",
+            "source": "provider-response:job-123",
+            "cost_approval": {
+                "state": "APPROVED",
+                "estimated_cost": 0.25,
+                "approved_ceiling": 0.25,
+            },
+            "entities": [
+                {
+                    "id": "openai",
+                    "name": "OpenAI",
+                    "salience": 0.88,
+                    "type": "ORGANIZATION",
+                }
+            ],
+        },
+    )
+    assert result.status == "ok"
+    assert result.data["provider_analysis"]["state"] == "SUPPLIED_PROVIDER_EVIDENCE"
+    assert result.data["provider_analysis"]["entities"][0]["salience"] == 0.88
+    assert result.data["provider_analysis"]["provenance"]["source"] == "provider-response:job-123"
+    assert "provider-secret" not in str(result.data)
+
+
+def test_entities_reject_provider_evidence_without_cost_approval(service, monkeypatch):
+    monkeypatch.setenv("ENTITY_ANALYSIS_API_KEY", "provider-secret")
+    with pytest.raises(ValueError, match="approved cost gate"):
+        service.entities(
+            text="OpenAI announced a project.",
+            provider_analysis={
+                "provider": "entity-analysis",
+                "captured_at": "2026-10-29T12:00:00Z",
+                "source": "provider-response:job-123",
+                "cost_approval": {"state": "BLOCKED"},
+                "entities": [],
+            },
+        )
+
+
 def test_brief_requires_relevance_serp_information_gain_and_sources(service):
     relevance = {"verdict": "RELEVANT", "reasons": ["Audience fit"]}
     serp = {"status": "SUFFICIENT", "primary_intent": "commercial investigation"}

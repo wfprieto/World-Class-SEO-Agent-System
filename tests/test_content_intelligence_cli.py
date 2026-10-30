@@ -46,6 +46,19 @@ def test_all_content_intelligence_commands_route(monkeypatch, tmp_path: Path):
     claims = _write(tmp_path / "claims.json", [{"id": "c1", "text": "Claim"}])
     sources = _write(tmp_path / "sources.json", [{"id": "s1", "title": "Source"}])
     catalog = _write(tmp_path / "catalog.json", [{"id": "x", "name": "Example"}])
+    provider_analysis = json.dumps(
+        {
+            "provider": "entity-analysis",
+            "captured_at": "2026-10-29T12:00:00Z",
+            "source": "provider-response:job-123",
+            "cost_approval": {
+                "state": "APPROVED",
+                "estimated_cost": 0.25,
+                "approved_ceiling": 0.25,
+            },
+            "entities": [],
+        }
+    )
     relevance = _write(tmp_path / "relevance.json", {"verdict": "RELEVANT"})
     serp = _write(tmp_path / "serp.json", {"status": "SUFFICIENT"})
     gains = _write(tmp_path / "gains.json", ["New evidence"])
@@ -56,7 +69,10 @@ def test_all_content_intelligence_commands_route(monkeypatch, tmp_path: Path):
     commands = [
         (["quality", "--input", text, "--title", "Title"], "content.quality"),
         (["verify", "--claims", claims, "--sources", sources], "content.verify"),
-        (["entities", "--input", text, "--catalog", catalog], "content.entities"),
+        ([
+            "entities", "--input", text, "--catalog", catalog,
+            "--provider-analysis", provider_analysis,
+        ], "content.entities"),
         ([
             "brief", "--relevance", relevance, "--serp", serp,
             "--information-gain", gains, "--sources", sources,

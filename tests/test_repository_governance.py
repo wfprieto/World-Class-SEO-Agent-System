@@ -63,7 +63,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
                 "number": control["issue"]["number"],
                 "url": control["issue"]["url"],
                 "title": control["title"],
-                "state": control["issue"]["expected_state"],
+                "state": "OPEN",
                 "assignees": [owner],
                 "locked": False,
             }
@@ -80,7 +80,7 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
         },
         "declared_blockers": {
             "independent_reviewer": contract["independent_reviewer"]["status"],
-            "private_conduct_reporting": "OWNER_ACTION_REQUIRED",
+            "private_conduct_reporting": "VERIFIED",
         },
     }
     return snapshot, contract, operations
@@ -262,7 +262,7 @@ def test_security_service_missing_or_disabled_is_rejected(tmp_path: Path, field:
     [
         ("missing_collaborators", "collaborator inventory"),
         ("invented_reviewer", "solo-maintainer status is stale"),
-        ("closed_issue", "issue 26 state"),
+        ("wrong_issue_state", "issue 26 state"),
         ("unassigned_issue", "issue 26 is not assigned"),
         ("wrong_pull_head", "pull request head"),
         ("false_conduct_ready", "declared blockers"),
@@ -292,17 +292,26 @@ def test_phase8_provider_evidence_fails_closed(
         candidate["collaborators"].sort(key=lambda row: row["login"])
         candidate["eligible_independent_reviewers"] = ["invented-reviewer"]
         candidate["independent_reviewer_status"] = "VERIFIED"
-    elif mutation == "closed_issue":
-        candidate["phase8_issues"][0]["state"] = "CLOSED"
+    elif mutation == "wrong_issue_state":
+        candidate["phase8_issues"][0]["state"] = "DRAFT"
     elif mutation == "unassigned_issue":
         candidate["phase8_issues"][0]["assignees"] = []
     elif mutation == "wrong_pull_head":
         candidate["phase8_pull_request"]["head"] = "unreviewed"
     else:
-        candidate["declared_blockers"]["private_conduct_reporting"] = "VERIFIED"
+        candidate["declared_blockers"]["private_conduct_reporting"] = "OWNER_ACTION_REQUIRED"
 
     errors = provider_state_errors(candidate, contract, operations=operations)
     assert any(expected_error in error for error in errors)
+
+
+def test_phase8_open_issue_transition_ends_when_remediation_pull_is_merged() -> None:
+    snapshot, contract, operations = _phase8_snapshot()
+    snapshot["phase8_pull_request"]["state"] = "CLOSED"
+    snapshot["phase8_pull_request"]["merged"] = True
+
+    errors = provider_state_errors(snapshot, contract, operations=operations)
+    assert any("issue 26 state" in error for error in errors)
 
 
 def test_repository_validator_enumerates_only_tracked_documents() -> None:

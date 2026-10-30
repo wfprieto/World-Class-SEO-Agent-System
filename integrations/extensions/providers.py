@@ -12,6 +12,20 @@ from adapters.mcp_extensions import (
     render_config,
 )
 from contracts.adapter import AdapterResult
+from integrations.extensions.entity_analysis import (
+    normalize_entity_analysis as _normalize_entity_analysis,
+)
+from integrations.extensions.image_generation import ImageGenerationService
+
+
+def normalize_entity_analysis(payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Apply provider availability to a supplied entity-analysis receipt."""
+    return _normalize_entity_analysis(payload, provider_state=preflight("entity-analysis")["state"])
+
+
+def image_generation_service() -> ImageGenerationService:
+    """Bind the pure request planner to the canonical optional-provider controls."""
+    return ImageGenerationService(preflight, estimate_cost)
 
 
 class ProviderService:

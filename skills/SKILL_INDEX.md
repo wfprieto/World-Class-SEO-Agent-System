@@ -34,7 +34,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 ## Content and IA Skills
 
 - `content-brief` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-brief`
-- `content-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-audit`
+- `content-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-audit`
 - `content-decay` — `COMMAND_BACKED` / `REGISTRY_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#content-decay`
 - `anti-ai-public-writing` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
 - `keyword-cluster` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
@@ -59,7 +59,7 @@ Skills are reusable capabilities. Priority packages add machine-readable executi
 - `hreflang-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED` — package: `skills/packages/PRIORITY_SKILL_PACKAGES.md#hreflang-audit`
 - `international-url-architecture` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
 - `localized-content-review` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
-- `image-seo-audit` — `COMMAND_BACKED` / `REGISTRY_VERIFIED`
+- `image-seo-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
 - `video-seo-audit` — `COMMAND_BACKED` / `LIVE_CAPABLE_NOT_VERIFIED`
 - `accessibility-audit` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`
 - `geo-grid-rank-scan` — `RUNTIME_CONTEXT` / `DOCUMENTED_ONLY`

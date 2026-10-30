@@ -219,6 +219,33 @@ def test_closed_capability_requires_evidence():
     assert any("claims closure without evidence" in error for error in errors)
 
 
+def test_every_repository_controlled_gap_is_resolved_with_code_evidence() -> None:
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    open_code_gaps = [
+        row["id"]
+        for row in ledger["capabilities"]
+        if row["status"] == "GAP_OPEN"
+        and row.get("gap_disposition") == "CODE_REMEDIATION"
+    ]
+    assert open_code_gaps == []
+    assert validate_parity_ledger(ledger, ROOT) == []
+
+
+def test_resolved_code_gap_requires_existing_source_and_test_receipts() -> None:
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(
+        item
+        for item in broken["capabilities"]
+        if item.get("resolution", {}).get("kind") == "CODE_REMEDIATION"
+    )
+    row["resolution"]["source_refs"] = ["does/not/exist.py"]
+    row["resolution"]["test_refs"] = []
+    errors = validate_parity_ledger(broken, ROOT)
+    assert any("source receipt is missing" in error for error in errors)
+    assert any("automated test receipts" in error for error in errors)
+
+
 def test_capability_ids_are_unique():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
     ids = [row["id"] for row in ledger["capabilities"]]

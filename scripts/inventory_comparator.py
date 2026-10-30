@@ -17,6 +17,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from scripts.comparative_receipts import code_remediation_errors
+
 effective_inventory = importlib.import_module(
     "scripts.effective_inventory" if __package__ else "effective_inventory"
 )
@@ -275,7 +277,7 @@ def _parity_row_errors(
     return errors
 
 
-def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
+def validate_parity_ledger(ledger: dict[str, Any], root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     allowed = set(ledger.get("allowed_statuses", []))
     allowed_gap_dispositions = set(ledger.get("allowed_gap_dispositions", []))
@@ -297,6 +299,7 @@ def validate_parity_ledger(ledger: dict[str, Any]) -> list[str]:
         seen.add(row_id)
         status = str(row.get("status", ""))
         errors.extend(_parity_row_errors(row_id, row, status, allowed))
+    errors.extend(code_remediation_errors(rows, root))
     return errors
 
 

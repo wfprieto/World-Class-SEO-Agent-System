@@ -95,12 +95,12 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 <a id="ops-security-intake"></a>
 ## security-intake
 
-- **Owner:** Repository maintainer. A monitored private conduct destination remains
-  `OWNER_ACTION_REQUIRED`; issue #30 tracks the blocker.
-- **Verify:** Run `python scripts/validate_repository_operations.py`. Provider verification must
-  attest the destination separately before this control can pass. Then run
-  `python scripts/validate_private_conduct_intake.py`; a closure URL alone is not proof of a
-  destination, access, or monitoring.
+- **Owner:** Repository maintainer. The monitored private conduct destination is
+  [wfprieto@gmail.com](mailto:wfprieto@gmail.com).
+- **Verify:** Run `python scripts/validate_repository_operations.py` and
+  `python scripts/validate_private_conduct_intake.py`. The READY contract requires an authenticated
+  provider-profile digest and access method; a closure URL alone is not proof of destination,
+  access, or monitoring.
 - **Fail:** Treat a missing, public-only, unmonitored, inaccessible, or security-only destination
   as failure. The private vulnerability route does not complete conduct intake.
 - **Recover:** Remove an invalid destination, mark the control blocked, preserve non-sensitive
@@ -110,29 +110,17 @@ Until GitHub confirms a distinct eligible collaborator, independent merge availa
 - **Stop:** Never request or publish identifying conduct details publicly. Do not publish a personal
   email without explicit owner authorization.
 
-### Owner provisioning checklist
+### Owner verification and recovery checklist
 
-The following actions require the repository owner and cannot be inferred or performed by a
-repository validator:
+The owner completed the provisioning and provider-profile access check on 2026-10-29. The
+repository validator enforces the non-sensitive result and these ongoing obligations:
 
-1. Select and provision one repository-controlled route whose submissions are private. Do not use
-   a public issue, Discussion, or the security-advisory route.
-2. Decide the accountable monitoring role, acknowledgement target, confidentiality limits, and
-   conflict-handling route. Explicitly authorize publication of the public contact instructions.
-3. Send a benign access test, confirm receipt by the monitoring role, and record only the method,
-   UTC time, and result. Never commit the test message, mailbox content, credentials, reporter
-   identity, report content, or a private access URL.
-4. Obtain provider-controlled, immutable verification of the actual destination and benign access
-   test. A repository issue comment, repository commit, self-authored assertion, or example/test
-   destination is not verification. The evidence must identify the provider, destination by a
-   non-sensitive stable digest, access-test result and UTC time, monitoring role, and evidence
-   digest without exposing mailbox content or a private URL.
-5. Add and review a new schema version that explicitly validates that provider evidence before it
-   permits an operational state. In the same reviewed change, update the issue #30 and
-   repository-operations states, `SUPPORT.md`, and `CODE_OF_CONDUCT.md`; publish the acknowledgement
-   target, monitoring role, confidentiality limits, and conflict handling. Run both operations
-   validators and exact-head repository certification before closing issue #30.
-6. If access, monitoring, or repository control later fails, remove the invalid public
+1. Revalidate authenticated provider-profile access by 2027-01-31 and after account changes.
+2. Keep the 72-hour acknowledgement target, monitoring role, confidentiality limits, and
+   conflict-handling instructions consistent across governance and public documentation.
+3. Never commit a test message, mailbox content, credentials, reporter identity, report content,
+   or a private access URL.
+4. If access, monitoring, or owner authorization later fails, remove the invalid public
    instructions, restore `BLOCKED_OWNER_ACTION`, preserve no report contents in the repository,
    and reopen issue #30.
 
@@ -179,6 +167,7 @@ explicit no-material-learning result, exact-head CI and rollback pass, and provi
 controls have fresh authenticated evidence. Publication, deployment, adoption, and real-world SEO
 outcomes remain separate decisions.
 
-Issues #29, #31, and #32 are recurring control records and are not closed merely because one run
-passes. Issues #26 and #28 close only at their machine-defined acceptance boundary. Issue #30
-cannot close until its owner-only private-destination prerequisite is independently attested.
+Issues #29, #31, and #32 are implementation tickets for recurring controls. Their tickets close
+after acceptance, while their machine contracts remain `CONTINUOUS` and scheduled. Issues #26 and
+#28 close only at their machine-defined acceptance boundaries. Issue #30 closes only while its
+authenticated private-destination evidence remains current.

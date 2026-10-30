@@ -23,18 +23,27 @@ def _indexed_rows(rows: list[object]) -> tuple[dict[int, dict[str, Any]], list[s
 
 
 def _row_errors(
-    number: int, observed: dict[str, Any], control: dict[str, Any], owner_login: str
+    number: int,
+    observed: dict[str, Any],
+    control: dict[str, Any],
+    owner_login: str,
+    *,
+    allow_open_transition: bool,
 ) -> list[str]:
     errors: list[str] = []
     expected_issue = control.get("issue", {})
     comparisons = (
         ("control_id", control.get("id"), "control identity"),
         ("url", expected_issue.get("url"), "URL"),
-        ("state", expected_issue.get("expected_state"), "state"),
     )
     for field, expected, label in comparisons:
         if observed.get(field) != expected:
             errors.append(f"issue {number} {label} does not match the registry")
+    expected_state = expected_issue.get("expected_state")
+    observed_state = observed.get("state")
+    transition = allow_open_transition and expected_state == "CLOSED" and observed_state == "OPEN"
+    if observed_state != expected_state and not transition:
+        errors.append(f"issue {number} state does not match the registry")
     assignees = observed.get("assignees")
     if not isinstance(assignees, list) or owner_login not in assignees:
         errors.append(f"issue {number} is not assigned to the repository owner")
@@ -61,6 +70,18 @@ def issue_errors(
     if set(actual) != set(expected):
         errors.append("Phase 8 issue inventory does not match the operations registry")
     owner_login = str(contract.get("repository", "")).partition("/")[0]
+    pull = snapshot.get("phase8_pull_request", {})
+    allow_open_transition = (
+        isinstance(pull, dict) and pull.get("state") == "OPEN" and pull.get("merged") is False
+    )
     for number in sorted(set(actual) & set(expected)):
-        errors.extend(_row_errors(number, actual[number], expected[number], owner_login))
+        errors.extend(
+            _row_errors(
+                number,
+                actual[number],
+                expected[number],
+                owner_login,
+                allow_open_transition=allow_open_transition,
+            )
+        )
     return errors

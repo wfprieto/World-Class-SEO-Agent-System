@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,8 @@ EXPECTED_KEYS = {
     "target_phase",
     "expected_exception_count",
     "expected_edges_sha256",
+    "reviewed_on",
+    "review_due",
     "rationale",
     "retirement_plans",
 }
@@ -56,7 +59,26 @@ def _retirement_plan_errors(plans: object, edges: list[str]) -> list[str]:
     return errors
 
 
-def validate(root: Path = ROOT, disposition: dict[str, Any] | None = None) -> list[str]:
+def _review_date_errors(active: dict[str, Any], as_of: date | None) -> list[str]:
+    try:
+        reviewed_on = date.fromisoformat(str(active["reviewed_on"]))
+        review_due = date.fromisoformat(str(active["review_due"]))
+    except ValueError:
+        return ["architecture exception review dates must be ISO dates"]
+    errors = []
+    if review_due <= reviewed_on:
+        errors.append("architecture exception review_due must follow reviewed_on")
+    if review_due < (as_of or date.today()):
+        errors.append("architecture exception reauthorization review is overdue")
+    return errors
+
+
+def validate(
+    root: Path = ROOT,
+    disposition: dict[str, Any] | None = None,
+    *,
+    as_of: date | None = None,
+) -> list[str]:
     active = disposition or _load(root / DISPOSITION_PATH.relative_to(ROOT))
     errors = []
     if set(active) != EXPECTED_KEYS:
@@ -77,10 +99,11 @@ def validate(root: Path = ROOT, disposition: dict[str, Any] | None = None) -> li
         errors.append("architecture exception disposition schema version must be 1.0.0")
     if (
         active["disposition"] != "REAUTHORIZE"
-        or active["overdue_phase"] != "P8"
-        or target_phase != "P9"
+        or active["overdue_phase"] != "P9"
+        or target_phase != "P10"
     ):
-        errors.append("remaining P8 architecture exceptions require explicit dated P9 reauthorization")
+        errors.append("remaining P9 architecture exceptions require explicit dated P10 reauthorization")
+    errors.extend(_review_date_errors(active, as_of))
     if active["expected_exception_count"] != len(edges):
         errors.append("overdue architecture exception count does not match disposition")
     if active["expected_edges_sha256"] != digest:

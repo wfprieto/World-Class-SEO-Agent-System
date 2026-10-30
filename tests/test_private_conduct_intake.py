@@ -10,7 +10,7 @@ import pytest
 from scripts.validate_private_conduct_intake import validate
 
 ROOT = Path(__file__).resolve().parents[1]
-AS_OF = date(2026, 8, 3)
+AS_OF = date(2026, 10, 29)
 
 
 def _copy_surface(tmp_path: Path) -> Path:
@@ -37,48 +37,24 @@ def _write(root: Path, relative: str, payload: dict) -> None:
     (root / relative).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def test_current_blocked_private_intake_is_truthful() -> None:
+def test_current_provider_verified_private_intake_is_truthful() -> None:
     assert validate(as_of=AS_OF) == []
 
 
-def test_repository_only_ready_transition_is_rejected(tmp_path: Path) -> None:
+def test_self_authored_ready_evidence_is_rejected(tmp_path: Path) -> None:
     root = _copy_surface(tmp_path)
     intake = _load(root, "governance/private-conduct-intake.json")
-    intake.update(
-        {
-            "state": "READY",
-            "destination": {
-                "type": "EMAIL",
-                "public_instructions": "mailto:conduct@example.test",
-            },
-            "owner_authorized_publication": True,
-            "repository_controlled": True,
-            "distinct_from_security_intake": True,
-            "monitoring": {
-                "status": "VERIFIED",
-                "monitor_role": "Repository maintainer",
-                "attested_at": "2026-08-01T12:00:00Z",
-                "attestation_ref": (
-                    "https://github.com/wfprieto/World-Class-SEO-Agent-System/"
-                    "issues/30#issuecomment-123456789"
-                ),
-            },
-            "access_test": {
-                "status": "PASS",
-                "tested_at": "2026-08-01T12:00:00Z",
-                "method": "Self-authored assertion",
-            },
-            "acknowledgement_target_hours": 72,
-        }
+    intake["monitoring"]["attestation_ref"] = (
+        "https://github.com/wfprieto/World-Class-SEO-Agent-System/"
+        "issues/30#issuecomment-123456789"
     )
+    intake["access_test"]["method"] = "Self-authored assertion"
     _write(root, "governance/private-conduct-intake.json", intake)
 
     errors = validate(root, as_of=AS_OF)
 
-    assert any("cannot promote conduct intake to READY" in error for error in errors)
-    assert any("example or test destinations" in error for error in errors)
-    assert any("cannot establish verified conduct monitoring" in error for error in errors)
-    assert any("cannot establish a provider access test" in error for error in errors)
+    assert any("authenticated provider attestation" in error for error in errors)
+    assert any("provider access test" in error for error in errors)
 
 
 @pytest.mark.parametrize(
@@ -148,18 +124,18 @@ def test_every_promised_disclosure_is_required_in_public_docs(
     )
 
 
-def test_linked_governance_cannot_claim_ready(tmp_path: Path) -> None:
+def test_linked_governance_cannot_regress_to_blocked(tmp_path: Path) -> None:
     root = _copy_surface(tmp_path)
     operations = _load(root, "governance/repository-operations.json")
     operation = next(row for row in operations["critical_paths"] if row["id"] == "security-intake")
-    operation["status"] = "READY"
-    operation["blocker"] = None
+    operation["status"] = "BLOCKED_OWNER_ACTION"
+    operation["blocker"] = "Synthetic regression"
     operation["closure_evidence"] = {
-        "status": "VERIFIED",
-        "refs": ["https://github.com/wfprieto/World-Class-SEO-Agent-System/issues/30"],
+        "status": "PENDING_OWNER_ACTION",
+        "refs": [],
     }
     _write(root, "governance/repository-operations.json", operations)
-    assert any("must remain BLOCKED_OWNER_ACTION" in error for error in validate(root))
+    assert any("must remain READY" in error for error in validate(root))
 
 
 def test_unknown_sensitive_field_fails_closed(tmp_path: Path) -> None:

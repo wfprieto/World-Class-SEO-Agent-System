@@ -114,13 +114,22 @@ REGISTRY: dict[str, Extension] = {
             "Remove the Bing Webmaster key and connector configuration.",
         ),
         Extension(
+            "entity-analysis", "Entity analysis", "metered",
+            "Optional provider-backed entity identity, type, and salience evidence",
+            ("geo-aio-citation-audit", "content-audit"),
+            ("entity_analysis",), _READ_ONLY_FORBIDDEN,
+            ("ENTITY_ANALYSIS_API_KEY",), "entity-analysis", False,
+            "", "", "provider_specific", "provider_specific",
+            "2026-10-29", "CONFIGURABLE",
+        ),
+        Extension(
             "image-gen", "Image generation", "metered",
             "On-brand media generation with provenance and labeling gates",
             ("image-seo-audit",),
             ("generate_image",), _READ_ONLY_FORBIDDEN + ("publish_asset",),
             ("IMAGE_GEN_API_KEY",), "image-gen", False,
             "", "", "provider_specific", "provider_specific",
-            "2026-07-12", "CONFIGURABLE",
+            "2026-10-29", "CONFIGURABLE",
         ),
     ]
 }

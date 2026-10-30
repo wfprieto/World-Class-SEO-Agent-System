@@ -79,6 +79,21 @@ def _issue_errors(
         classification,
     ):
         errors.append(f"issue {number} classification does not match the canonical program")
+    if row.get("implementation_state") == "ACCEPTANCE_READY":
+        if row.get("state") != "ACTIVE" or row.get("blocked_by") is not None:
+            errors.append(
+                f"issue {number} acceptance-ready implementation requires an active unblocked control"
+            )
+        if row.get("close_policy") != "CLOSE_ON_ACCEPTANCE":
+            errors.append(
+                f"issue {number} acceptance-ready implementation requires CLOSE_ON_ACCEPTANCE"
+            )
+    if row.get("classification") == "RECURRING_CONTROL" and row.get(
+        "control_lifecycle"
+    ) != "CONTINUOUS":
+        errors.append(
+            f"issue {number} recurring implementation ticket requires a CONTINUOUS control lifecycle"
+        )
     operation = operation_index.get(control_id, {})
     issue = operation.get("issue", {})
     if issue.get("number") != number:

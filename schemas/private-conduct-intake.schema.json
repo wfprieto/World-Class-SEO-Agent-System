@@ -5,74 +5,94 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "repository",
-    "state",
-    "accountable_role",
-    "destination",
-    "owner_authorized_publication",
-    "repository_controlled",
-    "distinct_from_security_intake",
-    "monitoring",
-    "access_test",
-    "acknowledgement_target_hours",
-    "activation_requirements",
-    "review_due",
-    "rollback_rule",
-    "prohibited_repository_data"
+    "schema_version", "repository", "state", "accountable_role", "destination",
+    "owner_authorized_publication", "repository_controlled", "distinct_from_security_intake",
+    "monitoring", "access_test", "acknowledgement_target_hours", "activation_requirements",
+    "review_due", "rollback_rule", "prohibited_repository_data"
   ],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "repository": {"const": "wfprieto/World-Class-SEO-Agent-System"},
-    "state": {"const": "BLOCKED_OWNER_ACTION"},
+    "state": {"enum": ["BLOCKED_OWNER_ACTION", "READY"]},
     "accountable_role": {"type": "string", "minLength": 1},
-    "destination": {"type": "null"},
-    "owner_authorized_publication": {"const": false},
-    "repository_controlled": {"const": false},
-    "distinct_from_security_intake": {"const": false},
+    "destination": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "public_instructions"],
+          "properties": {
+            "type": {"const": "EMAIL"},
+            "public_instructions": {"type": "string", "pattern": "^mailto:[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"}
+          }
+        }
+      ]
+    },
+    "owner_authorized_publication": {"type": "boolean"},
+    "repository_controlled": {"type": "boolean"},
+    "distinct_from_security_intake": {"type": "boolean"},
     "monitoring": {
-      "const": {
-        "status": "PENDING_OWNER_ACTION",
-        "monitor_role": null,
-        "attested_at": null,
-        "attestation_ref": null
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "monitor_role", "attested_at", "attestation_ref"],
+      "properties": {
+        "status": {"enum": ["PENDING_OWNER_ACTION", "VERIFIED"]},
+        "monitor_role": {"type": ["string", "null"]},
+        "attested_at": {"type": ["string", "null"]},
+        "attestation_ref": {"type": ["string", "null"]}
       }
     },
     "access_test": {
-      "const": {"status": "NOT_RUN", "tested_at": null, "method": null}
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "tested_at", "method"],
+      "properties": {
+        "status": {"enum": ["NOT_RUN", "PASS"]},
+        "tested_at": {"type": ["string", "null"]},
+        "method": {"type": ["string", "null"]}
+      }
     },
-    "acknowledgement_target_hours": {"type": "null"},
+    "acknowledgement_target_hours": {"type": ["integer", "null"], "minimum": 1, "maximum": 168},
     "activation_requirements": {
       "type": "object",
       "additionalProperties": false,
       "required": ["status", "required_disclosures", "prohibited_evidence"],
       "properties": {
-        "status": {"const": "PROVIDER_VERIFICATION_REQUIRED"},
-        "required_disclosures": {
-          "const": [
-            "acknowledgement target",
-            "monitoring role",
-            "confidentiality limits",
-            "conflict handling"
-          ]
-        },
-        "prohibited_evidence": {
-          "const": [
-            "repository issue comments",
-            "repository commits",
-            "self-authored assertions",
-            "example or test destinations"
-          ]
-        }
+        "status": {"enum": ["PROVIDER_VERIFICATION_REQUIRED", "PROVIDER_VERIFIED"]},
+        "required_disclosures": {"const": ["acknowledgement target", "monitoring role", "confidentiality limits", "conflict handling"]},
+        "prohibited_evidence": {"const": ["repository issue comments", "repository commits", "self-authored assertions", "example or test destinations"]}
       }
     },
     "review_due": {"type": "string", "format": "date"},
     "rollback_rule": {"type": "string", "minLength": 1},
-    "prohibited_repository_data": {
-      "type": "array",
-      "minItems": 5,
-      "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+    "prohibited_repository_data": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"state": {"const": "BLOCKED_OWNER_ACTION"}}},
+      "then": {"properties": {
+        "destination": {"type": "null"},
+        "owner_authorized_publication": {"const": false},
+        "repository_controlled": {"const": false},
+        "distinct_from_security_intake": {"const": false},
+        "monitoring": {"const": {"status": "PENDING_OWNER_ACTION", "monitor_role": null, "attested_at": null, "attestation_ref": null}},
+        "access_test": {"const": {"status": "NOT_RUN", "tested_at": null, "method": null}},
+        "acknowledgement_target_hours": {"type": "null"}
+      }}
+    },
+    {
+      "if": {"properties": {"state": {"const": "READY"}}},
+      "then": {"properties": {
+        "destination": {"type": "object"},
+        "owner_authorized_publication": {"const": true},
+        "repository_controlled": {"const": false},
+        "distinct_from_security_intake": {"const": true},
+        "monitoring": {"properties": {"status": {"const": "VERIFIED"}, "monitor_role": {"type": "string", "minLength": 1}, "attested_at": {"type": "string", "minLength": 1}, "attestation_ref": {"type": "string", "minLength": 1}}},
+        "access_test": {"properties": {"status": {"const": "PASS"}, "tested_at": {"type": "string", "minLength": 1}, "method": {"type": "string", "minLength": 1}}},
+        "acknowledgement_target_hours": {"type": "integer"},
+        "activation_requirements": {"properties": {"status": {"const": "PROVIDER_VERIFIED"}}}
+      }}
     }
-  }
+  ]
 }

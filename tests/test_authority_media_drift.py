@@ -236,7 +236,7 @@ def test_cli_registry_handlers_and_fixture_commands(tmp_path: Path, monkeypatch)
     ids = {spec.id for spec in command_specs(registry)}
     expected = {
         "links.commoncrawl", "links.profile", "links.gap", "domain.history",
-        "media.youtube-search", "media.iptc-label", "media.transcript-check",
+        "media.youtube-search", "media.iptc-label", "media.transcript-check", "media.image-plan",
         "drift.baseline", "drift.compare", "drift.history", "drift.report", "drift.watch",
     }
     assert expected <= ids
@@ -248,6 +248,7 @@ def test_cli_registry_handlers_and_fixture_commands(tmp_path: Path, monkeypatch)
         "media.youtube-search" if "media_youtube_search" in HANDLERS else "",
         "media.iptc-label" if "media_iptc_label" in HANDLERS else "",
         "media.transcript-check" if "media_transcript_check" in HANDLERS else "",
+        "media.image-plan" if "media_image_plan" in HANDLERS else "",
         "drift.baseline" if "drift_baseline" in HANDLERS else "",
         "drift.compare" if "drift_compare" in HANDLERS else "",
         "drift.history" if "drift_history" in HANDLERS else "",
@@ -269,6 +270,25 @@ def test_cli_registry_handlers_and_fixture_commands(tmp_path: Path, monkeypatch)
 
     payload, code = authority_cli.run(["media", "youtube-search", "--query", "seo"])
     assert code == EXIT_UNAVAILABLE
+
+    monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
+    request = _write(
+        tmp_path / "image-request.json",
+        {
+            "prompt": "A technical SEO audit illustration.",
+            "alt_text": "Analyst reviewing a technical SEO audit.",
+            "rights_basis": "Repository owner authorized project generation.",
+            "digital_source_type": "trainedAlgorithmicMedia",
+            "optimization": {"format": "webp", "width": 1600, "height": 900},
+        },
+    )
+    payload, code = authority_cli.run([
+        "media", "image-plan", "--request", request, "--units", "1",
+        "--unit-cost", "0.25", "--ceiling", "0.25", "--approve",
+    ])
+    assert code == EXIT_OK
+    assert payload["command"] == "media.image-plan"
+    assert payload["data"]["publish_state"] == "BLOCKED_PENDING_HUMAN_REVIEW"
 
 
 def test_runtime_adapters_expose_canonical_operations(tmp_path: Path):

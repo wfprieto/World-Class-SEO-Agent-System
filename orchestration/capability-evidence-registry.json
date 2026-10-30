@@ -551,7 +551,7 @@
       ]
     },
     "content.entities": {
-      "claim_ceiling": "REGISTRY_VERIFIED",
+      "claim_ceiling": "LIVE_CAPABLE_NOT_VERIFIED",
       "delivery_state": "COMMAND_BACKED",
       "evidence": {
         "AUTOMATED": {
@@ -585,8 +585,8 @@
           "status": "PASS"
         }
       },
-      "execution_mode": "DETERMINISTIC",
-      "network_class": "none",
+      "execution_mode": "LIVE_CAPABLE",
+      "network_class": "provider_optional",
       "owner": "SEO Knowledge Graph Sync Agent",
       "owner_skill_alignment": {
         "declares_all_command_skills": false,
@@ -2658,6 +2658,61 @@
       ],
       "skills": [
         "backlink-profile"
+      ]
+    },
+    "media.image-plan": {
+      "claim_ceiling": "LIVE_CAPABLE_NOT_VERIFIED",
+      "delivery_state": "COMMAND_BACKED",
+      "evidence": {
+        "AUTOMATED": {
+          "refs": [
+            "tests/test_seoctl.py",
+            "tests/test_seoctl_entrypoint.py"
+          ],
+          "status": "PASS"
+        },
+        "CI": {
+          "refs": [],
+          "status": "NOT_RUN"
+        },
+        "DEPLOYED": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "OPERATIONAL": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "PROVIDER": {
+          "refs": [],
+          "status": "OUT_OF_SCOPE"
+        },
+        "SOURCE": {
+          "refs": [
+            "orchestration/capability-registry.json",
+            "seoctl/command-registry.json"
+          ],
+          "status": "PASS"
+        }
+      },
+      "execution_mode": "LIVE_CAPABLE",
+      "network_class": "provider_optional",
+      "owner": "Visual & Video Search Agent",
+      "owner_skill_alignment": {
+        "declares_all_command_skills": true,
+        "missing_skills": []
+      },
+      "participant_skill_alignment": {
+        "Visual & Video Search Agent": {
+          "declares_all_command_skills": true,
+          "missing_skills": []
+        }
+      },
+      "participants": [
+        "Visual & Video Search Agent"
+      ],
+      "skills": [
+        "image-seo-audit"
       ]
     },
     "media.iptc-label": {
@@ -4747,7 +4802,7 @@
         "content.humanize",
         "content.quality"
       ],
-      "claim_ceiling": "REGISTRY_VERIFIED",
+      "claim_ceiling": "LIVE_CAPABLE_NOT_VERIFIED",
       "declared_owners": [
         "SEO Compliance & Legal Agent",
         "SEO Copywriter/Content Agent"
@@ -4784,7 +4839,7 @@
           "status": "PASS"
         }
       },
-      "execution_mode": "DETERMINISTIC"
+      "execution_mode": "LIVE_CAPABLE"
     },
     "content-brief": {
       "assigned_agents": [
@@ -5821,9 +5876,10 @@
         "Visual & Video Search Agent"
       ],
       "backing_commands": [
+        "media.image-plan",
         "media.iptc-label"
       ],
-      "claim_ceiling": "REGISTRY_VERIFIED",
+      "claim_ceiling": "LIVE_CAPABLE_NOT_VERIFIED",
       "declared_owners": [],
       "delivery_state": "COMMAND_BACKED",
       "evidence": {
@@ -5857,7 +5913,7 @@
           "status": "PASS"
         }
       },
-      "execution_mode": "DETERMINISTIC"
+      "execution_mode": "LIVE_CAPABLE"
     },
     "indexation-reality-check": {
       "assigned_agents": [
