@@ -775,11 +775,9 @@ def test_repository_policy_rejects_risk_script_deletion_and_floor_weakening(
 
 def test_rollback_certification_pins_historical_clock_and_restores_validator() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    assert workflow.count("$env:WCSEO_VALIDATION_AS_OF = \"2026-10-12\"") == 2
     assert workflow.count("$baselineValidator = \"$env:RUNNER_TEMP/baseline_validate_seo_claims.py\"") == 2
     assert workflow.count("Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py") == 2
-    assert workflow.count("Remove-Item Env:WCSEO_VALIDATION_AS_OF -ErrorAction SilentlyContinue") == 2
-    assert workflow.count('Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination "$env:RUNNER_TEMP/validate_seo_claims.py"') == 2
-    assert workflow.count('Copy-Item -LiteralPath scripts/rollback_validation_clock.py -Destination "$env:RUNNER_TEMP/rollback_validation_clock.py"') == 2
-    assert workflow.count("Remove-Item -LiteralPath scripts/rollback_validation_clock.py -ErrorAction SilentlyContinue") == 2
+    assert workflow.count("$env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator") == 2
+    assert workflow.count('Copy-Item -LiteralPath scripts/validate_historical_rollback_claims.py -Destination "$env:RUNNER_TEMP/validate_historical_rollback_claims.py"') == 2
+    assert workflow.count("Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue") == 2
     assert workflow.count("Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue") == 2

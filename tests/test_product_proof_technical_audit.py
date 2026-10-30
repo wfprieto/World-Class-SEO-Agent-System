@@ -8,7 +8,6 @@ from datetime import date
 
 from integrations.product_proof.crawler import RobotsPolicy, parse_robots
 from integrations.product_proof.service import ARTIFACT_FILENAMES, ProductProofTechnicalAudit
-from scripts.rollback_validation_clock import effective_as_of
 from scripts.validate_seo_claims import validate
 from seoctl.audit_cli import run
 
@@ -67,20 +66,21 @@ def test_claim_registry_and_deprecations_validate():
     assert validate(ROOT, as_of=date(2026,7,12)) == []
 
 
-def test_claim_validation_clock_is_bounded_and_fail_closed():
+def test_ambient_rollback_spoofing_cannot_change_current_validation(tmp_path: Path):
     command = [sys.executable, "-I", "-E", "-S", "scripts/validate_seo_claims.py"]
-    environment = os.environ | {"WCSEO_VALIDATION_AS_OF": "2026-10-12"}
-    result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True)
-    assert result.returncode == 1
-    phase0 = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
-    values = {"WCSEO_VALIDATION_AS_OF": "2026-10-12", "WCSEO_ROLLBACK_EXPECTED_SHA": phase0}
-    assert effective_as_of(ROOT, values, lambda _: phase0) == date(2026, 10, 12)
-    try:
-        effective_as_of(ROOT, values, lambda _: "0" * 40)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("historical validation must match the exact approved HEAD")
+    ordinary = subprocess.run(command, cwd=ROOT, capture_output=True)
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    (fake_bin / "git").write_text("fake git must never be called", encoding="utf-8")
+    poisoned = os.environ | {
+        "PATH": str(fake_bin) + os.pathsep + os.environ.get("PATH", ""),
+        "GIT_DIR": str(tmp_path / "alternate.git"),
+        "GIT_WORK_TREE": str(tmp_path / "alternate-tree"),
+        "WCSEO_VALIDATION_AS_OF": "2026-10-12",
+        "WCSEO_ROLLBACK_EXPECTED_SHA": "e8c37abb5e939d4433e42ea8a02af63549ca0010",
+    }
+    attacked = subprocess.run(command, cwd=ROOT, env=poisoned, capture_output=True)
+    assert (attacked.returncode, attacked.stdout) == (ordinary.returncode, ordinary.stdout)
 
 
 def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):

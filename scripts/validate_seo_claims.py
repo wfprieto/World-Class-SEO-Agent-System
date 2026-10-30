@@ -1,6 +1,6 @@
 """Validate claim precedence, external wording, and deprecated SEO guidance."""
 from __future__ import annotations
-import argparse,json,re,runpy
+import argparse,json,re
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -37,6 +37,6 @@ def validate(root:Path=ROOT,*,as_of:date|None=None)->list[str]:
  return fail
 def main():
  p=argparse.ArgumentParser();p.add_argument("--root",type=Path,default=ROOT);a=p.parse_args()
- if f:=validate(a.root.resolve(),as_of=runpy.run_path(str(Path(__file__).with_name("rollback_validation_clock.py")))["effective_as_of"](a.root.resolve())):print(json.dumps({"status":"failed","failures":f},indent=2));return 1
+ if f:=validate(a.root.resolve()):print(json.dumps({"status":"failed","failures":f},indent=2));return 1
  print(json.dumps({"status":"ok","claims":len(_json(a.root.resolve()/"knowledge"/"seo-claim-registry.json")["claims"])},indent=2));return 0
 if __name__=="__main__":raise SystemExit(main())
