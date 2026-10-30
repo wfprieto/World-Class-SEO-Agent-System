@@ -42,7 +42,7 @@ def test_llm_private_endpoint_denied_before_dial(monkeypatch) -> None:
         raise AssertionError('private endpoint reached socket creation')
 
     monkeypatch.setattr('socket.socket', forbid_socket)
-    client = OpenAICompatibleClient(api_key='synthetic-key',
+    client = OpenAICompatibleClient(api_key='fixture-key',
                                    base_url='https://127.0.0.1/v1',
                                    allow_custom_base_url=True)
     with pytest.raises(ValueError, match='non-public'):

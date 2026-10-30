@@ -15,6 +15,7 @@ from test_fresh_scan_brief_integrity import producer_assessments
 
 from adapters import rendered_page
 from integrations.content_intelligence.service import ContentIntelligenceService
+from scripts.seo_pdf_report import build_html
 from scripts.workflow_quality_contract import workflow_errors
 from seoctl import cli
 
@@ -92,3 +93,8 @@ def test_finite_ci_contract_rejects_removing_no_bytecode_flag(suffix):
     changed = workflow.replace(selected, selected.replace("python -B -m", "python -m"), 1)
     release = (ROOT / ".github/workflows/release.yml").read_text()
     assert workflow_errors(changed, 78, release)
+
+
+def test_report_markup_includes_a_meaningful_document_title():
+    markup = build_html({"agent": "QA fixture", "summary": "Synthetic report", "findings": []})
+    assert "<title>SEO Report</title>" in markup
