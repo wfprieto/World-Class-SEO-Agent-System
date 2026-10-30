@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -15,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = Path("governance/private-conduct-intake.json")
 SCHEMA = Path("schemas/private-conduct-intake.schema.json")
 DESTINATION = "mailto:wfprieto@gmail.com"
-PROVIDER_ATTESTATION = re.compile(r"^gmail-profile-sha256:[0-9a-f]{64}$")
+EXPECTED_PROVIDER_ATTESTATION = (
+    "gmail-profile-sha256:"
+    "cffaef28ce43210066ebf9dbbe3f5922091a22c253d7035c423a7c7dedd43395"
+)
 REQUIRED_DISCLOSURES = {
     "acknowledgement target",
     "monitoring role",
@@ -98,7 +100,7 @@ def _registry_errors(operation: dict[str, Any], issue: dict[str, Any]) -> list[s
         or closure.get("status") != "VERIFIED"
         or not isinstance(refs, list)
         or len(refs) != 1
-        or not PROVIDER_ATTESTATION.fullmatch(str(refs[0]))
+        or refs[0] != EXPECTED_PROVIDER_ATTESTATION
     ):
         errors.append("ready security-intake requires one authenticated provider attestation")
     if operation.get("blocker") is not None or issue.get("blocked_by") is not None:
@@ -137,7 +139,7 @@ def _ready_contract_errors(contract: dict[str, Any]) -> list[str]:
         errors.append("ready conduct intake must publish the owner-authorized destination")
     monitoring = contract.get("monitoring")
     ref = monitoring.get("attestation_ref") if isinstance(monitoring, dict) else None
-    if not isinstance(ref, str) or not PROVIDER_ATTESTATION.fullmatch(ref):
+    if ref != EXPECTED_PROVIDER_ATTESTATION:
         errors.append("ready conduct intake requires an authenticated provider attestation")
     access_test = contract.get("access_test")
     method = access_test.get("method") if isinstance(access_test, dict) else None
@@ -163,6 +165,16 @@ def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
     errors.extend(_activation_requirement_errors(contract))
     errors.extend(_ready_contract_errors(contract))
     errors.extend(_registry_errors(operation, issue))
+    monitoring = contract.get("monitoring")
+    monitoring_ref = monitoring.get("attestation_ref") if isinstance(monitoring, dict) else None
+    closure = operation.get("closure_evidence")
+    closure_refs = closure.get("refs") if isinstance(closure, dict) else None
+    if (
+        isinstance(closure_refs, list)
+        and len(closure_refs) == 1
+        and monitoring_ref != closure_refs[0]
+    ):
+        errors.append("private intake monitoring and closure attestations must match")
     errors.extend(_documentation_errors(root))
     return sorted(set(errors))
 

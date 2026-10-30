@@ -41,6 +41,33 @@ def test_current_provider_verified_private_intake_is_truthful() -> None:
     assert validate(as_of=AS_OF) == []
 
 
+def test_well_formed_but_wrong_provider_attestation_is_rejected(tmp_path: Path) -> None:
+    root = _copy_surface(tmp_path)
+    wrong = "gmail-profile-sha256:" + ("f" * 64)
+    intake = _load(root, "governance/private-conduct-intake.json")
+    intake["monitoring"]["attestation_ref"] = wrong
+    _write(root, "governance/private-conduct-intake.json", intake)
+    operations = _load(root, "governance/repository-operations.json")
+    operation = next(
+        row for row in operations["critical_paths"] if row["id"] == "security-intake"
+    )
+    operation["closure_evidence"]["refs"] = [wrong]
+    _write(root, "governance/repository-operations.json", operations)
+
+    errors = validate(root)
+
+    assert any("authenticated provider attestation" in error for error in errors)
+
+
+def test_monitoring_and_closure_attestations_must_match(tmp_path: Path) -> None:
+    root = _copy_surface(tmp_path)
+    intake = _load(root, "governance/private-conduct-intake.json")
+    intake["monitoring"]["attestation_ref"] = "gmail-profile-sha256:" + ("a" * 64)
+    _write(root, "governance/private-conduct-intake.json", intake)
+
+    assert any("attestations must match" in error for error in validate(root))
+
+
 def test_self_authored_ready_evidence_is_rejected(tmp_path: Path) -> None:
     root = _copy_surface(tmp_path)
     intake = _load(root, "governance/private-conduct-intake.json")

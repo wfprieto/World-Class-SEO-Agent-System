@@ -185,6 +185,36 @@ def test_entities_reject_provider_evidence_without_cost_approval(service, monkey
         )
 
 
+@pytest.mark.parametrize(
+    ("estimated_cost", "approved_ceiling"),
+    [
+        (float("nan"), 1.0),
+        (0.0, float("nan")),
+        (float("inf"), float("inf")),
+        (0.0, float("inf")),
+    ],
+)
+def test_entities_reject_non_finite_cost_approval(
+    service, monkeypatch, estimated_cost, approved_ceiling
+):
+    monkeypatch.setenv("ENTITY_ANALYSIS_API_KEY", "provider-secret")
+    with pytest.raises(ValueError, match="valid approved cost gate"):
+        service.entities(
+            text="OpenAI announced a project.",
+            provider_analysis={
+                "provider": "entity-analysis",
+                "captured_at": "2026-10-29T12:00:00Z",
+                "source": "provider-response:job-123",
+                "cost_approval": {
+                    "state": "APPROVED",
+                    "estimated_cost": estimated_cost,
+                    "approved_ceiling": approved_ceiling,
+                },
+                "entities": [],
+            },
+        )
+
+
 def test_brief_requires_relevance_serp_information_gain_and_sources(service):
     relevance = {"verdict": "RELEVANT", "reasons": ["Audience fit"]}
     serp = {"status": "SUFFICIENT", "primary_intent": "commercial investigation"}

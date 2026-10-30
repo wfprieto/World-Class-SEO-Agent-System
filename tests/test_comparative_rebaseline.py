@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts import inventory_comparator
 from scripts.inventory_comparator import (
     COMPARATIVE,
     _catalog_skill_ids,
@@ -79,6 +80,18 @@ def test_comparative_rebaseline_is_valid_and_reproducible():
         "target": 92.0,
     }
     assert result["open_capabilities"] > 0
+
+
+def test_validate_all_checks_receipts_against_supplied_root(monkeypatch, tmp_path: Path):
+    shutil.copytree(COMPARATIVE, tmp_path / "evaluation/comparative")
+    monkeypatch.setattr(inventory_comparator, "validate_current_target_commits", lambda *args: [])
+    monkeypatch.setattr(inventory_comparator, "validate_capability_inventory", lambda *args: [])
+    monkeypatch.setattr(inventory_comparator, "inventory_repo", lambda root: {})
+
+    result = inventory_comparator.validate_all(tmp_path)
+
+    assert any("source receipt is missing" in error for error in result["errors"])
+    assert any("automated test receipt is missing" in error for error in result["errors"])
 
 
 def test_local_inventory_proves_current_runtime_baseline_without_hardcoded_file_counts():

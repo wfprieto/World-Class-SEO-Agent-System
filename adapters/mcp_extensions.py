@@ -7,6 +7,7 @@ never return secret values.
 
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -267,18 +268,29 @@ def estimate_cost(
             "estimated_cost": None, "currency": "USD", "approved": False,
             "reason": "A current operator-verified unit cost is required; pricing is not hard-coded.",
         }
-    cost = float(unit_cost) * units
-    if unit_cost < 0 or not (cost >= 0 and cost < float("inf")):
+    if not isinstance(unit_cost, (int, float)) or isinstance(unit_cost, bool):
         raise ValueError("unit_cost must be a finite non-negative number")
-    ceiling_ok = approved_ceiling is not None and approved_ceiling >= cost
+    unit_cost_value = float(unit_cost)
+    cost = unit_cost_value * units
+    if unit_cost_value < 0 or not math.isfinite(cost):
+        raise ValueError("unit_cost must be a finite non-negative number")
+    if approved_ceiling is not None and (
+        not isinstance(approved_ceiling, (int, float))
+        or isinstance(approved_ceiling, bool)
+        or not math.isfinite(float(approved_ceiling))
+        or float(approved_ceiling) < 0
+    ):
+        raise ValueError("approved_ceiling must be a finite non-negative number")
+    ceiling_value = float(approved_ceiling) if approved_ceiling is not None else None
+    ceiling_ok = ceiling_value is not None and ceiling_value >= cost
     return {
         "provider": provider_id,
         "state": "APPROVED" if approved and ceiling_ok else "BLOCKED",
         "units": units,
-        "unit_cost": float(unit_cost),
+        "unit_cost": unit_cost_value,
         "estimated_cost": round(cost, 6),
         "currency": "USD",
-        "approved_ceiling": approved_ceiling,
+        "approved_ceiling": ceiling_value,
         "approved": bool(approved and ceiling_ok),
         "reason": None if approved and ceiling_ok else (
             "Explicit approval and a ceiling at or above the estimate are required."

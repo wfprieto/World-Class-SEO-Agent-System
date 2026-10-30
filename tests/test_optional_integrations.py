@@ -52,6 +52,18 @@ def test_cost_gate_and_bing_contract():
     assert preflight("bing-webmaster")["state"] == "BLOCKED_BY_CONTRACT"
 
 
+@pytest.mark.parametrize("ceiling", [float("nan"), float("inf")])
+def test_cost_gate_rejects_non_finite_ceiling(ceiling):
+    with pytest.raises(ValueError, match="approved_ceiling must be a finite"):
+        estimate_cost(
+            "image-gen",
+            units=1,
+            unit_cost=0.25,
+            approved_ceiling=ceiling,
+            approved=True,
+        )
+
+
 def test_image_generation_plan_requires_provider_cost_rights_and_review(monkeypatch):
     monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
     result = image_generation_service().plan(

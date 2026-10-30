@@ -63,7 +63,11 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
                 "number": control["issue"]["number"],
                 "url": control["issue"]["url"],
                 "title": control["title"],
-                "state": "OPEN",
+                "state": (
+                    "OPEN"
+                    if control["issue"]["number"] in {26, 28, 29, 30, 31, 32}
+                    else control["issue"]["expected_state"]
+                ),
                 "assignees": [owner],
                 "locked": False,
             }
@@ -315,6 +319,16 @@ def test_phase8_open_issue_transition_ends_when_remediation_pull_is_merged() -> 
 
     errors = provider_state_errors(snapshot, contract, operations=operations)
     assert any("issue 26 state" in error for error in errors)
+
+
+def test_open_transition_does_not_allow_reopening_issue_27() -> None:
+    snapshot, contract, operations = _phase8_snapshot()
+    issue = next(row for row in snapshot["phase8_issues"] if row["number"] == 27)
+    issue["state"] = "OPEN"
+
+    errors = provider_state_errors(snapshot, contract, operations=operations)
+
+    assert any("issue 27 state" in error for error in errors)
 
 
 def test_repository_validator_enumerates_only_tracked_documents() -> None:

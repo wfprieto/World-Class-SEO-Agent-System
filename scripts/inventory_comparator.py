@@ -323,7 +323,7 @@ def validate_all(root: Path = ROOT) -> dict[str, Any]:
                 claude, "claude-seo-baseline.json", authority
             )
         ],
-        *[f"parity: {item}" for item in validate_parity_ledger(parity)],
+        *[f"parity: {item}" for item in validate_parity_ledger(parity, root)],
         *[
             f"freshness: {item}"
             for item in validate_current_target_commits(world, parity, readiness, root)

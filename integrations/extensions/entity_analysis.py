@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from typing import Any
 
@@ -22,12 +23,18 @@ def _approved_cost(payload: dict[str, Any]) -> dict[str, float | str]:
         raise ValueError("provider_analysis requires a valid approved cost gate")
     if not isinstance(ceiling, (int, float)) or isinstance(ceiling, bool):
         raise ValueError("provider_analysis requires a valid approved cost gate")
-    if float(estimated) < 0 or float(ceiling) < float(estimated):
+    estimated_value, ceiling_value = float(estimated), float(ceiling)
+    if (
+        not math.isfinite(estimated_value)
+        or not math.isfinite(ceiling_value)
+        or estimated_value < 0
+        or ceiling_value < estimated_value
+    ):
         raise ValueError("provider_analysis requires a valid approved cost gate")
     return {
         "state": "APPROVED",
-        "estimated_cost": float(estimated),
-        "approved_ceiling": float(ceiling),
+        "estimated_cost": estimated_value,
+        "approved_ceiling": ceiling_value,
     }
 
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+REMEDIATION_TRANSITION_ISSUES = frozenset({26, 28, 29, 30, 31, 32})
+
 
 def _indexed_rows(rows: list[object]) -> tuple[dict[int, dict[str, Any]], list[str]]:
     errors: list[str] = []
@@ -41,7 +43,12 @@ def _row_errors(
             errors.append(f"issue {number} {label} does not match the registry")
     expected_state = expected_issue.get("expected_state")
     observed_state = observed.get("state")
-    transition = allow_open_transition and expected_state == "CLOSED" and observed_state == "OPEN"
+    transition = (
+        allow_open_transition
+        and number in REMEDIATION_TRANSITION_ISSUES
+        and expected_state == "CLOSED"
+        and observed_state == "OPEN"
+    )
     if observed_state != expected_state and not transition:
         errors.append(f"issue {number} state does not match the registry")
     assignees = observed.get("assignees")
