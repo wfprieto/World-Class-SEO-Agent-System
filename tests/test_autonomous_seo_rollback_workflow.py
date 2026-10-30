@@ -28,8 +28,8 @@ def test_restored_baseline_validation_has_an_explicit_package_root() -> None:
     step = steps[index]
 
     assert step["env"]["PYTHONPATH"] == "${{ github.workspace }}"
-    assert steps[index - 1]["name"] == "Install baseline validation dependencies"
-    assert steps[index - 2]["name"] == "Prove exact restored autonomous baseline"
+    assert steps[index - 1]["name"] == "Prove exact restored autonomous baseline"
+    assert steps[index - 2]["name"] == "Install baseline validation dependencies"
     assert steps[index + 1]["name"] == "Prove exact restored autonomous baseline"
     assert "validate_historical_rollback_claims.py" in step["run"]
     assert "WCSEO_BASELINE_CLAIM_VALIDATOR" in step["run"]
