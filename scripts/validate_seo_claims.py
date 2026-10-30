@@ -1,6 +1,6 @@
 """Validate claim precedence, external wording, and deprecated SEO guidance."""
 from __future__ import annotations
-import argparse,json,re
+import argparse,json,os,re
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -36,7 +36,7 @@ def validate(root:Path=ROOT,*,as_of:date|None=None)->list[str]:
    if re.search(re.escape(phrase),text,re.I):fail.append(f"{path.relative_to(root)} restores deprecated guidance {did}: {phrase}")
  return fail
 def main():
- p=argparse.ArgumentParser();p.add_argument("--root",type=Path,default=ROOT);a=p.parse_args();f=validate(a.root.resolve())
- if f:print(json.dumps({"status":"failed","failures":f},indent=2));return 1
+ p=argparse.ArgumentParser();p.add_argument("--root",type=Path,default=ROOT);a=p.parse_args()
+ if f:=validate(a.root.resolve(),as_of=date.fromisoformat(os.getenv("WCSEO_VALIDATION_AS_OF",date.today().isoformat()))):print(json.dumps({"status":"failed","failures":f},indent=2));return 1
  print(json.dumps({"status":"ok","claims":len(_json(a.root.resolve()/"knowledge"/"seo-claim-registry.json")["claims"])},indent=2));return 0
 if __name__=="__main__":raise SystemExit(main())

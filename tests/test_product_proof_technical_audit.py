@@ -1,5 +1,8 @@
 from __future__ import annotations
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 from datetime import date
 
@@ -61,6 +64,14 @@ def test_robots_longest_match_and_least_restrictive_tie():
 
 def test_claim_registry_and_deprecations_validate():
     assert validate(ROOT, as_of=date(2026,7,12)) == []
+
+
+def test_claim_validation_clock_is_bounded_and_fail_closed():
+    command = [sys.executable, "-I", "-E", "-S", "scripts/validate_seo_claims.py"]
+    for value, expected in (("2027-01-31", 0), ("2027-02-01", 1), ("not-a-date", 1)):
+        environment = os.environ | {"WCSEO_VALIDATION_AS_OF": value}
+        result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True)
+        assert result.returncode == expected
 
 
 def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
