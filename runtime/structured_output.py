@@ -181,6 +181,7 @@ class StructuredOutputService:
         output: dict[str, Any],
         *,
         expected_agent: str,
+        allow_synthetic: bool = False,
     ) -> list[str]:
         errors = self.schemas.errors("agent-output", output)
         if output.get("agent") != expected_agent:
@@ -189,6 +190,10 @@ class StructuredOutputService:
             )
         errors.extend(specialist_output_errors(output))
         errors.extend(validate_evidence_binding(output))
+        if not allow_synthetic and output.get("execution_state") == "SYNTHETIC":
+            errors.append(
+                "execution_state SYNTHETIC is reserved for trusted offline execution"
+            )
         return errors
 
     def _complete_echo(
@@ -211,7 +216,7 @@ class StructuredOutputService:
             prior_outputs,
             required_handoffs,
         )
-        errors = self._errors(output, expected_agent=agent_name)
+        errors = self._errors(output, expected_agent=agent_name, allow_synthetic=True)
         return StructuredOutputResult(
             status="ok" if not errors else "failed",
             output=output if not errors else None,

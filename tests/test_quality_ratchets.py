@@ -3,12 +3,14 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from scripts import validate_quality_ratchets as ratchets
 from scripts.validate_quality_ratchets import (
@@ -35,7 +37,7 @@ from scripts.workflow_quality_contract import TRUSTED_PYTHON_COMMAND
 
 
 def _baseline(tmp_path: Path, sources: dict[str, str] | None = None) -> Path:
-    for package in ("runtime", "adapters", "integrations", "seoctl", "scripts"):
+    for package in PACKAGES:
         package_path = tmp_path / package
         package_path.mkdir(parents=True)
         (package_path / "__init__.py").write_text("", encoding="utf-8")
@@ -113,6 +115,157 @@ def test_new_ruff_debt_fails_against_exact_fingerprint_baseline(tmp_path: Path) 
     (tmp_path / "runtime" / "lint_debt.py").write_text("import os\n", encoding="utf-8")
     errors = validate(tmp_path, contract_path, enforce_repository_settings=False)
     assert any("new Ruff debt:" in error and "F401" in error for error in errors)
+
+
+def test_security_source_cannot_evade_annotation_and_ruff_gates(tmp_path: Path) -> None:
+    contract_path = _baseline(tmp_path)
+    security = tmp_path / "security"
+    security.mkdir(exist_ok=True)
+    (security / "unreviewed.py").write_text(
+        "import os\n\ndef boundary(value):\n    return value\n", encoding="utf-8"
+    )
+    errors = validate(tmp_path, contract_path, enforce_repository_settings=False)
+    assert any("security.unreviewed::boundary missing_annotations" in error for error in errors)
+    assert any("security/unreviewed.py|F401" in error for error in errors)
+
+
+def test_security_scope_expansion_is_monotonic_but_removal_is_not(tmp_path: Path) -> None:
+    contract_path = _baseline(tmp_path)
+    previous = json.loads(contract_path.read_text(encoding="utf-8"))
+    previous["packages"] = [p for p in previous["packages"] if p != "security"]
+    expanded = copy.deepcopy(previous)
+    expanded["packages"].append("security")
+    assert _monotonic_contract_errors(previous, expanded) == []
+    for removed in previous["packages"]:
+        narrowed = copy.deepcopy(expanded)
+        narrowed["packages"].remove(removed)
+        assert _monotonic_contract_errors(expanded, narrowed)
+
+
+@pytest.mark.parametrize("change", ("unknown", "duplicate", "replacement"))
+def test_scope_expansion_does_not_allow_noncanonical_package_edits(
+    tmp_path: Path, change: str
+) -> None:
+    contract_path = _baseline(tmp_path)
+    previous = json.loads(contract_path.read_text(encoding="utf-8"))
+    current = copy.deepcopy(previous)
+    if change == "replacement":
+        current["packages"][0] = "unreviewed"
+    else:
+        current["packages"].append("unreviewed" if change == "unknown" else "runtime")
+    contract_path.write_text(json.dumps(current), encoding="utf-8")
+    errors = validate(
+        tmp_path, contract_path, enforce_repository_settings=False,
+        previous_contract=previous,
+    )
+    assert "quality-ratchet package inventory must match first-party packages exactly" in errors
+
+
+@pytest.mark.parametrize(
+    "filename", ("url_safety.py", "pinned_http.py", "browser_proxy.py", "browser_capture.py")
+)
+def test_security_coverage_floors_are_canonical_and_cannot_be_removed(
+    tmp_path: Path, filename: str
+) -> None:
+    path = f"security/{filename}"
+    assert "security" in PACKAGES
+    assert path in MINIMUM_CRITICAL_COVERAGE
+    contract_path = _baseline(tmp_path)
+    previous = json.loads(contract_path.read_text(encoding="utf-8"))
+    for replacement in (None, MINIMUM_CRITICAL_COVERAGE[path] - 1):
+        weakened = copy.deepcopy(previous)
+        if replacement is None:
+            del weakened["coverage"]["critical_file_floors"][path]
+        else:
+            weakened["coverage"]["critical_file_floors"][path] = replacement
+        contract_path.write_text(json.dumps(weakened), encoding="utf-8")
+        errors = validate(
+            tmp_path, contract_path, enforce_repository_settings=False,
+            previous_contract=previous,
+        )
+        assert f"critical coverage floor is below the immutable canonical minimum: {path}" in errors
+
+
+def test_security_is_mandatory_in_ci_coverage_and_real_browser_execution() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    coverage = next(
+        block for block in workflow.split("      - ") if block.startswith("name: Run coverage gate")
+    )
+    assert "--cov=security" in coverage
+    assert "--browser-security" in coverage
+    assert _workflow_errors(workflow, 78.0) == []
+    for required in ("--cov=security ", "--browser-security "):
+        mutated = workflow.replace(coverage, coverage.replace(required, ""), 1)
+        assert mutated != workflow
+        assert _workflow_errors(mutated, 78.0)
+
+
+def test_coverage_source_inventory_cannot_drop_security(tmp_path: Path) -> None:
+    (tmp_path / ".github/workflows").mkdir(parents=True)
+    (tmp_path / "scripts").mkdir()
+    for filename in ("validate.yml", "release.yml"):
+        shutil.copy2(ROOT / ".github/workflows" / filename, tmp_path / ".github/workflows" / filename)
+    shutil.copy2(ROOT / "scripts/validate_risk_coverage.py", tmp_path / "scripts")
+    source = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(source, encoding="utf-8")
+    contract = json.loads((ROOT / "governance/code-quality-ratchet.json").read_text())
+    assert _repository_setting_errors(tmp_path, contract) == []
+    mutated = source.replace(', "security"]\nomit =', ']\nomit =', 1)
+    assert mutated != source
+    (tmp_path / "pyproject.toml").write_text(mutated, encoding="utf-8")
+    assert "coverage source inventory must include every canonical target" in (
+        _repository_setting_errors(tmp_path, contract)
+    )
+
+
+@pytest.mark.parametrize("job", ("validation_matrix", "quality_security_release"))
+def test_browser_profiles_and_chromium_are_mandatory_in_each_measuring_job(job: str) -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    steps = yaml.safe_load(workflow)["jobs"][job]["steps"]
+    profile = next((s for s in steps if s.get("name") == "Install browser test dependencies"), {})
+    chromium = next((s for s in steps if s.get("name") == "Install Chromium runtime"), {})
+    assert profile.get("run") == "python -m pip install --require-hashes -r requirements-browser.txt"
+    assert chromium.get("run") == "python -m playwright install --with-deps chromium"
+    assert steps.index(profile) < steps.index(chromium)
+    assert _workflow_errors(workflow, 78.0) == []
+    for step in (profile, chromium):
+        mutated = workflow.replace(step["run"], "python -c 'pass'")
+        assert mutated != workflow
+        assert _workflow_errors(mutated, 78.0)
+
+
+@pytest.mark.parametrize("name", ("Lint canonical P3 profile", "Run complete static type gate"))
+def test_security_is_explicit_in_bound_ci_lint_and_type_commands(name: str) -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    steps = yaml.safe_load(workflow)["jobs"]["quality_security_release"]["steps"]
+    command = next(s["run"] for s in steps if s.get("name") == name)
+    assert "security" in command.split()
+    assert _workflow_errors(workflow, 78.0) == []
+    mutated = workflow.replace(command, command.replace(" security", ""), 1)
+    assert mutated != workflow
+    assert _workflow_errors(mutated, 78.0)
+
+
+def test_dependency_audit_covers_both_locked_profiles() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    steps = yaml.safe_load(workflow)["jobs"]["quality_security_release"]["steps"]
+    command = next(s["run"] for s in steps if s.get("name") == "Audit declared Python dependencies")
+    assert "-r requirements-dev.txt" in command
+    assert "-r requirements-browser.txt" in command
+    assert _workflow_errors(workflow, 78.0) == []
+    mutated = workflow.replace(command, command.replace(" -r requirements-browser.txt", ""), 1)
+    assert mutated != workflow
+    assert _workflow_errors(mutated, 78.0)
+
+
+def test_dependency_audit_command_cannot_be_substituted() -> None:
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    steps = yaml.safe_load(workflow)["jobs"]["quality_security_release"]["steps"]
+    command = next(s["run"] for s in steps if s.get("name") == "Audit declared Python dependencies")
+    assert _workflow_errors(workflow, 78.0) == []
+    mutated = workflow.replace(command, "python -c 'pass'", 1)
+    assert mutated != workflow
+    assert _workflow_errors(mutated, 78.0)
 
 
 def test_unsafe_or_unknown_baseline_entries_fail(tmp_path: Path) -> None:
@@ -613,12 +766,13 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     mutations = (
         workflow.replace("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "actions/upload-artifact@v7", 1),
-        workflow.replace("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", 1),
+        workflow.replace("actions/setup-python@", "attacker/setup-python@", 1),
         workflow.replace(" -I -E -S scripts/validate_source_integrity.py", " scripts/validate_source_integrity.py", 1),
         workflow.replace("${{ steps.trusted_python.outputs.path }}", "python", 1),
         workflow.replace("Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source", "'C:\\\\attacker\\python.exe'", 1),
     )
     for mutated in mutations:
+        assert mutated != workflow
         assert _workflow_errors(mutated, 78.0)
     action_without_proof = workflow.replace(
         "      - name: Prove exact source integrity\n        shell: pwsh\n",
@@ -626,6 +780,43 @@ def test_actions_and_trusted_interpreter_sequence_are_immutable() -> None:
         1,
     )
     assert any("fresh adjacent source proof" in error for error in _workflow_errors(action_without_proof, 78.0))
+
+
+@pytest.mark.parametrize(
+    "filename",
+    ("validate.yml", "release.yml", "maintenance.yml", "autonomous-seo-certification.yml"),
+)
+def test_setup_python_uses_reviewed_maintained_revision(filename: str) -> None:
+    workflow = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
+    revisions = re.findall(r"actions/setup-python@([^\s]+)", workflow)
+    assert revisions
+    assert set(revisions) == {"6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"}
+
+
+@pytest.mark.parametrize("filename", ("validate.yml", "release.yml"))
+@pytest.mark.parametrize(
+    "revision", ("v7", "0" * 40, "5fda3b95a4ea91299a34e894583c3862153e4b97")
+)
+def test_setup_python_revision_requires_reviewed_workflow_contract(
+    filename: str, revision: str
+) -> None:
+    workflow = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
+    validation = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    assert not _workflow_errors(
+        workflow if filename == "validate.yml" else validation,
+        78.0,
+        None if filename == "validate.yml" else workflow,
+    )
+    mutated = re.sub(
+        r"actions/setup-python@[^\s]+", f"actions/setup-python@{revision}", workflow, count=1
+    )
+    assert mutated != workflow
+    errors = (
+        _workflow_errors(mutated, 78.0)
+        if filename == "validate.yml"
+        else _workflow_errors(validation, 78.0, mutated)
+    )
+    assert any("approved finite contract" in error for error in errors)
 
 
 def test_trusted_tool_capture_emits_one_executable_path_per_output(tmp_path: Path) -> None:
@@ -683,8 +874,8 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
             1,
         ),
         workflow.replace(
-            "        run: pytest -q --cov=runtime",
-            "        run: |\n          exit 0\n          pytest -q --cov=runtime",
+            "        run: pytest -q --browser-security --cov=runtime",
+            "        run: |\n          exit 0\n          pytest -q --browser-security --cov=runtime",
             1,
         ),
     )
@@ -694,7 +885,7 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
 
 def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    coverage_run = "        run: pytest -q --cov=runtime"
+    coverage_run = "        run: pytest -q --browser-security --cov=runtime"
     risk_block = (
         "      - name: Validate critical coverage\n"
         "        run: python scripts/validate_risk_coverage.py outputs/coverage.json"

@@ -48,31 +48,55 @@ def _parse_target(url: object) -> tuple[urllib.parse.SplitResult, str, str, int 
     return parsed, scheme, host, port
 
 
-def _assert_public_host(host: str, port: int, resolver: Resolver) -> None:
+def _numeric_destination(address: str, port: int) -> tuple[int, tuple]:
+    try:
+        resolved = ipaddress.ip_address(address)
+    except ValueError as exc:
+        raise ValueError("URL host returned an invalid address") from exc
+    if not resolved.is_global or "%" in address:
+        raise ValueError(f"URL host resolves to a non-public address: {resolved.compressed}")
+    if resolved.version == 6:
+        return socket.AF_INET6, (resolved.compressed, port, 0, 0)
+    return socket.AF_INET, (resolved.compressed, port)
+
+
+def resolve_public_addresses(
+    host: str, port: int, *, resolver: Resolver | None = None
+) -> tuple[tuple[int, tuple], ...]:
+    """Resolve and vet a complete address set for numeric-only socket dialing.
+
+    Validation alone does not bind a later connection. Callers opening sockets must
+    use these returned destinations without resolving the hostname a second time.
+    """
+    if port not in ALLOWED_TARGET_PORTS:
+        raise ValueError("Only standard HTTP and HTTPS ports are allowed")
     try:
         literal = ipaddress.ip_address(host)
     except ValueError:
         literal = None
     if literal is not None:
-        if not literal.is_global:
-            raise ValueError(f"URL host resolves to a non-public address: {literal.compressed}")
-        return
-    try:
-        infos = resolver(host, port, type=socket.SOCK_STREAM)
-    except socket.gaierror as exc:
-        raise ValueError(f"URL host cannot be resolved: {host}") from exc
-    addresses = {str(info[4][0]) for info in infos}
+        addresses = [str(literal)]
+    else:
+        try:
+            infos = (resolver or socket.getaddrinfo)(host, port, type=socket.SOCK_STREAM)
+        except socket.gaierror as exc:
+            raise ValueError(f"URL host cannot be resolved: {host}") from exc
+        addresses = list(dict.fromkeys(str(info[4][0]) for info in infos))
     if not addresses:
         raise ValueError("URL host resolved to no addresses")
-    for address in addresses:
-        try:
-            resolved = ipaddress.ip_address(address)
-        except ValueError as exc:
-            raise ValueError("URL host returned an invalid address") from exc
-        if not resolved.is_global:
-            raise ValueError(
-                f"URL host resolves to a non-public address: {resolved.compressed}"
-            )
+    if len(addresses) > 16:
+        raise ValueError("URL host resolved to too many addresses")
+    return tuple(_numeric_destination(address, port) for address in addresses)
+
+
+def _assert_public_host(host: str, port: int, resolver: Resolver) -> None:
+    resolve_public_addresses(host, port, resolver=resolver)
+
+
+def _validate_query(query: str) -> None:
+    query_keys = {key.lower() for key, _ in urllib.parse.parse_qsl(query, keep_blank_values=True)}
+    if query_keys & SENSITIVE_QUERY_KEYS:
+        raise ValueError("URL query contains credential-like fields and cannot be sent")
 
 
 def validate_public_url(url: str, *, resolver: Resolver | None = None) -> str:
@@ -91,11 +115,7 @@ def validate_public_url(url: str, *, resolver: Resolver | None = None) -> str:
     if port is not None and port not in ALLOWED_TARGET_PORTS:
         raise ValueError("Only standard HTTP and HTTPS ports are allowed")
 
-    query_keys = {
-        key.lower() for key, _ in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-    }
-    if query_keys & SENSITIVE_QUERY_KEYS:
-        raise ValueError("URL query contains credential-like fields and cannot be sent")
+    _validate_query(parsed.query)
 
     _assert_public_host(
         host,

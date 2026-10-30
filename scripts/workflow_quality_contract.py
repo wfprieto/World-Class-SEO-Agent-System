@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters")
+COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters", "security")
 CANDIDATE_REF = "${{ github.event.pull_request.head.sha || github.sha }}"
 RELEASE_REF = "${{ github.sha }}"
 DANGEROUS_ENV_EXACT = {
@@ -36,13 +36,17 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "7c48c51f8f595e7c7e28648df9a588e151fa100b8bdede5128231f2dc06165eb"
-RELEASE_CONTRACT_SHA = "0bbd415a39319a18621ee5bf726e7771afbd3fd92049013d3a23af7ea5596056"
+WORKFLOW_CONTRACT_SHA = "916a01c0f9ef457856011e02d6d4680b5b263018bf74255b30a99a145edd861f"
+RELEASE_CONTRACT_SHA = "ab35593dc70df786472653cb340a21a747955f92a5df61102019454cc5711a3f"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
     "Seal successful receipt", "Preserve trusted source-integrity validator", "Prove exact restored baseline",
     "Validate restored baseline tree at historical review boundary",
+    "Install Chromium runtime", "Run semantic and runtime test suite",
+    "Install browser test dependencies", "Run coverage gate",
+    "Lint canonical P3 profile", "Run complete static type gate",
+    "Audit declared Python dependencies",
 }
 PHASE0_BASELINE = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
 PHASE0_ROLLBACK_SHA = "a6949648241634c21ec14d1ddc64323de1d477240a652b762cd563644aef4be1"
@@ -365,7 +369,7 @@ def workflow_errors(
 ) -> list[str]:
     """Reject shallow checkout and any masked or weakened quality command."""
     coverage = (
-        "pytest -q "
+        "pytest -q --browser-security "
         + " ".join(f"--cov={target}" for target in COVERAGE_TARGETS)
         + " --cov-report=term-missing --cov-report=xml:outputs/coverage.xml"
         + " --cov-report=json:outputs/coverage.json "

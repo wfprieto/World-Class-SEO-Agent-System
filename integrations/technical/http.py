@@ -13,8 +13,8 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
+from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
 from security.url_safety import validate_public_url
-
 
 _REDIRECTS = {301, 302, 303, 307, 308}
 
@@ -65,7 +65,9 @@ class BoundedHttpClient:
         self.max_response_bytes = max_response_bytes
         self.max_redirects = max_redirects
         self.user_agent = user_agent
-        self.opener = opener or urllib.request.build_opener(_NoRedirects())
+        self.opener = opener or urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(), _NoRedirects()
+        )
 
     def get(self, url: str, **_: Any) -> HttpHop:
         """Return the final bounded response after validating every redirect hop."""
@@ -172,10 +174,7 @@ class BoundedHttpClient:
             status = int(getattr(response, "status", None) or getattr(response, "code", 0) or 0)
             headers = {str(key): str(value) for key, value in response.headers.items()}
             final_url = str(getattr(response, "url", None) or getattr(response, "geturl", lambda: safe)())
-            if final_url:
-                final_url = validate_public_url(final_url)
-            else:
-                final_url = safe
+            final_url = validate_public_url(final_url) if final_url else safe
             return HttpHop(
                 requested_url=safe,
                 final_url=final_url,

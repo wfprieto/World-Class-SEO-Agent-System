@@ -20,6 +20,7 @@ from integrations.product_proof.metadata_parser import (
     extract_robot_directives,
 )
 from integrations.product_proof.models import CrawlConfig, PageRecord, RobotsRecord
+from integrations.product_proof.robots_policy import RobotsPolicy, validate_robots_text
 from integrations.technical.http import BoundedHttpClient, HttpHop
 from security.url_safety import validate_public_url
 
@@ -107,61 +108,8 @@ class _HTMLAuditParser(HTMLParser):
             self.jsonld_parts = None
 
 
-class RobotsPolicy:
-    """Google-style longest-path matcher with least-restrictive ties."""
-
-    def __init__(self, groups: list[dict[str, Any]]) -> None:
-        self.groups = groups
-
-    @staticmethod
-    def _pattern(path: str) -> re.Pattern[str]:
-        escaped = ""
-        for char in path:
-            if char == "*":
-                escaped += ".*"
-            elif char == "$":
-                escaped += "$"
-            else:
-                escaped += re.escape(char)
-        return re.compile("^" + escaped)
-
-    @staticmethod
-    def _specificity(path: str) -> int:
-        return len(path.replace("*", "").replace("$", ""))
-
-    def allowed(self, url: str, user_agent: str = "googlebot") -> bool:
-        parsed = urllib.parse.urlsplit(url)
-        target = parsed.path or "/"
-        if parsed.query:
-            target += "?" + parsed.query
-        ua = user_agent.lower()
-        matching: list[tuple[int, dict[str, Any]]] = []
-        for group in self.groups:
-            agents = [str(value).lower() for value in group.get("user_agents", [])]
-            exact = [agent for agent in agents if agent != "*" and agent in ua]
-            if exact:
-                matching.append((max(len(agent) for agent in exact), group))
-            elif "*" in agents:
-                matching.append((0, group))
-        if not matching:
-            return True
-        most_specific = max(score for score, _ in matching)
-        selected = [group for score, group in matching if score == most_specific]
-        rules: list[tuple[int, bool]] = []
-        for group in selected:
-            for rule in group.get("rules", []):
-                path = str(rule.get("path", ""))
-                if not path:
-                    continue
-                if self._pattern(path).search(target):
-                    rules.append((self._specificity(path), rule.get("directive") == "allow"))
-        if not rules:
-            return True
-        longest = max(score for score, _ in rules)
-        return any(allow for score, allow in rules if score == longest)
-
-
 def parse_robots(text: str) -> tuple[list[dict[str, Any]], list[str], list[str]]:
+    validate_robots_text(text)
     groups: list[dict[str, Any]] = []
     sitemaps: list[str] = []
     unknown: list[str] = []
@@ -200,7 +148,9 @@ def parse_robots(text: str) -> tuple[list[dict[str, Any]], list[str], list[str]]
         key = tuple(sorted(value.lower() for value in group["user_agents"]))
         bucket = merged.setdefault(key, {"user_agents": list(key), "rules": []})
         bucket["rules"].extend(group["rules"])
-    return list(merged.values()), sitemaps, unknown
+    result = list(merged.values())
+    RobotsPolicy(result)  # Reject unsupported policy sizes before they become apparent evidence.
+    return result, sitemaps, unknown
 
 
 class SiteCrawler:

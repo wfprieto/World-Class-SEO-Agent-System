@@ -49,14 +49,17 @@
           "policy": {
             "enum": [
               "APPROVED_HOST_BOUNDED_HTTP",
+              "BOUNDED_NUMERIC_BROWSER_EGRESS",
               "CONFIGURED_LLM_ENDPOINT_BOUNDED_HTTP",
               "GOOGLE_API_BOUNDED_HTTP",
+              "ISOLATED_BROWSER_CONTEXT",
               "LEGACY_GSC_EXAMPLE",
               "NO_REDIRECT_PUBLIC_MUTATION",
               "PUBLIC_BROWSER_REQUEST_GUARD",
               "PUBLIC_RENDERED_PAGE",
               "PUBLIC_URL_SAFETY",
-              "PUBLIC_WEB_EVERY_HOP"
+              "PUBLIC_WEB_EVERY_HOP",
+              "VETTED_NUMERIC_HTTP_TLS"
             ]
           },
           "delegates_to": {"type": "string", "minLength": 3}

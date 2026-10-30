@@ -10,6 +10,14 @@ This project follows semantic versioning where possible:
 
 ## [Unreleased]
 
+### Security and runtime maintenance
+
+- Shared public-address connection binding for HTTP and isolated Chromium, with verified TLS identity, bounded egress, and truthful optional-renderer fallback.
+- Deterministic bounded robots matching, one-pass bounded sitemap validation, and bounded SERP imports with incremental graph degree accounting.
+- Whole-report consent signal/region projection and authoritative workflow provenance validation.
+- Actual Chromium, TLS, proxy, screenshot, accessibility, and adverse-state certification in the supported Python/OS matrix; see [browser and input safety](docs/BROWSER-AND-INPUT-SAFETY.md).
+- Reconciled setup-python 7.1.0 and pip-tools 7.6.2 updates without reverting newer rollback or SEO evidence safeguards.
+
 ### Added
 
 - Registry-derived root CLI help, a deterministic fixture-first onboarding path, and regression coverage for every command family.

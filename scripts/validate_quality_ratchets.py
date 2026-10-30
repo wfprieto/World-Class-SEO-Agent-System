@@ -13,14 +13,15 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from scripts.workflow_quality_contract import COVERAGE_TARGETS
     from scripts.workflow_quality_contract import workflow_errors as _workflow_errors
 except ModuleNotFoundError:
-    from workflow_quality_contract import workflow_errors as _workflow_errors  # type: ignore[no-redef]  # noqa: I001
+    from workflow_quality_contract import COVERAGE_TARGETS, workflow_errors as _workflow_errors  # type: ignore[no-redef]  # noqa: I001
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "governance" / "code-quality-ratchet.json"
 SQUASH_EVIDENCE_TAG = "remediation-evidence-v1"
-PACKAGES = ("runtime", "adapters", "integrations", "seoctl", "scripts")
+PACKAGES = ("runtime", "adapters", "integrations", "seoctl", "scripts", "security")
 RUFF_RULES = ("E4", "E7", "E9", "F", "I", "B", "UP", "C4", "SIM", "C90")
 FILE_DEFAULTS = {"max_lines": 400, "max_complexity_total": 180, "max_missing_annotations": 0}
 FUNCTION_DEFAULTS = {"max_span": 75, "max_complexity": 15, "max_missing_annotations": 0}
@@ -35,6 +36,8 @@ MINIMUM_CRITICAL_COVERAGE = {
     "runtime/executor.py": 96.0, "runtime/llm.py": 64.0,
     "runtime/structured_output.py": 89.0, "runtime/tools.py": 83.0,
     "runtime/workflow_runner.py": 93.0,
+    "security/url_safety.py": 84.0, "security/pinned_http.py": 95.0,
+    "security/browser_proxy.py": 90.0, "security/browser_capture.py": 100.0,
 }
 def _complexity(node: ast.AST) -> int:
     score = 1
@@ -194,12 +197,15 @@ def _monotonic_exception_errors(
         )
     return errors
 def _monotonic_contract_errors(previous: dict[str, Any], current: dict[str, Any]) -> list[str]:
-    """Reject contract edits that add or raise debt allowances."""
+    """Reject debt growth; scope may expand but cannot discard an existing package."""
     errors = _monotonic_exception_errors(previous, current, "file_exceptions", tuple(key for _, key in FILE_METRICS))
     errors += _monotonic_exception_errors(previous, current, "function_exceptions", tuple(key for _, key in FUNCTION_METRICS))
-    for field in ("schema_version", "packages", "file_defaults", "function_defaults"):
+    for field in ("schema_version", "file_defaults", "function_defaults"):
         if current.get(field) != previous.get(field):
             errors.append(f"quality ratchet cannot rewrite immutable policy field: {field}")
+    # Scope may only expand; validate() still requires the exact canonical inventory.
+    if not set(previous.get("packages", ())).issubset(current.get("packages", ())):
+        errors.append("quality ratchet cannot remove canonical package scope")
     old_ruff = previous.get("ruff", {}).get("violation_counts", {})
     new_ruff = current.get("ruff", {}).get("violation_counts", {})
     for key, count in new_ruff.items():
@@ -263,6 +269,8 @@ def _repository_setting_errors(root: Path, contract: dict[str, Any]) -> list[str
         errors.append("mypy must analyze imported bodies and untyped function bodies")
     coverage = contract["coverage"]
     total_floor = float(pyproject["tool"]["coverage"]["report"]["fail_under"])
+    if not set(COVERAGE_TARGETS).issubset(pyproject["tool"]["coverage"]["run"]["source"]):
+        errors.append("coverage source inventory must include every canonical target")
     if total_floor < float(coverage["repository_floor"]):
         errors.append("repository coverage floor is weaker than the quality contract")
     risk = pyproject["tool"].get("wcseo", {}).get("risk_coverage", {})

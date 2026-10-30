@@ -16,6 +16,8 @@ Thumbs.db
 
 # Dependencies and build outputs
 node_modules/
+.venv/
+*.egg-info/
 __pycache__/
 .pytest_cache/
 *.py[cod]
@@ -23,10 +25,14 @@ dist/
 build/
 .next/
 coverage/
+.coverage
+.coverage.*
+htmlcov/
 
 # Local audit outputs
 outputs/
 reports/generated/
+.wcbs/runs/
 tmp/
 
 # Local SEO evidence cache and drift database (may contain client data)

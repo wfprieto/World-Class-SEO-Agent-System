@@ -18,6 +18,13 @@ _PRIVATE_HOSTS = {
 }
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--browser-security", action="store_true", default=False,
+        help="Require actual Chromium certification against controlled local fixtures",
+    )
+
+
 @pytest.fixture(autouse=True)
 def hermetic_dns(monkeypatch: pytest.MonkeyPatch):
     """Prevent accidental DNS egress while preserving public/private address tests."""

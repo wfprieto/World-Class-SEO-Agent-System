@@ -19,6 +19,18 @@ EXPECTED_NETWORK_TRANSPORTS: dict[str, dict[str, str]] = {
         "policy": "PUBLIC_URL_SAFETY",
         "delegates_to": "security.url_safety.validate_public_url",
     },
+    "security/pinned_http.py": {
+        "policy": "VETTED_NUMERIC_HTTP_TLS",
+        "delegates_to": "security.url_safety.resolve_public_addresses",
+    },
+    "security/browser_proxy.py": {
+        "policy": "BOUNDED_NUMERIC_BROWSER_EGRESS",
+        "delegates_to": "security.pinned_http.public_connection",
+    },
+    "security/browser_capture.py": {
+        "policy": "ISOLATED_BROWSER_CONTEXT",
+        "delegates_to": "security.browser_proxy.BrowserEgress",
+    },
     "integrations/authority_media/transport.py": {
         "policy": "APPROVED_HOST_BOUNDED_HTTP",
         "delegates_to": "integrations.authority_media.transport.BoundedTransport",

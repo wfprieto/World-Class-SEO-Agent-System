@@ -1,12 +1,8 @@
 """SERP-overlap topic clustering (stdlib only, deterministic).
 
-Groups keywords by how search engines actually rank them (shared top-10 URLs), not by
-text similarity. Two keywords sharing many top-10 results serve the same intent and
-usually belong in one cluster. Emits hub-and-spoke architecture and an internal-link
-matrix for the `serp-overlap-cluster` skill.
-
-Uses only observed SERP results supplied by the caller. It never fabricates rankings,
-volumes, intent, CPC or competitor data, and never calls a provider.
+Groups supplied top-10 results by URL overlap, not text similarity. Emits deterministic
+hub-and-spoke clusters and an internal-link matrix for `serp-overlap-cluster`.
+Never fabricates rankings, volumes, intent, CPC or competitor data or calls a provider.
 
 Thresholds (shared top-10 URLs): >= strong (default 4) or exactly 3 => same cluster; <= 2 => separate.
 Similarity groups intent. It is not proof that a page will rank.
@@ -20,12 +16,12 @@ import argparse
 import json
 from itertools import combinations
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-
-def load_json(path: str) -> Any:
-    """Read JSON tolerating a UTF-8 BOM (common in Windows exports)."""
-    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+if TYPE_CHECKING or __package__:
+    from scripts.serp_input_bounds import bounded_result_sets, check_edge_count, load_json
+else:  # Preserve the documented `python scripts/serp_cluster.py` entry point.
+    from serp_input_bounds import bounded_result_sets, check_edge_count, load_json
 
 
 class _DisjointSet:
@@ -47,25 +43,25 @@ def cluster(serps: dict[str, list[str]], volumes: dict[str, float] | None = None
     """Cluster keywords by shared top-10 URLs. Deterministic for identical input."""
     if not isinstance(serps, dict):
         raise TypeError("serps must be a mapping of keyword -> list of result URLs")
-    keywords = sorted(serps)  # sorted => deterministic ordering
-    sets = {k: {u for u in (serps.get(k) or []) if u} for k in keywords}
-
+    sets = bounded_result_sets(serps)
+    keywords = sorted(sets)  # sorted => deterministic ordering
     disjoint = _DisjointSet(keywords)
     edges: list[dict[str, Any]] = []
+    connectivity = dict.fromkeys(keywords, 0)
     for a, b in combinations(keywords, 2):
         shared = len(sets[a] & sets[b])
         if shared >= strong or shared == 3:
+            check_edge_count(len(edges))
             disjoint.union(a, b)
             edges.append({"a": a, "b": b, "shared": shared})
+            connectivity[a] += 1
+            connectivity[b] += 1
 
     groups: dict[str, list[str]] = {}
     for keyword in keywords:
         groups.setdefault(disjoint.find(keyword), []).append(keyword)
 
     volumes = volumes or {}
-    connectivity = {
-        k: sum(1 for e in edges if k in (e["a"], e["b"])) for k in keywords
-    }
     clusters: list[dict[str, Any]] = []
     for members in groups.values():
         members = sorted(members)

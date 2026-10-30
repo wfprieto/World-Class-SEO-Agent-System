@@ -46,15 +46,29 @@ def _project_version(pyproject: Path) -> str:
     return str(tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"])
 
 
+def _resolution_versions(root: Path) -> dict[str, str]:
+    pins = _locked_versions(root / "requirements-dev.txt")
+    for requirement, optional_group in _declared_dependencies(root / "pyproject.toml"):
+        if optional_group is None and _normalized(requirement.name) not in pins:
+            raise ValueError(
+                f"required dependency is not resolved in requirements-dev.txt: {requirement.name}"
+            )
+    optional_lock = root / "requirements-browser.txt"
+    if optional_lock.is_file():
+        for name, version in _locked_versions(optional_lock).items():
+            if name in pins and pins[name] != version:
+                raise ValueError(f"conflicting dependency lock pins: {name}=={pins[name]} != {version}")
+            pins[name] = version
+    return pins
+
+
 def build_sbom(root: Path = ROOT) -> dict:
     pyproject = root / "pyproject.toml"
-    pins = _locked_versions(root / "requirements-dev.txt")
+    pins = _resolution_versions(root)
     components = []
     for requirement, optional_group in _declared_dependencies(pyproject):
         name = requirement.name
         version = pins.get(_normalized(name))
-        if optional_group is None and version is None:
-            raise ValueError(f"required dependency is not resolved in requirements-dev.txt: {name}")
         component: dict[str, Any] = {
             "type": "library",
             "name": name,
