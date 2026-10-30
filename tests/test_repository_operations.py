@@ -4,6 +4,7 @@ import copy
 import json
 import shutil
 from collections.abc import Callable
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ import pytest
 from scripts.validate_repository_operations import validate
 
 ROOT = Path(__file__).resolve().parents[1]
+AS_OF = date(2026, 10, 29)
 Mutation = Callable[[dict[str, Any]], None]
 
 
@@ -34,11 +36,17 @@ def _mutate(tmp_path: Path, mutation: Mutation) -> list[str]:
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     mutation(contract)
     contract_path.write_text(json.dumps(contract, indent=2), encoding="utf-8")
-    return validate(root)
+    return validate(root, as_of=AS_OF)
 
 
 def test_repository_operations_contract_is_valid() -> None:
-    assert validate() == []
+    assert validate(as_of=AS_OF) == []
+
+
+def test_next_action_due_is_valid_on_date_and_overdue_after() -> None:
+    assert validate(as_of=date(2026, 11, 29)) == []
+    errors = validate(as_of=date(2026, 11, 30))
+    assert any("next_action_due is overdue" in error for error in errors)
 
 
 def test_contract_requires_exactly_seven_canonical_paths(tmp_path: Path) -> None:

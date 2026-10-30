@@ -41,6 +41,14 @@ def test_current_provider_verified_private_intake_is_truthful() -> None:
     assert validate(as_of=AS_OF) == []
 
 
+def test_provider_attestation_review_is_valid_through_due_date_and_expires_after() -> None:
+    assert validate(as_of=date(2027, 1, 31)) == []
+    assert any(
+        "provider attestation review is overdue" in error
+        for error in validate(as_of=date(2027, 2, 1))
+    )
+
+
 def test_well_formed_but_wrong_provider_attestation_is_rejected(tmp_path: Path) -> None:
     root = _copy_surface(tmp_path)
     wrong = "gmail-profile-sha256:" + ("f" * 64)

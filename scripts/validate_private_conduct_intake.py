@@ -151,8 +151,7 @@ def _ready_contract_errors(contract: dict[str, Any]) -> list[str]:
 
 
 def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
-    """Validate static blocked state; ``as_of`` is retained for caller compatibility."""
-    del as_of
+    """Validate provider-bound readiness and its time-bounded review obligation."""
     try:
         contract = _load(root / CONTRACT)
         schema = _load(root / SCHEMA)
@@ -160,6 +159,13 @@ def validate(root: Path = ROOT, *, as_of: date | None = None) -> list[str]:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return [str(exc)]
     errors = _schema_errors(schema, contract)
+    review_due = contract.get("review_due")
+    if isinstance(review_due, str):
+        try:
+            if date.fromisoformat(review_due) < (as_of or date.today()):
+                errors.append("private conduct intake provider attestation review is overdue")
+        except ValueError:
+            pass  # The schema reports malformed dates.
     if _string_set(contract.get("prohibited_repository_data")) != EXPECTED_PROHIBITED_DATA:
         errors.append("private intake must preserve the exact prohibited repository-data set")
     errors.extend(_activation_requirement_errors(contract))
