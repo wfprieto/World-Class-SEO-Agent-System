@@ -15,6 +15,8 @@ from typing import Any, Protocol
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
+from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
+
 logger = logging.getLogger(__name__)
 _MAX_RESPONSE_BYTES = 10_000_000
 
@@ -157,7 +159,10 @@ class OpenAICompatibleClient:
         if not self.api_key:
             variable = "OPENAI_COMPATIBLE_API_KEY" if custom else "OPENAI_API_KEY"
             raise LLMConfigurationError(f"{variable} is required for this endpoint.")
-        self._opener = opener or urllib.request.build_opener(_RejectCredentialRedirects())
+        self._opener = opener or urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(),
+            _RejectCredentialRedirects(),
+        )
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         payload = {
@@ -227,7 +232,10 @@ class AnthropicClient:
         self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"
         if not self.api_key:
             raise LLMConfigurationError("ANTHROPIC_API_KEY is required for the Anthropic client.")
-        self._opener = opener or urllib.request.build_opener(_RejectCredentialRedirects())
+        self._opener = opener or urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(),
+            _RejectCredentialRedirects(),
+        )
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         system = "\n\n".join(

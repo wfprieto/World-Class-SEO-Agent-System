@@ -14,6 +14,9 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
   release:
     permissions:

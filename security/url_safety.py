@@ -9,10 +9,11 @@ from __future__ import annotations
 import ipaddress
 import re
 import socket
+import time
 import urllib.parse
 from collections.abc import Callable
 
-from sensitive_data import SENSITIVE_QUERY_KEYS
+from sensitive_data import query_contains_credentials
 
 ALLOWED_SCHEMES = frozenset({"http", "https"})
 ALLOWED_TARGET_PORTS = frozenset({80, 443})
@@ -94,8 +95,7 @@ def _assert_public_host(host: str, port: int, resolver: Resolver) -> None:
 
 
 def _validate_query(query: str) -> None:
-    query_keys = {key.lower() for key, _ in urllib.parse.parse_qsl(query, keep_blank_values=True)}
-    if query_keys & SENSITIVE_QUERY_KEYS:
+    if query_contains_credentials(query):
         raise ValueError("URL query contains credential-like fields and cannot be sent")
 
 
@@ -127,6 +127,45 @@ def validate_public_url(url: str, *, resolver: Resolver | None = None) -> str:
     display_host = f"[{host}]" if ":" in host else host
     netloc = display_host if port is None else f"{display_host}:{port}"
     return urllib.parse.urlunsplit((scheme, netloc, parsed.path or "/", parsed.query, ""))
+
+
+class URLClassificationLimit(ValueError):
+    """Classification was not completed; this does not classify a URL unsafe."""
+
+
+class PublicURLClassificationBudget:
+    """Bound sitemap DNS work while validating every URL's own syntax/privacy."""
+
+    def __init__(self, max_hosts: int = 64, timeout: float = 5) -> None:
+        self.max_hosts = max_hosts
+        self.expires = time.monotonic() + timeout
+        self.hosts: set[tuple[str, int]] = set()
+        self.cache: dict[tuple[str, int], list[tuple]] = {}
+
+    def _check_time(self) -> None:
+        if time.monotonic() >= self.expires:
+            raise URLClassificationLimit('sitemap DNS classification time ceiling reached')
+
+    def _resolve(self, host: str, port: int, **_: object) -> list[tuple]:
+        self._check_time()
+        key = (host, port)
+        if key not in self.cache:
+            try:
+                self.cache[key] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+            except socket.gaierror:
+                self.cache[key] = []
+        self._check_time()
+        return self.cache[key]
+
+    def validate(self, url: str) -> str:
+        self._check_time()
+        _, scheme, host, port = _parse_target(url)
+        key = (host, port or (443 if scheme == 'https' else 80))
+        if key not in self.hosts:
+            if len(self.hosts) >= self.max_hosts:
+                raise URLClassificationLimit('sitemap DNS classification host ceiling reached')
+            self.hosts.add(key)
+        return validate_public_url(url, resolver=self._resolve)
 
 
 def host_is_public(host: str, *, resolver: Resolver | None = None) -> bool:

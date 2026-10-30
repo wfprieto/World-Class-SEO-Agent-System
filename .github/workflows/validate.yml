@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
   validation_matrix:
     name: validate (${{ matrix.os }}, ${{ matrix.python-version }})
@@ -75,7 +78,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Compile Python sources
-        run: python -m compileall -q .
+        run: python -X "pycache_prefix=${{ runner.temp }}/wcseo-compile-cache" -m compileall -q .
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -268,7 +271,7 @@ jobs:
       - name: Run semantic and runtime test suite
         id: pytest
         continue-on-error: true
-        run: pytest -q --browser-security --junitxml=pytest-results.xml
+        run: python -B -m pytest -q --browser-security --junitxml=pytest-results.xml
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -542,7 +545,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run coverage gate
-        run: pytest -q --browser-security --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov=security --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
+        run: python -B -m pytest -q --browser-security --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov=security --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -745,7 +748,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
       - name: Run baseline improvement-loop regression
-        run: python -m pytest -q tests/test_improvement_loop.py
+        run: python -B -m pytest -q tests/test_improvement_loop.py
       - name: Prove exact restored baseline
         shell: /usr/bin/pwsh -command ". '{0}'"
         run: |-
@@ -858,7 +861,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'restored-baseline proof did not return structured PASS' }
       - name: Run baseline improvement-loop regression
-        run: python -m pytest -q tests/test_improvement_loop.py
+        run: python -B -m pytest -q tests/test_improvement_loop.py
       - name: Prove exact restored baseline
         shell: /usr/bin/pwsh -command ". '{0}'"
         run: |-

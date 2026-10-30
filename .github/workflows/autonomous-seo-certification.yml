@@ -10,6 +10,9 @@ permissions:
   issues: read
   pull-requests: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 jobs:
   canonical-validation:
     name: canonical-validation-prerequisite
@@ -106,21 +109,31 @@ jobs:
           $raw = & '${{ steps.trusted.outputs.python }}' -I -E -S "$env:RUNNER_TEMP/validate_source_integrity.py" --root $env:GITHUB_WORKSPACE --expected-sha '${{ steps.rollback.outputs.baseline }}' --proof-mode restored-baseline --allow-untracked autonomous-seo-p0-rollback-receipt.json;
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'post-install restored autonomous baseline proof failed' }
-      - name: Validate restored baseline repository at historical review boundary
+      - name: Validate restored baseline repository with scoped freshness
         shell: pwsh
         run: |-
-          $baselineValidator = "$env:RUNNER_TEMP/baseline_validate_seo_claims.py"
-          Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination $baselineValidator
-          try {
-            Copy-Item -LiteralPath "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" -Destination scripts/validate_seo_claims.py
-            $env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator
-            $env:WCSEO_ROLLBACK_EXPECTED_SHA = '${{ steps.rollback.outputs.baseline }}'
+          $reviewModes = @(& '${{ steps.trusted.outputs.python }}' -I -E -S "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" --review-mode '${{ steps.rollback.outputs.baseline }}')
+          $modeExit = $LASTEXITCODE
+          if ($modeExit -ne 0 -or $reviewModes.Count -ne 1 -or $reviewModes[0] -cnotin @('APPROVED_HISTORICAL', 'CURRENT_FRESHNESS')) { throw 'rollback freshness selector failed' }
+          $reviewMode = $reviewModes[0]
+          Write-Output "Rollback-only validation: $reviewMode"
+          if ($reviewMode -ceq 'CURRENT_FRESHNESS') {
             ./scripts/validate-repository.ps1
-            if ($LASTEXITCODE -ne 0) { throw "historical autonomous baseline validation failed" }
-          } finally {
-            Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py
-            Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue
-            Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue
+            if ($LASTEXITCODE -ne 0) { throw "current-freshness autonomous baseline validation failed" }
+          } else {
+            $baselineValidator = "$env:RUNNER_TEMP/baseline_validate_seo_claims.py"
+            Copy-Item -LiteralPath scripts/validate_seo_claims.py -Destination $baselineValidator
+            try {
+              Copy-Item -LiteralPath "$env:RUNNER_TEMP/validate_historical_rollback_claims.py" -Destination scripts/validate_seo_claims.py
+              $env:WCSEO_BASELINE_CLAIM_VALIDATOR = $baselineValidator
+              $env:WCSEO_ROLLBACK_EXPECTED_SHA = '${{ steps.rollback.outputs.baseline }}'
+              ./scripts/validate-repository.ps1
+              if ($LASTEXITCODE -ne 0) { throw "historical autonomous baseline validation failed" }
+            } finally {
+              Copy-Item -LiteralPath $baselineValidator -Destination scripts/validate_seo_claims.py
+              Remove-Item Env:WCSEO_BASELINE_CLAIM_VALIDATOR -ErrorAction SilentlyContinue
+              Remove-Item Env:WCSEO_ROLLBACK_EXPECTED_SHA -ErrorAction SilentlyContinue
+            }
           }
         env:
           # The restored baseline invokes validators that import the repository's scripts namespace.

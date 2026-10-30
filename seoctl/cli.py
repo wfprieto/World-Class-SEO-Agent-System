@@ -11,6 +11,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, cast
 
+from runtime.public_results import PublicSession, public_result_mapping
 from seoctl.result_contract import exit_code_for_status as exit_code_for_status
 from seoctl.result_contract import normalize_error
 
@@ -42,6 +43,8 @@ def _json(path: str) -> Any:
 
 
 def _plain(value: Any) -> Any:
+    if isinstance(value, PublicSession):
+        return value
     if is_dataclass(value):
         return asdict(cast(Any, value))
     if hasattr(value, "to_dict") and callable(value.to_dict):
@@ -57,13 +60,13 @@ def _plain(value: Any) -> Any:
 
 def envelope(command: str, status: str, data: Any = None, *, warnings: list[str] | None = None,
              error: dict[str, str] | None = None) -> dict[str, Any]:
-    return {
+    return public_result_mapping({
         "command": command,
         "status": status,
         "data": _plain(data),
         "warnings": warnings or [],
         "error": normalize_error(status, error),
-    }
+    })
 
 
 def _system_route(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
@@ -158,7 +161,7 @@ def _content_brief_decision(args: argparse.Namespace) -> tuple[dict[str, Any], i
     result = brief_decision(
         _json(args.relevance),
         _json(args.serp),
-        [str(item) for item in gains],
+        gains,
         conditions_resolved=args.conditions_resolved,
         selected_intent=args.selected_intent,
     )

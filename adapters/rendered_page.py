@@ -23,7 +23,6 @@ Install rendering: pip install playwright && playwright install chromium
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from typing import Any
 
@@ -37,6 +36,7 @@ from adapters.url_safety import (
 )
 from integrations.technical.http import BoundedHttpClient
 from security.browser_capture import guard_request, render_browser
+from security.html_analysis import html_facts
 
 _SPA_MARKERS = ('id="root"', 'id="app"', 'id="__next"', "data-reactroot", "ng-version")
 _HTTP_TIMEOUT = 30
@@ -74,8 +74,7 @@ def is_spa(raw_html: str) -> bool:
     lowered = raw_html.lower()
     if not any(marker in lowered for marker in _SPA_MARKERS):
         return False
-    text = re.sub(r"<script[\s\S]*?</script>", " ", raw_html, flags=re.IGNORECASE)
-    text = re.sub(r"<[^>]+>", " ", text)
+    text = ' '.join(html_facts(raw_html).text)
     return len(text.split()) < _SPA_TEXT_WORD_FLOOR
 
 
@@ -85,6 +84,19 @@ def _playwright_available() -> bool:
     except Exception:  # noqa: BLE001
         return False
     return True
+
+
+def _raw_evidence(
+    url: str, raw_html: str, status: int | None, headers: dict[str, str], warnings: list[str]
+) -> dict[str, Any]:
+    try:
+        spa: bool | None = is_spa(raw_html)
+    except ValueError as exc:
+        spa = None
+        warnings.append(f"analysis_failed: {sanitize_text_for_evidence(exc)}; SPA detection is Not Run.")
+    data = blank_evidence(url, raw_html, status, headers, is_spa=False)
+    data["is_spa"] = spa
+    return data
 
 
 def dependency_status() -> dict[str, str]:
@@ -145,14 +157,12 @@ def fetch(
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"{FETCH_FAILED}: {sanitize_text_for_evidence(exc)}")
 
-    data = blank_evidence(
-        safe_url, raw_html, status, headers, is_spa=is_spa(raw_html)
-    )
+    data = _raw_evidence(safe_url, raw_html, status, headers, warnings)
     wants_render = mode == "always" or (mode == "auto" and data["is_spa"])
     if not wants_render:
         return AdapterResult(
             source="rendered_page",
-            status="ok" if raw_html else "partial",
+            status="ok" if raw_html and not warnings else "partial",
             data=data,
             warnings=warnings,
         )

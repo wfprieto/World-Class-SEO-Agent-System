@@ -36,14 +36,15 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "916a01c0f9ef457856011e02d6d4680b5b263018bf74255b30a99a145edd861f"
-RELEASE_CONTRACT_SHA = "ab35593dc70df786472653cb340a21a747955f92a5df61102019454cc5711a3f"
+WORKFLOW_CONTRACT_SHA = "fa757d60ab95cb2db40d474cbe79b958c675e5587e78515ce9abcb5315cf1412"
+RELEASE_CONTRACT_SHA = "a1ce6894d773f0b959d60131227967ae36dacac1b1880f148c61d0d8c778d3d4"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
     "Seal successful receipt", "Preserve trusted source-integrity validator", "Prove exact restored baseline",
     "Validate restored baseline tree at historical review boundary",
     "Install Chromium runtime", "Run semantic and runtime test suite",
+    "Compile Python sources",
     "Install browser test dependencies", "Run coverage gate",
     "Lint canonical P3 profile", "Run complete static type gate",
     "Audit declared Python dependencies",
@@ -85,7 +86,7 @@ def _jobs(workflow: str) -> tuple[dict[str, dict[str, Any]], list[str]]:
     errors = []
     if isinstance(run_defaults, dict) and set(run_defaults) & {"shell", "working-directory"}:
         errors.append("CI workflow must not inherit shell or working-directory defaults")
-    dangerous_env = _dangerous_env_keys(payload)
+    dangerous_env = _dangerous_env_keys(payload, allow_no_bytecode=True)
     if dangerous_env:
         errors.append(
             "CI workflow must not inherit execution-altering environment variables: "
@@ -101,12 +102,14 @@ def _steps(job: dict[str, Any]) -> list[dict[str, Any]]:
     value = job.get("steps", [])
     return [step for step in value if isinstance(step, dict)] if isinstance(value, list) else []
 
-def _dangerous_env_keys(owner: dict[str, Any]) -> list[str]:
+def _dangerous_env_keys(owner: dict[str, Any], *, allow_no_bytecode: bool = False) -> list[str]:
     env = owner.get("env", {})
     if not isinstance(env, dict):
         return ["<invalid-env-mapping>"] if env is not None else []
     dangerous = []
     for key in env:
+        if allow_no_bytecode and (key, env[key]) == ("PYTHONDONTWRITEBYTECODE", "1"):
+            continue
         normalized = str(key).upper()
         if normalized in DANGEROUS_ENV_EXACT or normalized.startswith(
             DANGEROUS_ENV_PREFIXES
@@ -331,6 +334,7 @@ def _project_contract_step(step: Any, fields: tuple[str, ...]) -> dict[str, Any]
         projected["with"] = inputs
     if step.get("name") in CONTRACT_RUN_STEPS:
         projected["run"] = step.get("run")
+        projected["run_contract"] = step
     return projected
 
 def _workflow_contract_errors(workflow: str, expected_sha: str) -> list[str]:
@@ -354,6 +358,7 @@ def _workflow_contract_errors(workflow: str, expected_sha: str) -> list[str]:
         }
     projection = {
         "trigger": payload.get("on", payload.get(True)),
+        "env": payload.get("env"),
         "permissions": payload.get("permissions"),
         "concurrency": payload.get("concurrency"),
         "jobs": jobs,
@@ -369,7 +374,7 @@ def workflow_errors(
 ) -> list[str]:
     """Reject shallow checkout and any masked or weakened quality command."""
     coverage = (
-        "pytest -q --browser-security "
+        "python -B -m pytest -q --browser-security "
         + " ".join(f"--cov={target}" for target in COVERAGE_TARGETS)
         + " --cov-report=term-missing --cov-report=xml:outputs/coverage.xml"
         + " --cov-report=json:outputs/coverage.json "

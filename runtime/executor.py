@@ -12,8 +12,10 @@ from runtime.capability_resolver import CapabilityResolver
 from runtime.execution_limits import ExecutionLimits
 from runtime.llm import LLMClient, LLMMessage
 from runtime.memory import InMemoryStore, MemoryStore
+from runtime.public_results import public_result_mapping
 from runtime.routing import RouteResult
 from runtime.run_budget import RunBudget
+from runtime.safe_paths import resolve_repository_path
 from runtime.state import Handoff, SessionState
 from runtime.structured_output import StructuredOutputResult, StructuredOutputService
 from runtime.tools import ToolDispatcher, ToolRequest
@@ -55,12 +57,12 @@ class AgentExecutor:
         tool_dispatcher: ToolDispatcher | None = None,
         memory: MemoryStore | None = None,
     ) -> None:
-        self.repo_root = repo_root
         self.llm_client = llm_client
         self.tool_dispatcher = tool_dispatcher or ToolDispatcher()
         self.memory = memory or InMemoryStore()
         self.capabilities = CapabilityResolver(repo_root)
-        self.structured = StructuredOutputService(repo_root)
+        self.repo_root = self.capabilities.repo_root
+        self.structured = StructuredOutputService(self.repo_root)
 
     async def execute_agent(
         self,
@@ -135,11 +137,12 @@ class AgentExecutor:
         session: SessionState,
         route: RouteResult,
         tool_requests: list[ToolRequest] | None = None,
+        *, limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
         """Backward-compatible single-agent execution for debugging and comparison."""
         tools = await self.tool_dispatcher.dispatch_many(tool_requests or [])
         budget = RunBudget(
-            ExecutionLimits(
+            limits or ExecutionLimits(
                 max_nodes=1,
                 max_llm_calls=2,
                 max_parallel_agents=1,
@@ -176,16 +179,21 @@ class AgentExecutor:
         }
         session.agent_outputs.append(agent_output)
         session.handoffs.extend(handoffs)
-        return payload
+        return public_result_mapping(payload)
 
     async def stream(
         self,
         session: SessionState,
         route: RouteResult,
         tool_requests: list[ToolRequest] | None = None,
+        *, limits: ExecutionLimits | None = None,
     ) -> AsyncIterator[str]:
         """Debug-only lead-agent streaming; coordinated workflows return structured artifacts."""
         tools = await self.tool_dispatcher.dispatch_many(tool_requests or [])
+        stream_input = {"request": session.request, "business_context": session.business_context.__dict__,
+                        "tools": [tool.to_dict() for tool in tools]}
+        if public_result_mapping(stream_input) != stream_input:
+            raise ValueError("Raw debug streaming refuses sensitive input; use structured execution.")
         context = self.capabilities.load_context(route.lead_agent)
         messages = self._messages_for_agent(
             session=session,
@@ -197,6 +205,10 @@ class AgentExecutor:
             role="lead-debug-stream",
             capability_context=context,
         )
+        budget = RunBudget(limits or ExecutionLimits())
+        budget.reserve_node()
+        if getattr(self.llm_client, "provider", "") != "echo":
+            budget.reserve_model_call(self.llm_client, messages)
         async for chunk in self.llm_client.stream(messages):
             yield chunk
 
@@ -205,8 +217,9 @@ class AgentExecutor:
         session: SessionState,
         route: RouteResult,
         tool_requests: list[ToolRequest] | None = None,
+        *, limits: ExecutionLimits | None = None,
     ) -> dict[str, Any]:
-        return asyncio.run(self.execute(session, route, tool_requests))
+        return asyncio.run(self.execute(session, route, tool_requests, limits=limits))
 
     def _messages_for_agent(
         self,
@@ -275,7 +288,7 @@ class AgentExecutor:
         ]
 
     def _read(self, relative_path: str) -> str:
-        path = self.repo_root / relative_path
+        path = resolve_repository_path(self.repo_root, relative_path, must_exist=False)
         return path.read_text(encoding="utf-8") if path.exists() else ""
 
     def _failure_output(

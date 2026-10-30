@@ -1,7 +1,5 @@
 """Bounded same-host crawler and Google robots.txt evaluator.
-
-The crawler creates one canonical crawl dataset. Downstream rules consume this dataset
-instead of independently refetching the site.
+Downstream rules consume one canonical dataset instead of refetching the site.
 """
 
 from __future__ import annotations
@@ -14,6 +12,7 @@ from collections import deque
 from html.parser import HTMLParser
 from typing import Any, Callable
 
+import integrations.product_proof.url_evidence_bounds as url_bounds
 from integrations.product_proof.link_extractor import extract_link_evidence
 from integrations.product_proof.metadata_parser import (
     extract_head_metadata,
@@ -178,6 +177,7 @@ class SiteCrawler:
 
     @staticmethod
     def _normalized(url: str) -> str:
+        url_bounds.check_url_length(url)
         parsed = urllib.parse.urlsplit(url)
         return urllib.parse.urlunsplit((parsed.scheme.lower(), parsed.netloc.lower(), parsed.path or "/", parsed.query, ""))
 
@@ -197,7 +197,8 @@ class SiteCrawler:
             except json.JSONDecodeError: continue
         return sorted(output)
 
-    def _page(self, url: str, depth: int, root_host: str) -> PageRecord:
+    def _page(self, url: str, depth: int, root_host: str, total_budget: url_bounds.URLBudget | None = None) -> PageRecord:
+        budget = url_bounds.URLBudget(parent=total_budget)
         hop = self.http.get(url)
         content_type = self._header(hop.headers, "content-type")
         html_like = not content_type or any(token in content_type.lower() for token in ("text/html", "application/xhtml+xml"))
@@ -208,12 +209,11 @@ class SiteCrawler:
             text = self._decode(hop)
             try: parser.feed(text)
             except Exception as exc: errors.append(f"HTML parse warning: {type(exc).__name__}")
-        links = extract_link_evidence(parser.links, hop.final_url, root_host, self._normalized)
-        assets = sorted({self._normalized(urllib.parse.urljoin(hop.final_url, value)) for value in parser.assets if urllib.parse.urlsplit(urllib.parse.urljoin(hop.final_url, value)).scheme in {"http", "https"}})
+        links = extract_link_evidence(parser.links, hop.final_url, root_host, self._normalized, budget)
+        assets, images = url_bounds.extract_media_evidence(parser.assets, parser.images, hop.final_url, self._normalized, budget)
         robots_values = extract_robot_directives(parser.metas)
         head = extract_head_metadata(parser.metas, content_type)
         x_robots = self._header(hop.headers, "x-robots-tag")
-        images = [{"src": self._normalized(urllib.parse.urljoin(hop.final_url, image.get("src", ""))) if image.get("src", "").strip() else None, "loading": image.get("loading") or None, "fetchpriority": image.get("fetchpriority") or None, "width": image.get("width") or None, "height": image.get("height") or None, "alt_present": "alt" in image, "position": index} for index, image in enumerate(parser.images)]
         visible_text = " ".join(parser.text_parts)
         title = " ".join(parser.title_parts).strip() or None
         soft = bool(200 <= hop.status_code < 300 and (_SOFT_404.search((title or "") + " " + visible_text[:2000]) or len(visible_text.strip()) < 40))
@@ -230,11 +230,12 @@ class SiteCrawler:
             return RobotsRecord(host=host, robots_url=url, status_code=0, elapsed_ms=0, size_bytes=0, groups=[], sitemaps=[], unknown_directives=[], errors=[f"{type(exc).__name__}: {str(exc)[:300]}"])
 
     def crawl(self, start_url: str) -> dict[str, Any]:
+        total_budget = url_bounds.URLBudget(url_bounds.CRAWL_URL_CHARS)
         safe = self.url_validator(start_url); start = self._normalized(safe); parsed = urllib.parse.urlsplit(start); root_host = parsed.hostname or ""; root_netloc = parsed.netloc
         queue: deque[tuple[str, int]] = deque([(start, 0)]); enqueued = {start}; pages: list[PageRecord] = []; failed: list[dict[str, str]] = []; asset_hosts: set[str] = set()
         while queue and len(pages) < self.config.max_urls:
             url, depth = queue.popleft()
-            try: page = self._page(url, depth, root_host); pages.append(page)
+            try: page = self._page(url, depth, root_host, total_budget); pages.append(page)
             except Exception as exc: failed.append({"url": url, "error": f"{type(exc).__name__}: {str(exc)[:300]}"}); continue
             for asset in page.asset_urls:
                 host = urllib.parse.urlsplit(asset).netloc
@@ -245,6 +246,5 @@ class SiteCrawler:
                 if target_parts.hostname != root_host or target_parts.netloc != root_netloc: continue
                 if target not in enqueued and len(enqueued) < self.config.max_urls * 5:
                     enqueued.add(target); queue.append((target, depth + 1))
-        hosts = [root_netloc] + sorted(asset_hosts - {root_netloc})[: self.config.max_asset_hosts]
-        robots = [self._robots(parsed.scheme, host) for host in hosts]
-        return {"start_url": start, "root_host": root_host, "pages": [page.to_dict() for page in pages], "robots": [record.to_dict() for record in robots], "failed_fetches": failed, "queued_but_not_crawled": max(len(queue), 0), "limits": self.config.to_dict(), "truncated": bool(queue) or len(pages) >= self.config.max_urls, "data_state": "AVAILABLE" if pages else "EMPTY"}
+        robots = [self._robots(parsed.scheme, host) for host in [root_netloc] + sorted(asset_hosts - {root_netloc})[: self.config.max_asset_hosts]]
+        return {"start_url": start, "root_host": root_host, "pages": [page.to_dict() for page in pages], "robots": [record.to_dict() for record in robots], "failed_fetches": failed, "queued_but_not_crawled": max(len(queue), 0), "limits": self.config.to_dict(), "truncated": bool(queue) or len(pages) >= self.config.max_urls, "data_state": url_bounds.crawl_data_state(pages, failed, queue)}

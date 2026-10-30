@@ -11,6 +11,7 @@ no production credentials, no consent writes.
 from __future__ import annotations
 
 import sys
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -116,6 +117,13 @@ CAPTURE = {"query": "rooftop hvac maintenance checklist", "locale": "en-US",
            "device": "mobile", "date": "2026-07-11", "source": "supplied-export"}
 
 
+def _brief_evidence():
+    relevance = cbe.assess_relevance(SITE, CAPTURE['query'], market='US-NY')
+    serp = cbe.assess_serp(SERP, dict(CAPTURE, date=date.today().isoformat()),
+                           own_domain='ours.example', target_intent='informational')
+    return relevance, serp
+
+
 def test_serp_assessment_requires_capture_metadata():
     with pytest.raises(ValueError, match="query|locale|device|date|source"):
         cbe.assess_serp(SERP, capture={"query": "x"}, own_domain="ours.example")
@@ -157,9 +165,10 @@ def test_serp_assessment_reports_unavailable_evidence():
 
 
 def test_brief_blocked_without_distinct_information_gain():
+    relevance, serp = _brief_evidence()
     decision = cbe.brief_decision(
-        relevance={"verdict": "RELEVANT"},
-        serp={"status": "OK"},
+        relevance=relevance,
+        serp=serp,
         information_gain=[],
     )
     assert decision["publish"] is False
@@ -167,9 +176,10 @@ def test_brief_blocked_without_distinct_information_gain():
 
 
 def test_brief_allowed_with_relevance_and_information_gain():
+    relevance, serp = _brief_evidence()
     decision = cbe.brief_decision(
-        relevance={"verdict": "RELEVANT"},
-        serp={"status": "OK"},
+        relevance=relevance,
+        serp=serp,
         information_gain=["original field data from 40 rooftop installs"],
     )
     assert decision["publish"] is True

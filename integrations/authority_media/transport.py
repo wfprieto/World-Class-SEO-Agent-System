@@ -11,6 +11,9 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from security import http_deadline as deadlines
+from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
+
 
 class TransportError(RuntimeError):
     """Sanitized transport failure."""
@@ -40,8 +43,7 @@ class BoundedTransport:
         self,
         allowed_hosts: set[str] | frozenset[str],
         *,
-        timeout_seconds: float = 15.0,
-        max_response_bytes: int = 2_000_000,
+        timeout_seconds: float = 15.0, max_response_bytes: int = 2_000_000,
         max_attempts: int = 3,
         opener: Any | None = None,
         sleeper: Any = time.sleep,
@@ -56,10 +58,12 @@ class BoundedTransport:
         if not 1 <= max_response_bytes <= 20_000_000:
             raise ValueError("max_response_bytes must be from 1 to 20000000")
         self.allowed_hosts = frozenset(hosts)
-        self.timeout_seconds = float(timeout_seconds)
+        self.timeout_seconds = deadlines.validate_timeout(timeout_seconds)
         self.max_response_bytes = int(max_response_bytes)
         self.max_attempts = int(max_attempts)
-        self._opener = opener or urllib.request.build_opener(_NoRedirect())
+        self._opener = opener or urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(), _NoRedirect()
+        )
         self._sleep = sleeper
         self.request_count = 0
         self.retry_count = 0
@@ -85,10 +89,19 @@ class BoundedTransport:
             return "approved provider request timed out"
         return "approved provider request failed"
 
+    def _consume(self, response: Any, status: int, url: str) -> TransportResponse:
+        deadlines.check_deadline()
+        body = response.read(self.max_response_bytes + 1)
+        deadlines.check_deadline()
+        if len(body) > self.max_response_bytes:
+            raise ResponseTooLarge("approved provider response exceeded the byte ceiling")
+        return TransportResponse(status, self._validate_url(url),
+                                 {str(k).lower(): str(v) for k, v in (response.headers or {}).items()}, body)
+
+    @deadlines.request_deadline
     def get(
         self,
-        url: str,
-        *,
+        url: str, *,
         headers: Mapping[str, str] | None = None,
         accepted_statuses: set[int] | frozenset[int] = frozenset({200}),
     ) -> TransportResponse:
@@ -96,6 +109,7 @@ class BoundedTransport:
         clean_headers = {str(k): str(v) for k, v in dict(headers or {}).items()}
         last_error: BaseException | None = None
         for attempt in range(self.max_attempts):
+            deadlines.check_deadline()
             self.request_count += 1
             request = urllib.request.Request(
                 safe_url,
@@ -107,27 +121,13 @@ class BoundedTransport:
                     status = int(getattr(response, "status", response.getcode()))
                     if status not in accepted_statuses:
                         raise urllib.error.HTTPError(safe_url, status, "unexpected status", response.headers, None)
-                    body = response.read(self.max_response_bytes + 1)
-                    if len(body) > self.max_response_bytes:
-                        raise ResponseTooLarge("approved provider response exceeded the byte ceiling")
-                    final_url = self._validate_url(response.geturl())
-                    return TransportResponse(
-                        status_code=status,
-                        url=final_url,
-                        headers={str(k).lower(): str(v) for k, v in response.headers.items()},
-                        body=body,
-                    )
+                    return self._consume(response, status, response.geturl())
             except urllib.error.HTTPError as exc:
-                if exc.code in accepted_statuses:
-                    body = exc.read(self.max_response_bytes + 1)
-                    if len(body) > self.max_response_bytes:
-                        raise ResponseTooLarge("approved provider response exceeded the byte ceiling") from None
-                    return TransportResponse(
-                        status_code=int(exc.code),
-                        url=safe_url,
-                        headers={str(k).lower(): str(v) for k, v in (exc.headers or {}).items()},
-                        body=body,
-                    )
+                try:
+                    if exc.code in accepted_statuses:
+                        return self._consume(exc, int(exc.code), safe_url)
+                finally:
+                    exc.close()
                 last_error = exc
                 retryable = exc.code in {408, 425, 429, 500, 502, 503, 504}
             except (OSError, TimeoutError, TransportError) as exc:
@@ -138,7 +138,7 @@ class BoundedTransport:
             if not retryable or attempt + 1 >= self.max_attempts:
                 break
             self.retry_count += 1
-            self._sleep(min(0.25 * (2**attempt), 1.0))
+            self._sleep(deadlines.remaining_timeout(min(0.25 * (2**attempt), 1.0)))
         raise TransportError(self._safe_message(last_error or RuntimeError("request failed")))
 
     def get_json(

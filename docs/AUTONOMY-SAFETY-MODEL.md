@@ -52,6 +52,26 @@ exact phase, candidate commit, and verification evidence can close a non-write p
 start its next approved phase. It is not a substitute for evidence, tests, rollback, or
 repository certification.
 
+Approval JSON is a pointer, not proof of identity. New phase approvals use founder
+schema v1.1: candidate-bound verification references and their canonical digest,
+plus a GitHub issue-comment pointer. Certification observes an unedited `wfprieto`
+comment on the declared PR whose head is the exact candidate. Its entire body is
+one JSON object containing exactly `program_id`, `phase_id`, `candidate_commit`,
+`verification_evidence_hash`, `authorized_next_phase`, and
+`approval_state: "APPROVED"`, matching the record. Duplicate keys, prose, wrong
+authors, replayed subjects, and a changed candidate phase definition fail closed.
+Schema v1.0 records remain readable historical assertions, never authenticated
+approval. P0 is BLOCKED and P1 NOT_STARTED until genuine authentication exists.
+
+Whole-program `VERIFIED` requires both final independent reviewers even when phase
+approvals are founder-controlled. Receipts match the closure's explicit candidate,
+base, canonical CI run, and evidence hash; the observed PR and successful canonical
+CI run must match too. An ISSUE_COMMENT result is accepted only as an entire JSON
+object with exactly `verdict: "APPROVE_GREAT"`, `candidate_commit`,
+`canonical_ci_run_id`, and `evidence_package_hash`. A quoted or negated marker is
+not approval. Native approved PR reviews and approved-agent positive trigger
+reactions retain their existing trust checks.
+
 Founder approval never authorizes an external change by itself. Every website, CMS, GBP,
 provider, outreach, spend, or publication action still requires a separate action-queue
 item with explicit founder approval, a rollback plan, and a verification method.

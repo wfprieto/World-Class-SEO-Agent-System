@@ -23,7 +23,7 @@
   ],
   "properties": {
     "$schema": {"const": "../../schemas/autonomous-seo-founder-approval.schema.json"},
-    "schema_version": {"const": "1.0.0"},
+    "schema_version": {"enum": ["1.0.0", "1.1.0"]},
     "approval_id": {"type": "string", "minLength": 12},
     "program_id": {"const": "autonomous-seo-expansion"},
     "phase_id": {"pattern": "^P(?:[0-9]|1[0-3])$"},
@@ -33,6 +33,30 @@
     "approval_source": {"type": "string", "minLength": 20},
     "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "approval_state": {"const": "APPROVED"},
+    "verification_evidence_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verification_evidence_refs": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["kind", "path", "sha256", "bound_commit"],
+        "properties": {
+          "kind": {"const": "repository_file"},
+          "path": {"type": "string", "minLength": 3, "not": {"pattern": "(^/|(^|/)\\.\\.(/|$))"}},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "bound_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        }
+      }
+    },
+    "owner_act": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "repository_full_name", "pull_request_number", "comment_id"],
+      "properties": {
+        "provider": {"const": "GITHUB_ISSUE_COMMENT"},
+        "repository_full_name": {"const": "wfprieto/World-Class-SEO-Agent-System"},
+        "pull_request_number": {"type": "integer", "minimum": 1},
+        "comment_id": {"type": "integer", "minimum": 1}
+      }
+    },
     "authorized_next_phase": {"pattern": "^P(?:[0-9]|1[0-3])$"},
     "external_write_authorized": {"const": false},
     "required_external_write_controls": {
@@ -47,5 +71,9 @@
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 12}
     }
-  }
+  },
+  "allOf": [{
+    "if": {"properties": {"schema_version": {"const": "1.1.0"}}},
+    "then": {"required": ["verification_evidence_hash", "verification_evidence_refs", "owner_act"]}
+  }]
 }

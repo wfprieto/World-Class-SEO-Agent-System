@@ -16,7 +16,9 @@ from urllib.parse import urlsplit
 MAX_TEXT_CHARS = 2_000_000
 MAX_RECORDS = 2_000
 WORD = re.compile(r"[A-Za-z0-9]+(?:['â€™\-][A-Za-z0-9]+)?")
-HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+# End the capture on a non-space (or one character). The old lazy capture
+# retried the complete trailing whitespace run at every character within it.
+HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.+\S|.)\s*$", re.MULTILINE)
 FIRST_PERSON = re.compile(r"\b(?:I|we|me|my|mine|us|our|ours)\b", re.IGNORECASE)
 URL = re.compile(r"https?://[^\s<>)\]]+")
 CITATION = re.compile(r"(?:\[\d+(?:\s*[-,]\s*\d+)*\]|\([A-Z][^()]{0,80},\s*\d{4}[a-z]?\))")

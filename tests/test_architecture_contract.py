@@ -55,6 +55,33 @@ def test_canonical_architecture_contract_passes() -> None:
     assert validate() == []
 
 
+def test_llm_numeric_transport_exception_does_not_open_runtime_layer() -> None:
+    contract = json.loads((Path(__file__).parents[1] / "governance/architecture-contract.json").read_text())
+    edges = [item for item in contract["exceptions"] if item["source"] == "runtime.llm"]
+    assert [(item["source"], item["target"]) for item in edges] == [
+        ("runtime.llm", "security.pinned_http")
+    ]
+    assert {"source": "runtime", "target": "security"} not in contract["allowed_layer_edges"]
+
+
+def test_llm_numeric_transport_exception_does_not_cover_another_module(tmp_path: Path) -> None:
+    contract = _contract()
+    contract["layers"]["security"] = "security"
+    contract["exceptions"] = [{
+        "source": "runtime.llm", "target": "security.pinned_http", "owner": "Security owner",
+        "rationale": "The configured LLM transport delegates only to vetted numeric public sockets.",
+        "removal_phase": "P10",
+    }]
+    paths = _fixture(tmp_path, contract, {
+        "runtime/llm.py": "from security.pinned_http import PinnedHTTPSHandler\n",
+        "runtime/unrelated.py": "from security.pinned_http import PinnedHTTPSHandler\n",
+        "security/pinned_http.py": "class PinnedHTTPSHandler: pass\n",
+    })
+    errors = validate(tmp_path, *paths)
+    assert "forbidden dependency edge: runtime.unrelated -> security.pinned_http" in errors
+    assert "forbidden dependency edge: runtime.llm -> security.pinned_http" not in errors
+
+
 def test_forbidden_runtime_to_integration_import_fails(tmp_path: Path) -> None:
     contract_path, schema_path = _fixture(
         tmp_path,

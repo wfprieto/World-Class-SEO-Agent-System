@@ -19,6 +19,7 @@
     {"source": "integrations", "target": "security"}
   ],
   "exceptions": [
+    {"source":"runtime.llm","target":"security.pinned_http","owner":"Security owner","rationale":"Configured LLM endpoints delegate only to canonical vetted numeric public sockets with TLS hostname verification; retain a single transport seam during migration.","removal_phase":"P10"},
     {"source":"adapters.gsc_live_example","target":"integrations.google.client","owner":"Security owner","rationale":"The GSC example delegates OAuth and API traffic to the canonical bounded Google transport.","removal_phase":"P10"},
     {"source":"runtime.tools","target":"adapters.registry","owner":"Runtime architecture owner","rationale":"Legacy default composition remains available while explicit injection is supported.","removal_phase":"P10"},
     {"source":"adapters.google_pagespeed_live","target":"integrations.google.client","owner":"Runtime architecture owner","rationale":"Legacy PageSpeed adapter delegates to the shared authenticated Google transport.","removal_phase":"P10"},

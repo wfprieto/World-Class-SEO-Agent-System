@@ -10,6 +10,13 @@ from datetime import date
 from typing import Any, Iterable
 from urllib.parse import urlsplit
 
+from scripts.content_brief_validation import (
+    relevance_evidence_valid,
+    serp_evidence_valid,
+    serp_signals,
+    text_rows,
+)
+
 DEFAULT_WEIGHTS: dict[str, float] = {
     "intent_fit": 0.25,
     "first_hand_evidence": 0.20,
@@ -134,18 +141,6 @@ def assess_relevance(
     }
 
 
-def _freshness(last_updated: str | None, as_of: str | None = None) -> float:
-    if not last_updated:
-        return 0.0
-    try:
-        updated = date.fromisoformat(str(last_updated)[:10])
-        current = date.fromisoformat(str(as_of)[:10]) if as_of else date.today()
-    except (TypeError, ValueError):
-        return 0.0
-    age_days = (current - updated).days
-    return 1.0 if age_days <= 365 else 0.5 if age_days <= 1095 else 0.0
-
-
 def _is_stale(captured: str | None, as_of: str | None = None) -> bool:
     if not captured:
         return True
@@ -175,7 +170,8 @@ def assess_serp(
     active_weights = _weights(weights)
     domain_competitors = {_host(item) for item in (known_domain_competitors or []) if _host(item)}
     own_host = _host(own_domain)
-    stale = _is_stale(capture.get("date"), as_of)
+    assessed_as_of = str(as_of or date.today().isoformat())[:10]
+    stale = _is_stale(capture.get("date"), assessed_as_of)
     intents: set[str] = set()
     inaccessible: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -211,23 +207,14 @@ def assess_serp(
             if any(_domain_matches(host, domain) for domain in domain_competitors)
             else "serp_only"
         )
-        signals = {
-            "intent_fit": (
-                1.0
-                if row_intent and (not target_intent or row_intent == target_intent.lower())
-                else 0.0
-            ),
-            "first_hand_evidence": 1.0 if row.get("first_hand_evidence") else 0.0,
-            "source_quality": 1.0 if row.get("sources_cited") else 0.0,
-            "freshness": _freshness(row.get("last_updated"), as_of),
-            "entity_coverage": min(len(row.get("entities") or []) / 3.0, 1.0),
-            "conversion_fit": 1.0 if row.get("conversion_path") else 0.0,
-        }
+        signals = serp_signals(row, target_intent, assessed_as_of)
         observed = {
             key: value
             for key, value in row.items()
             if key in ("url", "position", "page_type", "intent", "last_updated", "entities")
         }
+        observed.update({key: bool(row.get(key)) for key in
+                         ('first_hand_evidence', 'sources_cited', 'conversion_path')})
         heuristic = round(
             sum(signals[key] * active_weights[key] for key in signals) * 100,
             1,
@@ -250,6 +237,7 @@ def assess_serp(
         return {
             "status": "INSUFFICIENT_EVIDENCE",
             "capture": capture,
+            "assessed_as_of": assessed_as_of,
             "competitors": [],
             "result_count": 0,
             "duplicates_removed": duplicates,
@@ -276,6 +264,7 @@ def assess_serp(
         ),
         "inaccessible": inaccessible,
         "capture": capture,
+        "assessed_as_of": assessed_as_of,
         "own_domain": own_domain,
         "own_results_excluded": own_results_excluded,
         "target_intent": target_intent,
@@ -307,23 +296,29 @@ def brief_decision(
         return {"publish": False, "reason": "Website-relevance gate returned NOT_RELEVANT."}
     if verdict == "INSUFFICIENT_EVIDENCE":
         return {"publish": False, "reason": "Insufficient site evidence to judge relevance."}
-    if verdict == "CONDITIONALLY_RELEVANT" and not conditions_resolved:
+    if verdict == "CONDITIONALLY_RELEVANT" and conditions_resolved is not True:
         return {
             "publish": False,
             "reason": "Website relevance is conditional and the stated conditions are unresolved.",
             "conditions": relevance.get("conditions", []),
         }
-    if serp.get("status") in {"INSUFFICIENT_EVIDENCE", "STALE_EVIDENCE"}:
+    if verdict not in {"RELEVANT", "CONDITIONALLY_RELEVANT"}:
+        return {"publish": False, "reason": "Positive website-relevance evidence is required."}
+    if serp.get("status") != "OK":
         return {
             "publish": False,
             "reason": f"SERP evidence status is {serp.get('status')}; refresh or supply evidence.",
         }
+    if not relevance_evidence_valid(relevance, _SITE_FIELDS):
+        return {"publish": False, "reason": "Relevance assessment is missing supported producer evidence."}
+    if not serp_evidence_valid(serp, _REQUIRED_CAPTURE, STALE_AFTER_DAYS, tuple(DEFAULT_WEIGHTS)):
+        return {"publish": False, "reason": "SERP assessment requires coherent observations and a current capture."}
     if serp.get("mixed_intent") and not selected_intent:
         return {
             "publish": False,
             "reason": "Mixed-intent SERP requires one explicitly selected target intent.",
         }
-    if not information_gain:
+    if not text_rows(information_gain):
         return {
             "publish": False,
             "reason": "No distinct information gain stated. A brief must add value beyond observed results.",

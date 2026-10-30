@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 
 
@@ -43,8 +44,12 @@ class ExecutionLimits:
             raise InvalidExecutionLimits("max_workflow_depth must be at least 1")
         if self.max_runtime_seconds < 1:
             raise InvalidExecutionLimits("max_runtime_seconds must be at least 1")
-        if self.max_estimated_cost is not None and self.max_estimated_cost < 0:
-            raise InvalidExecutionLimits("max_estimated_cost cannot be negative")
+        cost = self.max_estimated_cost
+        if cost is not None and (
+            isinstance(cost, bool) or not isinstance(cost, (int, float))
+            or not math.isfinite(cost) or cost < 0
+        ):
+            raise InvalidExecutionLimits("max_estimated_cost must be finite and non-negative")
 
     def to_dict(self) -> dict[str, int | float | None]:
         return asdict(self)

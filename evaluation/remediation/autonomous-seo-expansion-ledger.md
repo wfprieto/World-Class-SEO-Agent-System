@@ -27,8 +27,8 @@ No global autonomy switch is authorized. Each capability advances independently.
 
 | Phase | State | APIVR | Target |
 |---|---|---|---|
-| P0 Authority, baseline, expansion contract | COMPLETE | COMPREHENSIVE | G0 |
-| P1 Site profile and Brand Truth contracts | IN_PROGRESS | COMPREHENSIVE | G1 |
+| P0 Authority, baseline, expansion contract | BLOCKED | COMPREHENSIVE | G0 |
+| P1 Site profile and Brand Truth contracts | NOT_STARTED | COMPREHENSIVE | G1 |
 | P2 Persistent site state/action/outcome | NOT_STARTED | COMPREHENSIVE | G1 |
 | P3 Provider-neutral intelligence contracts | NOT_STARTED | COMPREHENSIVE | G1 |
 | P4 DataForSEO and rendered acquisition | NOT_STARTED | COMPREHENSIVE | G3 |
@@ -64,11 +64,15 @@ Material false-green classes discovered during P0 include self-attested reviewer
 
 All prior runs and external reviews are historical evidence only. The stabilized integration SHA must receive its own complete canonical matrix, quality/security/release certification, clean-wheel checks, integration rollback proof, and WCSEO-specific certification.
 
-### Re-audit — PASS
+### Re-audit — BLOCKED
 
-The P0 candidate was verified by the full local suite and the required GitHub workflows. The
-repository founder approved P0 closure under the founder-controlled approval model, which
-does not authorize any external write. P1 is now active at G1 fixture verification.
+Historical implementation and verification records remain evidence of that work, not
+current authorization. The preserved P0 v1.0 founder assertion names a conversation but
+contains no independently observable owner event or bound verification-evidence digest.
+It is unverified legacy data and cannot close P0. Current phase is P0 BLOCKED; P1 is
+NOT_STARTED. Advancement requires a genuine owner act bound to P0, its exact candidate,
+the candidate-bound verification-evidence digest, and P1. No owner act, digest, approval,
+or external-write authorization has been invented or backdated.
 
 ## Independent-review boundary
 

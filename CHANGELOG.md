@@ -12,6 +12,12 @@ This project follows semantic versioning where possible:
 
 ### Security and runtime maintenance
 
+- Fresh deep-scan remediation adds canonical asset-root containment, numeric public-only model/RDAP sockets, bounded HTML/URL/CrUX work and total HTTP response deadlines.
+- Public result and report projections remove credential aliases across persisted/exported copies; bounded-analysis failures preserve raw evidence and explicit rendering modes.
+- Monetary ceilings reject unknown or invalid quotes before every paid execution mode; unpriced usage is reported as unknown rather than free.
+- Approval receipts, source-cache authenticity, release evidence inventories and imported brief observations now fail closed on missing or contradictory evidence. Older incomplete brief assessments must be regenerated; field validation does not authenticate provider provenance.
+- CI uses a fixed workflow-only no-bytecode-write policy for ordinary imports and subprocesses, and routes mandatory compilation output to disposable runner storage. Complete critical-step metadata, all jobs/tests/coverage floors/source proofs and the ban on other inherited execution-altering overrides remain enforced.
+- Autonomous rollback validation distinguishes the three approved historical review boundaries from current integration baselines. Current baselines retain current-date freshness checks; selector errors fail closed without widening historical exceptions or implying phase approval.
 - Shared public-address connection binding for HTTP and isolated Chromium, with verified TLS identity, bounded egress, and truthful optional-renderer fallback.
 - Deterministic bounded robots matching, one-pass bounded sitemap validation, and bounded SERP imports with incremental graph degree accounting.
 - Whole-report consent signal/region projection and authoritative workflow provenance validation.

@@ -551,8 +551,11 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
 
 def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    root_pytest_mask = "env:\n  PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n\n"
-    errors = _workflow_errors(root_pytest_mask + workflow, 78.0)
+    root_pytest_mask = workflow.replace(
+        "env:\n", "env:\n  PYTEST_ADDOPTS: --ignore=tests/test_architecture_contract.py\n", 1
+    )
+    assert root_pytest_mask != workflow
+    errors = _workflow_errors(root_pytest_mask, 78.0)
     assert any("PYTEST_ADDOPTS" in error for error in errors)
     job_pythonpath = workflow.replace(
         "  quality_security_release:\n    permissions:\n      contents: read\n    needs: validate",
@@ -571,8 +574,9 @@ def test_quality_job_rejects_execution_altering_inherited_environment() -> None:
 def test_workflow_rejects_command_channel_poisoning_and_unbounded_execution() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     for key in ("github_env", "GitHub_Path", "Path"):
-        poisoned = f"env:\n  {key}: attacker-controlled\n\n" + workflow
-        assert _workflow_errors(poisoned, 78.0)
+        poisoned = workflow.replace("env:\n", f"env:\n  {key}: attacker-controlled\n", 1)
+        assert poisoned != workflow
+        assert any(key in error for error in _workflow_errors(poisoned, 78.0))
 
     gate = (
         "      - name: Prove exact source integrity\n"
@@ -874,8 +878,8 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
             1,
         ),
         workflow.replace(
-            "        run: pytest -q --browser-security --cov=runtime",
-            "        run: |\n          exit 0\n          pytest -q --browser-security --cov=runtime",
+            "        run: python -B -m pytest -q --browser-security --cov=runtime",
+            "        run: |\n          exit 0\n          python -B -m pytest -q --browser-security --cov=runtime",
             1,
         ),
     )
@@ -885,7 +889,7 @@ def test_coverage_and_risk_commands_reject_deletion_path_or_threshold_weakening(
 
 def test_quality_steps_reject_masking_metadata_and_wrong_order() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    coverage_run = "        run: pytest -q --browser-security --cov=runtime"
+    coverage_run = "        run: python -B -m pytest -q --browser-security --cov=runtime"
     risk_block = (
         "      - name: Validate critical coverage\n"
         "        run: python scripts/validate_risk_coverage.py outputs/coverage.json"

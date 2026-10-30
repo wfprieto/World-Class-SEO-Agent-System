@@ -19,25 +19,15 @@ def _is_trusted_bootstrap_entry(value: str, prefixes: tuple[str, ...]) -> bool:
 
 _ORIGINAL_SYS_PATH = list(_sys.path)
 _BOOTSTRAP_PREFIXES = tuple(
-    dict.fromkeys(
-        _normalized_bootstrap_path(value)
-        for value in (_sys.base_prefix, _sys.base_exec_prefix)
-        if value
-    )
+    dict.fromkeys(_normalized_bootstrap_path(value)
+                  for value in (_sys.base_prefix, _sys.base_exec_prefix) if value)
 )
 _TRUSTED_SYS_PATH = [
     value for value in _ORIGINAL_SYS_PATH if _is_trusted_bootstrap_entry(value, _BOOTSTRAP_PREFIXES)
 ]
 _BOOTSTRAP_MODULE_NAMES = (
-    "argparse",
-    "importlib.machinery",
-    "json",
-    "os",
-    "pathlib",
-    "re",
-    "shutil",
-    "stat",
-    "subprocess",
+    "argparse", "importlib.machinery", "importlib.util", "json", "marshal", "os",
+    "pathlib", "re", "shutil", "stat", "subprocess", "types",
 )
 _PRELOADED_BOOTSTRAP_ERRORS: list[str] = []
 for _bootstrap_name in _BOOTSTRAP_MODULE_NAMES:
@@ -60,13 +50,16 @@ _sys.path[:] = _TRUSTED_SYS_PATH
 try:
     import argparse
     import importlib.machinery as _machinery
+    import importlib.util as _importlib_util
     import json
+    import marshal
     import os
     import pathlib as _pathlib
     import re
     import shutil
     import stat
     import subprocess
+    import types
 finally:
     _sys.path[:] = _ORIGINAL_SYS_PATH
 
@@ -76,29 +69,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 PROOF_MODES = {"candidate", "restored-baseline"}
 PROTECTED_IMPORT_ROOTS = {
-    "adapters",
-    "integrations",
-    "runtime",
-    "scripts",
-    "seoctl",
-    "tests",
+    "adapters", "contracts", "integrations", "runtime", "scripts", "security", "seoctl", "tests",
 }
-PYTHON_SHADOW_SUFFIXES = tuple(
-    sorted(
-        {
-            ".py",
-            ".pyc",
-            ".pyi",
-            ".pyo",
-            ".pth",
-            ".pyd",
-            ".so",
-            *(suffix.casefold() for suffix in _machinery.EXTENSION_SUFFIXES),
-        },
-        key=len,
-        reverse=True,
-    )
-)
+PYTHON_SHADOW_SUFFIXES = tuple(sorted({
+    ".py", ".pyc", ".pyi", ".pyo", ".pth", ".pyd", ".so",
+    *(suffix.casefold() for suffix in _machinery.EXTENSION_SUFFIXES),
+}, key=len, reverse=True))
 WINDOWS_LAUNCHER_SUFFIXES = {".bat", ".cmd", ".com", ".exe", ".ps1"}
 
 
@@ -114,15 +90,10 @@ _BOOTSTRAP_ERRORS = list(_PRELOADED_BOOTSTRAP_ERRORS)
 if not _TRUSTED_SYS_PATH:
     _BOOTSTRAP_ERRORS.append("trusted base-interpreter bootstrap path is unavailable")
 for _name, _module in (
-    ("argparse", argparse),
-    ("importlib.machinery", _machinery),
-    ("json", json),
-    ("os", os),
-    ("pathlib", _pathlib),
-    ("re", re),
-    ("shutil", shutil),
-    ("stat", stat),
-    ("subprocess", subprocess),
+    ("argparse", argparse), ("importlib.machinery", _machinery),
+    ("importlib.util", _importlib_util), ("json", json), ("marshal", marshal),
+    ("os", os), ("pathlib", _pathlib), ("re", re), ("shutil", shutil),
+    ("stat", stat), ("subprocess", subprocess), ("types", types),
 ):
     if not _module_origin_is_trusted(_module):
         _BOOTSTRAP_ERRORS.append(f"untrusted bootstrap module origin: {_name}")
@@ -151,12 +122,8 @@ def _git(
 ) -> str:
     try:
         result = subprocess.run(
-            [_git_executable(root), *arguments],
-            cwd=root,
-            check=False,
-            capture_output=True,
-            text=True,
-            input=input_text,
+            [_git_executable(root), *arguments], cwd=root, check=False,
+            capture_output=True, text=True, input=input_text,
         )
     except OSError as exc:
         raise RuntimeError("Git source-integrity query could not execute") from exc
@@ -214,10 +181,7 @@ def _tracked_content_errors(root: Path) -> list[str]:
     if any("\n" in path or "\r" in path for path in paths):
         return [*errors, "tracked paths containing line breaks cannot be certified"]
     actual_hashes = _git(
-        root,
-        "hash-object",
-        "--stdin-paths",
-        input_text="".join(f"{path}\n" for path in paths),
+        root, "hash-object", "--stdin-paths", input_text="".join(f"{path}\n" for path in paths),
     ).splitlines()
     if len(actual_hashes) != len(paths):
         return [*errors, "tracked worktree content inventory is incomplete"]
@@ -275,7 +239,7 @@ def _untracked_shadow_error(root: Path, path: str) -> str | None:
     protected_root = parts[0].casefold() in PROTECTED_IMPORT_ROOTS
     root_file = len(parts) == 1
     package_artifact = _is_top_level_package_artifact(parts, normalized)
-    ordinary_cache = "__pycache__" in parts
+    ordinary_cache = len(parts) > 1 and parts[-2].casefold() == "__pycache__" and suffix == ".pyc"
     python_shadow = _has_python_shadow_suffix(normalized) and not ordinary_cache
     launcher = (protected_root or root_file) and _is_executable_launcher(
         root / Path(*parts), suffix
@@ -308,10 +272,7 @@ def _allowlist_errors(allowed: tuple[str, ...]) -> list[str]:
 
 
 def _untracked_errors(
-    root: Path,
-    *,
-    proof_mode: str,
-    allowed_untracked: tuple[str, ...],
+    root: Path, *, proof_mode: str, allowed_untracked: tuple[str, ...],
 ) -> list[str]:
     paths = _untracked_paths(root)
     errors = _allowlist_errors(allowed_untracked)
@@ -327,17 +288,66 @@ def _untracked_errors(
             "__pycache__" not in normalized.split("/") and normalized not in allowed
         ):
             errors.append(f"restored baseline has unapproved untracked path: {normalized}")
+    tracked = _head_entries(root)
+    for path in sorted(set(paths) | set(tracked)):
+        cache_error = _cache_authenticity_error(root, path, tracked)
+        if cache_error:
+            errors.append(cache_error)
     if proof_mode == "restored-baseline":
         for path in sorted(allowed - set(paths)):
             errors.append(f"allowed untracked path is not present: {path}")
     return errors
 
 
+def _cache_authenticity_error(root: Path, relative: str, tracked: dict[str, tuple[str, str]]) -> str | None:
+    path = Path(relative)
+    if path.parent.name.casefold() != "__pycache__" or path.suffix.casefold() != ".pyc":
+        return None
+    match = re.fullmatch(r"(.+?)\.(cpython-\d+)(?:\.opt-([012]))?\.pyc", path.name, re.IGNORECASE)
+    if match is None:
+        return f"executable cache authenticity failed: {relative}; unrecognized compiler cache name"
+    label = f"executable cache authenticity failed: {relative}; use a source-only checkout or regenerate normal compileall caches"
+    source = _cache_source(path, match[1], tracked)
+    if source is None:
+        return label if path.parts[0].casefold() in PROTECTED_IMPORT_ROOTS or len(path.parts) == 2 else None
+    if match[2].casefold() != str(_sys.implementation.cache_tag).casefold():
+        return label
+    cache = root / path
+    source_path = root / source
+    try:
+        if not _is_within(cache.resolve(), root.resolve()):
+            return label
+        source_bytes = source_path.read_bytes()
+        optimize = int(match[3] or "0")
+        for filename in _cache_filenames(root, source):
+            code = compile(source_bytes, filename, "exec", dont_inherit=True, optimize=optimize)
+            payload = _compiler_payload(code)
+            if cache.stat().st_size == len(payload) + 16:
+                actual = cache.read_bytes()
+                if actual[:4] == _importlib_util.MAGIC_NUMBER and actual[16:] == payload:
+                    return None
+    except (OSError, ValueError, SyntaxError, OverflowError):
+        return label
+    return label
+
+def _cache_source(path: Path, stem: str, tracked: dict[str, tuple[str, str]]) -> Path | None:
+    source_key = (path.parent.parent / f"{stem}.py").as_posix()
+    if os.name == "nt":
+        source_key = next((name for name in tracked if name.casefold() == source_key.casefold()), source_key)
+    return Path(source_key) if source_key in tracked else None
+
+def _cache_filenames(root: Path, source: Path) -> list[str]:
+    names = {str(root / source), str((root / source).resolve()), str(source)}
+    names.update({f".\\{source}", f"./{source}", f"./{source.as_posix()}"})
+    return sorted(names | {name.replace("\\", "/") for name in names})
+
+def _compiler_payload(code: types.CodeType) -> bytes:
+    # Match py_compile's caller/serializer code references (marshal v4 reference flags).
+    # Only locally compiled code reaches marshal; cache bytes are never deserialized.
+    return marshal.dumps(code)
+
 def validate(
-    expected_sha: str,
-    root: Path = ROOT,
-    *,
-    proof_mode: str = "candidate",
+    expected_sha: str, root: Path = ROOT, *, proof_mode: str = "candidate",
     allowed_untracked: tuple[str, ...] = (),
 ) -> list[str]:
     """Prove that HEAD, the index, and every tracked worktree file are immutable."""
@@ -351,9 +361,7 @@ def validate(
         head = _git(root, "rev-parse", "HEAD")
         content_errors = _tracked_content_errors(root)
         untracked_errors = _untracked_errors(
-            root,
-            proof_mode=proof_mode,
-            allowed_untracked=allowed_untracked,
+            root, proof_mode=proof_mode, allowed_untracked=allowed_untracked,
         )
     except RuntimeError as exc:
         return [str(exc)]
@@ -374,25 +382,17 @@ def main() -> int:
     args = parser.parse_args()
     allowed_untracked = tuple(args.allow_untracked)
     errors = validate(
-        args.expected_sha,
-        args.root,
-        proof_mode=args.proof_mode,
-        allowed_untracked=allowed_untracked,
+        args.expected_sha, args.root, proof_mode=args.proof_mode, allowed_untracked=allowed_untracked,
     )
-    print(
-        json.dumps(
+    print(json.dumps(
             {
-                "schema_version": 1,
-                "status": "PASS" if not errors else "FAIL",
-                "proof_mode": args.proof_mode,
+                "schema_version": 1, "status": "PASS" if not errors else "FAIL", "proof_mode": args.proof_mode,
                 "expected_sha": args.expected_sha.casefold(),
                 "allowed_untracked": sorted(allowed_untracked),
                 "errors": errors,
             },
-            indent=2,
-            sort_keys=True,
-        )
-    )
+            indent=2, sort_keys=True,
+    ))
     return int(bool(errors))
 
 
