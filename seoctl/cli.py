@@ -168,9 +168,11 @@ def _content_brief_decision(args: argparse.Namespace) -> tuple[dict[str, Any], i
 
 
 def _cluster_serp(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    from scripts.serp_input_bounds import load_json as load_serp_json
+
     result = cluster_serps(
-        _json(args.serps),
-        _json(args.volumes) if args.volumes else None,
+        load_serp_json(args.serps),
+        load_serp_json(args.volumes) if args.volumes else None,
         strong=args.strong,
     )
     return envelope("cluster.serp", "ok", result), EXIT_OK

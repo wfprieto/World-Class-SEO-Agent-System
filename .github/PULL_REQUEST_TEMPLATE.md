@@ -10,7 +10,8 @@
 
 - [ ] This is a material change to runtime, integrations, schemas, security, governance, CI, or release behavior
 - Protected surfaces affected:
-- Independent reviewer (must not be the last pusher for a material change):
+- Independent engineering-review evidence (not a GitHub human approval):
+- Solo-maintainer merge controls: `governance/github-controls.json`; exact-head `repository-certification` must pass and all review threads must be resolved. Do not claim a nonexistent second human approval.
 
 ## Canonical authority changed
 

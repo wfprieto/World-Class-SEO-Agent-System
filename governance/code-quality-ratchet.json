@@ -5,7 +5,8 @@
     "adapters",
     "integrations",
     "seoctl",
-    "scripts"
+    "scripts",
+    "security"
   ],
   "file_defaults": {
     "max_lines": 400,
@@ -83,8 +84,8 @@
       "removal_phase": "P7"
     },
     "integrations/product_proof/crawler.py": {
-      "max_lines": 300,
-      "max_complexity_total": 146,
+      "max_lines": 250,
+      "max_complexity_total": 117,
       "max_missing_annotations": 1,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -98,16 +99,8 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations/technical/browser.py": {
-      "max_lines": 421,
-      "max_complexity_total": 53,
-      "max_missing_annotations": 2,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations/technical/http.py": {
-      "max_lines": 198,
+      "max_lines": 197,
       "max_complexity_total": 47,
       "max_missing_annotations": 7,
       "owner": "Quality owner",
@@ -178,14 +171,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "scripts/consent_mode_diagnostic.py": {
-      "max_lines": 412,
-      "max_complexity_total": 69,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "scripts/run_performance_benchmarks.py": {
       "max_lines": 74,
       "max_complexity_total": 10,
@@ -195,8 +180,8 @@
       "removal_phase": "P7"
     },
     "scripts/serp_cluster.py": {
-      "max_lines": 135,
-      "max_complexity_total": 32,
+      "max_lines": 131,
+      "max_complexity_total": 24,
       "max_missing_annotations": 5,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -476,14 +461,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations.product_proof.crawler::RobotsPolicy.allowed": {
-      "max_span": 30,
-      "max_complexity": 23,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.product_proof.crawler::SiteCrawler._page": {
       "max_span": 21,
       "max_complexity": 18,
@@ -640,22 +617,6 @@
       "max_span": 11,
       "max_complexity": 9,
       "max_missing_annotations": 3,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "integrations.technical.browser::PlaywrightRenderer.render": {
-      "max_span": 128,
-      "max_complexity": 21,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "integrations.technical.browser::PlaywrightRenderer.render.guard": {
-      "max_span": 12,
-      "max_complexity": 6,
-      "max_missing_annotations": 2,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
@@ -1284,14 +1245,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "scripts.consent_mode_diagnostic::diagnose": {
-      "max_span": 303,
-      "max_complexity": 49,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "scripts.content_brief_evidence::assess_relevance": {
       "max_span": 71,
       "max_complexity": 19,
@@ -1360,14 +1313,6 @@
       "max_span": 2,
       "max_complexity": 1,
       "max_missing_annotations": 2,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "scripts.serp_cluster::cluster": {
-      "max_span": 49,
-      "max_complexity": 18,
-      "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
@@ -1566,7 +1511,6 @@
       "integrations/google/client.py|I001|Import block is un-sorted or un-formatted": 1,
       "integrations/google/client.py|UP037|Remove quotes from type annotation": 1,
       "integrations/google/gsc.py|C901|`query` is too complex (19 > 10)": 1,
-      "integrations/product_proof/crawler.py|C901|`allowed` is too complex (11 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`handle_starttag` is too complex (16 > 10)": 1,
       "integrations/product_proof/crawler.py|C901|`parse_robots` is too complex (11 > 10)": 1,
       "integrations/product_proof/crawler.py|E701|Multiple statements on one line (colon)": 13,
@@ -1581,9 +1525,6 @@
       "integrations/product_proof/rules.py|E701|Multiple statements on one line (colon)": 35,
       "integrations/product_proof/rules.py|E702|Multiple statements on one line (semicolon)": 45,
       "integrations/product_proof/rules.py|I001|Import block is un-sorted or un-formatted": 1,
-      "integrations/technical/browser.py|C901|`render` is too complex (14 > 10)": 1,
-      "integrations/technical/http.py|I001|Import block is un-sorted or un-formatted": 1,
-      "integrations/technical/http.py|SIM108|Use ternary operator `final_url = validate_public_url(final_url) if final_url else safe` instead of `if`-`else`-block": 1,
       "integrations/technical/parsing.py|C901|`parse_robots` is too complex (12 > 10)": 1,
       "runtime/business_profile_resolver.py|C420|Unnecessary dict comprehension for iterable; use `dict.fromkeys` instead": 1,
       "runtime/business_profile_resolver.py|C901|`_explicit_profiles` is too complex (13 > 10)": 1,
@@ -1594,7 +1535,6 @@
       "runtime/state.py|UP037|Remove quotes from type annotation": 1,
       "runtime/workflow_graph.py|C901|`validate` is too complex (16 > 10)": 1,
       "runtime/workflow_graph.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
-      "scripts/consent_mode_diagnostic.py|C901|`diagnose` is too complex (25 > 10)": 1,
       "scripts/content_brief_evidence.py|UP035|Import from `collections.abc` instead: `Iterable`": 1,
       "scripts/generate_command_docs.py|E402|Module level import not at top of file": 1,
       "scripts/plan_github_controls_rollback.py|C901|`restored_state_errors` is too complex (11 > 10)": 1,
@@ -1628,7 +1568,7 @@
       "scripts/validate_seo_claims.py|C901|`validate` is too complex (17 > 10)": 1,
       "scripts/validate_seo_claims.py|E401|Multiple imports on one line": 1,
       "scripts/validate_seo_claims.py|E701|Multiple statements on one line (colon)": 13,
-      "scripts/validate_seo_claims.py|E702|Multiple statements on one line (semicolon)": 11,
+      "scripts/validate_seo_claims.py|E702|Multiple statements on one line (semicolon)": 10,
       "scripts/validate_seo_claims.py|I001|Import block is un-sorted or un-formatted": 1,
       "seoctl/__main__.py|I001|Import block is un-sorted or un-formatted": 1,
       "seoctl/audit_cli.py|UP035|Import from `collections.abc` instead: `Callable`": 1,
@@ -1659,7 +1599,11 @@
       "runtime/llm.py": 64.0,
       "runtime/structured_output.py": 89.0,
       "runtime/tools.py": 83.0,
-      "runtime/workflow_runner.py": 93.0
+      "runtime/workflow_runner.py": 93.0,
+      "security/url_safety.py": 84.0,
+      "security/pinned_http.py": 95.0,
+      "security/browser_proxy.py": 90.0,
+      "security/browser_capture.py": 100.0
     }
   }
 }

@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import os
-import time
-import urllib.parse
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
 from contracts.adapter import AdapterResult
-from security.url_safety import host_is_public, validate_public_url
+from security.browser_capture import render_browser
+from security.url_safety import validate_public_url
 
 _WAIT_UNTIL = {"commit", "domcontentloaded", "load", "networkidle"}
 _RESOURCE_TYPES = {
@@ -25,7 +24,6 @@ _RESOURCE_TYPES = {
     "xhr",
     "fetch",
     "eventsource",
-    "websocket",
     "manifest",
     "other",
 }
@@ -133,101 +131,11 @@ class PlaywrightRenderer:
             )
         safe_url = validate_public_url(url)
 
-        from playwright.sync_api import sync_playwright
-
-        started = time.monotonic()
-        console_errors: list[str] = []
-        page_errors: list[str] = []
-        failed_requests: list[dict[str, Any]] = []
-        screenshot_bytes: bytes | None = None
-        final_url = safe_url
-        status_code: int | None = None
-        html = ""
-        title = ""
-        text = ""
-
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context(
-                viewport={"width": width, "height": height},
-                user_agent=user_agent,
-                ignore_https_errors=False,
-                java_script_enabled=True,
-            )
-            page = context.new_page()
-
-            def guard(route):
-                request = route.request
-                parsed = urllib.parse.urlsplit(request.url)
-                if parsed.scheme in {"data", "blob", "about"}:
-                    return route.continue_()
-                if parsed.scheme not in {"http", "https"}:
-                    return route.abort("blockedbyclient")
-                if not parsed.hostname or not host_is_public(parsed.hostname):
-                    return route.abort("blockedbyclient")
-                if request.resource_type in blocked:
-                    return route.abort("blockedbyclient")
-                return route.continue_()
-
-            page.route("**/*", guard)
-            page.on(
-                "console",
-                lambda message: console_errors.append(message.text)
-                if message.type == "error"
-                else None,
-            )
-            page.on("pageerror", lambda error: page_errors.append(str(error)))
-            page.on(
-                "requestfailed",
-                lambda request: failed_requests.append(
-                    {
-                        "url": request.url,
-                        "resource_type": request.resource_type,
-                        "failure": request.failure,
-                    }
-                ),
-            )
-            try:
-                response = page.goto(
-                    safe_url,
-                    wait_until=wait_until,
-                    timeout=timeout_ms,
-                )
-                final_url = validate_public_url(page.url)
-                status_code = response.status if response else None
-                html = page.content()
-                title = page.title()
-                try:
-                    text = page.locator("body").inner_text(
-                        timeout=min(timeout_ms, 10_000)
-                    )
-                except Exception:  # noqa: BLE001
-                    text = ""
-                if include_screenshot:
-                    screenshot_bytes = page.screenshot(
-                        full_page=full_page,
-                        type="png",
-                        animations="disabled",
-                    )
-            finally:
-                context.close()
-                browser.close()
-
-        return {
-            "url": safe_url,
-            "final_url": final_url,
-            "status_code": status_code,
-            "html": html,
-            "title": title,
-            "text": text,
-            "console_errors": console_errors[:500],
-            "page_errors": page_errors[:500],
-            "failed_requests": failed_requests[:1000],
-            "render_ms": round((time.monotonic() - started) * 1000),
-            "render_engine": "playwright-chromium",
-            "screenshot_bytes": screenshot_bytes,
-            "viewport": {"width": width, "height": height},
-        }
+        return render_browser(
+            safe_url, timeout_ms=timeout_ms, wait_until=wait_until,
+            width=width, height=height, include_screenshot=include_screenshot,
+            full_page=full_page, block_resource_types=blocked, user_agent=user_agent,
+        )
 
 
 class RenderedPageService:

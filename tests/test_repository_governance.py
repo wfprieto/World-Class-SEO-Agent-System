@@ -111,6 +111,31 @@ def test_repository_governance_is_valid() -> None:
     assert local_errors() == []
 
 
+@pytest.mark.parametrize(
+    ("relative", "stale_requirement"),
+    [
+        ("SECURITY.md", "an approval from someone other than the last pusher"),
+        (".github/PULL_REQUEST_TEMPLATE.md", "must not be the last pusher"),
+        ("docs/REPOSITORY-OPERATIONS.md", "independent merge availability remains"),
+        ("docs/GOVERNANCE.md", "independent merge availability remain"),
+        (
+            "docs/BROWSER-AND-INPUT-SAFETY.md",
+            "the independent approval requirement in security.md remains applicable",
+        ),
+    ],
+)
+def test_merge_guidance_matches_owner_selected_solo_policy(
+    relative: str, stale_requirement: str
+) -> None:
+    contract = json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
+    assert contract["ruleset"]["required_approving_review_count"] == 0
+    assert contract["ruleset"]["require_last_push_approval"] is False
+    guidance = " ".join((ROOT / relative).read_text(encoding="utf-8").lower().split())
+    assert stale_requirement not in guidance
+    for required in ("solo-maintainer", "github-controls.json", "repository-certification", "resolved"):
+        assert required in guidance
+
+
 def test_indirect_security_destination_is_rejected(tmp_path: Path) -> None:
     root = _copy_repository_surface(tmp_path)
     security = root / "SECURITY.md"

@@ -3,10 +3,9 @@
 Renders a URL as a browser would, so agents can judge what a user (and a
 JS-incapable AI crawler) actually sees. Returns the canonical AdapterResult.
 
-Security: outbound targets use the canonical public-web URL policy and bounded
-HTTP transport. Browser requests are revalidated before continuation. This is a
-fail-closed URL/redirect policy, not DNS pinning; DNS rebinding remains a stated
-limitation because the browser and validator resolve independently.
+Security: HTTP and browser egress connect only to vetted numeric public addresses.
+Both renderer interfaces share one isolated browser boundary. HTTPS CONNECT keeps
+TLS verification end-to-end; encrypted paths/queries are not visible to the proxy.
 
 Playwright is optional. Rendering is performed by an injectable `render_fn`, so the
 success-path logic is testable without a live browser. When Playwright is missing or a
@@ -25,7 +24,6 @@ Install rendering: pip install playwright && playwright install chromium
 from __future__ import annotations
 
 import re
-import time
 from collections.abc import Callable
 from typing import Any
 
@@ -38,6 +36,7 @@ from adapters.url_safety import (
     validate_public_url,
 )
 from integrations.technical.http import BoundedHttpClient
+from security.browser_capture import guard_request, render_browser
 
 _SPA_MARKERS = ('id="root"', 'id="app"', 'id="__next"', "data-reactroot", "ng-version")
 _HTTP_TIMEOUT = 30
@@ -94,50 +93,21 @@ def dependency_status() -> dict[str, str]:
 
 
 def _guard_browser_request(route: Any, block: tuple[str, ...]) -> Any:
-    try:
-        validate_public_url(route.request.url)
-    except ValueError:
-        return route.abort()
-    if route.request.resource_type in block:
-        return route.abort()
-    return route.continue_()
+    return guard_request(route, block)
 
 
 def playwright_render(url: str, block: tuple[str, ...] = ()) -> dict[str, Any]:
     """Render with Playwright Chromium. Raises on any failure; never returns partial data."""
-    from playwright.sync_api import sync_playwright
-
-    started = time.time()
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        context = browser.new_context()
-        page = context.new_page()
-
-        def guard(route: Any) -> Any:
-            return _guard_browser_request(route, block)
-
-        page.route("**/*", guard)
-        errors: list[str] = []
-        page.on(
-            "console",
-            lambda m: errors.append(sanitize_text_for_evidence(m.text))
-            if m.type == "error"
-            else None,
-        )
-        response = page.goto(url, wait_until="networkidle", timeout=_RENDER_TIMEOUT_MS)
-        rendered = page.content()
-        tree = page.accessibility.snapshot()
-        status = response.status if response else None
-        context.close()
-        browser.close()
-
+    result = render_browser(url, timeout_ms=_RENDER_TIMEOUT_MS,
+                            block_resource_types=block, accessibility=True)
     return {
-        "content": rendered,
-        "status_code": status,
-        "accessibility_tree": tree,
-        "console_errors": errors,
-        "render_ms": round((time.time() - started) * 1000),
-        "render_engine": "playwright-chromium",
+        "content": result["html"],
+        "status_code": result["status_code"],
+        "accessibility_tree": result["accessibility_tree"],
+        "console_errors": result["console_errors"],
+        "render_ms": result["render_ms"],
+        "render_engine": result["render_engine"],
+        "network_policy": result["network_policy"],
     }
 
 

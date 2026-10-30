@@ -42,6 +42,9 @@
   "network_modules": [
     "adapters/rendered_page.py",
     "security/url_safety.py",
+    "security/pinned_http.py",
+    "security/browser_proxy.py",
+    "security/browser_capture.py",
     "integrations/authority_media/transport.py",
     "integrations/extensions/indexnow.py",
     "integrations/google/client.py",
@@ -52,6 +55,9 @@
   "network_transports": {
     "adapters/rendered_page.py": {"policy":"PUBLIC_RENDERED_PAGE","delegates_to":"integrations.technical.http.BoundedHttpClient + security.url_safety.validate_public_url"},
     "security/url_safety.py": {"policy":"PUBLIC_URL_SAFETY","delegates_to":"security.url_safety.validate_public_url"},
+    "security/pinned_http.py": {"policy":"VETTED_NUMERIC_HTTP_TLS","delegates_to":"security.url_safety.resolve_public_addresses"},
+    "security/browser_proxy.py": {"policy":"BOUNDED_NUMERIC_BROWSER_EGRESS","delegates_to":"security.pinned_http.public_connection"},
+    "security/browser_capture.py": {"policy":"ISOLATED_BROWSER_CONTEXT","delegates_to":"security.browser_proxy.BrowserEgress"},
     "integrations/authority_media/transport.py": {"policy":"APPROVED_HOST_BOUNDED_HTTP","delegates_to":"integrations.authority_media.transport.BoundedTransport"},
     "integrations/extensions/indexnow.py": {"policy":"NO_REDIRECT_PUBLIC_MUTATION","delegates_to":"integrations.extensions.indexnow.NoRedirect"},
     "integrations/google/client.py": {"policy":"GOOGLE_API_BOUNDED_HTTP","delegates_to":"integrations.google.client"},

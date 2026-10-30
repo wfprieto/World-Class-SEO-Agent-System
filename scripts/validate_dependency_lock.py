@@ -1,4 +1,4 @@
-"""Validate that the generated development lock covers every direct input."""
+"""Validate development/browser hash locks and their shared exact pins."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.version import InvalidVersion, Version
 
 _PIN = re.compile(r"^([A-Za-z0-9_.-]+)==([^\s;]+)")
@@ -67,8 +67,34 @@ def validate(input_path: Path, lock_path: Path) -> list[str]:
     return errors
 
 
+def validate_profiles(profiles: tuple[tuple[Path, Path], ...]) -> list[str]:
+    errors: list[str] = []
+    shared: dict[str, tuple[str, str]] = {}
+    for input_path, lock_path in profiles:
+        try:
+            profile_errors = validate(input_path, lock_path)
+            pins, _ = _parse_lock(lock_path.read_text(encoding="utf-8"))
+        except (OSError, InvalidRequirement) as exc:
+            errors.append(f"{lock_path.name}: unable to validate profile: {exc}")
+            continue
+        errors.extend(f"{lock_path.name}: {error}" for error in profile_errors)
+        for name, version in pins.items():
+            previous = shared.get(name)
+            if previous and previous[1] != version:
+                errors.append(
+                    f"conflicting lock pin for {name}: {previous[0]}=={previous[1]} "
+                    f"!= {lock_path.name}=={version}"
+                )
+            else:
+                shared[name] = (lock_path.name, version)
+    return errors
+
+
 def main() -> int:
-    errors = validate(Path("requirements-dev.in"), Path("requirements-dev.txt"))
+    errors = validate_profiles(tuple(
+        (Path(f"requirements-{profile}.in"), Path(f"requirements-{profile}.txt"))
+        for profile in ("dev", "browser")
+    ))
     for error in errors:
         print(f"ERROR: {error}", file=sys.stderr)
     return 1 if errors else 0

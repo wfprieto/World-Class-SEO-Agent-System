@@ -77,12 +77,12 @@ def node_result_state(
     status: str, synthetic: bool, output: dict[str, Any] | None = None
 ) -> str:
     if status == "ok":
-        if synthetic:
-            return "SYNTHETIC"
         declared = (output or {}).get("execution_state")
-        if declared in {"COMPLETE", "PARTIAL", "BLOCKED", "FAILED"}:
-            return str(declared)
-        return "COMPLETE"
+        if synthetic:
+            return "SYNTHETIC" if declared == "SYNTHETIC" else "FAILED"
+        if isinstance(declared, str) and declared in {"COMPLETE", "PARTIAL", "BLOCKED", "FAILED"}:
+            return declared
+        return "FAILED"
     return "BLOCKED" if status == "blocked" else "FAILED"
 
 
