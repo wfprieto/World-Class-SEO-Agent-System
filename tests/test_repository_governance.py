@@ -70,10 +70,13 @@ def _phase8_snapshot() -> tuple[dict[str, object], dict[str, object], dict[str, 
             for control in operations["critical_paths"]
         ],
         "phase8_pull_request": {
-            "number": 24,
-            "url": f"https://github.com/{contract['repository']}/pull/24",
-            "base": "main",
-            "head": "agent/owner-controlled-remediation-loop",
+            "number": contract["phase8_pull_request"]["number"],
+            "url": (
+                f"https://github.com/{contract['repository']}/pull/"
+                f"{contract['phase8_pull_request']['number']}"
+            ),
+            "base": contract["phase8_pull_request"]["base"],
+            "head": contract["phase8_pull_request"]["head"],
             "state": "OPEN",
             "draft": True,
             "merged": False,

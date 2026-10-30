@@ -38,9 +38,9 @@
     "closure_truth": "The owner explicitly selected the solo-maintainer policy after GitHub proved that a self-authored pull request cannot satisfy one required approval."
   },
   "phase8_pull_request": {
-    "number": 24,
+    "number": 67,
     "base": "main",
-    "head": "agent/owner-controlled-remediation-loop",
+    "head": "codex/resolve-open-issues-26-32",
     "allowed_states": ["OPEN", "CLOSED"]
   }
 }
