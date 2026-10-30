@@ -243,32 +243,75 @@ GAP_DISPOSITIONS = {
 }
 
 
-def _gap_disposition_errors(row_id: str, row: dict[str, Any], status: str) -> list[str]:
+def _open_gap_reference_errors(
+    row_id: str, row: dict[str, Any], field: str, root: Path
+) -> list[str]:
+    refs = row.get(field)
+    if not isinstance(refs, list) or not refs or any(
+        not isinstance(ref, str) or not ref.strip() for ref in refs
+    ):
+        return [f"{row_id} open gap requires non-empty {field}"]
+    errors: list[str] = []
+    for ref in refs:
+        relative = Path(ref)
+        candidate = (root / relative).resolve()
+        try:
+            candidate.relative_to(root.resolve())
+        except ValueError:
+            errors.append(f"{row_id} {field} escapes the repository: {ref}")
+            continue
+        if not candidate.exists():
+            errors.append(f"{row_id} {field} is missing: {ref}")
+        if field == "test_refs" and (
+            relative.suffix != ".py" or not relative.as_posix().startswith("tests/test_")
+        ):
+            errors.append(f"{row_id} test_refs must name fixed automated tests: {ref}")
+    return errors
+
+
+def _gap_disposition_errors(
+    row_id: str, row: dict[str, Any], status: str, root: Path
+) -> list[str]:
     if status != "GAP_OPEN":
         return (
             [f"{row_id} closed capability must not retain open-gap disposition"]
-            if any(field in row for field in ("gap_disposition", "next_action"))
+            if any(
+                field in row
+                for field in (
+                    "gap_disposition",
+                    "next_action",
+                    "implementation_refs",
+                    "test_refs",
+                    "rollback_trigger",
+                )
+            )
             else []
         )
     errors = []
     if row.get("gap_disposition") not in GAP_DISPOSITIONS:
         errors.append(f"{row_id} has invalid or missing gap disposition")
-    for field in ("owner", "next_action"):
+    for field in ("owner", "next_action", "rollback_trigger"):
         value = row.get(field)
         if not isinstance(value, str) or not value.strip():
             errors.append(f"{row_id} open gap requires {field}")
+    errors.extend(_open_gap_reference_errors(row_id, row, "implementation_refs", root))
+    errors.extend(_open_gap_reference_errors(row_id, row, "test_refs", root))
     return errors
 
 
 def _parity_row_errors(
-    row_id: str, row: dict[str, Any], status: str, allowed: set[object]
+    row_id: str,
+    row: dict[str, Any],
+    status: str,
+    allowed: set[object],
+    root: Path,
 ) -> list[str]:
     errors: list[str] = []
     if status not in allowed:
         errors.append(f"{row_id} has invalid status {status!r}")
     if status == "GAP_OPEN" and not row.get("target_pr"):
         errors.append(f"{row_id} is open without a target PR")
-    errors.extend(_gap_disposition_errors(row_id, row, status))
+    errors.extend(_gap_disposition_errors(row_id, row, status, root))
     if status != "GAP_OPEN" and not row.get("evidence"):
         errors.append(f"{row_id} claims closure without evidence")
     acceptance = row.get("acceptance")
@@ -298,7 +341,7 @@ def validate_parity_ledger(ledger: dict[str, Any], root: Path = ROOT) -> list[st
             errors.append(f"duplicate parity id: {row_id}")
         seen.add(row_id)
         status = str(row.get("status", ""))
-        errors.extend(_parity_row_errors(row_id, row, status, allowed))
+        errors.extend(_parity_row_errors(row_id, row, status, allowed, root))
     errors.extend(code_remediation_errors(rows, root))
     return errors
 

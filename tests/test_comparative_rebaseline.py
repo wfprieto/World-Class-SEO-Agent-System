@@ -181,7 +181,7 @@ def test_scorecard_validation_requires_reviewed_source_authority() -> None:
     assert validate_scorecard(scorecard) == ["reviewed source authority is required"]
 
 
-def test_every_open_capability_has_owner_pr_and_acceptance_criteria():
+def test_every_open_capability_has_owned_testable_rollback_contract():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
     assert validate_parity_ledger(ledger) == []
     for row in ledger["capabilities"]:
@@ -191,15 +191,37 @@ def test_every_open_capability_has_owner_pr_and_acceptance_criteria():
             assert row["gap_disposition"] in ledger["allowed_gap_dispositions"]
             assert row["owner"]
             assert row["next_action"]
+            assert row["implementation_refs"]
+            assert row["test_refs"]
+            assert row["rollback_trigger"]
 
 
-def test_open_gap_requires_typed_disposition_owner_and_next_action():
+def test_open_gap_requires_typed_disposition_owner_tests_and_rollback():
     ledger = load_json(COMPARATIVE / "capability-parity.json")
-    for field in ("gap_disposition", "owner", "next_action"):
+    for field in (
+        "gap_disposition",
+        "owner",
+        "next_action",
+        "implementation_refs",
+        "test_refs",
+        "rollback_trigger",
+    ):
         broken = copy.deepcopy(ledger)
         row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
         row.pop(field)
         assert validate_parity_ledger(broken), field
+
+
+@pytest.mark.parametrize("field", ["implementation_refs", "test_refs"])
+def test_open_gap_references_must_exist_in_the_validated_root(field: str):
+    ledger = load_json(COMPARATIVE / "capability-parity.json")
+    broken = copy.deepcopy(ledger)
+    row = next(item for item in broken["capabilities"] if item["status"] == "GAP_OPEN")
+    row[field] = ["does/not/exist.py"]
+
+    errors = validate_parity_ledger(broken, ROOT)
+
+    assert any(f"{field} is missing" in error for error in errors)
 
 
 def test_gap_disposition_vocabulary_is_fail_closed():

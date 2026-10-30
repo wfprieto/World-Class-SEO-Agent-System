@@ -129,6 +129,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Google integrations owner",
       "next_action": "Run the authorized redacted GSC smoke contract with owner-supplied credentials; do not change code-verified status without that evidence.",
+      "implementation_refs": ["integrations/google/gsc.py", "seoctl/google_cli.py"],
+      "test_refs": ["tests/test_google_cli.py"],
+      "rollback_trigger": "Reopen code remediation if the scoped GSC connector, dimensionless totals, redaction, or bounded query tests regress; never promote without an authorized live receipt.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "google.gsc-query",
@@ -154,6 +157,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Google integrations owner",
       "next_action": "Run the authorized redacted GA4 smoke contract with a test property and owner-supplied credentials.",
+      "implementation_refs": ["integrations/google/ga4.py", "seoctl/google_cli.py"],
+      "test_refs": ["tests/test_google_cli.py"],
+      "rollback_trigger": "Reopen code remediation if GA4 property or metric validation, error redaction, or report contract tests regress; never promote without an authorized live receipt.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "google.ga4-report"
@@ -236,6 +242,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Technical integrations owner",
       "next_action": "Capture a cross-platform Chromium install and bounded-render smoke result in an authorized environment.",
+      "implementation_refs": ["adapters/rendered_page.py", "seoctl/technical_cli.py"],
+      "test_refs": ["tests/test_rendering_technical.py", "tests/test_technical_cli.py"],
+      "rollback_trigger": "Reopen code remediation if renderer availability, bounded routing, screenshot, or page-contract tests regress; never promote without authorized Chromium smoke evidence.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "render.health",
@@ -387,6 +396,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Authority integrations owner",
       "next_action": "Execute the bounded live Common Crawl retrieval smoke and preserve redacted provenance.",
+      "implementation_refs": ["integrations/authority_media/services.py", "integrations/authority_media/transport.py", "seoctl/authority_cli.py"],
+      "test_refs": ["tests/test_authority_media_drift.py"],
+      "rollback_trigger": "Reopen code remediation if URL normalization, bounded traversal, caching, transport safety, or provenance tests regress; never promote without authorized live retrieval evidence.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "links.commoncrawl"
@@ -398,7 +410,7 @@
         "Bounded traversal and caching."
       ],
       "evidence": [
-        "adapters/backlink_export.py"
+        "integrations/authority_media/services.py"
       ]
     },
     {
@@ -410,6 +422,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Authority integrations owner",
       "next_action": "Run an authorized domain-history provider smoke while preserving uncertainty and privacy constraints.",
+      "implementation_refs": ["integrations/authority_media/services.py", "seoctl/authority_cli.py"],
+      "test_refs": ["tests/test_authority_media_drift.py"],
+      "rollback_trigger": "Reopen code remediation if uncertainty, privacy, rate-limit, or no-ownership-inference tests regress; never promote without authorized provider evidence.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "domain.history"
@@ -433,6 +448,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Media integrations owner",
       "next_action": "Run an authorized quota-bounded YouTube Data API smoke and retain normalized redacted evidence.",
+      "implementation_refs": ["integrations/authority_media/services.py", "seoctl/authority_cli.py"],
+      "test_refs": ["tests/test_authority_media_drift.py"],
+      "rollback_trigger": "Reopen code remediation if quota bounds, normalized media evidence, redaction, or CLI tests regress; never promote without authorized live API evidence.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "media.youtube-search"
@@ -501,6 +519,9 @@
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Extension integrations owner",
       "next_action": "Run authorized Bing and IndexNow smokes against owner-controlled non-production targets.",
+      "implementation_refs": ["integrations/extensions/indexnow.py", "adapters/mcp_extensions.py", "seoctl/extensions_cli.py"],
+      "test_refs": ["tests/test_optional_integrations.py", "tests/test_libhunt_adapter_hardening.py"],
+      "rollback_trigger": "Reopen code remediation if dry-run defaults, explicit write approval, retry bounds, or secret-redaction tests regress; never promote without owner-controlled live evidence.",
       "code_state": "CODE_VERIFIED",
       "required_command_ids": [
         "bing.preflight",
@@ -638,6 +659,9 @@
       "gap_disposition": "EXCLUDED_PACKAGING_RELEASE",
       "owner": "Documentation owner",
       "next_action": "Retain as excluded until packaging and release maturity returns to approved scope.",
+      "implementation_refs": ["docs/INSTALL.md", "docs/QUICKSTART.md", "docs/COMMANDS.md", "docs/TROUBLESHOOTING.md"],
+      "test_refs": ["tests/test_seoctl_docs.py", "tests/test_repository_semantics.py"],
+      "rollback_trigger": "Reopen documentation remediation if generated command docs, quick-start paths, troubleshooting links, or repository semantics tests regress; retain the packaging exclusion until external install evidence exists.",
       "code_state": "CODE_VERIFIED",
       "target_pr": "PR11",
       "acceptance": [
@@ -661,6 +685,9 @@
       "gap_disposition": "EXCLUDED_REAL_WORLD_EVIDENCE",
       "owner": "Repository maintainer",
       "next_action": "Retain as excluded because adoption and community effectiveness require real-world evidence outside this remediation scope.",
+      "implementation_refs": ["CONTRIBUTING.md", "CONTRIBUTORS.md", "CITATION.cff", ".github/CODEOWNERS", ".github/ISSUE_TEMPLATE"],
+      "test_refs": ["tests/test_repository_semantics.py", "tests/test_repository_governance.py"],
+      "rollback_trigger": "Reopen repository remediation if contributor, citation, ownership, issue-template, or governance contract tests regress; retain the real-world effectiveness exclusion until external adoption evidence exists.",
       "code_state": "CODE_VERIFIED",
       "target_pr": "PR11",
       "acceptance": [
@@ -686,6 +713,9 @@
       "gap_disposition": "EXCLUDED_PACKAGING_RELEASE",
       "owner": "Release owner",
       "next_action": "Retain as excluded until packaging and release maturity returns to approved scope.",
+      "implementation_refs": ["pyproject.toml", "CHANGELOG.md", ".github/workflows/release.yml"],
+      "test_refs": ["tests/test_phase5_quality_security_release.py", "tests/test_phase6_release_readiness.py", "tests/test_release_risk_boundaries.py"],
+      "rollback_trigger": "Keep release publication blocked if artifact signing, checksums, SBOM, migration, install, or release-workflow tests regress; retain the packaging exclusion until authorized distribution evidence exists.",
       "target_pr": "PR12",
       "acceptance": [
         "Signed or checksummed release.",
