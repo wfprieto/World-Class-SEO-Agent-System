@@ -109,6 +109,16 @@ def test_blocked_brief_returns_blocked_exit(monkeypatch, tmp_path: Path):
     assert payload["status"] == "blocked"
 
 
+def test_entities_accepts_omitted_optional_catalog(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(content_cli, "ContentIntelligenceService", FakeContentService)
+    text = _write(tmp_path / "content.md", "# Title\n\nOpenAI builds models.")
+
+    payload, code = content_cli.run(["entities", "--input", text])
+
+    assert code == EXIT_OK
+    assert payload["data"]["kwargs"]["catalog"] == []
+
+
 def test_humanize_can_write_reviewable_output(monkeypatch, tmp_path: Path):
     class Humanized(FakeContentService):
         def humanize(self, **kwargs):

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
-from scripts import autonomous_seo_expansion_closure as closure
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from scripts import autonomous_seo_expansion_closure as closure  # noqa: E402
+
 PROGRAM_PATH = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-program.json"
 POLICY_PATH = ROOT / "evaluation" / "remediation" / "autonomous-seo-expansion-policy.json"
 SCHEMA_PATH = ROOT / "schemas" / "autonomous-seo-expansion-program.schema.json"

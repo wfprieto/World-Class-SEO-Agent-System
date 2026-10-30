@@ -64,7 +64,7 @@ def _verify(args: argparse.Namespace):
 
 
 def _entities(args: argparse.Namespace):
-    catalog = _read_json(args.catalog) or []
+    catalog = _read_json(args.catalog) if args.catalog else []
     result = _service().entities(
         text=_read_text(args.input), catalog=catalog,
         provider_analysis=json.loads(args.provider_analysis),
