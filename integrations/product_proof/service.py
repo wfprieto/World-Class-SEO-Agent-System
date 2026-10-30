@@ -22,6 +22,7 @@ from integrations.product_proof.rules import ClaimPolicy, TechnicalAuditRules, b
 from integrations.technical.http import HttpHop
 from runtime.assets import resolve_asset_root
 from security.url_safety import validate_public_url
+from sensitive_data import redact
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[2])
 
@@ -154,7 +155,7 @@ class ProductProofTechnicalAudit:
 
     @staticmethod
     def _write_json(path: Path, payload: Any) -> None:
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        path.write_text(json.dumps(redact(payload), indent=2, sort_keys=True), encoding="utf-8")
 
     def run(self, *, url: str, output_dir: str | Path, fixture_path: str | Path | None = None, max_urls: int = 500, max_depth: int = 6, max_asset_hosts: int = 10) -> AdapterResult:
         config = CrawlConfig(max_urls=max_urls, max_depth=max_depth, max_asset_hosts=max_asset_hosts)
@@ -187,14 +188,14 @@ class ProductProofTechnicalAudit:
         self._write_json(artifacts["contributions"], contributions)
         self._write_json(artifacts["trust"], trust)
         artifacts["technical_report"].write_text(
-            technical_markdown(safe_url, crawl, evaluated, trust, evidence_mode),
+            str(redact(technical_markdown(safe_url, crawl, evaluated, trust, evidence_mode))),
             encoding="utf-8",
         )
         artifacts["executive_report"].write_text(
-            executive_markdown(safe_url, evaluated, trust, evidence_mode),
+            str(redact(executive_markdown(safe_url, evaluated, trust, evidence_mode))),
             encoding="utf-8",
         )
-        write_csv(artifacts["remediation"], evaluated["findings"])
+        write_csv(artifacts["remediation"], redact(evaluated["findings"]))
         self._write_json(artifacts["verification"], [{"finding_id": row["id"], "verification": row["verification"], "owner": row["owner"], "status": "OPEN"} for row in evaluated["findings"]])
         digests = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in artifacts.items() if name != "manifest" and path.exists()}
         manifest = {
@@ -219,7 +220,7 @@ class ProductProofTechnicalAudit:
         return AdapterResult(
             source=self.name,
             status=status,
-            data=_result_data(
+            data=redact(_result_data(
                 run_id=run_id,
                 target=safe_url,
                 evidence_mode=evidence_mode,
@@ -228,6 +229,6 @@ class ProductProofTechnicalAudit:
                 contributions=contributions,
                 artifacts=artifacts,
                 trust=trust,
-            ),
+            )),
             warnings=warnings,
         )

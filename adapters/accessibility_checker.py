@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 from adapters.base import AdapterResult
+from security.html_analysis import html_facts
 
 
 class AccessibilityCheckerAdapter:
@@ -20,9 +20,10 @@ class AccessibilityCheckerAdapter:
             violations = data.get("violations", [])
             warnings = [f"{len(violations)} accessibility violations found."] if violations else []
             return AdapterResult(source=source, status="ok" if not warnings else "needs-review", data={"violation_count": len(violations)}, warnings=warnings)
-        img_count = len(re.findall(r"<img\b", text, re.IGNORECASE))
-        missing_alt = len(re.findall(r"<img\b(?![^>]*\balt=)", text, re.IGNORECASE))
-        h1_count = len(re.findall(r"<h1\b", text, re.IGNORECASE))
+        facts = html_facts(text)
+        img_count = facts.image_count
+        missing_alt = facts.missing_alt_count
+        h1_count = facts.h1_count
         warnings = []
         if missing_alt:
             warnings.append(f"{missing_alt} images are missing alt attributes.")

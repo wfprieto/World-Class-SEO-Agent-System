@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from contracts.adapter import AdapterResult
+from sensitive_data import redact
 
 _COMMON_LOG = re.compile(r'^(?P<ip>\S+)\s+\S+\s+\S+\s+\[[^\]]+\]\s+"(?P<method>\S+)\s+(?P<path>\S+)\s+[^\"]+"\s+(?P<status>\d{3})\s+(?P<bytes>\S+)(?:\s+"[^\"]*"\s+"(?P<ua>[^\"]*)")?')
 _RESPONSE_TIME = re.compile(r'(?:request_time|rt|response_time)[=:](?P<seconds>\d+(?:\.\d+)?)')
@@ -65,7 +66,7 @@ class AITimeoutAnalyzer:
                 malformed += 1; continue
             family = _classify_ua(match.group("ua") or "")
             if not family: continue
-            status = int(match.group("status")); path = match.group("path")
+            status = int(match.group("status")); path = str(redact(match.group("path")))
             time_match = _RESPONSE_TIME.search(raw); seconds = float(time_match.group("seconds")) if time_match else None
             ai_requests[family] += 1; statuses[(family, status)] += 1; path_counts[path] += 1
             if seconds is not None: response_samples[family].append(seconds)

@@ -6,6 +6,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from sensitive_data import REDACTED, redact, redact_mapping_keys
+
 SIGNALS = ("ad_storage", "analytics_storage", "ad_user_data", "ad_personalization")
 _VALID_STATES = {"granted", "denied"}
 _VALID_MODES = {"basic", "advanced"}
@@ -13,6 +15,7 @@ _REDACT_KEYS = {
     "tc_string", "user_id", "client_id", "gclid", "email", "consent_string",
     "access_token", "refresh_token", "api_key", "authorization", "cookie",
 }
+_REDACT_KEY_ALIASES = {re.sub(r"[^a-z0-9]", "", key) for key in _REDACT_KEYS}
 _REGION = re.compile(r"[A-Z]{2,3}(?:-[A-Z0-9]{1,3})?")
 
 
@@ -24,25 +27,23 @@ def _project_region(value: Any) -> str:
     return "unknown"
 
 def _redact(value: Any, *, key: str = "", _path: tuple[str, ...] = ()) -> Any:
-    normalized = key.lower().replace("-", "_")
-    if normalized in _REDACT_KEYS or any(
-        marker in normalized for marker in ("password", "secret", "private_key")
-    ):
-        return "[REDACTED]"
+    normalized = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", key).lower().replace("-", "_")
+    if re.sub(r"[^a-z0-9]", "", normalized) in _REDACT_KEY_ALIASES or redact(None, key=key) == REDACTED:
+        return REDACTED
     if normalized in {"region", "requested_region"}:
         return _project_region(value)
     if normalized in SIGNALS and _path[:-1] != ("consent_state_matrix",):
         return value.lower() if isinstance(value, str) and value.lower() in _VALID_STATES else "[INVALID]"
     if isinstance(value, dict):
-        return {
+        return redact_mapping_keys({
             str(item_key): _redact(item_value, key=str(item_key), _path=(*_path, str(item_key)))
             for item_key, item_value in value.items()
-        }
+        })
     if isinstance(value, list):
         return [_redact(item, _path=(*_path, "[]")) for item in value]
     if isinstance(value, tuple):
         return [_redact(item, _path=(*_path, "[]")) for item in value]
-    return value
+    return redact(value)
 
 
 def _region_parts(region: str) -> tuple[str, str | None]:

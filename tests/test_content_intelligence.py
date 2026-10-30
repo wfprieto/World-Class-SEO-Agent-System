@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from integrations.content_intelligence.service import ContentIntelligenceService
+from scripts.content_brief_evidence import assess_relevance, assess_serp
 
 
 @pytest.fixture()
@@ -216,8 +217,19 @@ def test_entities_reject_non_finite_cost_approval(
 
 
 def test_brief_requires_relevance_serp_information_gain_and_sources(service):
-    relevance = {"verdict": "RELEVANT", "reasons": ["Audience fit"]}
-    serp = {"status": "SUFFICIENT", "primary_intent": "commercial investigation"}
+    relevance = assess_relevance(
+        {'purpose': 'Governed SEO platforms', 'audience': 'SEO leaders',
+         'offerings': ['SEO platform evaluation'], 'expertise': ['SEO platform governance']},
+        'Governed SEO platform evaluation',
+    )
+    serp = assess_serp(
+        [{'url': 'https://competitor.example/guide', 'position': 1,
+          'intent': 'commercial investigation', 'page_type': 'guide',
+          'last_updated': date.today().isoformat()}],
+        {'query': 'Governed SEO platform evaluation', 'locale': 'en-US', 'device': 'mobile',
+         'date': date.today().isoformat(), 'source': 'supplied-export'},
+        own_domain='ours.example', target_intent='commercial investigation',
+    )
     result = service.brief(
         relevance=relevance,
         serp=serp,

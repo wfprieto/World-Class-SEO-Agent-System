@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 import urllib.parse
-import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -21,7 +20,6 @@ from integrations.technical.parsing import (
     directive_tokens,
     header_value,
     is_missing,
-    local_name,
     parse_jsonld_scripts,
     parse_robots,
     performance_score,
@@ -29,12 +27,15 @@ from integrations.technical.parsing import (
     tokens,
     type_values,
 )
+from integrations.technical.sitemap_inspection import inspect_sitemap
 from security.url_safety import validate_public_url
 
 _BCP47 = re.compile(
     r"^(?:[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|\d{3}))?"
     r"(?:-[A-Za-z0-9]{5,8}|-\d[A-Za-z0-9]{3})*|x-default)$"
 )
+
+
 class TechnicalInspectionService:
     name = "technical_inspection"
 
@@ -90,82 +91,7 @@ class TechnicalInspectionService:
         )
 
     def sitemap(self, url: str, **_: Any) -> AdapterResult:
-        safe = validate_public_url(url)
-        hop = self.http.get(safe)
-        try:
-            root = ET.fromstring(hop.body)
-        except ET.ParseError as exc:
-            return AdapterResult(
-                source=self.name,
-                status="invalid",
-                data={
-                    "operation": "sitemap",
-                    "url": safe,
-                    "status_code": hop.status_code,
-                    "data_state": "INVALID_RESPONSE",
-                    "error": str(exc),
-                },
-                warnings=["Sitemap response is not valid XML."],
-            )
-        kind = local_name(root.tag)
-        locations = [
-            (element.text or "").strip()
-            for element in root.iter()
-            if local_name(element.tag) == "loc"
-            and (element.text or "").strip()
-        ]
-        truncated = len(locations) > 50_000
-        analyzed = locations[:50_000]
-        counts = Counter(analyzed)
-        duplicates = sorted(
-            location for location, count in counts.items() if count > 1
-        )
-        safe_locations: list[str] = []
-        unsafe_locations: list[str] = []
-        for location in analyzed:
-            try:
-                safe_locations.append(validate_public_url(location))
-            except ValueError:
-                unsafe_locations.append(location)
-        warnings: list[str] = []
-        if kind not in {"urlset", "sitemapindex"}:
-            warnings.append(f"Unexpected sitemap root element: {kind or 'unknown'}.")
-        if duplicates:
-            warnings.append(
-                f"{len(duplicates)} duplicate sitemap location(s) found."
-            )
-        if unsafe_locations:
-            warnings.append(
-                f"{len(unsafe_locations)} invalid or non-public sitemap location(s) found."
-            )
-        if truncated:
-            warnings.append(
-                "Sitemap exceeds the 50,000-location analysis ceiling; remaining entries were not analyzed."
-            )
-        if not locations:
-            warnings.append("No sitemap <loc> elements were found.")
-        if not 200 <= hop.status_code < 300:
-            warnings.append(f"Sitemap returned HTTP {hop.status_code}.")
-        return AdapterResult(
-            source=self.name,
-            status="ok" if not warnings else "needs-review",
-            data={
-                "operation": "sitemap",
-                "url": safe,
-                "final_url": hop.final_url,
-                "status_code": hop.status_code,
-                "kind": kind,
-                "url_count": len(locations),
-                "analyzed_count": len(analyzed),
-                "locations": safe_locations[:1000],
-                "duplicates": duplicates,
-                "unsafe_locations": unsafe_locations,
-                "truncated": truncated,
-                "data_state": "AVAILABLE" if locations else "EMPTY",
-                "request_metadata": {"elapsed_ms": hop.elapsed_ms},
-            },
-            warnings=warnings,
-        )
+        return inspect_sitemap(self.http, url, source=self.name)
 
     def hreflang(self, url: str, **_: Any) -> AdapterResult:
         safe, hop, parser = self._page(url)

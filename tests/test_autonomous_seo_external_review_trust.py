@@ -81,14 +81,14 @@ def test_reviewer_receipts_reject_cross_pr_evidence() -> None:
     assert any("one positive pull request" in error for error in errors)
 
 
-def test_founder_controlled_phase_does_not_require_external_reviewer_receipts(tmp_path) -> None:
+def test_founder_controlled_incomplete_phase_does_not_require_external_reviewer_receipts(tmp_path) -> None:
     program_path = tmp_path / external_review.phase_closure.PROGRAM_RELATIVE
     program_path.parent.mkdir(parents=True)
     program_path.write_text(
         json.dumps(
             {
                 "approval_model": "FOUNDER_CONTROLLED",
-                "phases": [{"id": "P0", "status": "COMPLETE"}],
+                "phases": [{"id": "P0", "status": "BLOCKED"}],
             }
         ),
         encoding="utf-8",

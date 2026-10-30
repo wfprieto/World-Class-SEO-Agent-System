@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from runtime.public_results import public_session_mapping
+
 
 def _default_business_profile_resolution() -> dict[str, Any]:
     """A schema-valid unresolved profile for direct SessionState construction paths."""
@@ -164,4 +166,4 @@ class SessionState:
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data.pop("created_at", None)
-        return data
+        return public_session_mapping(data)

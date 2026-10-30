@@ -15,6 +15,7 @@ from typing import Any
 from contracts.adapter import AdapterNotConfigured, AdapterResult
 from integrations.extensions.indexnow_result import response_result
 from integrations.extensions.indexnow_retry import post_with_retries
+from sensitive_data import query_contains_credentials
 
 MAX_URLS = 10_000
 INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
@@ -40,7 +41,7 @@ def _normalize_url(value: str) -> str:
     parsed = urllib.parse.urlsplit(value.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise ValueError("IndexNow URLs must use http or https and include a host")
-    if parsed.username or parsed.password:
+    if any((parsed.username, parsed.password, query_contains_credentials(parsed.query))):
         raise ValueError("URLs containing credentials are not allowed")
     host = parsed.hostname.encode("idna").decode("ascii").lower().rstrip(".")
     port = parsed.port
@@ -73,7 +74,6 @@ def normalize(urls: Iterable[str], key_location: str | None = None) -> Normalize
         ):
             raise ValueError("submitted URLs must fall under the keyLocation directory")
     return NormalizedSubmission(host=host, urls=rows, key_location=normalized_location)
-
 
 def _validate_endpoint(endpoint: str) -> str:
     parsed = urllib.parse.urlsplit(endpoint)

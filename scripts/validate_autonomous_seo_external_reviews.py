@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import Any
 
 from scripts import autonomous_seo_phase_closure as phase_closure
+from scripts import autonomous_seo_program_closure as program_closure
 from scripts import autonomous_seo_review_trust as trust
+from scripts import validate_autonomous_seo_expansion_program as expansion
+from scripts import wait_for_canonical_validation as canonical
 
 ROOT = Path(__file__).resolve().parents[1]
 API_ROOT = "https://api.github.com"
@@ -82,6 +85,8 @@ def _subject_errors(
         errors.append(f"external review model identifier mismatch: {reviewer_id}")
     if receipt["result_actor_login"] != trust.EXPECTED_ACTORS[reviewer_id]:
         errors.append(f"external review receipt actor is not an approved independent identity: {reviewer_id}")
+    if receipt["candidate_commit"] != closure["candidate_commit"]:
+        errors.append(f"external review candidate mismatch: {reviewer_id}")
     if receipt["base_commit"] != closure["base_commit"]:
         errors.append(f"external review base mismatch: {reviewer_id}")
     if receipt["canonical_ci_run_id"] != closure["canonical_ci_run_id"]:
@@ -111,8 +116,10 @@ def _pr_and_run_errors(receipt: dict[str, Any], token: str) -> tuple[list[str], 
         errors.append("external review canonical CI run is not bound to candidate")
     if run.get("status") != "completed" or run.get("conclusion") != "success":
         errors.append("external review canonical CI run is not completed/success")
-    if run.get("name") != "Validate repository":
-        errors.append("external review canonical CI run has wrong workflow name")
+    if canonical.select_canonical_run({"workflow_runs": [run]}, candidate) != run:
+        errors.append("external review canonical CI run has wrong workflow identity or event")
+    if run.get("id") != run_id:
+        errors.append("external review canonical CI run ID does not match receipt")
     return errors, run
 
 
@@ -170,15 +177,25 @@ def _issue_comment_result(
     errors = _provider_actor_errors(receipt, result)
     if not _issue_url_matches_pr(result, repository, pr_number):
         errors.append("external review result does not belong to declared pull request")
-    for required in (
-        str(receipt["candidate_commit"]),
-        str(receipt["canonical_ci_run_id"]),
-        str(receipt["evidence_package_hash"]),
-        str(verdict["verdict"]),
-    ):
-        if required not in body:
-            errors.append(f"external review result omits bound subject: {required}")
+    expected = {
+        "verdict": "APPROVE_GREAT",
+        "candidate_commit": receipt["candidate_commit"],
+        "canonical_ci_run_id": receipt["canonical_ci_run_id"],
+        "evidence_package_hash": receipt["evidence_package_hash"],
+    }
+    try:
+        decision = json.loads(body, object_pairs_hook=_unambiguous_object)
+    except (ValueError, TypeError):
+        decision = None
+    if decision != expected or verdict.get("verdict") != "APPROVE_GREAT":
+        errors.append("external review result is not one structured affirmative bound decision")
     return errors, result
+
+
+def _unambiguous_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    if len(dict(pairs)) != len(pairs):
+        raise ValueError("duplicate approval decision fields")
+    return dict(pairs)
 
 
 def _review_result(
@@ -270,29 +287,80 @@ def _approval_model(root: Path) -> str:
 
 
 def validate_live_external_reviews(root: Path, token: str) -> list[str]:
-    if _approval_model(root) == "FOUNDER_CONTROLLED":
-        # Founder approval is validated by the expansion-program validator. It is
-        # deliberately limited to non-write phase progression and therefore has
-        # no GitHub reviewer receipt to authenticate here.
-        return []
-    completed = _completed_phases(root)
-    if not completed:
-        return []
-    errors: list[str] = []
-    for phase in completed:
-        phase_id = str(phase["id"])
-        closure_path = phase_closure.closure_path(root, phase_id)
+    errors = _founder_live_errors(root, token)
+    for closure_path in _review_closure_paths(root):
         if not closure_path.is_file():
-            errors.append(f"{phase_id} external review closure is missing")
+            errors.append(f"external review closure is missing: {closure_path.name}")
             continue
         closure = _load(closure_path)
         verdicts = [_load(root / str(item)) for item in closure["reviewer_verdict_files"]]
         receipts = [_load(root / str(item)) for item in closure["reviewer_provenance_files"]]
         verdict_map = {str(item["reviewer_id"]): item for item in verdicts}
+        if (len(receipts) != 2 or len(verdicts) != 2 or set(verdict_map) != set(EXPECTED_MODELS)
+                or {str(item["reviewer_id"]) for item in receipts} != set(EXPECTED_MODELS)):
+            errors.append("external review closure requires both canonical reviewers exactly once")
+            continue
+        errors.extend(trust._execution_identity_errors(receipts))
         for receipt in receipts:
             reviewer_id = str(receipt["reviewer_id"])
             errors.extend(_authenticate_one(receipt, verdict_map[reviewer_id], closure, token))
     return errors
+
+
+def _founder_live_errors(root: Path, token: str) -> list[str]:
+    if _approval_model(root) != "FOUNDER_CONTROLLED":
+        return []
+    program = _load(root / phase_closure.PROGRAM_RELATIVE)
+    errors: list[str] = []
+    for phase in _completed_phases(root):
+        static_errors = expansion._founder_approval_errors(phase, root, program)
+        errors.extend(static_errors)
+        if static_errors:
+            continue
+        relative = f"evaluation/remediation/autonomous-seo-expansion-{phase['id'].lower()}-founder-approval.json"
+        errors.extend(_owner_act_errors(_load(root / relative), token))
+    return errors
+
+
+def _owner_act_errors(approval: dict[str, Any], token: str) -> list[str]:
+    pointer = approval["owner_act"]
+    repository = pointer["repository_full_name"]
+    pr_number = pointer["pull_request_number"]
+    event = _api_json(f"/repos/{repository}/issues/comments/{pointer['comment_id']}", token)
+    pr = _api_json(f"/repos/{repository}/pulls/{pr_number}", token)
+    expected = {key: approval[key] for key in (
+        "program_id", "phase_id", "candidate_commit", "verification_evidence_hash",
+        "authorized_next_phase", "approval_state",
+    )}
+    errors: list[str] = []
+    try:
+        decision = json.loads(str(event.get("body", "")), object_pairs_hook=_unambiguous_object)
+    except (ValueError, TypeError):
+        decision = None
+    if decision != expected:
+        errors.append("founder owner act is not one affirmative phase/candidate/evidence/next-phase decision")
+    if event.get("id") != pointer["comment_id"] or event.get("user", {}).get("login") != "wfprieto":
+        errors.append("founder owner act is not authenticated to the repository owner")
+    if not _issue_url_matches_pr(event, repository, pr_number):
+        errors.append("founder owner act does not belong to the declared PR")
+    if pr.get("number") != pr_number or pr.get("head", {}).get("sha") != approval["candidate_commit"]:
+        errors.append("founder owner act PR does not identify the exact candidate")
+    created = str(event.get("created_at", ""))
+    if not created or _iso(created).date().isoformat() != approval["approval_recorded_on"]:
+        errors.append("founder owner act date is not provider-derived")
+    if event.get("updated_at") != created:
+        errors.append("founder owner act must be an unedited provider comment")
+    return errors
+
+
+def _review_closure_paths(root: Path) -> list[Path]:
+    program = _load(root / phase_closure.PROGRAM_RELATIVE)
+    paths = [] if _approval_model(root) == "FOUNDER_CONTROLLED" else [
+        phase_closure.closure_path(root, str(phase["id"])) for phase in _completed_phases(root)
+    ]
+    if program.get("program_evidence_state") == "VERIFIED":
+        paths.append(root / program_closure.PROGRAM_CLOSURE_RELATIVE)
+    return paths
 
 
 def main() -> int:
@@ -301,15 +369,8 @@ def main() -> int:
         print(json.dumps({"status": "FAIL", "errors": ["GITHUB_TOKEN is required"]}))
         return 1
     try:
-        completed = _completed_phases(ROOT)
-        approval_model = _approval_model(ROOT)
-        if not completed or approval_model == "FOUNDER_CONTROLLED":
-            reason = (
-                "Founder-controlled approvals are validated by the expansion-program validator; "
-                "they do not authorize external writes or require external reviewer receipts."
-                if approval_model == "FOUNDER_CONTROLLED"
-                else "No autonomous SEO phase is COMPLETE; there are no external review receipts to authenticate yet."
-            )
+        if not _review_closure_paths(ROOT) and not _completed_phases(ROOT):
+            reason = "No independent phase or terminal program review requires authentication."
             print(
                 json.dumps(
                     {

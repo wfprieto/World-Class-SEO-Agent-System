@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import marshal
 import os
+import py_compile
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 from scripts.validate_source_integrity import validate
 
@@ -160,12 +164,15 @@ def test_restored_baseline_requires_exact_safe_untracked_allowlist(
     ordinary_cache = root / "tests" / "__pycache__" / "cache.pyc"
     ordinary_cache.parent.mkdir(parents=True)
     ordinary_cache.write_bytes(b"cache")
-    assert validate(
+    errors = validate(
         expected,
         root,
         proof_mode="restored-baseline",
         allowed_untracked=("phase-rollback-receipt.json",),
-    ) == []
+    )
+    assert errors == [
+        "executable cache authenticity failed: tests/__pycache__/cache.pyc; unrecognized compiler cache name"
+    ]
 
 
 def test_untracked_allowlist_cannot_weaken_candidate_or_shadow_controls(
@@ -364,7 +371,7 @@ def test_source_integrity_bootstraps_before_repository_module_imports(
     )
 
 
-def test_source_integrity_allows_non_importable_artifacts_and_ordinary_cache(
+def test_source_integrity_allows_non_importable_artifacts_but_rejects_orphan_cache(
     tmp_path: Path,
 ) -> None:
     root = tmp_path / "negative-controls"
@@ -372,7 +379,6 @@ def test_source_integrity_allows_non_importable_artifacts_and_ordinary_cache(
     artifacts = {
         "outputs/report.so": b"report data",
         "docs/example.py": b"documentation example\n",
-        "runtime/__pycache__/cache.cpython-313.pyc": b"ordinary cache",
         "notes/shadow_package/readme.txt": b"not importable",
     }
     for relative, content in artifacts.items():
@@ -380,3 +386,89 @@ def test_source_integrity_allows_non_importable_artifacts_and_ordinary_cache(
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
     assert validate(expected, root) == []
+    orphan = root / "runtime/__pycache__/cache.cpython-313.pyc"
+    orphan.parent.mkdir(parents=True)
+    orphan.write_bytes(b"unverified orphan cache")
+    assert any("cache authenticity" in error for error in validate(expected, root))
+
+
+@pytest.mark.parametrize("mode", ["candidate", "restored-baseline"])
+@pytest.mark.parametrize("invalidation_mode", list(py_compile.PycInvalidationMode))
+def test_matching_source_cache_payload_must_be_authentic(
+    tmp_path: Path, mode: str, invalidation_mode: py_compile.PycInvalidationMode,
+) -> None:
+    root = tmp_path / "matching-cache"
+    expected = _repository(root, {"runtime/module.py": "VALUE = 'canonical'\n"})
+    source = root / "runtime/module.py"
+    cached = Path(py_compile.compile(str(source), doraise=True, invalidation_mode=invalidation_mode))
+    genuine = cached.read_bytes()
+    cached.write_bytes(genuine[:16] + marshal.dumps(compile("VALUE = 'poison'\n", str(source), "exec")))
+    errors = validate(expected, root, proof_mode=mode)
+    assert any("cache" in error and "authentic" in error for error in errors), (
+        "matching source metadata must not certify an unrelated executable cache payload"
+    )
+    cached.write_bytes(genuine)
+    assert validate(expected, root, proof_mode=mode) == []
+
+
+@pytest.mark.parametrize("source_argument", ["runtime", "./runtime", "ABSOLUTE"])
+def test_cache_authenticity_accepts_cross_process_compileall(tmp_path: Path, source_argument: str) -> None:
+    root = tmp_path / "compileall"
+    expected = _repository(root, {"runtime/module.py": (
+        '"""A real module with nested optimized code."""\n'
+        "def outer(value):\n"
+        "    assert value\n"
+        "    def inner():\n"
+        "        return value in {'alpha', 'beta', 'gamma'}\n"
+        "    return inner\n"
+    )})
+    argument = str(root / "runtime") if source_argument == "ABSOLUTE" else source_argument
+    compiled = subprocess.run([
+        sys.executable, "-I", "-E", "-S", "-B", "-m", "compileall", "-q",
+        "-o", "0", "-o", "1", "-o", "2", argument,
+    ], cwd=root, check=False, capture_output=True, text=True, timeout=20)
+    assert compiled.returncode == 0, compiled.stderr
+    assert len(list(root.rglob("*.pyc"))) == 3
+    assert validate(expected, root) == []
+    assert validate(expected, root, proof_mode="restored-baseline") == []
+
+
+def test_cache_directory_does_not_exempt_importable_impostors(tmp_path: Path) -> None:
+    root = tmp_path / "cache-impostors"
+    expected = _repository(root)
+    for relative in ("runtime/__pycache__/shadow.py", "runtime/__pycache__/native.pyd",
+                     "runtime/__pycache__/orphan.cpython-313.pyc"):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"untrusted cache-directory artifact")
+        assert validate(expected, root), relative
+        assert validate(expected, root, proof_mode="restored-baseline"), relative
+        path.unlink()
+
+
+@pytest.mark.parametrize("package", ["security", "contracts"])
+def test_all_shipped_packages_reject_untracked_module_shadows(tmp_path: Path, package: str) -> None:
+    root = tmp_path / "shipped-package-shadow"
+    expected = _repository(root)
+    path = root / package / "rogue.py"
+    path.parent.mkdir()
+    path.write_text("UNTRUSTED = True\n", encoding="utf-8")
+    assert any("forbidden" in error for error in validate(expected, root)), package
+    assert any("forbidden" in error for error in validate(expected, root, proof_mode="restored-baseline"))
+
+
+def test_dependency_caches_outside_certified_roots_are_not_source_certified(tmp_path: Path) -> None:
+    root = tmp_path / "dependency-cache"
+    expected = _repository(root, {".gitignore": ".venv/\n"})
+    dependency = root / ".venv/site-packages/dependency.py"
+    dependency.parent.mkdir(parents=True)
+    dependency.write_text("VALUE = 1\n", encoding="utf-8")
+    py_compile.compile(str(dependency), doraise=True)
+    assert validate(expected, root) == []
+
+
+def test_customized_compiler_filename_fails_closed_with_guidance(tmp_path: Path) -> None:
+    root = tmp_path / "customized-cache"
+    expected = _repository(root, {"runtime/module.py": "VALUE = 1\n"})
+    py_compile.compile(str(root / "runtime/module.py"), dfile="customized/module.py", doraise=True)
+    assert any("source-only checkout" in error for error in validate(expected, root))

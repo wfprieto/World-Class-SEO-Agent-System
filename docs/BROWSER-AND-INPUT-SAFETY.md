@@ -64,6 +64,23 @@ The connection deadline includes elapsed DNS time before dialing. An OS resolver
 call itself is not forcibly interruptible; after it returns, expired/cancelled
 connections are not opened. Active relays and context cleanup are bounded.
 
+RDAP/authority and both real-model clients use the same pinned public sockets,
+including custom model endpoints. Endpoint approval does not authorize a private
+address. Injected transports remain trusted test/application dependencies.
+
+Technical HTTP operations share one elapsed-time budget across DNS, TCP/TLS,
+headers, body consumption and redirects. Authority requests share one budget
+across retries, retry sleeps and accepted HTTP-error bodies. Deadline expiry shuts
+down registered raw/TLS sockets; TLS handshakes are registered before they start.
+Responses, including accepted and rejected HTTP errors, are closed on all paths.
+An in-flight OS DNS call cannot be forcibly stopped; expiry prevents subsequent
+lookups/dials after it returns. Arbitrary injected openers/adapters may still run
+after a dispatcher timeout, so the generic indeterminate-work warning remains.
+
+Redirect evidence is a separate display projection: it strips URL credentials,
+queries/fragments and non-allowlisted headers. Raw response headers and Location
+values remain internal so routing and SEO decisions use the original values.
+
 ## Browser output and work ceilings
 
 Per inspection, the proxy permits at most 1,000 authenticated requests, 64 active
@@ -90,6 +107,32 @@ Chromium still executes untrusted JavaScript. These controls are not an OS-level
 CPU/memory sandbox or protection against every browser-engine vulnerability.
 Keep the tested browser dependency current and use appropriate process isolation
 when inspecting hostile content.
+
+## HTML, URL and provider-response work bounds
+
+SPA and accessibility HTML analysis uses a shared parser with a 12,000,000-character
+input ceiling and a 65,536-character markup-token ceiling. Script/style raw text
+is not treated as nested markup. Oversized malformed tags fail explicitly. Heading
+analysis avoids repeatedly rescanning internal whitespace across every caller.
+
+Crawl URL evidence is bounded before relative expansion: 8,192 characters per URL,
+2,000,000 conservative URL-work characters per page, and 20,000,000 across a crawl.
+The budget counts up to four retained representations and covers navigation,
+canonical/next/previous links, assets and images. Exhaustion fails that page rather
+than silently dropping evidence; failed or queued pages keep the crawl partial.
+
+CrUX History validates returned arrays before constructing period/histogram
+cross-products: at most 40 periods/p75/density entries and 50 histogram bins per
+metric, with at most 50 requested metrics. These are local resource ceilings, not
+a claim that malformed provider output is valid or that a live provider was tested.
+Missing values remain missing, not zero-valued observations.
+
+Technical sitemap inspection analyzes at most 50,000 locations and caches DNS
+classification for at most 64 normalized host/port pairs within five elapsed
+seconds. Every URL still gets its own syntax/privacy validation on cache hits.
+Unclassified locations or excess entries produce `PARTIAL` evidence, not an unsafe
+classification or complete coverage. One slow OS resolver call can outlast this
+budget; after it returns, no additional DNS classification is started.
 
 ## Imported data and report integrity
 

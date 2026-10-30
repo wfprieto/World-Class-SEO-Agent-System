@@ -61,7 +61,7 @@
     },
     "integrations/extensions/indexnow.py": {
       "max_lines": 198,
-      "max_complexity_total": 43,
+      "max_complexity_total": 42,
       "max_missing_annotations": 7,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -77,7 +77,7 @@
     },
     "integrations/google/crux.py": {
       "max_lines": 407,
-      "max_complexity_total": 92,
+      "max_complexity_total": 90,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -85,7 +85,7 @@
     },
     "integrations/product_proof/crawler.py": {
       "max_lines": 250,
-      "max_complexity_total": 117,
+      "max_complexity_total": 108,
       "max_missing_annotations": 1,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -108,8 +108,8 @@
       "removal_phase": "P7"
     },
     "integrations/technical/inspection.py": {
-      "max_lines": 616,
-      "max_complexity_total": 128,
+      "max_lines": 542,
+      "max_complexity_total": 109,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -341,14 +341,6 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations.authority_media.transport::BoundedTransport.get": {
-      "max_span": 55,
-      "max_complexity": 17,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.content_intelligence.service::ContentIntelligenceService.quality": {
       "max_span": 102,
       "max_complexity": 22,
@@ -415,7 +407,7 @@
     },
     "integrations.google.crux::CrUXHistoryAdapter.fetch": {
       "max_span": 87,
-      "max_complexity": 19,
+      "max_complexity": 18,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -461,17 +453,9 @@
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"
     },
-    "integrations.product_proof.crawler::SiteCrawler._page": {
-      "max_span": 21,
-      "max_complexity": 18,
-      "max_missing_annotations": 0,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
     "integrations.product_proof.crawler::SiteCrawler.crawl": {
       "max_span": 19,
-      "max_complexity": 18,
+      "max_complexity": 17,
       "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
@@ -633,14 +617,6 @@
       "max_span": 2,
       "max_complexity": 1,
       "max_missing_annotations": 7,
-      "owner": "Quality owner",
-      "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
-      "removal_phase": "P7"
-    },
-    "integrations.technical.inspection::TechnicalInspectionService.sitemap": {
-      "max_span": 77,
-      "max_complexity": 20,
-      "max_missing_annotations": 0,
       "owner": "Quality owner",
       "rationale": "Frozen P3 legacy ceiling; increases fail and reductions are encouraged.",
       "removal_phase": "P7"

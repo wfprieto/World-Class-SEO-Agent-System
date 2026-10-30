@@ -5,6 +5,8 @@ import urllib.parse
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from integrations.product_proof.url_evidence_bounds import URLBudget
+
 SKIPPED_LINK_RELS = {"stylesheet", "preload", "modulepreload", "icon"}
 
 
@@ -22,13 +24,15 @@ def extract_link_evidence(
     base_url: str,
     root_host: str,
     normalize: Callable[[str], str],
+    budget: URLBudget | None = None,
 ) -> LinkEvidence:
     evidence = LinkEvidence()
+    budget = budget or URLBudget()
     for link in links:
         href = link.get("href", "").strip()
         if not href:
             continue
-        absolute = normalize(urllib.parse.urljoin(base_url, href))
+        absolute = budget.expand(base_url, href, normalize)
         relation = {part.lower() for part in link.get("rel", "").split()}
         if "canonical" in relation and evidence.canonical is None:
             evidence.canonical = absolute

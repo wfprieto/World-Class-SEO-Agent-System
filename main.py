@@ -11,6 +11,8 @@ from pathlib import Path
 from runtime.execution_limits import ExecutionLimits
 from runtime.llm import build_llm_client
 from runtime.orchestrator import SEOOrchestrator
+from runtime.public_results import public_result_mapping
+from runtime.run_budget import BudgetExceeded
 from runtime.tools import ToolRequest
 
 
@@ -67,26 +69,30 @@ def main() -> int:
         profile_signals=args.profile_signal,
     )
     result = orchestrator.route(session)
+    limits = ExecutionLimits(
+        max_nodes=args.max_nodes,
+        max_llm_calls=args.max_llm_calls,
+        max_parallel_agents=args.max_parallel_agents,
+        max_correction_attempts=args.max_correction_attempts,
+        max_workflow_depth=args.max_workflow_depth,
+        max_runtime_seconds=args.max_runtime_seconds,
+        max_estimated_cost=args.max_estimated_cost,
+    ) if args.execute else None
     if args.execute and args.stream:
         if args.execution_mode != "single-agent":
             parser.error("--stream is available only with --execution-mode single-agent")
 
         async def run_stream() -> None:
-            async for chunk in orchestrator.executor.stream(session, result, args.tool):
+            async for chunk in orchestrator.executor.stream(session, result, args.tool, limits=limits):
                 print(chunk, end="", flush=True)
 
-        asyncio.run(run_stream())
+        try:
+            asyncio.run(run_stream())
+        except (BudgetExceeded, ValueError) as exc:
+            print(json.dumps(public_result_mapping({"status": "BLOCKED", "error": str(exc)})))
+            return 2
         return 0
     if args.execute:
-        limits = ExecutionLimits(
-            max_nodes=args.max_nodes,
-            max_llm_calls=args.max_llm_calls,
-            max_parallel_agents=args.max_parallel_agents,
-            max_correction_attempts=args.max_correction_attempts,
-            max_workflow_depth=args.max_workflow_depth,
-            max_runtime_seconds=args.max_runtime_seconds,
-            max_estimated_cost=args.max_estimated_cost,
-        )
         payload = orchestrator.execute(
             session,
             result,
@@ -97,6 +103,7 @@ def main() -> int:
     else:
         payload = result.to_dict()
 
+    payload = public_result_mapping(payload)
     if args.output:
         Path(args.output).write_text(json.dumps(payload, indent=2), encoding="utf-8")
     else:

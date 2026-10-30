@@ -20,6 +20,7 @@ from typing import Any
 
 from runtime.evidence_binding import validate_evidence_binding
 from runtime.schema_registry import SchemaRegistry
+from security.report_brand import validate_brand
 
 SEVERITY_COLOR = {
     "Critical": "#b00020",
@@ -244,6 +245,7 @@ def _validate_canonical(data: dict) -> None:
 
 
 def build_html(data: dict, brand: str = "#0b5fff") -> str:
+    brand = validate_brand(brand)
     if not isinstance(data, dict):
         raise TypeError("agent output must be a dict")
     missing = [key for key in _REQUIRED if key not in data]

@@ -31,10 +31,24 @@ def program_closure_errors(
     errors.extend(_phase_closure_reference_errors(closure, root, policy))
     errors.extend(_program_evidence_errors(closure, root))
     errors.extend(phase_closure.reviewer_file_errors(closure, root))
+    errors.extend(_review_subject_errors(closure, root))
     if closure.get("evidence_package_hash") != phase_closure.canonical_hash(
         _program_closure_payload(closure)
     ):
         errors.append("program closure evidence_package_hash is invalid")
+    return errors
+
+
+def _review_subject_errors(closure: dict[str, Any], root: Path) -> list[str]:
+    errors: list[str] = []
+    for relative in closure["reviewer_provenance_files"]:
+        path = trust._safe_path(root, str(relative))
+        if path is None or not path.is_file():
+            continue  # reviewer_file_errors reports missing/unsafe files.
+        receipt = phase_closure.load_object(path)
+        for field in ("candidate_commit", "base_commit", "canonical_ci_run_id", "evidence_package_hash"):
+            if receipt.get(field) != closure[field]:
+                errors.append(f"program review provenance {field} mismatch: {relative}")
     return errors
 
 

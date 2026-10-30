@@ -145,7 +145,8 @@ def _build_report(
         "guardrails": [
             "Consent is never set automatically by this tool.",
             "The CMP is never bypassed or manipulated.",
-            "No consent strings, identifiers, or user data are retained in this report.",
+            "Recognized credential and identifier fields and labeled secrets are redacted; "
+            "arbitrary unlabeled private data is not detected.",
             "No live tag or production change is made.",
         ],
     })

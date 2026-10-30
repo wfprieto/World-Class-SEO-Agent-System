@@ -11,7 +11,7 @@
   },
   "apivr_tier": "COMPREHENSIVE",
   "approval_model": "FOUNDER_CONTROLLED",
-  "current_phase": "P1",
+  "current_phase": "P0",
   "direct_merge_permitted": false,
   "capability_maturity_order": [
     "G0_DOCUMENTED",
@@ -53,7 +53,7 @@
     {
       "id": "P0",
       "title": "Authority, baseline, and expansion contract",
-      "status": "COMPLETE",
+      "status": "BLOCKED",
       "apivr_tier": "COMPREHENSIVE",
       "objective": "Establish one machine-validated expansion program anchored to the current repository authority without changing the flagship product proof boundary or permitting direct merge.",
       "depends_on": [],
@@ -92,7 +92,7 @@
     {
       "id": "P1",
       "title": "Site profile and Brand Truth contracts",
-      "status": "IN_PROGRESS",
+      "status": "NOT_STARTED",
       "apivr_tier": "COMPREHENSIVE",
       "objective": "Create evidence-governed site identity, Brand Truth, site-state, action, outcome, hypothesis, and experiment contracts before introducing persistent behavior.",
       "depends_on": ["P0"],

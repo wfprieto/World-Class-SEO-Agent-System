@@ -122,16 +122,20 @@ def test_https_keeps_original_host_sni_and_verification(monkeypatch):
     identity = []
     messages = []
 
-    def wrap(context, sock, *, server_hostname):
+    def wrap(context, sock, *, server_hostname, do_handshake_on_connect):
+        assert do_handshake_on_connect is False
         identity.append((server_hostname, context.check_hostname, context.verify_mode))
         return sock
 
     monkeypatch.setattr(ssl.SSLContext, "wrap_socket", wrap)
+    handshakes = []
+    monkeypatch.setattr(WireSocket, 'do_handshake', lambda self: handshakes.append(True), raising=False)
     monkeypatch.setattr(WireSocket, "sendall", lambda self, message: messages.append(message))
     assert BoundedHttpClient().get("https://public.example/path").body == b"ok"
     assert identity == [("public.example", True, ssl.CERT_REQUIRED)]
     assert b"Host: public.example\r\n" in b"".join(messages)
     assert attempts == [("93.184.216.34", 443)]
+    assert handshakes == [True]
 
 
 def test_ambient_proxy_environment_cannot_override_vetted_peer(monkeypatch):

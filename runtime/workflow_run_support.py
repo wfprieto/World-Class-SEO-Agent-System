@@ -5,6 +5,7 @@ from dataclasses import asdict
 from typing import Any
 
 from runtime.executor import AgentExecutor
+from runtime.public_results import public_result_mapping
 from runtime.routing import RouteResult
 from runtime.run_budget import RunBudget
 from runtime.state import Handoff, SessionState
@@ -176,7 +177,7 @@ def run_payload(
     session_payload: dict[str, Any],
 ) -> dict[str, Any]:
     consumed = sum(1 for handoff in session.handoffs if handoff.status == "CONSUMED")
-    return {
+    return public_result_mapping({
         "execution_mode": "multi-agent", "route": route.to_dict(),
         "workflow": graph.to_dict(), "workflow_status": status,
         "node_states": states, "node_errors": errors, "tool_results": tool_results,
@@ -194,4 +195,4 @@ def run_payload(
             "synthetic": has_synthetic,
         },
         "session": session_payload,
-    }
+    })

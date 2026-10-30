@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,8 @@ def _founder_approval_errors(
     errors = closure.schema_errors(approval, schema, f"{phase_id} founder approval")
     if errors:
         return errors
+    if approval.get("schema_version") == "1.0.0":
+        return [f"{phase_id} legacy founder assertion has no authenticated owner-act binding"]
     if approval.get("phase_id") != phase_id:
         errors.append(f"{phase_id} founder approval phase_id does not match")
     candidate = str(approval.get("candidate_commit"))
@@ -50,7 +53,33 @@ def _founder_approval_errors(
         root, ["merge-base", "--is-ancestor", candidate, "HEAD"]
     ):
         errors.append(f"{phase_id} founder approval candidate_commit must be an ancestor of HEAD")
+    refs = approval["verification_evidence_refs"]
+    errors.extend(closure.evidence_ref_errors(refs, root, candidate))
+    if approval["verification_evidence_hash"] != closure.canonical_hash(refs):
+        errors.append(f"{phase_id} founder approval verification evidence digest mismatch")
+    order = [str(item["id"]) for item in program.get("phases", [])]
+    if phase_id not in order:
+        errors.append(f"{phase_id} founder approval phase is not in the program")
+    elif approval["authorized_next_phase"] != order[min(order.index(phase_id) + 1, len(order) - 1)]:
+        errors.append(f"{phase_id} founder approval authorized_next_phase is not the next phase")
+    errors.extend(_founder_phase_definition_errors(phase, root, candidate))
     return errors
+
+
+def _founder_phase_definition_errors(phase: dict[str, Any], root: Path, candidate: str) -> list[str]:
+    content = closure.git_stdout(root, ["show", f"{candidate}:{closure.PROGRAM_RELATIVE}"])
+    if content is None:
+        return ["founder approval cannot load the exact candidate program"]
+    before = json.loads(content)
+    if not isinstance(before, dict):
+        return ["founder approval candidate program must be an object"]
+    matches = [item for item in before.get("phases", []) if item.get("id") == phase.get("id")]
+    if len(matches) != 1:
+        return ["founder approval candidate must contain the exact phase once"]
+    mutable = {"status", "technical_verification", "outcome_verification"}
+    reviewed = {key: value for key, value in matches[0].items() if key not in mutable}
+    current = {key: value for key, value in phase.items() if key not in mutable}
+    return [] if reviewed == current else ["founder approved phase definition changed after candidate"]
 
 
 def _baseline_errors(program: dict[str, Any], root: Path) -> list[str]:

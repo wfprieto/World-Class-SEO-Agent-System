@@ -10,6 +10,12 @@ from datetime import date
 from typing import Any, Iterable
 from urllib.parse import urlsplit
 
+from scripts.content_brief_validation import (
+    relevance_evidence_valid,
+    serp_evidence_valid,
+    text_rows,
+)
+
 DEFAULT_WEIGHTS: dict[str, float] = {
     "intent_fit": 0.25,
     "first_hand_evidence": 0.20,
@@ -307,23 +313,29 @@ def brief_decision(
         return {"publish": False, "reason": "Website-relevance gate returned NOT_RELEVANT."}
     if verdict == "INSUFFICIENT_EVIDENCE":
         return {"publish": False, "reason": "Insufficient site evidence to judge relevance."}
-    if verdict == "CONDITIONALLY_RELEVANT" and not conditions_resolved:
+    if verdict == "CONDITIONALLY_RELEVANT" and conditions_resolved is not True:
         return {
             "publish": False,
             "reason": "Website relevance is conditional and the stated conditions are unresolved.",
             "conditions": relevance.get("conditions", []),
         }
-    if serp.get("status") in {"INSUFFICIENT_EVIDENCE", "STALE_EVIDENCE"}:
+    if verdict not in {"RELEVANT", "CONDITIONALLY_RELEVANT"}:
+        return {"publish": False, "reason": "Positive website-relevance evidence is required."}
+    if serp.get("status") != "OK":
         return {
             "publish": False,
             "reason": f"SERP evidence status is {serp.get('status')}; refresh or supply evidence.",
         }
+    if not relevance_evidence_valid(relevance, _SITE_FIELDS):
+        return {"publish": False, "reason": "Relevance assessment is missing supported producer evidence."}
+    if not serp_evidence_valid(serp, _REQUIRED_CAPTURE, STALE_AFTER_DAYS, tuple(DEFAULT_WEIGHTS)):
+        return {"publish": False, "reason": "SERP assessment requires coherent observations and a current capture."}
     if serp.get("mixed_intent") and not selected_intent:
         return {
             "publish": False,
             "reason": "Mixed-intent SERP requires one explicitly selected target intent.",
         }
-    if not information_gain:
+    if not text_rows(information_gain):
         return {
             "publish": False,
             "reason": "No distinct information gain stated. A brief must add value beyond observed results.",

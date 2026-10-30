@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from contracts.adapter import AdapterNotConfigured, AdapterResult
 from integrations.google.client import GoogleAPIError, GoogleJsonClient
+from integrations.google.crux_bounds import history_array, history_dimensions
 from security.url_safety import validate_public_url
 
 CRUX_CURRENT_ENDPOINT = (
@@ -255,7 +256,7 @@ class CrUXHistoryAdapter:
                 )
             raise
         record = response.get("record") or {}
-        collection_periods = record.get("collectionPeriods") or []
+        collection_periods = history_array(record.get("collectionPeriods"), 40)
         metric_data = record.get("metrics") or {}
         series = {
             metric: self._normalize_metric_series(metric_data.get(metric) or {}, collection_periods)
@@ -310,11 +311,10 @@ class CrUXHistoryAdapter:
         metric: dict[str, Any],
         collection_periods: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
+        history_dimensions(metric, collection_periods)
         percentiles = metric.get("percentilesTimeseries") or {}
         p75_values = percentiles.get("p75s") or []
         histograms = metric.get("histogramTimeseries") or []
-        if not isinstance(histograms, list):
-            histograms = []
         output: list[dict[str, Any]] = []
         count = max(len(collection_periods), len(p75_values))
         for index in range(count):

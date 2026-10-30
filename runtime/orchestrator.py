@@ -188,7 +188,7 @@ class SEOOrchestrator:
     ) -> dict[str, Any]:
         active_route = route or self.route(session)
         if execution_mode == "single-agent":
-            return await self.executor.execute(session, active_route, tool_requests)
+            return await self.executor.execute(session, active_route, tool_requests, limits=limits)
         if execution_mode != "multi-agent":
             raise ValueError("execution_mode must be 'multi-agent' or 'single-agent'")
         return await self.workflow_runner.run(

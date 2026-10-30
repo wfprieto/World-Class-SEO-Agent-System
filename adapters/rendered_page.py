@@ -23,7 +23,6 @@ Install rendering: pip install playwright && playwright install chromium
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from typing import Any
 
@@ -37,6 +36,7 @@ from adapters.url_safety import (
 )
 from integrations.technical.http import BoundedHttpClient
 from security.browser_capture import guard_request, render_browser
+from security.html_analysis import html_facts
 
 _SPA_MARKERS = ('id="root"', 'id="app"', 'id="__next"', "data-reactroot", "ng-version")
 _HTTP_TIMEOUT = 30
@@ -74,8 +74,7 @@ def is_spa(raw_html: str) -> bool:
     lowered = raw_html.lower()
     if not any(marker in lowered for marker in _SPA_MARKERS):
         return False
-    text = re.sub(r"<script[\s\S]*?</script>", " ", raw_html, flags=re.IGNORECASE)
-    text = re.sub(r"<[^>]+>", " ", text)
+    text = ' '.join(html_facts(raw_html).text)
     return len(text.split()) < _SPA_TEXT_WORD_FLOOR
 
 

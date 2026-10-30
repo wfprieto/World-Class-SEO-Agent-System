@@ -1,6 +1,6 @@
 """Bounded public-web HTTP transport for technical SEO inspection.
 
-This module reuses ``adapters.url_safety`` as the single target policy. Redirects
+This module reuses ``security.url_safety`` as the single target policy. Redirects
 are followed manually so every hop is revalidated and chain evidence is retained.
 """
 
@@ -13,8 +13,13 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
+from security.http_deadline import check_deadline, request_deadline, validate_timeout
 from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
-from security.url_safety import validate_public_url
+from security.url_safety import (
+    sanitize_headers_for_evidence,
+    sanitize_url_for_evidence,
+    validate_public_url,
+)
 
 _REDIRECTS = {301, 302, 303, 307, 308}
 
@@ -35,10 +40,10 @@ class HttpHop:
 
     def as_dict(self) -> dict[str, Any]:
         return {
-            "requested_url": self.requested_url,
-            "final_url": self.final_url,
+            "requested_url": sanitize_url_for_evidence(self.requested_url),
+            "final_url": sanitize_url_for_evidence(self.final_url),
             "status_code": self.status_code,
-            "headers": self.headers,
+            "headers": sanitize_headers_for_evidence(self.headers),
             "elapsed_ms": self.elapsed_ms,
         }
 
@@ -61,7 +66,7 @@ class BoundedHttpClient:
             raise ValueError("max_response_bytes must be from 1 to 50000000")
         if not isinstance(max_redirects, int) or not 0 <= max_redirects <= 20:
             raise ValueError("max_redirects must be an integer from 0 to 20")
-        self.timeout = float(timeout)
+        self.timeout = validate_timeout(timeout)
         self.max_response_bytes = max_response_bytes
         self.max_redirects = max_redirects
         self.user_agent = user_agent
@@ -69,10 +74,10 @@ class BoundedHttpClient:
             urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(), _NoRedirects()
         )
 
+    @request_deadline
     def get(self, url: str, **_: Any) -> HttpHop:
         """Return the final bounded response after validating every redirect hop."""
-        safe = validate_public_url(url)
-        current = safe
+        current = validate_public_url(url)
         visited: set[str] = set()
         for redirect_index in range(self.max_redirects + 1):
             if current in visited:
@@ -89,6 +94,7 @@ class BoundedHttpClient:
             current = validate_public_url(urllib.parse.urljoin(current, location))
         raise ValueError("redirect chain exceeds configured limit")
 
+    @request_deadline
     def redirect_chain(self, url: str, *, max_redirects: int | None = None) -> dict[str, Any]:
         limit = self.max_redirects if max_redirects is None else max_redirects
         if not isinstance(limit, int) or not 0 <= limit <= 20:
@@ -126,22 +132,19 @@ class BoundedHttpClient:
                 limit_reached = True
                 break
             current = next_url
-        state = (
-            "BLOCKED"
-            if loop_detected or limit_reached or blocked_target
-            else "AVAILABLE"
-        )
+        state = "BLOCKED" if any((loop_detected, limit_reached, blocked_target)) else "AVAILABLE"
         return {
-            "requested_url": url,
-            "final_url": final_url,
+            "requested_url": sanitize_url_for_evidence(url),
+            "final_url": sanitize_url_for_evidence(final_url) if final_url else None,
             "hops": hops,
             "hop_count": len(hops),
             "loop_detected": loop_detected,
             "limit_reached": limit_reached,
-            "blocked_target": blocked_target,
+            "blocked_target": sanitize_url_for_evidence(blocked_target) if blocked_target else None,
             "data_state": state,
         }
 
+    @request_deadline
     def _single_request(self, url: str) -> HttpHop:
         safe = validate_public_url(url)
         request = urllib.request.Request(
@@ -159,6 +162,7 @@ class BoundedHttpClient:
         except urllib.error.HTTPError as exc:
             response = exc
         try:
+            check_deadline()
             declared = response.headers.get("Content-Length")
             if declared:
                 try:
@@ -169,20 +173,16 @@ class BoundedHttpClient:
                         raise
                     raise ValueError("invalid Content-Length header") from exc
             body = response.read(self.max_response_bytes + 1)
+            check_deadline()
             if len(body) > self.max_response_bytes:
                 raise ValueError("response exceeds maximum allowed size")
             status = int(getattr(response, "status", None) or getattr(response, "code", 0) or 0)
             headers = {str(key): str(value) for key, value in response.headers.items()}
             final_url = str(getattr(response, "url", None) or getattr(response, "geturl", lambda: safe)())
             final_url = validate_public_url(final_url) if final_url else safe
-            return HttpHop(
-                requested_url=safe,
-                final_url=final_url,
-                status_code=status,
-                headers=headers,
-                body=body,
-                elapsed_ms=round((time.monotonic() - started) * 1000),
-            )
+            return HttpHop(requested_url=safe, final_url=final_url, status_code=status,
+                           headers=headers, body=body,
+                           elapsed_ms=round((time.monotonic() - started) * 1000))
         finally:
             close = getattr(response, "close", None)
             if callable(close):

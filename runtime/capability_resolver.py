@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.assets import resolve_asset_root
+from runtime.safe_paths import resolve_repository_path
 
 
 class CapabilityResolutionError(RuntimeError):
@@ -49,21 +50,21 @@ class CapabilityResolver:
 
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = resolve_asset_root(repo_root)
-        path = self.repo_root / "orchestration" / "capability-registry.json"
+        registry_path = "orchestration/capability-registry.json"
+        path = resolve_repository_path(self.repo_root, registry_path, must_exist=False)
         if not path.exists():
             raise CapabilityResolutionError(f"capability registry missing: {path}")
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(self._read(registry_path))
         self.registry: dict[str, dict[str, Any]] = raw.get("agents", {})
         self.shared: dict[str, Any] = raw.get("shared", {})
-        package_raw = json.loads(
-            (self.repo_root / "skills" / "package-registry.json").read_text(encoding="utf-8")
-        )
+        package_raw = json.loads(self._read("skills/package-registry.json"))
         self.packages: dict[str, dict[str, Any]] = package_raw.get("packages", {})
         self.package_document = str(package_raw.get("package_document", ""))
-        overlay_path = self.repo_root / "orchestration" / "product-proof-capability-overlay.json"
+        overlay_relative = "orchestration/product-proof-capability-overlay.json"
+        overlay_path = resolve_repository_path(self.repo_root, overlay_relative, must_exist=False)
         overlay: dict[str, Any] = {}
         if overlay_path.exists():
-            overlay = json.loads(overlay_path.read_text(encoding="utf-8"))
+            overlay = json.loads(self._read(overlay_relative))
         self.shared_knowledge_files = tuple(
             str(value) for value in overlay.get("shared_knowledge_files", [])
         )
@@ -117,10 +118,12 @@ class CapabilityResolver:
             *bundle.knowledge_files,
             *bundle.templates,
         ):
-            if not (self.repo_root / relative).exists():
+            try:
+                resolve_repository_path(self.repo_root, relative)
+            except FileNotFoundError as exc:
                 raise CapabilityResolutionError(
                     f"{agent_name} capability path does not exist: {relative}"
-                )
+                ) from exc
         return bundle
 
     def load_context(self, agent_name: str) -> dict[str, Any]:
@@ -176,7 +179,7 @@ class CapabilityResolver:
         }
 
     def _read(self, relative: str) -> str:
-        return (self.repo_root / relative).read_text(encoding="utf-8")
+        return resolve_repository_path(self.repo_root, relative).read_text(encoding="utf-8")
 
     @staticmethod
     def _definition_pattern(skill: str) -> re.Pattern[str]:
@@ -193,10 +196,11 @@ class CapabilityResolver:
 
     def _definition_candidates(self, skill: str) -> list[tuple[str, str]]:
         candidates: list[tuple[str, str]] = []
+        resolve_repository_path(self.repo_root, "skills", must_exist=False)
         for path in sorted((self.repo_root / "skills").glob("*.md")):
             if path.name in self._SKILL_DEFINITION_EXCLUDES:
                 continue
-            text = path.read_text(encoding="utf-8")
+            text = self._read(path.relative_to(self.repo_root).as_posix())
             for match in self._definition_pattern(skill).finditer(text):
                 candidates.append(
                     (
@@ -265,7 +269,7 @@ class CapabilityResolver:
             paths.append(product_proof)
         sections: dict[str, str] = {}
         for path in paths:
-            text = path.read_text(encoding="utf-8")
+            text = self._read(path.relative_to(self.repo_root).as_posix())
             matches = list(re.finditer(r"^## ([a-z0-9-]+)\s*$", text, re.MULTILINE))
             for index, match in enumerate(matches):
                 end = matches[index + 1].start() if index + 1 < len(matches) else len(text)

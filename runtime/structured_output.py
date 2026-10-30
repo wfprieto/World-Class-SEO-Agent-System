@@ -260,7 +260,7 @@ class StructuredOutputService:
         output: dict[str, Any] | None = None
         for correction in range(budget.limits.max_correction_attempts + 1):
             try:
-                budget.reserve_llm_call(correction=correction > 0)
+                budget.reserve_model_call(client, active_messages, correction=correction > 0)
             except BudgetExceeded as exc:
                 return StructuredOutputResult(
                     status="blocked",
