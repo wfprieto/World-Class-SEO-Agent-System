@@ -100,4 +100,3 @@ def inspect_sitemap(http: Any, url: str, *, source: str) -> AdapterResult:
         },
         warnings=warnings,
     )
-
