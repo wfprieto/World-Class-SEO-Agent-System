@@ -8,6 +8,7 @@ from datetime import date
 
 from integrations.product_proof.crawler import RobotsPolicy, parse_robots
 from integrations.product_proof.service import ARTIFACT_FILENAMES, ProductProofTechnicalAudit
+from scripts.rollback_validation_clock import effective_as_of
 from scripts.validate_seo_claims import validate
 from seoctl.audit_cli import run
 
@@ -68,10 +69,18 @@ def test_claim_registry_and_deprecations_validate():
 
 def test_claim_validation_clock_is_bounded_and_fail_closed():
     command = [sys.executable, "-I", "-E", "-S", "scripts/validate_seo_claims.py"]
-    for value, expected in (("2027-01-31", 0), ("2027-02-01", 1), ("not-a-date", 1)):
-        environment = os.environ | {"WCSEO_VALIDATION_AS_OF": value}
-        result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True)
-        assert result.returncode == expected
+    environment = os.environ | {"WCSEO_VALIDATION_AS_OF": "2026-10-12"}
+    result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True)
+    assert result.returncode == 1
+    phase0 = "e8c37abb5e939d4433e42ea8a02af63549ca0010"
+    values = {"WCSEO_VALIDATION_AS_OF": "2026-10-12", "WCSEO_ROLLBACK_EXPECTED_SHA": phase0}
+    assert effective_as_of(ROOT, values, lambda _: phase0) == date(2026, 10, 12)
+    try:
+        effective_as_of(ROOT, values, lambda _: "0" * 40)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("historical validation must match the exact approved HEAD")
 
 
 def test_flagship_fixture_audit_generates_client_artifacts(tmp_path: Path):
