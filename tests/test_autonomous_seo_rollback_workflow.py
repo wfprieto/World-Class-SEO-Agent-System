@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
+from scripts.validate_historical_rollback_claims import APPROVED_BOUNDARIES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,3 +46,4 @@ def test_autonomous_rollback_preserves_historical_wrapper_before_checkout() -> N
     )
     assert "validate_source_integrity.py" in step["run"]
     assert "validate_historical_rollback_claims.py" in step["run"]
+    assert "4350c3716f6da11e0f57ddf85997c096b2e0c8fd" in APPROVED_BOUNDARIES
