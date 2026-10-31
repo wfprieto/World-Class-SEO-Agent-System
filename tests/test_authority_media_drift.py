@@ -7,7 +7,6 @@ from integrations.authority_media.adapters import AuthorityMediaAdapter, DriftEx
 from integrations.authority_media.drift import DriftService as ModularDriftService
 from integrations.authority_media.services import (
     BacklinkProfileService,
-    CommonCrawlService,
     DomainHistoryService,
     DriftService,
     IPTCLabelService,
@@ -17,6 +16,7 @@ from integrations.authority_media.services import (
 from integrations.authority_media.transport import BoundedTransport
 from seoctl import authority_cli
 from seoctl.cli import EXIT_BLOCKED, EXIT_OK, EXIT_UNAVAILABLE
+from seoctl.composition import build_commoncrawl_service, build_drift_service
 from seoctl.entrypoint import HANDLERS
 from seoctl.registry import command_specs, load_registry
 
@@ -58,7 +58,7 @@ def test_commoncrawl_fixture_is_bounded_and_does_not_claim_backlink_coverage(tmp
         ),
         encoding="utf-8",
     )
-    result = CommonCrawlService().search("example.com", fixture_path=str(fixture), page_size=10)
+    result = build_commoncrawl_service().search("example.com", fixture_path=str(fixture), page_size=10)
     assert result.status == "ok"
     assert result.data["record_count"] == 2
     assert result.data["coverage"] == "bounded_url_index_sample"
@@ -198,7 +198,7 @@ def test_drift_command_family_uses_one_evidence_store(tmp_path: Path):
         tmp_path / "second.json",
         {"title": "After", "canonical": "https://example.com/new", "status_code": 200, "html": "after"},
     )
-    service = DriftService()
+    service = build_drift_service()
     baseline = service.baseline("https://example.com/", first, db_path=db)
     assert baseline.status == "ok"
     watched = service.watch("https://example.com/", second, db_path=db)
@@ -221,7 +221,7 @@ def test_drift_rejects_unknown_state_before_creating_evidence_store(tmp_path: Pa
     db = tmp_path / "evidence.db"
 
     try:
-        DriftService().baseline("https://example.com/", state, db_path=str(db))
+        build_drift_service().baseline("https://example.com/", state, db_path=str(db))
     except ValueError as exc:
         assert str(exc) == "unsupported state fields: unexpected"
     else:
@@ -294,10 +294,10 @@ def test_cli_registry_handlers_and_fixture_commands(tmp_path: Path, monkeypatch)
 def test_runtime_adapters_expose_canonical_operations(tmp_path: Path):
     fixture = tmp_path / "cc.ndjson"
     fixture.write_text(json.dumps({"url": "https://example.com/", "status": "200"}), encoding="utf-8")
-    result = AuthorityMediaAdapter().fetch(
+    result = AuthorityMediaAdapter(build_commoncrawl_service()).fetch(
         operation="commoncrawl",
         domain="example.com",
         fixture_path=str(fixture),
     )
     assert result.status == "ok"
-    assert isinstance(DriftExecutionAdapter().service, DriftService)
+    assert isinstance(DriftExecutionAdapter(build_drift_service()).service, DriftService)

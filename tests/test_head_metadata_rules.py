@@ -5,7 +5,6 @@ from pathlib import Path
 
 from integrations.product_proof.service import ProductProofTechnicalAudit
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

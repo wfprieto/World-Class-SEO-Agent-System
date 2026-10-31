@@ -21,11 +21,10 @@ from datetime import date, timedelta
 from typing import Any
 
 from adapters.base import AdapterNotConfigured, AdapterResult
-from integrations.google.client import (
+from contracts.google import (
     GoogleAPIError,
-    GoogleJsonClient,
-    GoogleOAuthConfig,
-    GoogleOAuthProvider,
+    JsonClient,
+    TokenProvider,
 )
 
 
@@ -37,11 +36,11 @@ class GSCLiveExampleAdapter:
     def __init__(
         self,
         *,
-        oauth: GoogleOAuthProvider | None = None,
-        client: GoogleJsonClient | None = None,
+        oauth: TokenProvider | None = None,
+        client: JsonClient | None = None,
     ) -> None:
-        self.oauth = oauth or GoogleOAuthProvider(GoogleOAuthConfig.from_env("GSC"))
-        self.client = client or GoogleJsonClient(allowed_hosts={"www.googleapis.com"})
+        self.oauth = oauth
+        self.client = client
 
     def fetch(
         self,
@@ -81,6 +80,8 @@ class GSCLiveExampleAdapter:
         )
 
     def _access_token(self) -> str:
+        if self.oauth is None:
+            raise AdapterNotConfigured("GSC token provider is not configured; use seoctl.composition.")
         try:
             return self.oauth.token()
         except GoogleAPIError as exc:
@@ -100,6 +101,8 @@ class GSCLiveExampleAdapter:
         scheme, _, access_token = authorization.partition(" ")
         if scheme.lower() != "bearer" or not access_token:
             raise GoogleAPIError("gsc", None, "missing bearer token", state="BLOCKED")
+        if self.client is None:
+            raise AdapterNotConfigured("GSC JSON transport is not configured; use seoctl.composition.")
         return self.client.request(
             url,
             service="gsc",

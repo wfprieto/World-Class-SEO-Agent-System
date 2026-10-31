@@ -9,12 +9,12 @@ import pytest
 
 from runtime.execution_limits import ExecutionLimits
 from runtime.llm import EchoLLMClient, LLMMessage, LLMResponse
-from runtime.orchestrator import SEOOrchestrator
 from runtime.run_budget import RunBudget
 from runtime.structured_output import StructuredOutputService
 from runtime.workflow_graph import WorkflowGraph, WorkflowNode
 from runtime.workflow_run_support import node_result_state
 from scripts.validate_quality_ratchets import measure
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
 AGENT = "SEO Output Report Agent"

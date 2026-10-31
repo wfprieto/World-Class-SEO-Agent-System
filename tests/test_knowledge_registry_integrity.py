@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validate_reference_freshness import validate as validate_references
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -18,8 +17,8 @@ def test_reference_registry_paths_sources_and_anchors_are_complete():
     assert validate_references() == []
 
     packs = registry["packs"]
-    entries_by_pack = {pack_id: 0 for pack_id in packs}
-    for pack_id, pack in packs.items():
+    entries_by_pack = dict.fromkeys(packs, 0)
+    for _pack_id, pack in packs.items():
         pack_path = ROOT / pack["path"]
         assert pack_path.exists(), pack["path"]
         body = pack_path.read_text(encoding="utf-8")

@@ -12,7 +12,6 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = "wfprieto/World-Class-SEO-Agent-System"
 RULESET_ID = 18955880
@@ -170,6 +169,23 @@ def apply_plan(
     return applied
 
 
+def _capture_freshness_errors(observed: dict[str, Any], now: dt.datetime | None) -> list[str]:
+    errors: list[str] = []
+    captured_at = observed.get("captured_at")
+    try:
+        captured = dt.datetime.strptime(str(captured_at), "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=dt.UTC
+        )
+    except ValueError:
+        errors.append("post-restore capture requires a UTC captured_at timestamp")
+    else:
+        current = now or dt.datetime.now(dt.UTC)
+        age = current - captured
+        if age < dt.timedelta(minutes=-1) or age > dt.timedelta(minutes=5):
+            errors.append("post-restore capture is outside the five-minute verification window")
+    return errors
+
+
 def restored_state_errors(
     baseline: dict[str, Any],
     observed: dict[str, Any],
@@ -190,18 +206,7 @@ def restored_state_errors(
         errors.append("post-restore capture does not identify its authenticated actor")
     if observed.get("capture_method") != "gh-api-live":
         errors.append("post-restore capture must use live owner-authenticated GitHub APIs")
-    captured_at = observed.get("captured_at")
-    try:
-        captured = dt.datetime.strptime(str(captured_at), "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=dt.UTC
-        )
-    except ValueError:
-        errors.append("post-restore capture requires a UTC captured_at timestamp")
-    else:
-        current = now or dt.datetime.now(dt.UTC)
-        age = current - captured
-        if age < dt.timedelta(minutes=-1) or age > dt.timedelta(minutes=5):
-            errors.append("post-restore capture is outside the five-minute verification window")
+    errors.extend(_capture_freshness_errors(observed, now))
     return errors
 
 

@@ -17,6 +17,7 @@ from integrations.google.client import (
     GoogleOAuthConfig,
     GoogleOAuthProvider,
 )
+from integrations.google.gsc_results import query_result
 from security.url_safety import validate_public_url
 
 SEARCH_ANALYTICS = (
@@ -74,6 +75,32 @@ class GoogleSearchConsoleAdapter:
         kwargs.pop("dimensions", None)
         return self.query(site_url=site_url, dimensions=[], **kwargs)
 
+    def _validate_dimensions(self, dims: list[str], aggregation_type: str,
+                             dimension_filter_groups: list[dict[str, Any]] | None) -> None:
+        if len(dims) != len(set(dims)) or any(item not in _ALLOWED_DIMENSIONS for item in dims):
+            raise ValueError(f"dimensions must be unique values from {sorted(_ALLOWED_DIMENSIONS)}")
+    def _validate_aggregation(self, dims: list[str], aggregation_type: str,
+                              dimension_filter_groups: list[dict[str, Any]] | None) -> None:
+        self._validate_filter_groups(dimension_filter_groups)
+        if aggregation_type == "byProperty" and (
+            "page" in dims or self._filters_dimension(dimension_filter_groups, "page")
+        ):
+            raise ValueError("byProperty aggregation is invalid when grouping or filtering by page")
+
+    @staticmethod
+    def _validate_query_limits(row_limit: int, max_pages: int, search_type: str,
+                               aggregation_type: str, data_state: str) -> None:
+        if not isinstance(row_limit, int) or not 1 <= row_limit <= 25_000:
+            raise ValueError("row_limit must be an integer from 1 to 25000")
+        if not isinstance(max_pages, int) or not 1 <= max_pages <= 100:
+            raise ValueError("max_pages must be an integer from 1 to 100")
+        if search_type not in _ALLOWED_SEARCH_TYPES:
+            raise ValueError(f"search_type must be one of {sorted(_ALLOWED_SEARCH_TYPES)}")
+        if aggregation_type not in _ALLOWED_AGGREGATION:
+            raise ValueError(f"aggregation_type must be one of {sorted(_ALLOWED_AGGREGATION)}")
+        if data_state not in _ALLOWED_DATA_STATES:
+            raise ValueError(f"data_state must be one of {sorted(_ALLOWED_DATA_STATES)}")
+
     def query(
         self,
         site_url: str,
@@ -91,23 +118,9 @@ class GoogleSearchConsoleAdapter:
         property_value = self._validate_property(site_url)
         start, end = self._date_range(start_date, end_date)
         dims = list(dimensions or [])
-        if len(dims) != len(set(dims)) or any(item not in _ALLOWED_DIMENSIONS for item in dims):
-            raise ValueError(f"dimensions must be unique values from {sorted(_ALLOWED_DIMENSIONS)}")
-        if not isinstance(row_limit, int) or not 1 <= row_limit <= 25_000:
-            raise ValueError("row_limit must be an integer from 1 to 25000")
-        if not isinstance(max_pages, int) or not 1 <= max_pages <= 100:
-            raise ValueError("max_pages must be an integer from 1 to 100")
-        if search_type not in _ALLOWED_SEARCH_TYPES:
-            raise ValueError(f"search_type must be one of {sorted(_ALLOWED_SEARCH_TYPES)}")
-        if aggregation_type not in _ALLOWED_AGGREGATION:
-            raise ValueError(f"aggregation_type must be one of {sorted(_ALLOWED_AGGREGATION)}")
-        if data_state not in _ALLOWED_DATA_STATES:
-            raise ValueError(f"data_state must be one of {sorted(_ALLOWED_DATA_STATES)}")
-        self._validate_filter_groups(dimension_filter_groups)
-        if aggregation_type == "byProperty" and (
-            "page" in dims or self._filters_dimension(dimension_filter_groups, "page")
-        ):
-            raise ValueError("byProperty aggregation is invalid when grouping or filtering by page")
+        self._validate_dimensions(dims, aggregation_type, dimension_filter_groups)
+        self._validate_query_limits(row_limit, max_pages, search_type, aggregation_type, data_state)
+        self._validate_aggregation(dims, aggregation_type, dimension_filter_groups)
 
         token = self.oauth.token()
         endpoint = SEARCH_ANALYTICS.format(
@@ -142,6 +155,38 @@ class GoogleSearchConsoleAdapter:
             "position": float(aggregate_row.get("position", 0.0)),
         }
 
+        rows, truncated, detail_pages, detail_metadata = self._detail_rows(
+            endpoint, token, common, dims, row_limit, max_pages, request_telemetry,
+        )
+
+        return query_result(
+            self.name, property_value, start, end, dims, row_limit, max_pages, data_state,
+            search_type, aggregation_type, aggregate_response, aggregate, rows, truncated,
+            detail_pages, detail_metadata, request_telemetry,
+        )
+
+    @staticmethod
+    def _detail_row(raw: dict[str, Any], dims: list[str]) -> dict[str, Any]:
+        keys = list(raw.get("keys") or [])
+        return {
+                "dimensions": {
+                    dimension: keys[index] if index < len(keys) else None
+                    for index, dimension in enumerate(dims)
+                },
+                "clicks": float(raw.get("clicks", 0.0)),
+                "impressions": float(raw.get("impressions", 0.0)),
+                "ctr": float(raw.get("ctr", 0.0)),
+                "position": (
+                    float(raw["position"])
+                    if raw.get("position") is not None
+                    else None
+                ),
+            }
+
+    def _detail_rows(
+        self, endpoint: str, token: str, common: dict[str, Any], dims: list[str],
+        row_limit: int, max_pages: int, request_telemetry: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], bool, int, list[dict[str, Any]]]:
         rows: list[dict[str, Any]] = []
         truncated = False
         detail_pages = 0
@@ -166,96 +211,12 @@ class GoogleSearchConsoleAdapter:
                 if metadata:
                     detail_metadata.append(metadata)
                 raw_rows = response.get("rows") or []
-                for raw in raw_rows:
-                    keys = list(raw.get("keys") or [])
-                    rows.append(
-                        {
-                            "dimensions": {
-                                dimension: keys[index] if index < len(keys) else None
-                                for index, dimension in enumerate(dims)
-                            },
-                            "clicks": float(raw.get("clicks", 0.0)),
-                            "impressions": float(raw.get("impressions", 0.0)),
-                            "ctr": float(raw.get("ctr", 0.0)),
-                            "position": (
-                                float(raw["position"])
-                                if raw.get("position") is not None
-                                else None
-                            ),
-                        }
-                    )
+                rows.extend(self._detail_row(raw, dims) for raw in raw_rows)
                 if len(raw_rows) < row_limit:
                     break
             else:
                 truncated = True
-
-        warnings: list[str] = []
-        if truncated:
-            warnings.append(
-                "Dimension rows reached the configured pagination ceiling; aggregate totals remain valid but row coverage is partial."
-            )
-        aggregate_metadata = aggregate_response.get("metadata") or {}
-        if aggregate_metadata or detail_metadata:
-            warnings.append(
-                "Search Console reported incomplete recent data; inspect provider metadata before comparison."
-            )
-        if dims:
-            warnings.append(
-                "Visible dimension rows can exclude anonymized or lower-volume data and must not be summed as property totals."
-            )
-
-        if not aggregate_rows and not rows:
-            normalized_state = "EMPTY"
-        elif truncated or aggregate_metadata or detail_metadata:
-            normalized_state = "PARTIAL"
-        else:
-            normalized_state = "AVAILABLE"
-        adapter_status = {
-            "AVAILABLE": "ok",
-            "EMPTY": "ok",
-            "PARTIAL": "partial",
-        }[normalized_state]
-        return AdapterResult(
-            source=self.name,
-            status=adapter_status,
-            data={
-                "site_url": property_value,
-                "aggregate": aggregate,
-                "aggregate_source": "dimensionless_aggregate_query",
-                "rows": rows,
-                "row_count": len(rows),
-                "dimensions": dims,
-                "date_range": {
-                    "start": start,
-                    "end": end,
-                    "timezone": "America/Los_Angeles",
-                },
-                "pagination": {
-                    "row_limit": row_limit,
-                    "max_pages": max_pages,
-                    "detail_pages_requested": detail_pages,
-                    "rows_truncated": truncated,
-                },
-                "data_state": normalized_state,
-                "provider_data_state": data_state,
-                "search_type": search_type,
-                "aggregation_type": aggregate_response.get(
-                    "responseAggregationType",
-                    aggregation_type,
-                ),
-                "provider_metadata": {
-                    "aggregate": aggregate_metadata,
-                    "detail_pages": detail_metadata,
-                },
-                "request_metadata": request_telemetry,
-                "warnings": warnings,
-                "limitations": [
-                    "Search Analytics returns top rows and does not guarantee every dimension row.",
-                    "Dimension rows must not be summed to replace the separate aggregate totals.",
-                ],
-            },
-            warnings=warnings,
-        )
+        return rows, truncated, detail_pages, detail_metadata
 
     def inspect(
         self,

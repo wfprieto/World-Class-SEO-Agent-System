@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from typing import Iterable
 
 from runtime.routing import RouteResult
 from runtime.state import SessionState
@@ -35,6 +35,11 @@ class WorkflowGraph:
     declared_control_handoffs: list[dict[str, object]] = field(default_factory=list)
 
     def validate(self, *, max_nodes: int, max_depth: int) -> None:
+        self._validate_nodes(max_nodes)
+        self._validate_depth(max_depth)
+        self._validate_deliverable()
+
+    def _validate_nodes(self, max_nodes: int) -> None:
         if not self.nodes:
             raise WorkflowGraphError("workflow graph has no nodes")
         if len(self.nodes) > max_nodes:
@@ -60,6 +65,7 @@ class WorkflowGraph:
             if node.id in node.depends_on:
                 raise WorkflowGraphError(f"node {node.id} depends on itself")
 
+    def _validate_depth(self, max_depth: int) -> None:
         depths: dict[str, int] = {}
         visiting: set[str] = set()
 
@@ -81,6 +87,7 @@ class WorkflowGraph:
                 f"workflow depth {graph_depth} exceeds max_workflow_depth={max_depth}"
             )
 
+    def _validate_deliverable(self) -> None:
         downstream: dict[str, set[str]] = {node.id: set() for node in self.nodes}
         for node in self.nodes:
             for dependency in node.depends_on:
@@ -170,60 +177,67 @@ def _eligible_support(route: RouteResult) -> list[str]:
 def build_workflow_graph(route: RouteResult, session: SessionState) -> WorkflowGraph:
     """Build the smallest complete graph for the routed deliverable."""
     if route.workflow == "workflows/full-audit-workflow.md":
-        vertical = _vertical_agents(session)
-        fixed = [
-            "SEO Technical Agent",
-            "SEO Copywriter/Content Agent",
-            "SEO Information Architecture Agent",
-            "SEO Accessibility Agent",
-            "GEO / AIO Optimization Agent",
-            "Negative SEO & Security Agent",
-        ]
-        selected_vertical = vertical[:2]
-        optional_slots = selected_vertical or ["SEO CRO Agent", "Competitive Intelligence Agent"]
-        specialists = _dedupe([*fixed, *optional_slots])[:8]
-        specialist_nodes = [
-            WorkflowNode(
-                id=f"specialist-{index:02d}-{_slug(agent)}",
-                agent=agent,
-                role="specialist",
-            )
-            for index, agent in enumerate(specialists, start=1)
-        ]
-        dependencies = tuple(node.id for node in specialist_nodes)
-        lead = WorkflowNode(
-            id="lead-synthesis",
-            agent="SEO Full Audit/Analyst Agent",
-            depends_on=dependencies,
-            role="lead",
-        )
-        scrum = WorkflowNode(
-            id="scrummaster-challenge",
-            agent="SEO Scrummaster Agent",
-            depends_on=(lead.id,),
-            role="governance",
-        )
-        strategy = WorkflowNode(
-            id="strategic-roadmap",
-            agent="Senior SEO Strategist Agent",
-            depends_on=(scrum.id,),
-            role="strategy",
-        )
-        report = WorkflowNode(
-            id="stakeholder-report",
-            agent="SEO Output Report Agent",
-            depends_on=(strategy.id,),
-            role="report",
-        )
-        return WorkflowGraph(
-            id="full-audit-v2",
-            nodes=[*specialist_nodes, lead, scrum, strategy, report],
-            deliverable_node_id=report.id,
-            capacity_exclusions=_capacity_exclusions(
-                vertical[2:], "vertical specialist capacity is bounded to two agents"
-            ),
-        )
+        return _build_full_audit_graph(session)
+    return _build_routed_graph(route)
 
+
+def _build_full_audit_graph(session: SessionState) -> WorkflowGraph:
+    vertical = _vertical_agents(session)
+    fixed = [
+        "SEO Technical Agent",
+        "SEO Copywriter/Content Agent",
+        "SEO Information Architecture Agent",
+        "SEO Accessibility Agent",
+        "GEO / AIO Optimization Agent",
+        "Negative SEO & Security Agent",
+    ]
+    selected_vertical = vertical[:2]
+    optional_slots = selected_vertical or ["SEO CRO Agent", "Competitive Intelligence Agent"]
+    specialists = _dedupe([*fixed, *optional_slots])[:8]
+    specialist_nodes = [
+        WorkflowNode(
+            id=f"specialist-{index:02d}-{_slug(agent)}",
+            agent=agent,
+            role="specialist",
+        )
+        for index, agent in enumerate(specialists, start=1)
+    ]
+    dependencies = tuple(node.id for node in specialist_nodes)
+    lead = WorkflowNode(
+        id="lead-synthesis",
+        agent="SEO Full Audit/Analyst Agent",
+        depends_on=dependencies,
+        role="lead",
+    )
+    scrum = WorkflowNode(
+        id="scrummaster-challenge",
+        agent="SEO Scrummaster Agent",
+        depends_on=(lead.id,),
+        role="governance",
+    )
+    strategy = WorkflowNode(
+        id="strategic-roadmap",
+        agent="Senior SEO Strategist Agent",
+        depends_on=(scrum.id,),
+        role="strategy",
+    )
+    report = WorkflowNode(
+        id="stakeholder-report",
+        agent="SEO Output Report Agent",
+        depends_on=(strategy.id,),
+        role="report",
+    )
+    return WorkflowGraph(
+        id="full-audit-v2",
+        nodes=[*specialist_nodes, lead, scrum, strategy, report],
+        deliverable_node_id=report.id,
+        capacity_exclusions=_capacity_exclusions(
+            vertical[2:], "vertical specialist capacity is bounded to two agents"
+        ),
+    )
+
+
+def _build_routed_graph(route: RouteResult) -> WorkflowGraph:
     deduped_support = _eligible_support(route)
     support = deduped_support[:6]
     support_nodes = [

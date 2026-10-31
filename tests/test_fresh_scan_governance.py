@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from scripts import validate_autonomous_seo_external_reviews as external_review
 from scripts import autonomous_seo_program_closure as program_closure
 from scripts import validate_autonomous_seo_expansion_program as expansion
+from scripts import validate_autonomous_seo_external_reviews as external_review
 
 
 def _write_json(root: Path, relative: str, payload: dict) -> None:

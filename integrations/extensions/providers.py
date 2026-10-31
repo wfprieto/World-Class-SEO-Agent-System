@@ -5,35 +5,35 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from adapters.mcp_extensions import (
-    capability_report,
-    estimate_cost,
-    preflight,
-    render_config,
-)
 from contracts.adapter import AdapterResult
+from contracts.construction import ProviderControls
 from integrations.extensions.entity_analysis import (
     normalize_entity_analysis as _normalize_entity_analysis,
 )
 from integrations.extensions.image_generation import ImageGenerationService
 
 
-def normalize_entity_analysis(payload: dict[str, Any] | None) -> dict[str, Any]:
+def normalize_entity_analysis(
+    payload: dict[str, Any] | None, *, providers: ProviderService,
+) -> dict[str, Any]:
     """Apply provider availability to a supplied entity-analysis receipt."""
-    return _normalize_entity_analysis(payload, provider_state=preflight("entity-analysis")["state"])
+    return _normalize_entity_analysis(payload, provider_state=providers.preflight(provider="entity-analysis").data["state"])
 
 
-def image_generation_service() -> ImageGenerationService:
+def image_generation_service(providers: ProviderService) -> ImageGenerationService:
     """Bind the pure request planner to the canonical optional-provider controls."""
-    return ImageGenerationService(preflight, estimate_cost)
+    return ImageGenerationService(providers)
 
 
 class ProviderService:
+    def __init__(self, controls: ProviderControls) -> None:
+        self.controls = controls
+
     def list(self, connected_mcp: set[str] | None = None) -> AdapterResult:
         return AdapterResult(
             source="optional-integrations",
             status="ok",
-            data=capability_report(connected_mcp),
+            data=self.controls.capability_report(connected_mcp),
             warnings=[
                 "Availability is a credential or host-connection presence check, not a live smoke test."
             ],
@@ -42,7 +42,7 @@ class ProviderService:
     def preflight(
         self, *, provider: str, connected_mcp: set[str] | None = None
     ) -> AdapterResult:
-        data = preflight(provider, connected_mcp)
+        data = self.controls.preflight(provider, connected_mcp)
         status = {
             "AVAILABLE": "ok",
             "NOT_CONFIGURED": "not_configured",
@@ -57,7 +57,7 @@ class ProviderService:
         )
 
     def config(self, *, provider: str, client: str = "generic") -> AdapterResult:
-        data = render_config(provider, client)
+        data = self.controls.render_config(provider, client)
         status = "blocked" if data["state"] == "BLOCKED_BY_CONTRACT" else "ok"
         return AdapterResult(
             source=f"optional-integrations:{provider}",
@@ -77,7 +77,7 @@ class ProviderService:
         approved_ceiling: float | None = None,
         approved: bool = False,
     ) -> AdapterResult:
-        data = estimate_cost(
+        data = self.controls.estimate_cost(
             provider,
             units=units,
             unit_cost=unit_cost,
@@ -98,8 +98,8 @@ class ProviderService:
 class ExtensionAdapter:
     name = "optional_extensions"
 
-    def __init__(self) -> None:
-        self.providers = ProviderService()
+    def __init__(self, providers: ProviderService) -> None:
+        self.providers = providers
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
         handlers: dict[str, Callable[..., AdapterResult]] = {

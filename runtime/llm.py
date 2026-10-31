@@ -11,33 +11,15 @@ import urllib.parse
 import urllib.request
 from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol
+from typing import Protocol
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
-from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
+from contracts.llm_transport import LLMConfigurationError as LLMConfigurationError
+from contracts.llm_transport import LLMOpener
 
 logger = logging.getLogger(__name__)
 _MAX_RESPONSE_BYTES = 10_000_000
-
-
-class LLMConfigurationError(RuntimeError):
-    """Raised when a configured LLM provider is missing required or safe settings."""
-
-
-class _RejectCredentialRedirects(urllib.request.HTTPRedirectHandler):
-    """Never forward credential-bearing provider requests to a redirect target."""
-
-    def redirect_request(
-        self,
-        req: Any,
-        fp: Any,
-        code: int,
-        msg: str,
-        headers: Any,
-        newurl: str,
-    ) -> None:
-        raise LLMConfigurationError("LLM credential request refused a redirect.")
 
 
 def _retryable_transport_failure(exc: BaseException) -> bool:
@@ -113,7 +95,9 @@ def _approved_base_url(value: str, *, allow_custom: bool) -> tuple[str, bool]:
     if parsed.scheme != "https":
         raise LLMConfigurationError("LLM base URL must use HTTPS.")
     if not parsed.hostname or parsed.username or parsed.password:
-        raise LLMConfigurationError("LLM base URL must have a hostname and no embedded credentials.")
+        raise LLMConfigurationError(
+            "LLM base URL must have a hostname and no embedded credentials."
+        )
     if parsed.query or parsed.fragment:
         raise LLMConfigurationError("LLM base URL cannot contain query parameters or fragments.")
     custom = parsed.hostname.lower() != "api.openai.com"
@@ -139,11 +123,13 @@ class OpenAICompatibleClient:
         base_url: str | None = None,
         *,
         allow_custom_base_url: bool = False,
-        opener: Any | None = None,
+        opener: LLMOpener[urllib.request.Request] | None = None,
     ) -> None:
         raw_base = base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
         env_approval = os.getenv("ALLOW_CUSTOM_LLM_BASE_URL", "").lower() in {
-            "1", "true", "yes",
+            "1",
+            "true",
+            "yes",
         }
         self.base_url, custom = _approved_base_url(
             raw_base,
@@ -159,10 +145,11 @@ class OpenAICompatibleClient:
         if not self.api_key:
             variable = "OPENAI_COMPATIBLE_API_KEY" if custom else "OPENAI_API_KEY"
             raise LLMConfigurationError(f"{variable} is required for this endpoint.")
-        self._opener = opener or urllib.request.build_opener(
-            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(),
-            _RejectCredentialRedirects(),
-        )
+        if opener is None:
+            raise LLMConfigurationError(
+                "Live LLM clients require an explicit opener; use seoctl.composition."
+            )
+        self._opener = opener
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
         payload = {
@@ -226,21 +213,20 @@ class AnthropicClient:
         api_key: str | None = None,
         model: str | None = None,
         *,
-        opener: Any | None = None,
+        opener: LLMOpener[urllib.request.Request] | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.model = model or os.getenv("ANTHROPIC_MODEL") or "claude-sonnet-4-5"
         if not self.api_key:
             raise LLMConfigurationError("ANTHROPIC_API_KEY is required for the Anthropic client.")
-        self._opener = opener or urllib.request.build_opener(
-            urllib.request.ProxyHandler({}), PinnedHTTPHandler(), PinnedHTTPSHandler(),
-            _RejectCredentialRedirects(),
-        )
+        if opener is None:
+            raise LLMConfigurationError(
+                "Live LLM clients require an explicit opener; use seoctl.composition."
+            )
+        self._opener = opener
 
     async def complete(self, messages: list[LLMMessage]) -> LLMResponse:
-        system = "\n\n".join(
-            message.content for message in messages if message.role == "system"
-        )
+        system = "\n\n".join(message.content for message in messages if message.role == "system")
         user_messages = [asdict(message) for message in messages if message.role != "system"]
         payload = {
             "model": self.model,
@@ -256,9 +242,7 @@ class AnthropicClient:
         )
         content_blocks = data.get("content", [])
         content = "\n".join(
-            block.get("text", "")
-            for block in content_blocks
-            if block.get("type") == "text"
+            block.get("text", "") for block in content_blocks if block.get("type") == "text"
         )
         return LLMResponse(provider=self.provider, model=self.model, content=content, raw=data)
 
@@ -301,12 +285,17 @@ class AnthropicClient:
             return decoded
 
 
-def build_llm_client(provider: str = "echo", model: str | None = None) -> LLMClient:
+def build_llm_client(
+    provider: str = "echo",
+    model: str | None = None,
+    *,
+    opener: LLMOpener[urllib.request.Request] | None = None,
+) -> LLMClient:
     normalized = provider.lower().strip()
     if normalized in {"echo", "dry-run", "dryrun"}:
         return EchoLLMClient(model=model or "echo-seo-runtime")
     if normalized in {"openai", "openai-compatible"}:
-        return OpenAICompatibleClient(model=model)
+        return OpenAICompatibleClient(model=model, opener=opener)
     if normalized == "anthropic":
-        return AnthropicClient(model=model)
+        return AnthropicClient(model=model, opener=opener)
     raise LLMConfigurationError(f"Unsupported LLM provider: {provider}")

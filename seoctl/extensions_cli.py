@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from adapters.base import AdapterNotConfigured
+from adapters.base import AdapterNotConfigured, AdapterResult
 from integrations.extensions.indexnow import IndexNowService
 from integrations.extensions.providers import ProviderService
 from seoctl.cli import (
@@ -17,17 +18,18 @@ from seoctl.cli import (
     envelope,
     exit_code_for_status,
 )
+from seoctl.composition import build_provider_service
 
 
 def _providers() -> ProviderService:
-    return ProviderService()
+    return build_provider_service()
 
 
 def _indexnow() -> IndexNowService:
     return IndexNowService()
 
 
-def _result(command: str, result):
+def _result(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
@@ -47,25 +49,25 @@ def _read_urls(path: str) -> list[str]:
     ]
 
 
-def _integrations_list(args: argparse.Namespace):
+def _integrations_list(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("integrations.list", _providers().list())
 
 
-def _integrations_preflight(args: argparse.Namespace):
+def _integrations_preflight(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "integrations.preflight",
         _providers().preflight(provider=args.provider),
     )
 
 
-def _integrations_config(args: argparse.Namespace):
+def _integrations_config(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "integrations.config",
         _providers().config(provider=args.provider, client=args.client),
     )
 
 
-def _integrations_estimate(args: argparse.Namespace):
+def _integrations_estimate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "integrations.estimate",
         _providers().estimate(
@@ -78,14 +80,14 @@ def _integrations_estimate(args: argparse.Namespace):
     )
 
 
-def _bing_preflight(args: argparse.Namespace):
+def _bing_preflight(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "bing.preflight",
         _providers().preflight(provider="bing-webmaster"),
     )
 
 
-def _indexnow_validate(args: argparse.Namespace):
+def _indexnow_validate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "indexnow.validate",
         _indexnow().validate(
@@ -95,7 +97,7 @@ def _indexnow_validate(args: argparse.Namespace):
     )
 
 
-def _indexnow_submit(args: argparse.Namespace):
+def _indexnow_submit(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "indexnow.submit",
         _indexnow().submit(
@@ -172,7 +174,7 @@ def build_parser(family: str) -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if not arguments or arguments[0] not in {"integrations", "bing", "indexnow"}:
         return envelope(

@@ -30,7 +30,8 @@ class RedirectChainAdapter:
         hops_column: str = "hops",
         **_: object,
     ) -> AdapterResult:
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         chains = [row for row in rows if _hops(row, hops_column) > 1]
         loops = [row for row in rows if row.get(source_column) == row.get(target_column)]
         skipped = [row for row in rows if _is_skipped(row)]

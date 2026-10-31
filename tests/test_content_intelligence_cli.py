@@ -41,7 +41,7 @@ def _write(path: Path, value) -> str:
 
 
 def test_all_content_intelligence_commands_route(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(content_cli, "ContentIntelligenceService", FakeContentService)
+    monkeypatch.setattr(content_cli, "build_content_service", FakeContentService)
     text = _write(tmp_path / "content.md", "# Title\n\nUseful copy.")
     claims = _write(tmp_path / "claims.json", [{"id": "c1", "text": "Claim"}])
     sources = _write(tmp_path / "sources.json", [{"id": "s1", "title": "Source"}])
@@ -94,7 +94,7 @@ def test_blocked_brief_returns_blocked_exit(monkeypatch, tmp_path: Path):
         def brief(self, **kwargs):
             return self._result("brief", status="blocked", **kwargs)
 
-    monkeypatch.setattr(content_cli, "ContentIntelligenceService", Blocked)
+    monkeypatch.setattr(content_cli, "build_content_service", Blocked)
     relevance = _write(tmp_path / "relevance.json", {"verdict": "NOT_RELEVANT"})
     serp = _write(tmp_path / "serp.json", {"status": "SUFFICIENT"})
     gains = _write(tmp_path / "gains.json", [])
@@ -110,7 +110,7 @@ def test_blocked_brief_returns_blocked_exit(monkeypatch, tmp_path: Path):
 
 
 def test_entities_accepts_omitted_optional_catalog(monkeypatch, tmp_path: Path):
-    monkeypatch.setattr(content_cli, "ContentIntelligenceService", FakeContentService)
+    monkeypatch.setattr(content_cli, "build_content_service", FakeContentService)
     text = _write(tmp_path / "content.md", "# Title\n\nOpenAI builds models.")
 
     payload, code = content_cli.run(["entities", "--input", text])
@@ -134,7 +134,7 @@ def test_humanize_can_write_reviewable_output(monkeypatch, tmp_path: Path):
                 warnings=[],
             )
 
-    monkeypatch.setattr(content_cli, "ContentIntelligenceService", Humanized)
+    monkeypatch.setattr(content_cli, "build_content_service", Humanized)
     source = _write(tmp_path / "input.txt", "Filler text.")
     output = tmp_path / "output.txt"
     payload, code = content_cli.run([

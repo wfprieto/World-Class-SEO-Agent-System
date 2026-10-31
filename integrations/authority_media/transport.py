@@ -8,8 +8,10 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from email.message import Message
+from typing import IO, Any
 
 from security import http_deadline as deadlines
 from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
@@ -32,7 +34,10 @@ class TransportResponse:
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
+    def redirect_request(
+        self, req: urllib.request.Request, fp: IO[bytes], code: int,
+        msg: str, headers: Message, newurl: str,
+    ) -> None:
         return None
 
 
@@ -45,8 +50,8 @@ class BoundedTransport:
         *,
         timeout_seconds: float = 15.0, max_response_bytes: int = 2_000_000,
         max_attempts: int = 3,
-        opener: Any | None = None,
-        sleeper: Any = time.sleep,
+        opener: urllib.request.OpenerDirector | None = None,
+        sleeper: Callable[[float], None] = time.sleep,
     ) -> None:
         hosts = {str(host).strip().lower().rstrip(".") for host in allowed_hosts if str(host).strip()}
         if not hosts:

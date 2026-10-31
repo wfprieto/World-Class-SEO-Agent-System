@@ -79,7 +79,7 @@ def validate(
     *,
     as_of: date | None = None,
 ) -> list[str]:
-    active = disposition or _load(root / DISPOSITION_PATH.relative_to(ROOT))
+    active = disposition if disposition is not None else _load(root / DISPOSITION_PATH.relative_to(ROOT))
     errors = []
     if set(active) != EXPECTED_KEYS:
         errors.append("architecture exception disposition must use exact keys")
@@ -88,6 +88,8 @@ def validate(
     if source != "governance/architecture-contract.json":
         return ["architecture exception disposition must bind the canonical contract"]
     contract = _load(root / source)
+    if active["disposition"] == "RETIRED":
+        return _retired_errors(active, contract)
     target_phase = active["target_phase"]
     edges = sorted(
         f"{item['source']}->{item['target']}"
@@ -111,6 +113,33 @@ def validate(
     if not isinstance(active["rationale"], str) or len(active["rationale"].strip()) < 80:
         errors.append("architecture exception disposition requires a concise governance rationale")
     errors.extend(_retirement_plan_errors(active.get("retirement_plans"), edges))
+    return errors
+
+
+def _retired_errors(active: dict[str, Any], contract: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if active["schema_version"] != "1.0.0":
+        errors.append("architecture exception disposition schema version must be 1.0.0")
+    if active["overdue_phase"] != "P9" or active["target_phase"] != "P10":
+        errors.append("retirement must preserve the P9 to P10 migration identity")
+    if contract.get("exceptions") != []:
+        errors.append("retired architecture contract must contain an empty exception list")
+    count = active["expected_exception_count"]
+    if type(count) is not int or count != 0:
+        errors.append("retired architecture exception count must be integer zero")
+    if active["expected_edges_sha256"] != hashlib.sha256(b"\n").hexdigest():
+        errors.append("retired architecture exception edge digest must bind the empty set")
+    if active["retirement_plans"] != []:
+        errors.append("retired architecture disposition must contain no retirement plans")
+    if not isinstance(active["rationale"], str) or len(active["rationale"].strip()) < 80:
+        errors.append("architecture exception disposition requires a concise governance rationale")
+    try:
+        reviewed = date.fromisoformat(str(active["reviewed_on"]))
+        due = date.fromisoformat(str(active["review_due"]))
+        if due <= reviewed:
+            errors.append("architecture exception review_due must follow reviewed_on")
+    except ValueError:
+        errors.append("architecture exception review dates must be ISO dates")
     return errors
 
 

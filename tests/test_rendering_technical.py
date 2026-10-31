@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from adapters.base import AdapterResult
 from integrations.technical.browser import (
     BrowserHealth,
     BrowserNotConfigured,

@@ -3,12 +3,13 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from runtime.memory import InMemoryStore
-from runtime.orchestrator import SEOOrchestrator
 from runtime.routing import RequestRouter
 from runtime.tools import ToolRequest
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 from tests.test_schema_validation import load_json
-from jsonschema import Draft202012Validator
 
 
 def test_routes_diagnostic_setup_to_infrastructure_agent():

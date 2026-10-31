@@ -3,9 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from runtime.business_profile_resolver import resolve_business_profile
-from runtime.orchestrator import SEOOrchestrator
 from runtime.workflow_graph import build_workflow_graph
-
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
 

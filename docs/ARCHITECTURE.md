@@ -37,11 +37,31 @@ The implementation-neutral `contracts` layer owns shared boundary types, while t
 
 `seoctl` is the outer composition layer and may assemble runtime, adapter, and integration components. The implementation-neutral `contracts` layer owns shared boundary types and may not import any executable layer; runtime, adapters, and integrations may depend on it. All other cross-layer imports fail unless the architecture contract names the exact source module, exact target module, accountable owner, rationale, and removal phase. Absolute, relative, package-`__init__`, and literal reflective imports participate in the same dependency and cycle graph, including aliased built-in imports, positional or keyword `import_module` forms, and module-global, source-ordered exact Name or Attribute assignments to `importlib`, `builtins`, `import_module`, or `__import__`. Dynamic expressions and arbitrary cross-scope data flow are not claimed as assignment-alias analysis; once an exact reflective alias is observed, an unresolved reassignment remains fail-closed. Literal relative reflection is resolved against its literal package and fails closed when resolution is impossible. The validator also rejects stale exceptions, missing packages, and new modules that directly import a declared network or browser client, dynamically import a declared client by a literal name, or launch a statically identifiable network command without explicit registration. Process detection resolves positional and keyword arguments, quoted or byte-string executables, normalized executable path, case, and `.exe` suffix. A literal `executable=` override selecting `sh`, `bash`, `env`, or their `.exe` forms is composed with its literal argv and the same finite grammar; unresolved selected-wrapper argv fails closed while non-wrapper argv remains data. The quote-aware wrapper grammar covers `sh`/`bash` command options (including combined `-lc` and `--noprofile -c`), `env` flags and option operands, shell `exec`, leading environment assignments, and the POSIX `command` builtin; `command -v` and `command -V` are treated as non-executing queries. Unquoted control operators, redirects, newlines, command substitution, backticks, or supported wrappers with dynamic or unrecognized grammar fail closed as network-capable. Quoted punctuation and punctuation in non-shell argument values remain data and are negative controls. This remains an import-and-literal-call egress inventory, not whole-program data-flow proof; indirect calls and dynamically constructed non-wrapper command strings remain the responsibility of security review.
 
-Every registered direct network sink must also have an exact `network_transports` entry naming its policy and canonical delegate. The rendered-page adapter delegates raw HTTP to the bounded technical HTTP client, which validates every redirect hop, caps redirects, response bytes, and time, and closes every response. Evidence exports strip URL credentials, queries, fragments, sensitive headers, and credential-like console or error text. Playwright requests are revalidated before continuation, but validation and browser resolution are separate: this is not DNS pinning and does not claim to eliminate DNS rebinding.
+Every registered direct network sink must also have an exact `network_transports` entry naming its policy and canonical delegate. The rendered-page adapter delegates raw HTTP to the bounded technical HTTP client, which validates every redirect hop, caps redirects, response bytes, and time, and closes every response. Evidence exports strip URL credentials, queries, fragments, sensitive headers, and credential-like console or error text. Playwright runs inside the canonical isolated browser boundary with numeric-only public egress. HTTP connections are made to vetted numeric addresses; HTTPS CONNECT preserves end-to-end hostname and certificate verification. Request guards also revalidate destinations. This is a bounded egress control, not a claim that arbitrary browser content or every network threat is safe.
 
 Credential-bearing LLM requests reject redirects and retry only bounded transient transport failures. The GSC example delegates OAuth and API calls to the approved-host Google transport instead of implementing a separate credential path. The generated development dependency lock includes SHA-256 artifact hashes for every exact pin, and validation fails when any pin loses its hash.
 
 `contracts.adapter` owns the one generic `AdapterResult` class and runtime-checkable adapter protocol. `runtime.adapter_contracts` and `adapters.base` are identity-preserving compatibility re-exports, so integrations and callers cannot create competing result identities. `ToolDispatcher` validates source, status, warning types, secret safety, and finite JSON serializability before evidence crosses the runtime boundary.
+
+## Explicit construction
+
+`seoctl.composition` is the public outer construction root. Its `default_adapters`
+factory preserves all 47 ordered keys, classes, and distinct alias instances.
+`build_orchestrator` supplies that mapping and the composed LLM client unless the
+caller supplies explicit instances. `main.py` and the module CLI use this root.
+
+Raw `ToolDispatcher()` and `ToolDispatcher(None)` reject missing mappings;
+`ToolDispatcher({})` stays empty. Raw `SEOOrchestrator` and `AgentExecutor` remain
+offline-capable and have no implicit tool registry. A missing tool remains missing
+evidence. Live LLM clients require an explicit opener after credential and endpoint
+validation, and preserve the shared `LLMConfigurationError` identity.
+
+Drift persistence factories, canonical URL identity, provider controls, PageSpeed,
+raw HTTP fetches, and the product-proof claim-registry path are injected explicitly.
+The factories bind existing canonical implementations; they do not introduce a
+second transport, database, normalizer, or provider registry. Google errors retain
+one `contracts.google.GoogleAPIError` identity through compatibility re-exports.
+See [construction migration](construction-migration.md) for concrete APIs.
 
 ## Flagship boundary
 

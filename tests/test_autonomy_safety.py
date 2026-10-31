@@ -47,7 +47,7 @@ def test_autonomy_policy_has_ordered_modes_and_public_default() -> None:
 def test_dangerous_actions_require_approval_and_reviewers() -> None:
     payload = _policy()
     dangerous_ids = {row["id"] for row in payload["dangerous_actions"]}
-    assert EXPECTED_DANGEROUS_ACTIONS <= dangerous_ids
+    assert dangerous_ids >= EXPECTED_DANGEROUS_ACTIONS
     for row in payload["dangerous_actions"]:
         assert row["requires_approval"] is True
         assert row["minimum_mode"] == "mode_3_approval_gated_execution"

@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+Check = Callable[[], tuple[bool, str]]
+Recorder = Callable[[str, Check], None]
 
 
 def _json(path: Path) -> Any:
@@ -17,26 +20,7 @@ def _path_exists(root: Path, path: str) -> tuple[bool, str]:
     return (root / path).exists(), f"{path} exists"
 
 
-def validate(root: Path = ROOT) -> dict[str, Any]:
-    rows: list[dict[str, Any]] = _json(
-        root / "evaluation" / "product-proof" / "requirements.json"
-    )["requirements"]
-    failures: list[str] = []
-    passes: list[dict[str, str]] = []
-
-    def record(name: str, check: Callable[[], tuple[bool, str]]) -> None:
-        ok, detail = check()
-        passes.append(
-            {
-                "pass": str(len(passes) + 1),
-                "name": name,
-                "status": "PASS" if ok else "FAIL",
-                "detail": detail,
-            }
-        )
-        if not ok:
-            failures.append(f"{name}: {detail}")
-
+def _requirement_checks(root: Path, rows: list[dict[str, Any]], record: Recorder) -> None:
     ids = [str(row["id"]) for row in rows]
     record(
         "Requirement identity",
@@ -90,20 +74,8 @@ def validate(root: Path = ROOT) -> dict[str, Any]:
         ),
     )
 
-    checks: list[tuple[str, str]] = [
-        ("Claim registry", "knowledge/seo-claim-registry.json"),
-        ("Deprecation registry", "knowledge/deprecation-registry.json"),
-        ("Primary source pack", "knowledge/primary-source-technical-seo.md"),
-        ("Bounded crawler", "integrations/product_proof/crawler.py"),
-        ("Rule engine", "integrations/product_proof/rules.py"),
-        ("Root-cause reporting", "integrations/product_proof/report.py"),
-        ("CLI product path", "seoctl/audit_cli.py"),
-        ("Command overlay", "seoctl/command-registry-overlay.json"),
-        ("Capability overlay", "orchestration/product-proof-capability-overlay.json"),
-    ]
-    for name, path in checks:
-        record(name, partial(_path_exists, root, path))
 
+def _artifact_checks(root: Path, rows: list[dict[str, Any]], record: Recorder) -> None:
     service_text = (root / "integrations/product_proof/service.py").read_text(
         encoding="utf-8"
     )
@@ -148,6 +120,45 @@ def validate(root: Path = ROOT) -> dict[str, Any]:
             f"External proof remains blocked and explicit: {', '.join(blocked)}",
         ),
     )
+
+
+def validate(root: Path = ROOT) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = _json(
+        root / "evaluation" / "product-proof" / "requirements.json"
+    )["requirements"]
+    failures: list[str] = []
+    passes: list[dict[str, str]] = []
+
+    def record(name: str, check: Callable[[], tuple[bool, str]]) -> None:
+        ok, detail = check()
+        passes.append(
+            {
+                "pass": str(len(passes) + 1),
+                "name": name,
+                "status": "PASS" if ok else "FAIL",
+                "detail": detail,
+            }
+        )
+        if not ok:
+            failures.append(f"{name}: {detail}")
+
+    _requirement_checks(root, rows, record)
+
+    checks: list[tuple[str, str]] = [
+        ("Claim registry", "knowledge/seo-claim-registry.json"),
+        ("Deprecation registry", "knowledge/deprecation-registry.json"),
+        ("Primary source pack", "knowledge/primary-source-technical-seo.md"),
+        ("Bounded crawler", "integrations/product_proof/crawler.py"),
+        ("Rule engine", "integrations/product_proof/rules.py"),
+        ("Root-cause reporting", "integrations/product_proof/report.py"),
+        ("CLI product path", "seoctl/audit_cli.py"),
+        ("Command overlay", "seoctl/command-registry-overlay.json"),
+        ("Capability overlay", "orchestration/product-proof-capability-overlay.json"),
+    ]
+    for name, path in checks:
+        record(name, partial(_path_exists, root, path))
+
+    _artifact_checks(root, rows, record)
 
     return {
         "status": "PASS" if not failures else "FAIL",

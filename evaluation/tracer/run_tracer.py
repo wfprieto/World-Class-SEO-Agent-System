@@ -19,7 +19,6 @@ if str(ROOT) not in sys.path:
 
 from runtime.finding_registry import FindingRegistry  # noqa: E402
 
-
 DEFAULT_FIXTURES = ROOT / "evaluation" / "tracer" / "seeded-conflict-fixtures.json"
 
 

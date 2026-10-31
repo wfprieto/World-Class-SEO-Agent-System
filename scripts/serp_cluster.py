@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Iterable
 from itertools import combinations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -25,16 +26,16 @@ else:  # Preserve the documented `python scripts/serp_cluster.py` entry point.
 
 
 class _DisjointSet:
-    def __init__(self, items) -> None:
+    def __init__(self, items: Iterable[str]) -> None:
         self.parent = {item: item for item in items}
 
-    def find(self, item):
+    def find(self, item: str) -> str:
         while self.parent[item] != item:
             self.parent[item] = self.parent[self.parent[item]]
             item = self.parent[item]
         return item
 
-    def union(self, a, b) -> None:
+    def union(self, a: str, b: str) -> None:
         self.parent[self.find(a)] = self.find(b)
 
 

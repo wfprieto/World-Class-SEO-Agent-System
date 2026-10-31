@@ -460,8 +460,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Lint canonical P3 profile
-        run: ruff check runtime adapters integrations seoctl scripts security
-        continue-on-error: true # Exact legacy fingerprints are enforced by the ratchet above.
+        run: ruff check . --no-cache
       - name: Prove exact source integrity
         shell: pwsh
         run: >-
@@ -545,7 +544,7 @@ jobs:
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
       - name: Run coverage gate
-        run: python -B -m pytest -q --browser-security --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov=security --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
+        run: python -B -m pytest -q --browser-security --cov=runtime --cov=seoctl --cov=integrations --cov=adapters --cov=security --cov=contracts --cov-report=term-missing --cov-report=xml:outputs/coverage.xml --cov-report=json:outputs/coverage.json --cov-fail-under=78 --junitxml=outputs/pytest-quality.xml
       - name: Prove exact source integrity
         shell: pwsh
         run: >-

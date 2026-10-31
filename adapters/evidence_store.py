@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-import hmac
 import math
 import os
 import sqlite3
 import threading
 import time
-import urllib.parse
-from collections.abc import Iterator, Mapping
+from collections.abc import Mapping
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Final
 
+from adapters.evidence_identity import _iter_drift as _iter_drift
+from adapters.evidence_identity import canonicalize_url as canonicalize_url
+from adapters.evidence_identity import compare_snapshots
 from adapters.evidence_integrity import (
     SnapshotIntegrityFailure,
     decode_verified_row,
@@ -26,7 +28,9 @@ from adapters.evidence_integrity import (
 from adapters.evidence_integrity import (
     sha256_text as _sha256,
 )
-from sensitive_data import SENSITIVE_QUERY_KEYS, redact_evidence_fields
+from adapters.evidence_migrations import migrate_schema
+from adapters.evidence_migrations import repair_digests as repair_stored_digests
+from sensitive_data import redact_evidence_fields
 
 __all__ = [
     "DEFAULT_DB",
@@ -52,68 +56,6 @@ class EvidenceIntegrityError(EvidenceStoreError):
     """Persisted evidence failed hash, JSON, or type validation."""
 
 
-def canonicalize_url(url: str) -> str:
-    """Return a stable URL identity without fragments or embedded credentials."""
-    if not isinstance(url, str) or not url.strip():
-        raise ValueError("url must be a non-empty string")
-
-    parsed = urllib.parse.urlsplit(url.strip())
-    scheme = parsed.scheme.lower()
-    if scheme not in {"http", "https"} or not parsed.hostname:
-        raise ValueError("url must use http or https and include a host")
-    if parsed.username or parsed.password:
-        raise ValueError("URLs containing credentials are not allowed")
-
-    query_keys = {
-        key.lower()
-        for key, _ in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
-    }
-    sensitive = sorted(query_keys & SENSITIVE_QUERY_KEYS)
-    if sensitive:
-        raise ValueError(
-            "URL query contains credential-like fields: " + ", ".join(sensitive)
-        )
-
-    try:
-        host = parsed.hostname.rstrip(".").encode("idna").decode("ascii").lower()
-        port = parsed.port
-    except (UnicodeError, ValueError) as exc:
-        raise ValueError("url contains an invalid host or port") from exc
-
-    if port == (80 if scheme == "http" else 443):
-        port = None
-    display_host = f"[{host}]" if ":" in host else host
-    netloc = display_host if port is None else f"{display_host}:{port}"
-    path = parsed.path or "/"
-    return urllib.parse.urlunsplit((scheme, netloc, path, parsed.query, ""))
-
-
-def _json_pointer_escape(token: str) -> str:
-    return token.replace("~", "~0").replace("/", "~1")
-
-
-def _iter_drift(before: Any, after: Any, path: str = "") -> Iterator[tuple[str, dict[str, Any]]]:
-    """Yield JSON-Pointer-style differences while preserving missing vs null."""
-    if isinstance(before, dict) and isinstance(after, dict):
-        before_keys = set(before)
-        after_keys = set(after)
-        for key in sorted(before_keys - after_keys):
-            child = f"{path}/{_json_pointer_escape(str(key))}"
-            yield child, {"change": "removed", "before": before[key]}
-        for key in sorted(after_keys - before_keys):
-            child = f"{path}/{_json_pointer_escape(str(key))}"
-            yield child, {"change": "added", "after": after[key]}
-        for key in sorted(before_keys & after_keys):
-            child = f"{path}/{_json_pointer_escape(str(key))}"
-            yield from _iter_drift(before[key], after[key], child)
-        return
-
-    # Treat arrays as ordered values. Reordering is material unless a metric
-    # schema defines its own normalization before storage.
-    if before != after:
-        yield path or "/", {"change": "changed", "before": before, "after": after}
-
-
 class EvidenceStore:
     """SQLite-backed evidence store with additive migration and integrity checks."""
 
@@ -136,10 +78,8 @@ class EvidenceStore:
 
         if str(self.db_path) != ":memory:":
             self.db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            try:
+            with suppress(OSError):
                 self.db_path.parent.chmod(0o700)
-            except OSError:
-                pass
 
         self._conn = sqlite3.connect(
             str(self.db_path),
@@ -163,127 +103,12 @@ class EvidenceStore:
             raise
 
         if str(self.db_path) != ":memory:":
-            try:
+            with suppress(OSError):
                 self.db_path.chmod(0o600)
-            except OSError:
-                pass
 
     def _migrate_schema(self) -> None:
         with self._lock:
-            self._conn.execute("BEGIN IMMEDIATE")
-            try:
-                self._conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS snapshots (
-                        id             INTEGER PRIMARY KEY AUTOINCREMENT,
-                        url            TEXT NOT NULL,
-                        metric_group   TEXT NOT NULL,
-                        captured_at    REAL NOT NULL,
-                        payload_json   TEXT NOT NULL,
-                        schema_version TEXT NOT NULL DEFAULT '1',
-                        source         TEXT,
-                        status         TEXT NOT NULL DEFAULT 'ok',
-                        run_id         TEXT,
-                        scope_json     TEXT NOT NULL DEFAULT '{}',
-                        payload_sha256 TEXT NOT NULL DEFAULT '',
-                        record_sha256  TEXT NOT NULL DEFAULT ''
-                    )
-                    """
-                )
-                columns = {
-                    row["name"]
-                    for row in self._conn.execute("PRAGMA table_info(snapshots)")
-                }
-                additions = {
-                    "schema_version": "TEXT NOT NULL DEFAULT '1'",
-                    "source": "TEXT",
-                    "status": "TEXT NOT NULL DEFAULT 'ok'",
-                    "run_id": "TEXT",
-                    "scope_json": "TEXT NOT NULL DEFAULT '{}'",
-                    "payload_sha256": "TEXT NOT NULL DEFAULT ''",
-                    "record_sha256": "TEXT NOT NULL DEFAULT ''",
-                }
-                for name, definition in additions.items():
-                    if name not in columns:
-                        self._conn.execute(
-                            f"ALTER TABLE snapshots ADD COLUMN {name} {definition}"
-                        )
-
-                legacy_rows = self._conn.execute(
-                    """
-                    SELECT id, url, metric_group, captured_at, payload_json,
-                           schema_version, source, status, run_id, scope_json,
-                           payload_sha256, record_sha256
-                      FROM snapshots
-                    """
-                ).fetchall()
-                # Backfill digests ONLY for rows that genuinely lack them (pre-digest legacy
-                # rows). A row that already carries both digests is never rewritten here:
-                # recomputing it would silently re-bless external tampering and destroy
-                # tamper-evidence. Verification of hashed rows happens on read
-                # (`_decode_row`) and in `integrity_check()`. Deliberate rewriting is only
-                # available through the explicit `repair_digests(confirm=True)` method.
-                for row in legacy_rows:
-                    payload_hash = row["payload_sha256"] or ""
-                    record_hash = row["record_sha256"] or ""
-                    if payload_hash and record_hash:
-                        continue  # fully hashed: leave untouched, verify on read
-
-                    payload_digest = _sha256(row["payload_json"])
-                    if payload_hash and not hmac.compare_digest(payload_hash, payload_digest):
-                        raise EvidenceIntegrityError(
-                            f"snapshot {row['id']} failed payload hash verification during "
-                            "migration; refusing to repair it silently"
-                        )
-
-                    try:
-                        canonical_url = canonicalize_url(row["url"])
-                    except ValueError as exc:
-                        raise EvidenceIntegrityError(
-                            f"legacy snapshot {row['id']} has an invalid URL"
-                        ) from exc
-
-                    record_digest = _record_digest(
-                        url=canonical_url,
-                        metric_group=row["metric_group"],
-                        captured_at=row["captured_at"],
-                        payload_json=row["payload_json"],
-                        schema_version=row["schema_version"],
-                        source=row["source"],
-                        status=row["status"],
-                        run_id=row["run_id"],
-                        scope_json=row["scope_json"],
-                    )
-                    if record_hash and not hmac.compare_digest(record_hash, record_digest):
-                        raise EvidenceIntegrityError(
-                            f"snapshot {row['id']} failed record hash verification during "
-                            "migration; refusing to repair it silently"
-                        )
-
-                    self._conn.execute(
-                        """
-                        UPDATE snapshots
-                           SET url=?, payload_sha256=?, record_sha256=?
-                         WHERE id=?
-                        """,
-                        (canonical_url, payload_digest, record_digest, row["id"]),
-                    )
-
-                self._conn.execute("DROP INDEX IF EXISTS idx_url_group")
-                self._conn.execute(
-                    """
-                    CREATE INDEX IF NOT EXISTS idx_url_group
-                    ON snapshots(
-                        url, metric_group, schema_version, captured_at DESC, id DESC
-                    )
-                    """
-                )
-                self._conn.execute(f"PRAGMA user_version={DB_SCHEMA_VERSION}")
-            except Exception:
-                self._conn.rollback()
-                raise
-            else:
-                self._conn.commit()
+            migrate_schema(self._conn, canonicalize_url, EvidenceIntegrityError, DB_SCHEMA_VERSION)
 
     @staticmethod
     def _require_label(value: str, field: str) -> str:
@@ -427,40 +252,7 @@ class EvidenceStore:
             limit=2,
             schema_version=schema_version,
         )
-        if len(recent) < 2:
-            return {
-                "status": "insufficient_history",
-                "url": canonicalize_url(url),
-                "metric_group": metric_group,
-                "schema_version": schema_version,
-                "have": len(recent),
-            }
-
-        current, previous = recent[0], recent[1]
-        if current["schema_version"] != previous["schema_version"]:
-            return {
-                "status": "schema_mismatch",
-                "url": current["url"],
-                "metric_group": metric_group,
-                "current_schema": current["schema_version"],
-                "previous_schema": previous["schema_version"],
-                "current_id": current["id"],
-                "previous_id": previous["id"],
-            }
-
-        drift = dict(_iter_drift(previous["payload"], current["payload"]))
-        return {
-            "status": "ok",
-            "url": current["url"],
-            "metric_group": metric_group,
-            "schema_version": current["schema_version"],
-            "from": previous["captured_at"],
-            "to": current["captured_at"],
-            "previous_id": previous["id"],
-            "current_id": current["id"],
-            "drift": drift,
-            "drift_count": len(drift),
-        }
+        return compare_snapshots(recent, url, metric_group, schema_version)
 
     def purge(
         self,
@@ -567,15 +359,7 @@ class EvidenceStore:
             }
 
     def repair_digests(self, *, confirm: bool = False) -> dict[str, Any]:
-        """Recompute and overwrite integrity digests for every row.
-
-        This is the only path that rewrites existing digests. It is deliberately NOT part
-        of initialization, because rewriting a digest over tampered content destroys the
-        tamper-evidence that `integrity_check()` and `_decode_row()` rely on.
-
-        Use it only when you have established that a mismatch is caused by a legitimate
-        migration and not by tampering. It requires `confirm=True`.
-        """
+        """Explicitly re-bless all rows only after investigating a digest mismatch."""
         if not confirm:
             raise ValueError(
                 "repair_digests() rewrites integrity digests and destroys tamper-evidence; "
@@ -583,45 +367,7 @@ class EvidenceStore:
             )
         with self._lock:
             self._ensure_open()
-            rows = self._conn.execute(
-                """
-                SELECT id, url, metric_group, captured_at, payload_json,
-                       schema_version, source, status, run_id, scope_json,
-                       payload_sha256, record_sha256
-                  FROM snapshots
-                """
-            ).fetchall()
-            repaired = 0
-            for row in rows:
-                canonical_url = canonicalize_url(row["url"])
-                payload_digest = _sha256(row["payload_json"])
-                record_digest = _record_digest(
-                    url=canonical_url,
-                    metric_group=row["metric_group"],
-                    captured_at=row["captured_at"],
-                    payload_json=row["payload_json"],
-                    schema_version=row["schema_version"],
-                    source=row["source"],
-                    status=row["status"],
-                    run_id=row["run_id"],
-                    scope_json=row["scope_json"],
-                )
-                if (
-                    row["url"] != canonical_url
-                    or (row["payload_sha256"] or "") != payload_digest
-                    or (row["record_sha256"] or "") != record_digest
-                ):
-                    self._conn.execute(
-                        """
-                        UPDATE snapshots
-                           SET url=?, payload_sha256=?, record_sha256=?
-                         WHERE id=?
-                        """,
-                        (canonical_url, payload_digest, record_digest, row["id"]),
-                    )
-                    repaired += 1
-            self._conn.commit()
-        return {"status": "repaired", "repaired": repaired, "checked": len(rows)}
+            return repair_stored_digests(self._conn, canonicalize_url)
 
     def close(self) -> None:
         with self._lock:

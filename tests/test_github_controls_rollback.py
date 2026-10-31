@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import datetime as dt
+import json
 from pathlib import Path
 
 import pytest
@@ -14,7 +14,6 @@ from scripts.plan_github_controls_rollback import (
     execute_verified_rollback,
     restored_state_errors,
 )
-
 
 ROOT = Path(__file__).resolve().parents[1]
 

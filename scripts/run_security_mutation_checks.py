@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from runtime.telemetry import redact
 
 
 def _redaction_invariant(redactor: Callable[[Any], Any]) -> bool:
@@ -24,6 +24,8 @@ def _redaction_invariant(redactor: Callable[[Any], Any]) -> bool:
 
 
 def run() -> dict[str, object]:
+    from runtime.telemetry import redact
+
     baseline_passed = _redaction_invariant(redact)
     mutant_survived = _redaction_invariant(lambda value: value)
     status = "PASS" if baseline_passed and not mutant_survived else "FAIL"

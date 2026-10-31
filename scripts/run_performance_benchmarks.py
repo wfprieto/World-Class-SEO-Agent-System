@@ -7,6 +7,7 @@ import json
 import statistics
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
-def _measure(fn, iterations: int) -> dict[str, float]:
+def _measure(fn: Callable[[], object], iterations: int) -> dict[str, float]:
     samples = []
     for _ in range(iterations):
         start = time.perf_counter()

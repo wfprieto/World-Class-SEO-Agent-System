@@ -16,8 +16,8 @@ from integrations.product_proof.service import ProductProofTechnicalAudit
 class ProductProofTechnicalAuditAdapter:
     name = "product_proof_technical_audit"
 
-    def __init__(self) -> None:
-        self.service = ProductProofTechnicalAudit()
+    def __init__(self, service: ProductProofTechnicalAudit) -> None:
+        self.service = service
 
     def fetch(self, operation: str = "technical", **kwargs: Any) -> AdapterResult:
         if operation != "technical":

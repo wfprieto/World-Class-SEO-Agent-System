@@ -315,6 +315,43 @@ class RegistryGovernanceError(RuntimeError):
     pass
 
 
+def _operation_problems(ext: Extension) -> list[str]:
+    problems: list[str] = []
+    for op in ext.allowed_operations:
+        if any(verb in op.lower() for verb in DESTRUCTIVE):
+            problems.append(f"{ext.id}: destructive operation {op!r} in allowed_operations")
+    if not ext.forbidden_operations:
+        problems.append(f"{ext.id}: must declare forbidden operations")
+    if ext.cost_tier not in {"free", "metered"}:
+        problems.append(f"{ext.id}: invalid cost_tier {ext.cost_tier!r}")
+    return problems
+
+
+def _description_problems(ext: Extension) -> list[str]:
+    problems: list[str] = []
+    for var in ext.env_vars:
+        if not var or var != var.upper() or " " in var:
+            problems.append(f"{ext.id}: malformed credential variable {var!r}")
+    blob = f"{ext.provider} {ext.unlocks}".lower()
+    for marker in _INJECTION_MARKERS:
+        if marker in blob:
+            problems.append(f"{ext.id}: description contains suspicious text {marker!r}")
+    return problems
+
+
+def _transport_problems(ext: Extension) -> list[str]:
+    problems: list[str] = []
+    if ext.fetches_urls and not (
+        {"crawl_private_hosts", "scan_third_party_targets"} & set(ext.forbidden_operations)
+    ):
+        problems.append(
+            f"{ext.id}: URL-fetching provider must forbid private-host or third-party targets"
+        )
+    if ext.remote_endpoint and not ext.remote_endpoint.startswith("https://"):
+        problems.append(f"{ext.id}: remote endpoint must use HTTPS")
+    return problems
+
+
 def validate_registry(registry: dict[str, Extension] | None = None) -> dict[str, object]:
     reg = registry if registry is not None else REGISTRY
     problems: list[str] = []
@@ -325,28 +362,9 @@ def validate_registry(registry: dict[str, Extension] | None = None) -> dict[str,
         if ext.id in seen:
             problems.append(f"{ext.id}: duplicate id (tool-name shadowing)")
         seen.add(ext.id)
-        for op in ext.allowed_operations:
-            if any(verb in op.lower() for verb in DESTRUCTIVE):
-                problems.append(f"{ext.id}: destructive operation {op!r} in allowed_operations")
-        if not ext.forbidden_operations:
-            problems.append(f"{ext.id}: must declare forbidden operations")
-        if ext.cost_tier not in {"free", "metered"}:
-            problems.append(f"{ext.id}: invalid cost_tier {ext.cost_tier!r}")
-        for var in ext.env_vars:
-            if not var or var != var.upper() or " " in var:
-                problems.append(f"{ext.id}: malformed credential variable {var!r}")
-        blob = f"{ext.provider} {ext.unlocks}".lower()
-        for marker in _INJECTION_MARKERS:
-            if marker in blob:
-                problems.append(f"{ext.id}: description contains suspicious text {marker!r}")
-        if ext.fetches_urls and not (
-            {"crawl_private_hosts", "scan_third_party_targets"} & set(ext.forbidden_operations)
-        ):
-            problems.append(
-                f"{ext.id}: URL-fetching provider must forbid private-host or third-party targets"
-            )
-        if ext.remote_endpoint and not ext.remote_endpoint.startswith("https://"):
-            problems.append(f"{ext.id}: remote endpoint must use HTTPS")
+        problems.extend(_operation_problems(ext))
+        problems.extend(_description_problems(ext))
+        problems.extend(_transport_problems(ext))
     if problems:
         raise RegistryGovernanceError("; ".join(problems))
     return {

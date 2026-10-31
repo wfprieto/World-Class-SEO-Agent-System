@@ -9,6 +9,8 @@ from urllib.parse import urlsplit
 from contracts.adapter import AdapterNotConfigured, AdapterResult
 from integrations.google.client import GoogleAPIError, GoogleJsonClient
 from integrations.google.crux_bounds import history_array, history_dimensions
+from integrations.google.crux_lcp import _LCP_PARTS as _LCP_PARTS
+from integrations.google.crux_lcp import decompose_lcp_history as decompose_lcp_history
 from security.url_safety import validate_public_url
 
 CRUX_CURRENT_ENDPOINT = (
@@ -29,12 +31,7 @@ _DEFAULT_METRICS = [
     "largest_contentful_paint_image_resource_load_duration",
     "largest_contentful_paint_image_element_render_delay",
 ]
-_LCP_PARTS = [
-    "largest_contentful_paint_image_time_to_first_byte",
-    "largest_contentful_paint_image_resource_load_delay",
-    "largest_contentful_paint_image_resource_load_duration",
-    "largest_contentful_paint_image_element_render_delay",
-]
+
 
 
 def _credentials(api_key: str | None) -> str:
@@ -257,24 +254,7 @@ class CrUXHistoryAdapter:
             raise
         record = response.get("record") or {}
         collection_periods = history_array(record.get("collectionPeriods"), 40)
-        metric_data = record.get("metrics") or {}
-        series = {
-            metric: self._normalize_metric_series(metric_data.get(metric) or {}, collection_periods)
-            for metric in selected_metrics
-        }
-        available = {
-            metric: values
-            for metric, values in series.items()
-            if any(item.get("p75") is not None for item in values)
-        }
-        warnings: list[str] = []
-        if not collection_periods:
-            warnings.append("CrUX History returned no collection periods for this target.")
-        unavailable = sorted(set(selected_metrics) - set(available))
-        if unavailable:
-            warnings.append(
-                "No p75 history was available for: " + ", ".join(unavailable)
-            )
+        series, available, warnings = self._history_series(record, collection_periods, selected_metrics)
         lcp = decompose_lcp_history(series)
         data_state = "AVAILABLE" if collection_periods and available else "EMPTY"
         return AdapterResult(
@@ -305,6 +285,30 @@ class CrUXHistoryAdapter:
             },
             warnings=warnings,
         )
+
+    @staticmethod
+    def _history_series(
+        record: dict[str, Any], collection_periods: list[dict[str, Any]], selected_metrics: list[str],
+    ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, list[dict[str, Any]]], list[str]]:
+        metric_data = record.get("metrics") or {}
+        series = {
+            metric: CrUXHistoryAdapter._normalize_metric_series(metric_data.get(metric) or {}, collection_periods)
+            for metric in selected_metrics
+        }
+        available = {
+            metric: values
+            for metric, values in series.items()
+            if any(item.get("p75") is not None for item in values)
+        }
+        warnings: list[str] = []
+        if not collection_periods:
+            warnings.append("CrUX History returned no collection periods for this target.")
+        unavailable = sorted(set(selected_metrics) - set(available))
+        if unavailable:
+            warnings.append(
+                "No p75 history was available for: " + ", ".join(unavailable)
+            )
+        return series, available, warnings
 
     @staticmethod
     def _normalize_metric_series(
@@ -348,60 +352,3 @@ class CrUXHistoryAdapter:
                 }
             )
         return output
-
-
-def decompose_lcp_history(
-    metric_series: dict[str, list[dict[str, Any]]]
-) -> dict[str, Any]:
-    """Return latest observed image-LCP subparts without inventing values."""
-    latest: dict[str, float | None] = {}
-    for metric in ["largest_contentful_paint", *_LCP_PARTS]:
-        values = metric_series.get(metric) or []
-        latest_value = next(
-            (
-                item.get("p75")
-                for item in reversed(values)
-                if item.get("p75") is not None
-            ),
-            None,
-        )
-        latest[metric] = float(latest_value) if latest_value is not None else None
-
-    part_values = [latest[item] for item in _LCP_PARTS]
-    complete = all(value is not None for value in part_values)
-    subpart_sum = sum(value for value in part_values if value is not None) if complete else None
-    observed_lcp = latest["largest_contentful_paint"]
-    residual = (
-        observed_lcp - subpart_sum
-        if observed_lcp is not None and subpart_sum is not None
-        else None
-    )
-    names = {
-        _LCP_PARTS[0]: "time_to_first_byte",
-        _LCP_PARTS[1]: "resource_load_delay",
-        _LCP_PARTS[2]: "resource_load_duration",
-        _LCP_PARTS[3]: "element_render_delay",
-    }
-    parts = {names[key]: latest[key] for key in _LCP_PARTS}
-    largest = max(
-        ((name, value) for name, value in parts.items() if value is not None),
-        key=lambda item: item[1],
-        default=(None, None),
-    )
-    return {
-        "evidence_state": "AVAILABLE" if complete and observed_lcp is not None else "INSUFFICIENT_EVIDENCE",
-        "source": "crux_history_field_metrics",
-        "unit": "milliseconds",
-        "latest_lcp_p75_ms": observed_lcp,
-        "parts_ms": parts,
-        "parts_complete": complete,
-        "parts_sum_ms": subpart_sum,
-        "lcp_minus_parts_ms": residual,
-        "largest_observed_part": {
-            "name": largest[0],
-            "value_ms": largest[1],
-        },
-        "interpretation": (
-            "Subparts are observed CrUX field metrics for image LCP. Missing values are not estimated."
-        ),
-    }

@@ -6,33 +6,42 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 
-def validate(root: Path, manifest_path: Path, sbom_path: Path) -> list[str]:
+def _component_errors(component: dict[str, Any]) -> list[str]:
     failures: list[str] = []
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
+    name = component.get("name", "<unnamed>")
+    if component.get("version") == "NOT_INSTALLED":
+        failures.append(f"SBOM component has an unresolved pseudo-version: {name}")
+    properties = {
+        row.get("name"): row.get("value")
+        for row in component.get("properties", [])
+        if isinstance(row, dict)
+    }
+    resolution = properties.get("wcseo:resolution")
+    if component.get("scope") == "required" and (
+        resolution != "LOCKED" or not component.get("version")
+    ):
+        failures.append(f"required SBOM component is not lock-resolved: {name}")
+    if component.get("scope") == "optional" and not component.get("version") and (
+        resolution != "DECLARED_OPTIONAL_UNRESOLVED"
+    ):
+        failures.append(f"optional unresolved SBOM component is not explicit: {name}")
+    return failures
+
+
+def _sbom_errors(sbom: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != "1.5":
         failures.append("SBOM is not CycloneDX 1.5")
     for component in sbom.get("components", []):
-        name = component.get("name", "<unnamed>")
-        if component.get("version") == "NOT_INSTALLED":
-            failures.append(f"SBOM component has an unresolved pseudo-version: {name}")
-        properties = {
-            row.get("name"): row.get("value")
-            for row in component.get("properties", [])
-            if isinstance(row, dict)
-        }
-        resolution = properties.get("wcseo:resolution")
-        if component.get("scope") == "required" and (
-            resolution != "LOCKED" or not component.get("version")
-        ):
-            failures.append(f"required SBOM component is not lock-resolved: {name}")
-        if component.get("scope") == "optional" and not component.get("version") and (
-            resolution != "DECLARED_OPTIONAL_UNRESOLVED"
-        ):
-            failures.append(f"optional unresolved SBOM component is not explicit: {name}")
+        failures.extend(_component_errors(component))
+    return failures
 
+
+def _inventory_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
     catalog = json.loads(
         (root / "skills" / "skill-catalog.json").read_text(encoding="utf-8")
     )
@@ -47,7 +56,12 @@ def validate(root: Path, manifest_path: Path, sbom_path: Path) -> list[str]:
             f"expected {expected_skill_count}, got {manifest.get('skill_count')}"
         )
 
-    for row in manifest.get("files", []):
+    return failures
+
+
+def _file_errors(root: Path, files: list[dict[str, Any]]) -> list[str]:
+    failures: list[str] = []
+    for row in files:
         path = root / row["path"]
         if not path.is_file():
             failures.append(f"manifest file missing: {row['path']}")
@@ -55,6 +69,15 @@ def validate(root: Path, manifest_path: Path, sbom_path: Path) -> list[str]:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         if digest != row["sha256"]:
             failures.append(f"manifest hash mismatch: {row['path']}")
+    return failures
+
+
+def validate(root: Path, manifest_path: Path, sbom_path: Path) -> list[str]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
+    failures = _sbom_errors(sbom)
+    failures.extend(_inventory_errors(root, manifest))
+    failures.extend(_file_errors(root, manifest.get("files", [])))
     sbom_record = manifest.get("sbom")
     if (
         sbom_record

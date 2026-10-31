@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters", "security")
+COVERAGE_TARGETS = ("runtime", "seoctl", "integrations", "adapters", "security", "contracts")
 CANDIDATE_REF = "${{ github.event.pull_request.head.sha || github.sha }}"
 RELEASE_REF = "${{ github.sha }}"
 DANGEROUS_ENV_EXACT = {
@@ -36,7 +36,7 @@ TRUSTED_PYTHON_STEP = {"name": "Capture trusted Python interpreter", "id": "trus
 VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "quality_security_release",
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
-WORKFLOW_CONTRACT_SHA = "fa757d60ab95cb2db40d474cbe79b958c675e5587e78515ce9abcb5315cf1412"
+WORKFLOW_CONTRACT_SHA = "5c2bc7c6125067d627dda91d6dfdc8c41eb3e01b20aa41b37a05e82790104c6e"
 RELEASE_CONTRACT_SHA = "a1ce6894d773f0b959d60131227967ae36dacac1b1880f148c61d0d8c778d3d4"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",

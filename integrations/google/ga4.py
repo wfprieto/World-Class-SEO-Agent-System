@@ -56,12 +56,7 @@ class GoogleAnalyticsDataAdapter:
         mets = list(metrics or ["sessions", "engagedSessions", "keyEvents"])
         self._validate_names(dims, "dimension")
         self._validate_names(mets, "metric")
-        if not isinstance(limit, int) or not 1 <= limit <= 250_000:
-            raise ValueError("limit must be an integer from 1 to 250000")
-        if not isinstance(offset, int) or offset < 0:
-            raise ValueError("offset must be a non-negative integer")
-        if currency_code is not None and not re.fullmatch(r"[A-Z]{3}", currency_code):
-            raise ValueError("currency_code must be a three-letter ISO 4217 code")
+        self._validate_report_window(limit, offset, currency_code)
 
         request_payload: dict[str, Any] = {
             "dimensions": [{"name": item} for item in dims],
@@ -88,6 +83,10 @@ class GoogleAnalyticsDataAdapter:
             payload=request_payload,
             access_token=self.oauth.token(),
         )
+        return self._report_result(response, property_name, start, end, dims, mets, offset, limit, currency_code)
+
+    @staticmethod
+    def _report_columns(response: dict[str, Any]) -> tuple[list[str], list[dict[str, str]]]:
         dimension_headers = [
             str(item.get("name", ""))
             for item in response.get("dimensionHeaders") or []
@@ -99,6 +98,13 @@ class GoogleAnalyticsDataAdapter:
             }
             for item in response.get("metricHeaders") or []
         ]
+        return dimension_headers, metric_headers
+
+    def _report_result(
+        self, response: dict[str, Any], property_name: str, start: str, end: str,
+        dims: list[str], mets: list[str], offset: int, limit: int, currency_code: str | None,
+    ) -> AdapterResult:
+        dimension_headers, metric_headers = self._report_columns(response)
         rows = [
             self._normalize_row(row, dimension_headers, metric_headers)
             for row in response.get("rows") or []
@@ -144,6 +150,15 @@ class GoogleAnalyticsDataAdapter:
             },
             warnings=warnings,
         )
+
+    @staticmethod
+    def _validate_report_window(limit: int, offset: int, currency_code: str | None) -> None:
+        if not isinstance(limit, int) or not 1 <= limit <= 250_000:
+            raise ValueError("limit must be an integer from 1 to 250000")
+        if not isinstance(offset, int) or offset < 0:
+            raise ValueError("offset must be a non-negative integer")
+        if currency_code is not None and not re.fullmatch(r"[A-Z]{3}", currency_code):
+            raise ValueError("currency_code must be a three-letter ISO 4217 code")
 
     @staticmethod
     def _property_name(value: str) -> str:

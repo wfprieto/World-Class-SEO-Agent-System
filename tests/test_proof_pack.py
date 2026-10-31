@@ -31,7 +31,7 @@ def test_proof_pack_manifest_covers_required_units() -> None:
     payload = _manifest()
     assert payload["fixture_is_live_proof"] is False
     unit_ids = {unit["id"] for unit in payload["proof_units"]}
-    assert REQUIRED_PROOF_UNITS <= unit_ids
+    assert unit_ids >= REQUIRED_PROOF_UNITS
 
 
 def test_proof_pack_files_exist_and_are_validated() -> None:

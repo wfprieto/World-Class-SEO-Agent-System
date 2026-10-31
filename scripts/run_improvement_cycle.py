@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from runtime.schema_registry import SchemaRegistry
 
 REQUIRED_ROLES = {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}
 APPROVAL = "APPROVE_GREAT"
@@ -26,6 +25,20 @@ APPROVAL = "APPROVE_GREAT"
 def canonical_hash(payload: Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _verdict_independence_errors(verdict: dict[str, Any], evidence_package_hash: str) -> list[str]:
+    errors: list[str] = []
+    if verdict.get("is_builder") is not False:
+        errors.append(f"{verdict.get('reviewer_id')} must explicitly declare is_builder=false")
+    if verdict.get("saw_other_reviewer_verdict") is not False:
+        errors.append(f"{verdict.get('reviewer_id')} must submit before seeing the other verdict")
+    if verdict.get("evidence_package_hash") != evidence_package_hash:
+        errors.append(f"{verdict.get('reviewer_id')} reviewed a different evidence package")
+    objections = verdict.get("strongest_objections")
+    if not isinstance(objections, list) or len(objections) < 3:
+        errors.append(f"{verdict.get('reviewer_id')} must provide at least three objections")
+    return errors
 
 
 def validate_reviewer_independence(
@@ -53,23 +66,74 @@ def validate_reviewer_independence(
         errors.append("reviewer context cannot equal the builder context")
 
     for verdict in verdicts:
-        if verdict.get("is_builder") is not False:
-            errors.append(f"{verdict.get('reviewer_id')} must explicitly declare is_builder=false")
-        if verdict.get("saw_other_reviewer_verdict") is not False:
-            errors.append(
-                f"{verdict.get('reviewer_id')} must submit before seeing the other verdict"
-            )
-        if verdict.get("evidence_package_hash") != evidence_package_hash:
-            errors.append(
-                f"{verdict.get('reviewer_id')} reviewed a different evidence package"
-            )
-        objections = verdict.get("strongest_objections")
-        if not isinstance(objections, list) or len(objections) < 3:
-            errors.append(f"{verdict.get('reviewer_id')} must provide at least three objections")
+        errors.extend(_verdict_independence_errors(verdict, evidence_package_hash))
     return errors
 
 
+def _cycle_gate_errors(
+    cycle: dict[str, Any], verification: dict[str, Any], comparison: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    for field in ("files_changed", "tests_added", "lessons"):
+        values = cycle.get(field)
+        if not values or any(not str(value).strip() for value in values):
+            errors.append(f"{field} must contain at least one concrete record")
+    evidence_refs = verification.get("evidence_refs")
+    if not evidence_refs or any(not str(value).strip() for value in evidence_refs):
+        errors.append("verification evidence_refs must contain at least one concrete reference")
+
+    if cycle.get("direct_merge_permitted") is not False:
+        errors.append("improvement cycles can never authorize direct merge")
+    if not verification.get("tests_passed"):
+        errors.append("tests are not passing")
+    if verification.get("regressions"):
+        errors.append("regressions remain unresolved")
+    if verification.get("security_passed") is not True:
+        errors.append("security verification is not passing")
+    if verification.get("documentation_executed") is not True:
+        errors.append("operator documentation has not been executed successfully")
+    if comparison.get("verdict") not in {"SUPERIOR", "PARITY", "REJECTED"}:
+        errors.append("the implementation remains inferior to the pinned comparator")
+
+    return errors
+
+
+def _review_decision(
+    cycle: dict[str, Any],
+    review_values: list[str],
+    verdicts: list[dict[str, Any]],
+    errors: list[str],
+) -> tuple[str, str, str]:
+    if "REJECT_BAD" in review_values:
+        decision = "REJECT_BAD"
+        state = "REJECTED_BAD"
+        next_action = "Revert or redesign the correction; do not close the parity gap."
+    elif errors or "REWORK_GOOD" in review_values or len(verdicts) != 2:
+        if int(cycle["iteration"]) >= 5:
+            decision = "ARCHITECTURAL_REDESIGN"
+            state = "ARCHITECTURAL_REDESIGN"
+            next_action = "Stop incremental patching and start a new architecture hypothesis."
+        else:
+            decision = "REWORK_GOOD"
+            state = "REWORK_REQUIRED"
+            next_action = "Address every failed gate and reviewer objection, then repeat the cycle."
+    elif review_values.count(APPROVAL) == 2 and cycle["builder_rating"] == "GREAT":
+        decision = "APPROVE_GREAT"
+        state = "APPROVED_GREAT"
+        next_action = (
+            "Persist verified lessons and submit the branch for normal human-controlled merge."
+        )
+    else:
+        decision = "REWORK_GOOD"
+        state = "REWORK_REQUIRED"
+        next_action = "Builder and independent reviewers have not all rated the work GREAT."
+
+    return decision, state, next_action
+
+
 def evaluate_cycle(cycle: dict[str, Any], *, builder_context_id: str) -> dict[str, Any]:
+    from runtime.schema_registry import SchemaRegistry
+
     registry = SchemaRegistry(ROOT)
     schema_errors = registry.errors("improvement-cycle", cycle)
     if schema_errors:
@@ -96,26 +160,7 @@ def evaluate_cycle(cycle: dict[str, Any], *, builder_context_id: str) -> dict[st
     }
     evidence_hash = canonical_hash(evidence_package)
 
-    for field in ("files_changed", "tests_added", "lessons"):
-        values = cycle.get(field)
-        if not values or any(not str(value).strip() for value in values):
-            errors.append(f"{field} must contain at least one concrete record")
-    evidence_refs = verification.get("evidence_refs")
-    if not evidence_refs or any(not str(value).strip() for value in evidence_refs):
-        errors.append("verification evidence_refs must contain at least one concrete reference")
-
-    if cycle.get("direct_merge_permitted") is not False:
-        errors.append("improvement cycles can never authorize direct merge")
-    if not verification.get("tests_passed"):
-        errors.append("tests are not passing")
-    if verification.get("regressions"):
-        errors.append("regressions remain unresolved")
-    if verification.get("security_passed") is not True:
-        errors.append("security verification is not passing")
-    if verification.get("documentation_executed") is not True:
-        errors.append("operator documentation has not been executed successfully")
-    if comparison.get("verdict") not in {"SUPERIOR", "PARITY", "REJECTED"}:
-        errors.append("the implementation remains inferior to the pinned comparator")
+    errors.extend(_cycle_gate_errors(cycle, verification, comparison))
 
     errors.extend(
         validate_reviewer_independence(
@@ -126,27 +171,7 @@ def evaluate_cycle(cycle: dict[str, Any], *, builder_context_id: str) -> dict[st
     )
 
     review_values = [str(item.get("verdict", "")) for item in verdicts]
-    if "REJECT_BAD" in review_values:
-        decision = "REJECT_BAD"
-        state = "REJECTED_BAD"
-        next_action = "Revert or redesign the correction; do not close the parity gap."
-    elif errors or "REWORK_GOOD" in review_values or len(verdicts) != 2:
-        if int(cycle["iteration"]) >= 5:
-            decision = "ARCHITECTURAL_REDESIGN"
-            state = "ARCHITECTURAL_REDESIGN"
-            next_action = "Stop incremental patching and start a new architecture hypothesis."
-        else:
-            decision = "REWORK_GOOD"
-            state = "REWORK_REQUIRED"
-            next_action = "Address every failed gate and reviewer objection, then repeat the cycle."
-    elif review_values.count(APPROVAL) == 2 and cycle["builder_rating"] == "GREAT":
-        decision = "APPROVE_GREAT"
-        state = "APPROVED_GREAT"
-        next_action = "Persist verified lessons and submit the branch for normal human-controlled merge."
-    else:
-        decision = "REWORK_GOOD"
-        state = "REWORK_REQUIRED"
-        next_action = "Builder and independent reviewers have not all rated the work GREAT."
+    decision, state, next_action = _review_decision(cycle, review_values, verdicts, errors)
 
     return {
         "decision": decision,
@@ -161,7 +186,9 @@ def evaluate_cycle(cycle: dict[str, Any], *, builder_context_id: str) -> dict[st
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Evaluate a controlled SEO-system improvement cycle.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate a controlled SEO-system improvement cycle."
+    )
     parser.add_argument("cycle", type=Path)
     parser.add_argument("--builder-context-id", required=True)
     parser.add_argument("--output", type=Path)

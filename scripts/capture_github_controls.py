@@ -231,18 +231,22 @@ def _source_endpoints(
     return endpoints
 
 
+def _capture_contract() -> dict[str, Any]:
+    return json.loads((ROOT / "governance/github-controls.json").read_text(encoding="utf-8"))
+
+
+def _capture_operations() -> dict[str, Any]:
+    return json.loads((ROOT / "governance/repository-operations.json").read_text(encoding="utf-8"))
+
+
 def capture(
     owner_snapshot: dict[str, Any] | None = None,
     *,
     contract: dict[str, Any] | None = None,
     operations: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    contract = contract or json.loads(
-        (ROOT / "governance/github-controls.json").read_text(encoding="utf-8")
-    )
-    operations = operations or json.loads(
-        (ROOT / "governance/repository-operations.json").read_text(encoding="utf-8")
-    )
+    contract = contract or _capture_contract()
+    operations = operations or _capture_operations()
     actor = (
         {"login": os.environ.get("GITHUB_ACTOR")}
         if os.environ.get("GITHUB_ACTOR")

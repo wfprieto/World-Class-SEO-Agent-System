@@ -323,6 +323,32 @@ def _cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     for module in sorted(graph):
         visit(module)
     return [list(item) for item in sorted(found)]
+def _dependency_graph_errors(module_paths: dict[str, Path], module_imports: dict[str, set[str]], package_layers: dict[str, str], allowed: set[tuple[str, str]], exceptions: set[tuple[str, str]]) -> tuple[list[str], dict[str, set[str]]]:
+    errors: list[str] = []
+    observed_cross_edges: set[tuple[str, str]] = set()
+    graph: dict[str, set[str]] = {name: set() for name in module_paths}
+    for source, imports in module_imports.items():
+        source_package = source.split(".", 1)[0]
+        source_layer = package_layers[source_package]
+        for imported in sorted(imports):
+            target_package = imported.split(".", 1)[0]
+            if target_package not in package_layers:
+                continue
+            target = imported
+            if target in module_paths:
+                graph[source].add(target)
+            target_layer = package_layers[target_package]
+            if source_layer == target_layer:
+                continue
+            edge = (source, target)
+            observed_cross_edges.add(edge)
+            if (source_layer, target_layer) not in allowed and edge not in exceptions:
+                errors.append(f"forbidden dependency edge: {source} -> {target}")
+    for edge in sorted(exceptions - observed_cross_edges):
+        errors.append(f"stale or unknown dependency exception: {edge[0]} -> {edge[1]}")
+    return errors, graph
+
+
 def validate(root: Path = ROOT, contract_path: Path | None = None,
              schema_path: Path | None = None) -> list[str]:
     contract_path = contract_path or root / CONTRACT_PATH.relative_to(ROOT)
@@ -355,27 +381,8 @@ def validate(root: Path = ROOT, contract_path: Path | None = None,
 
     module_imports = _resolved_imports(module_paths, module_trees)
     errors.extend(_unresolved_dynamic_errors(module_trees))
-    observed_cross_edges: set[tuple[str, str]] = set()
-    graph: dict[str, set[str]] = {name: set() for name in module_paths}
-    for source, imports in module_imports.items():
-        source_package = source.split(".", 1)[0]
-        source_layer = package_layers[source_package]
-        for imported in sorted(imports):
-            target_package = imported.split(".", 1)[0]
-            if target_package not in package_layers:
-                continue
-            target = imported
-            if target in module_paths:
-                graph[source].add(target)
-            target_layer = package_layers[target_package]
-            if source_layer == target_layer:
-                continue
-            edge = (source, target)
-            observed_cross_edges.add(edge)
-            if (source_layer, target_layer) not in allowed and edge not in exceptions:
-                errors.append(f"forbidden dependency edge: {source} -> {target}")
-    for edge in sorted(exceptions - observed_cross_edges):
-        errors.append(f"stale or unknown dependency exception: {edge[0]} -> {edge[1]}")
+    dependency_errors, graph = _dependency_graph_errors(module_paths, module_imports, package_layers, allowed, exceptions)
+    errors.extend(dependency_errors)
     errors.extend(f"internal import cycle: {' -> '.join(cycle)}" for cycle in _cycles(graph))
 
     errors.extend(network_inventory.validate_network_inventory(contract, network_paths))

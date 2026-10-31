@@ -23,7 +23,6 @@ from integrations.product_proof.service import ProductProofTechnicalAudit
 from integrations.technical.http import BoundedHttpClient, HttpHop
 from runtime.llm import LLMResponse
 from runtime.memory import JsonlMemoryStore
-from runtime.orchestrator import SEOOrchestrator
 from runtime.public_results import public_result_mapping
 from runtime.schema_registry import SchemaRegistry
 from runtime.tools import ToolDispatcher, ToolRequest
@@ -32,6 +31,7 @@ from scripts.consent_mode_diagnostic import SIGNALS, diagnose
 from security.url_safety import validate_public_url
 from sensitive_data import redact
 from seoctl.cli import envelope
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 
 def test_embedded_url_secrets_are_removed_before_persistence(tmp_path):

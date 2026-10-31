@@ -18,13 +18,11 @@ from integrations.product_proof.report import (
     trust_summary,
     write_csv,
 )
+from integrations.product_proof.rule_types import CrawlEvidence, RuleEvaluation, TrustSummary
 from integrations.product_proof.rules import ClaimPolicy, TechnicalAuditRules, build_contributions
 from integrations.technical.http import HttpHop
-from runtime.assets import resolve_asset_root
 from security.url_safety import validate_public_url
 from sensitive_data import redact
-
-ROOT = resolve_asset_root(Path(__file__).resolve().parents[2])
 
 ARTIFACT_FILENAMES = {
     "crawl": "crawl.json",
@@ -41,8 +39,8 @@ ARTIFACT_FILENAMES = {
 
 
 def _contribution_semantics(
-    contributions: list[dict[str, Any]], decisions: list[dict[str, Any]]
-) -> dict[str, Any]:
+    contributions: list[dict[str, object]], decisions: list[dict[str, str | int]]
+) -> dict[str, object]:
     return {
         "type": "DETERMINISTIC_RULE_ATTRIBUTION",
         "agents_executed": 0,
@@ -60,12 +58,12 @@ def _result_data(
     run_id: str,
     target: str,
     evidence_mode: str,
-    crawl: dict[str, Any],
-    evaluated: dict[str, Any],
-    contributions: list[dict[str, Any]],
+    crawl: CrawlEvidence,
+    evaluated: RuleEvaluation,
+    contributions: list[dict[str, object]],
     artifacts: dict[str, Path],
-    trust: dict[str, Any],
-) -> dict[str, Any]:
+    trust: TrustSummary,
+) -> dict[str, object]:
     return {
         "state": "AVAILABLE" if crawl["pages"] else "EMPTY",
         "run_id": run_id,
@@ -90,7 +88,7 @@ def _result_data(
     }
 
 
-def _run_warnings(crawl: dict[str, Any], *, fixture: bool) -> list[str]:
+def _run_warnings(crawl: CrawlEvidence, *, fixture: bool) -> list[str]:
     warnings: list[str] = []
     if crawl["truncated"]:
         warnings.append("Crawl reached a configured ceiling; uncrawled URLs remain unknown.")
@@ -145,8 +143,8 @@ def _fixture_validator(url: str) -> str:
 class ProductProofTechnicalAudit:
     name = "product_proof_technical_audit"
 
-    def __init__(self, *, claim_registry: str | Path | None = None, crawler_factory: Callable[..., SiteCrawler] = SiteCrawler) -> None:
-        self.claim_registry = Path(claim_registry or ROOT / "knowledge" / "seo-claim-registry.json")
+    def __init__(self, *, claim_registry: str | Path, crawler_factory: Callable[..., SiteCrawler] = SiteCrawler) -> None:
+        self.claim_registry = Path(claim_registry)
         self.crawler_factory = crawler_factory
 
     @staticmethod

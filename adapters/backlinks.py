@@ -12,7 +12,8 @@ class BacklinkCSVAdapter:
     name = "backlink_csv"
 
     def fetch(self, path: str, domain_column: str = "referring_domain", anchor_column: str = "anchor", **_: object) -> AdapterResult:
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         domains = {row.get(domain_column, "") for row in rows if row.get(domain_column)}
         anchors: dict[str, int] = {}
         for row in rows:

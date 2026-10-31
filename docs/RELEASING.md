@@ -1,8 +1,22 @@
 # Releasing
 
-Public releases are fail-closed. A maintainer may create and push an exact semantic tag only after `evaluation/comparative/final-release-readiness.json` records `APPROVED` and every required gate records `PASS` or `APPROVE_GREAT`.
+Public releases are fail-closed and currently blocked. Do not create or push a
+release tag from the current readiness record. Its August candidate and gate
+states are historical evidence, not certification of a later main commit.
 
-Before tagging, run the repository certification workflow on the exact commit and confirm both independent reviewer verdicts, authorized live-site evidence, clean external reproduction, and current comparative evidence. Then verify version consistency:
+There is also an unresolved sequencing defect: the existing tag workflow requires
+final `APPROVED` before building/publishing, while two of the twelve final gates
+require an actual tag and published artifacts. Filling those gates with planned
+actions, private staging files, or self-asserted PASS values is not a solution.
+The existing guard remains in force until a separately reviewed publication
+protocol resolves source/evidence/artifact authority and this ordering. See
+[publication blockers](PUBLICATION-BLOCKERS.md). A normal protected code merge
+does not authorize a public release.
+
+For candidate preparation (not permission to tag), run the repository
+certification workflow on the exact commit and collect independent reviewer
+verdicts, authorized live-site evidence, clean external reproduction, and current
+comparative evidence. Verify internal consistency and version consistency:
 
 ```powershell
 python scripts/validate_phase6_readiness.py

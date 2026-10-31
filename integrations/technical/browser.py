@@ -273,6 +273,11 @@ class RenderedPageService:
                 },
                 warnings=[f"screenshot_failed: {type(exc).__name__}: {exc}"],
             )
+        return self._persist_screenshot(result, safe_url, path, full_page)
+
+    def _persist_screenshot(
+        self, result: dict[str, Any], safe_url: str, path: Path, full_page: bool,
+    ) -> AdapterResult:
         screenshot = result.get("screenshot_bytes")
         if (
             not isinstance(screenshot, (bytes, bytearray))

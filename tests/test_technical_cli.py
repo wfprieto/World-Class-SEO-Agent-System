@@ -66,7 +66,7 @@ class FakeTechnical:
 
 def test_all_render_technical_schema_commands_route(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(technical_cli, "RenderedPageService", FakeBrowser)
-    monkeypatch.setattr(technical_cli, "TechnicalInspectionService", FakeTechnical)
+    monkeypatch.setattr(technical_cli, "build_technical_service", FakeTechnical)
 
     commands = [
         (["render", "health"], "render.health"),

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from adapters.llm_transport import build_llm_opener
 from runtime.llm import LLMConfigurationError, OpenAICompatibleClient
 
 
@@ -25,6 +26,7 @@ def test_custom_openai_compatible_endpoint_requires_explicit_approval():
 def test_approved_custom_endpoint_uses_explicitly_supplied_key():
     client = OpenAICompatibleClient(
         api_key="fixture-custom-key",
+        opener=build_llm_opener(),
         base_url="https://provider.example/v1",
         allow_custom_base_url=True,
     )

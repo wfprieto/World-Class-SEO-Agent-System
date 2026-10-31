@@ -9,6 +9,7 @@ from typing import Any
 
 from integrations.extensions.providers import image_generation_service
 from seoctl.cli import envelope, exit_code_for_status
+from seoctl.composition import build_provider_service
 
 
 def image_plan(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
@@ -16,7 +17,7 @@ def image_plan(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     if request_path.stat().st_size > 1_000_000:
         raise ValueError("image request exceeds 1000000 bytes")
     request = json.loads(request_path.read_text(encoding="utf-8-sig"))
-    result = image_generation_service().plan(
+    result = image_generation_service(build_provider_service()).plan(
         request=request,
         units=args.units,
         unit_cost=args.unit_cost,

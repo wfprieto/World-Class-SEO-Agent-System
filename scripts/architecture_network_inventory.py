@@ -8,6 +8,13 @@ from pathlib import Path
 from typing import Any
 
 EXPECTED_NETWORK_TRANSPORTS: dict[str, dict[str, str]] = {
+    "adapters/llm_transport.py": {
+        "policy": "CONFIGURED_LLM_PINNED_TRANSPORT",
+        "delegates_to": (
+            "security.pinned_http.PinnedHTTPHandler + "
+            "security.pinned_http.PinnedHTTPSHandler"
+        ),
+    },
     "adapters/rendered_page.py": {
         "policy": "PUBLIC_RENDERED_PAGE",
         "delegates_to": (
@@ -42,6 +49,14 @@ EXPECTED_NETWORK_TRANSPORTS: dict[str, dict[str, str]] = {
     "integrations/google/client.py": {
         "policy": "GOOGLE_API_BOUNDED_HTTP",
         "delegates_to": "integrations.google.client",
+    },
+    "integrations/google/oauth.py": {
+        "policy": "GOOGLE_API_BOUNDED_HTTP",
+        "delegates_to": "integrations.google.oauth.GoogleOAuthProvider",
+    },
+    "integrations/google/transport.py": {
+        "policy": "GOOGLE_API_BOUNDED_HTTP",
+        "delegates_to": "integrations.google.transport._NoCrossHostRedirects",
     },
     "integrations/technical/browser.py": {
         "policy": "PUBLIC_BROWSER_REQUEST_GUARD",

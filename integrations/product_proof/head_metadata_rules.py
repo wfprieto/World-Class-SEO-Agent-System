@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Protocol
+from typing import Protocol
 
-Page = dict[str, Any]
+from integrations.product_proof.rule_types import CrawlEvidence
+from integrations.product_proof.rule_types import PageEvidence as Page
 
 
 class RuleSink(Protocol):
@@ -33,7 +34,7 @@ class RuleSink(Protocol):
 GENERIC_TITLES = {"home", "homepage", "untitled", "index", "page", "new page"}
 
 
-def _html_pages(crawl: dict[str, Any]) -> list[Page]:
+def _html_pages(crawl: CrawlEvidence) -> list[Page]:
     return [
         page
         for page in crawl["pages"]
@@ -42,7 +43,7 @@ def _html_pages(crawl: dict[str, Any]) -> list[Page]:
     ]
 
 
-def _indexable_html(rules: RuleSink, crawl: dict[str, Any]) -> list[Page]:
+def _indexable_html(rules: RuleSink, crawl: CrawlEvidence) -> list[Page]:
     return [page for page in _html_pages(crawl) if "noindex" not in rules.dirs(page)]
 
 
@@ -51,7 +52,7 @@ def _duplicate_urls(rows: list[Page], key: str) -> list[str]:
     return [
         row["final_url"]
         for row in rows
-        if row.get(key) and values[str(row[key]).strip().lower()] > 1
+        if row.get(key) and values[str(row.get(key)).strip().lower()] > 1
     ]
 
 
@@ -63,7 +64,7 @@ def _urls_with(rows: list[Page], key: str) -> list[str]:
     return [row["final_url"] for row in rows if row.get(key)]
 
 
-def apply_head_metadata_rules(rules: RuleSink, crawl: dict[str, Any]) -> None:
+def apply_head_metadata_rules(rules: RuleSink, crawl: CrawlEvidence) -> None:
     html = _html_pages(crawl)
     indexable = _indexable_html(rules, crawl)
     _apply_title_rules(rules, indexable)

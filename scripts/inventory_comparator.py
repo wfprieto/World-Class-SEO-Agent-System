@@ -17,7 +17,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from scripts.comparative_receipts import code_remediation_errors, open_gap_contract_errors
+receipts = importlib.import_module(
+    "scripts.comparative_receipts" if __package__ else "comparative_receipts"
+)
+code_remediation_errors = receipts.code_remediation_errors
+open_gap_contract_errors = receipts.open_gap_contract_errors
 
 effective_inventory = importlib.import_module(
     "scripts.effective_inventory" if __package__ else "effective_inventory"

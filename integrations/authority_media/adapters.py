@@ -20,8 +20,8 @@ from integrations.authority_media.services import (
 class AuthorityMediaAdapter:
     name = "authority_media"
 
-    def __init__(self) -> None:
-        self.commoncrawl = CommonCrawlService()
+    def __init__(self, commoncrawl: CommonCrawlService) -> None:
+        self.commoncrawl = commoncrawl
         self.backlinks = BacklinkProfileService()
         self.domain_history = DomainHistoryService()
         self.youtube = YouTubeSearchService()
@@ -46,8 +46,8 @@ class AuthorityMediaAdapter:
 class DriftExecutionAdapter:
     name = "drift_execution"
 
-    def __init__(self) -> None:
-        self.service = DriftService()
+    def __init__(self, service: DriftService) -> None:
+        self.service = service
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
         handlers: dict[str, Callable[..., AdapterResult]] = {

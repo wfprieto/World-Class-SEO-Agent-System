@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
+from adapters.base import AdapterResult
 from integrations.content_intelligence.service import ContentIntelligenceService
 from seoctl import cli as core_cli
 from seoctl.cli import (
@@ -15,12 +17,13 @@ from seoctl.cli import (
     envelope,
     exit_code_for_status,
 )
+from seoctl.composition import build_content_service
 
 _LEGACY_ACTIONS = {"relevance", "serp", "brief-decision"}
 
 
 def _service() -> ContentIntelligenceService:
-    return ContentIntelligenceService()
+    return build_content_service()
 
 
 def _read_text(path: str) -> str:
@@ -31,7 +34,7 @@ def _read_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
-def _result(command: str, result):
+def _result(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(
         command,
         result.status,
@@ -40,7 +43,7 @@ def _result(command: str, result):
     ), exit_code_for_status(result.status)
 
 
-def _quality(args: argparse.Namespace):
+def _quality(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     sources = _read_json(args.sources) if args.sources else []
     result = _service().quality(
         text=_read_text(args.input),
@@ -55,7 +58,7 @@ def _quality(args: argparse.Namespace):
     return _result("content.quality", result)
 
 
-def _verify(args: argparse.Namespace):
+def _verify(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _service().verify(
         claims=_read_json(args.claims),
         sources=_read_json(args.sources),
@@ -63,7 +66,7 @@ def _verify(args: argparse.Namespace):
     return _result("content.verify", result)
 
 
-def _entities(args: argparse.Namespace):
+def _entities(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     catalog = _read_json(args.catalog) if args.catalog else []
     result = _service().entities(
         text=_read_text(args.input), catalog=catalog,
@@ -72,7 +75,7 @@ def _entities(args: argparse.Namespace):
     return _result("content.entities", result)
 
 
-def _brief(args: argparse.Namespace):
+def _brief(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _service().brief(
         relevance=_read_json(args.relevance),
         serp=_read_json(args.serp),
@@ -87,7 +90,7 @@ def _brief(args: argparse.Namespace):
     return _result("content.brief", result)
 
 
-def _decay(args: argparse.Namespace):
+def _decay(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _service().decay(
         current=_read_json(args.current),
         prior=_read_json(args.prior),
@@ -96,7 +99,7 @@ def _decay(args: argparse.Namespace):
     return _result("content.decay", result)
 
 
-def _compare(args: argparse.Namespace):
+def _compare(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _service().compare(
         left_text=_read_text(args.left),
         right_text=_read_text(args.right),
@@ -106,7 +109,7 @@ def _compare(args: argparse.Namespace):
     return _result("content.compare", result)
 
 
-def _humanize(args: argparse.Namespace):
+def _humanize(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _service().humanize(text=_read_text(args.input))
     payload = dict(result.data)
     if args.output:
@@ -136,22 +139,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], tuple[dict[str, Any], int]]] 
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="seoctl content",
-        description="Content evidence, diagnostics, comparison, and clarity tools",
-    )
-    sub = parser.add_subparsers(dest="action")
-
-    # Existing commands remain canonical in seoctl.cli. They are declared here
-    # only so one combined help surface remains available.
-    sub.add_parser("relevance", help="Run the canonical content relevance gate")
-    sub.add_parser("serp", help="Run the canonical SERP evidence analyzer")
-    sub.add_parser(
-        "brief-decision",
-        help="Run the canonical relevance and SERP brief decision gate",
-    )
-
+def _add_review_commands(sub: argparse._SubParsersAction) -> None:
     quality = sub.add_parser(
         "quality",
         help="Score measurable editorial signals without claiming ranking quality",
@@ -186,6 +174,26 @@ def build_parser() -> argparse.ArgumentParser:
     entities.add_argument("--catalog")
     entities.add_argument("--provider-analysis", default="null", help="Provider-result JSON with provenance and an approved cost receipt")
     entities.set_defaults(handler="content_entities")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="seoctl content",
+        description="Content evidence, diagnostics, comparison, and clarity tools",
+    )
+    sub = parser.add_subparsers(dest="action")
+
+    # Existing commands remain canonical in seoctl.cli. They are declared here
+    # only so one combined help surface remains available.
+    sub.add_parser("relevance", help="Run the canonical content relevance gate")
+    sub.add_parser("serp", help="Run the canonical SERP evidence analyzer")
+    sub.add_parser(
+        "brief-decision",
+        help="Run the canonical relevance and SERP brief decision gate",
+    )
+
+    _add_review_commands(sub)
+
     brief = sub.add_parser(
         "brief",
         help="Build an evidence-gated content brief from canonical decisions",
@@ -230,7 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if arguments and arguments[0] == "content":
         arguments.pop(0)

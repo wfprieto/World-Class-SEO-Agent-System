@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 import re
 import subprocess
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_FILE_BYTES = 2_000_000
@@ -70,6 +70,20 @@ def _placeholder(value: str) -> bool:
     return False
 
 
+def _text_findings(text: str, relative: str) -> list[Finding]:
+    findings: list[Finding] = []
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        for kind, pattern in _PATTERNS.items():
+            for match in pattern.finditer(line):
+                candidate = match.group(1) if match.lastindex else match.group(0)
+                if _placeholder(candidate) or "os.environ" in line or "getenv(" in line:
+                    continue
+                findings.append(
+                    Finding(relative, line_number, kind, candidate[:4] + "…REDACTED")
+                )
+    return findings
+
+
 def scan(root: Path = ROOT) -> list[Finding]:
     findings: list[Finding] = []
     for path in _tracked_files(root):
@@ -87,15 +101,7 @@ def scan(root: Path = ROOT) -> list[Finding]:
             text = path.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError):
             continue
-        for line_number, line in enumerate(text.splitlines(), start=1):
-            for kind, pattern in _PATTERNS.items():
-                for match in pattern.finditer(line):
-                    candidate = match.group(1) if match.lastindex else match.group(0)
-                    if _placeholder(candidate) or "os.environ" in line or "getenv(" in line:
-                        continue
-                    findings.append(
-                        Finding(relative, line_number, kind, candidate[:4] + "…REDACTED")
-                    )
+        findings.extend(_text_findings(text, relative))
     return findings
 
 

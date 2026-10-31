@@ -4,73 +4,28 @@ from __future__ import annotations
 
 import csv
 import json
-import os
-import re
 import urllib.parse
 from collections import Counter
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
-from adapters.evidence_store import canonicalize_url
 from contracts.adapter import AdapterResult
+from contracts.construction import URLIdentity
+from integrations.authority_media.domain_history import DomainHistoryService as DomainHistoryService
 from integrations.authority_media.drift import DriftService as DriftService
+from integrations.authority_media.input_data import (
+    MAX_ROWS,
+    _bounded_text,
+    _host,
+    _state,
+)
+from integrations.authority_media.media_metadata import IPTCLabelService as IPTCLabelService
+from integrations.authority_media.transcript_service import TranscriptService as TranscriptService
 from integrations.authority_media.transport import BoundedTransport
-
-MAX_INPUT_BYTES = 10_000_000
-MAX_ROWS = 100_000
-IPTC_BASE = "http://cv.iptc.org/newscodes/digitalsourcetype/"
-IPTC_LABELS = {
-    "captured": "Captured by a camera",
-    "compositeCapture": "Composite of captured elements",
-    "algorithmicallyEnhanced": "Algorithmically-altered media",
-    "dataDrivenMedia": "Data-driven media",
-    "digitalCreation": "Digital creation",
-    "trainedAlgorithmicMedia": "Created using Generative AI",
-    "compositeWithTrainedAlgorithmicMedia": "Edited using Generative AI",
-    "algorithmicMedia": "Pure algorithmic media",
-    "screenCapture": "Screen capture",
-    "virtualRecording": "Virtual event recording",
-    "composite": "Composite of elements",
-    "compositeSynthetic": "Composite including generative AI elements",
-    "humanEdits": "Human-edited media",
-}
-IPTC_RETIRED = {"softwareImage", "digitalArt"}
-
-
-def _bounded_text(path: str | Path) -> str:
-    target = Path(path)
-    size = target.stat().st_size
-    if size > MAX_INPUT_BYTES:
-        raise ValueError(f"input exceeds {MAX_INPUT_BYTES} bytes")
-    return target.read_text(encoding="utf-8-sig")
-
-
-def _read_json(path: str | Path) -> Any:
-    return json.loads(_bounded_text(path))
-
-
-def _host(value: str) -> str:
-    text = value.strip()
-    parsed = urllib.parse.urlsplit(text if "://" in text else f"https://{text}")
-    if parsed.username or parsed.password or not parsed.hostname:
-        raise ValueError("domain must be a hostname or public URL without credentials")
-    host = parsed.hostname.encode("idna").decode("ascii").lower().rstrip(".")
-    if not host or "." not in host:
-        raise ValueError("domain must contain a registrable hostname")
-    return host
-
-
-def _state(status: str) -> str:
-    return {
-        "ok": "AVAILABLE",
-        "partial": "PARTIAL",
-        "empty": "EMPTY",
-        "not_configured": "NOT_CONFIGURED",
-        "not_found": "NOT_FOUND",
-        "invalid_response": "INVALID_RESPONSE",
-        "blocked": "BLOCKED",
-        "failed": "FAILED",
-    }.get(status, status.upper())
+from integrations.authority_media.youtube_service import (
+    YouTubeSearchService as YouTubeSearchService,
+)
 
 
 class CommonCrawlService:
@@ -78,11 +33,13 @@ class CommonCrawlService:
 
     COLLINFO = "https://index.commoncrawl.org/collinfo.json"
 
-    def __init__(self, transport: BoundedTransport | None = None) -> None:
+    def __init__(
+        self, canonicalize_url: URLIdentity, transport: BoundedTransport | None = None
+    ) -> None:
+        self._canonicalize_url = canonicalize_url
         self.transport = transport or BoundedTransport({"index.commoncrawl.org"})
 
-    @staticmethod
-    def _parse_records(text: str, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
+    def _parse_records(self, text: str, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
         records: list[dict[str, Any]] = []
         warnings: list[str] = []
         for line_number, line in enumerate(text.splitlines(), start=1):
@@ -100,7 +57,7 @@ class CommonCrawlService:
                 warnings.append(f"Ignored incomplete Common Crawl record at line {line_number}.")
                 continue
             try:
-                normalized_url = canonicalize_url(str(row["url"]))
+                normalized_url = self._canonicalize_url(str(row["url"]))
             except ValueError:
                 warnings.append(f"Ignored unsafe or invalid URL at line {line_number}.")
                 continue
@@ -146,37 +103,25 @@ class CommonCrawlService:
         else:
             listing, _ = self.transport.get_json(self.COLLINFO)
             if not isinstance(listing, list) or not listing:
-                return AdapterResult("commoncrawl", "invalid_response", {"data_state": "INVALID_RESPONSE"}, warnings)
-            selected = None
-            for item in listing:
-                if isinstance(item, dict) and (index is None or item.get("id") == index):
-                    selected = item
-                    break
+                return AdapterResult(
+                    "commoncrawl", "invalid_response", {"data_state": "INVALID_RESPONSE"}, warnings
+                )
+            selected = _select_index(listing, index)
             if not selected:
-                return AdapterResult("commoncrawl", "not_found", {"data_state": "NOT_FOUND", "index": index}, warnings)
+                return AdapterResult(
+                    "commoncrawl",
+                    "not_found",
+                    {"data_state": "NOT_FOUND", "index": index},
+                    warnings,
+                )
             api = str(selected.get("cdx-api") or "")
             parsed_api = urllib.parse.urlsplit(api)
             if parsed_api.scheme != "https" or parsed_api.hostname != "index.commoncrawl.org":
-                return AdapterResult("commoncrawl", "invalid_response", {"data_state": "INVALID_RESPONSE"}, warnings)
-            index_id = str(selected.get("id") or "unknown")
-            collected: list[dict[str, Any]] = []
-            for page in range(max_pages):
-                query = urllib.parse.urlencode(
-                    {
-                        "url": f"{host}/*",
-                        "output": "json",
-                        "filter": "status:200",
-                        "collapse": "urlkey",
-                        "pageSize": page_size,
-                        "page": page,
-                    }
+                return AdapterResult(
+                    "commoncrawl", "invalid_response", {"data_state": "INVALID_RESPONSE"}, warnings
                 )
-                text, _ = self.transport.get_text(f"{api}?{query}")
-                page_records, parse_warnings = self._parse_records(text, page_size)
-                warnings.extend(parse_warnings)
-                collected.extend(page_records)
-                if len(page_records) < page_size:
-                    break
+            index_id = str(selected.get("id") or "unknown")
+            collected = self._collect_pages(host, api, max_pages, page_size, warnings)
             records = collected[: max_pages * page_size]
             source = api
             request_count = self.transport.request_count
@@ -199,6 +144,30 @@ class CommonCrawlService:
             },
             warnings=warnings,
         )
+
+    def _collect_pages(
+        self, host: str, api: str, max_pages: int, page_size: int, warnings: list[str]
+    ) -> list[dict[str, Any]]:
+        collected: list[dict[str, Any]] = []
+        for page in range(max_pages):
+            query = urllib.parse.urlencode(
+                {
+                    "url": f"{host}/*",
+                    "output": "json",
+                    "filter": "status:200",
+                    "collapse": "urlkey",
+                    "pageSize": page_size,
+                    "page": page,
+                }
+            )
+            text, _ = self.transport.get_text(f"{api}?{query}")
+            page_records, parse_warnings = self._parse_records(text, page_size)
+            warnings.extend(parse_warnings)
+            collected.extend(page_records)
+            if len(page_records) < page_size:
+                break
+
+        return collected
 
 
 class BacklinkProfileService:
@@ -239,7 +208,12 @@ class BacklinkProfileService:
             source = cls._value(row, "source_url")
             domain = cls._value(row, "referring_domain")
             if not domain and source:
-                domain = urllib.parse.urlsplit(source if "://" in source else f"https://{source}").hostname or ""
+                domain = (
+                    urllib.parse.urlsplit(
+                        source if "://" in source else f"https://{source}"
+                    ).hostname
+                    or ""
+                )
             domain = domain.lower().rstrip(".")
             if not domain:
                 continue
@@ -260,8 +234,10 @@ class BacklinkProfileService:
         anchors = Counter(row["anchor"] for row in rows)
         targets = {row["target_url"] for row in rows if row["target_url"]}
         rel_counts = Counter(
-            "nofollow" if "nofollow" in row["rel"] or row["rel"] in {"true", "1", "yes"}
-            else "dofollow" if row["rel"]
+            "nofollow"
+            if "nofollow" in row["rel"] or row["rel"] in {"true", "1", "yes"}
+            else "dofollow"
+            if row["rel"]
             else "unknown"
             for row in rows
         )
@@ -275,11 +251,15 @@ class BacklinkProfileService:
                 "referring_domain_count": len(domains),
                 "unique_target_count": len(targets),
                 "rel_counts": dict(rel_counts),
-                "top_anchors": [{"anchor": key, "count": count} for key, count in anchors.most_common(20)],
+                "top_anchors": [
+                    {"anchor": key, "count": count} for key, count in anchors.most_common(20)
+                ],
                 "referring_domains": domains,
                 "quality_score": None,
             },
-            warnings=["This profile normalizes supplied records; it does not independently verify link existence or quality."],
+            warnings=[
+                "This profile normalizes supplied records; it does not independently verify link existence or quality."
+            ],
         )
 
     def gap(self, target_path: str, competitor_path: str) -> AdapterResult:
@@ -306,323 +286,17 @@ class BacklinkProfileService:
                 "gap_count": len(gaps),
                 "gaps": gaps,
             },
-            warnings=["A domain gap is a prospecting lead, not proof that outreach is appropriate or that a link is obtainable."],
-        )
-
-
-class DomainHistoryService:
-    BOOTSTRAP = "https://data.iana.org/rdap/dns.json"
-
-    def __init__(self, bootstrap_transport: BoundedTransport | None = None) -> None:
-        self.bootstrap_transport = bootstrap_transport or BoundedTransport({"data.iana.org"})
-
-    @staticmethod
-    def normalize(payload: Mapping[str, Any], domain: str, source: str) -> AdapterResult:
-        events: dict[str, list[str]] = {}
-        for item in payload.get("events", []) if isinstance(payload.get("events"), list) else []:
-            if isinstance(item, dict) and item.get("eventAction") and item.get("eventDate"):
-                events.setdefault(str(item["eventAction"]), []).append(str(item["eventDate"]))
-        registrar = None
-        for entity in payload.get("entities", []) if isinstance(payload.get("entities"), list) else []:
-            if not isinstance(entity, dict) or "registrar" not in entity.get("roles", []):
-                continue
-            registrar = {"handle": entity.get("handle"), "public_ids": entity.get("publicIds", [])}
-            break
-        nameservers = []
-        for item in payload.get("nameservers", []) if isinstance(payload.get("nameservers"), list) else []:
-            if isinstance(item, dict) and item.get("ldhName"):
-                nameservers.append(str(item["ldhName"]).lower())
-        notices = [
-            {"title": item.get("title"), "description": item.get("description")}
-            for item in payload.get("notices", []) if isinstance(item, dict)
-        ] if isinstance(payload.get("notices"), list) else []
-        return AdapterResult(
-            source=source,
-            status="ok",
-            data={
-                "data_state": "AVAILABLE",
-                "domain": str(payload.get("ldhName") or domain).lower(),
-                "handle": payload.get("handle"),
-                "status": payload.get("status", []),
-                "events": events,
-                "nameservers": nameservers,
-                "secure_dns": payload.get("secureDNS"),
-                "registrar": registrar,
-                "notices": notices,
-                "rdap_conformance": payload.get("rdapConformance", []),
-                "ownership_inference": None,
-            },
             warnings=[
-                "RDAP registration data may be redacted, incomplete, delayed, or inconsistent across registries.",
-                "Registrar and event data do not establish beneficial ownership or domain reputation."
+                "A domain gap is a prospecting lead, not proof that outreach is appropriate or that a link is obtainable."
             ],
         )
 
-    def history(self, domain: str, *, fixture_path: str | None = None) -> AdapterResult:
-        host = _host(domain)
-        if fixture_path:
-            payload = _read_json(fixture_path)
-            if not isinstance(payload, dict):
-                return AdapterResult(fixture_path, "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-            return self.normalize(payload, host, fixture_path)
-        bootstrap, _ = self.bootstrap_transport.get_json(self.BOOTSTRAP)
-        if not isinstance(bootstrap, dict) or not isinstance(bootstrap.get("services"), list):
-            return AdapterResult("iana-rdap-bootstrap", "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-        tld = host.rsplit(".", 1)[-1]
-        base = None
-        for service in bootstrap["services"]:
-            if not isinstance(service, list) or len(service) != 2:
-                continue
-            tlds, urls = service
-            if isinstance(tlds, list) and tld in {str(item).lower() for item in tlds} and isinstance(urls, list):
-                base = next((str(url) for url in urls if str(url).startswith("https://")), None)
-                break
-        if not base:
-            return AdapterResult("iana-rdap-bootstrap", "not_found", {"data_state": "NOT_FOUND", "domain": host}, [])
-        parsed = urllib.parse.urlsplit(base)
-        if parsed.scheme != "https" or not parsed.hostname:
-            return AdapterResult("iana-rdap-bootstrap", "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-        endpoint = base.rstrip("/") + "/domain/" + urllib.parse.quote(host, safe="")
-        transport = BoundedTransport({parsed.hostname})
-        payload, response = transport.get_json(endpoint, accepted_statuses=frozenset({200, 404}))
-        if response.status_code == 404:
-            return AdapterResult(endpoint, "not_found", {"data_state": "NOT_FOUND", "domain": host}, [])
-        if not isinstance(payload, dict):
-            return AdapterResult(endpoint, "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-        result = self.normalize(payload, host, endpoint)
-        result.data["request_count"] = self.bootstrap_transport.request_count + transport.request_count
-        result.data["retry_count"] = self.bootstrap_transport.retry_count + transport.retry_count
-        return result
 
+def _select_index(listing: list[Any], index: str | None) -> dict[str, Any] | None:
+    selected = None
+    for item in listing:
+        if isinstance(item, dict) and (index is None or item.get("id") == index):
+            selected = item
+            break
 
-class YouTubeSearchService:
-    ENDPOINT = "https://www.googleapis.com/youtube/v3/search"
-
-    def __init__(self, transport: BoundedTransport | None = None, api_key: str | None = None) -> None:
-        self.transport = transport or BoundedTransport({"www.googleapis.com"})
-        self.api_key = api_key if api_key is not None else os.environ.get("YOUTUBE_API_KEY")
-
-    @staticmethod
-    def normalize(payload: Mapping[str, Any], *, source: str, requests: int, retries: int) -> AdapterResult:
-        rows = []
-        for item in payload.get("items", []) if isinstance(payload.get("items"), list) else []:
-            if not isinstance(item, dict):
-                continue
-            raw_identifier = item.get("id")
-            identifier: dict[str, Any] = raw_identifier if isinstance(raw_identifier, dict) else {}
-            raw_snippet = item.get("snippet")
-            snippet: dict[str, Any] = raw_snippet if isinstance(raw_snippet, dict) else {}
-            video_id = identifier.get("videoId")
-            if not video_id:
-                continue
-            rows.append(
-                {
-                    "video_id": video_id,
-                    "title": snippet.get("title"),
-                    "description": snippet.get("description"),
-                    "channel_id": snippet.get("channelId"),
-                    "channel_title": snippet.get("channelTitle"),
-                    "published_at": snippet.get("publishedAt"),
-                    "live_broadcast_content": snippet.get("liveBroadcastContent"),
-                    "thumbnails": snippet.get("thumbnails", {}),
-                }
-            )
-        status = "ok" if rows else "empty"
-        raw_page_info = payload.get("pageInfo")
-        page_info: dict[str, Any] = raw_page_info if isinstance(raw_page_info, dict) else {}
-        return AdapterResult(
-            source=source,
-            status=status,
-            data={
-                "data_state": _state(status),
-                "results": rows,
-                "result_count": len(rows),
-                "next_page_token": payload.get("nextPageToken"),
-                "region_code": payload.get("regionCode"),
-                "provider_total_results_approximate": page_info.get("totalResults"),
-                "request_count": requests,
-                "retry_count": retries,
-                "quota_units_estimated": requests,
-                "quota_bucket": "search.list",
-            },
-            warnings=["YouTube pageInfo.totalResults is approximate and must not be used as an exact inventory count."],
-        )
-
-    def search(
-        self,
-        query: str,
-        *,
-        fixture_path: str | None = None,
-        max_results: int = 25,
-        pages: int = 1,
-        region_code: str | None = None,
-        relevance_language: str | None = None,
-        order: str = "relevance",
-        safe_search: str = "moderate",
-    ) -> AdapterResult:
-        if not query.strip() or len(query) > 500:
-            raise ValueError("query must contain 1 to 500 characters")
-        if not 1 <= max_results <= 50:
-            raise ValueError("max_results must be from 1 to 50")
-        if not 1 <= pages <= 3:
-            raise ValueError("pages must be from 1 to 3")
-        if fixture_path:
-            payload = _read_json(fixture_path)
-            if not isinstance(payload, dict):
-                return AdapterResult(fixture_path, "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-            return self.normalize(payload, source=fixture_path, requests=0, retries=0)
-        if not self.api_key:
-            return AdapterResult("youtube", "not_configured", {"data_state": "NOT_CONFIGURED"}, ["Set YOUTUBE_API_KEY to enable live search."])
-        all_items: list[dict[str, Any]] = []
-        token = None
-        last_payload: dict[str, Any] = {}
-        for _ in range(pages):
-            params = {
-                "part": "snippet",
-                "type": "video",
-                "q": query,
-                "maxResults": max_results,
-                "order": order,
-                "safeSearch": safe_search,
-            }
-            if token:
-                params["pageToken"] = token
-            if region_code:
-                params["regionCode"] = region_code
-            if relevance_language:
-                params["relevanceLanguage"] = relevance_language
-            url = self.ENDPOINT + "?" + urllib.parse.urlencode(params)
-            payload, _ = self.transport.get_json(url, headers={"X-Goog-Api-Key": self.api_key})
-            if not isinstance(payload, dict):
-                return AdapterResult("youtube", "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-            last_payload = dict(payload)
-            items = payload.get("items", [])
-            if isinstance(items, list):
-                all_items.extend(item for item in items if isinstance(item, dict))
-            token = payload.get("nextPageToken")
-            if not token:
-                break
-        last_payload["items"] = all_items
-        return self.normalize(
-            last_payload,
-            source=self.ENDPOINT,
-            requests=self.transport.request_count,
-            retries=self.transport.retry_count,
-        )
-
-
-class IPTCLabelService:
-    @staticmethod
-    def _extract(payload: Mapping[str, Any]) -> list[str]:
-        candidates = []
-        for key in ("digital_source_type", "DigitalSourceType", "digitalSourceType"):
-            value = payload.get(key)
-            if isinstance(value, str):
-                candidates.append(value)
-            elif isinstance(value, list):
-                candidates.extend(str(item) for item in value)
-        return candidates
-
-    def inspect(
-        self,
-        input_path: str,
-        *,
-        label: str | None = None,
-        write: bool = False,
-        authorize_write: bool = False,
-        output_path: str | None = None,
-    ) -> AdapterResult:
-        payload = _read_json(input_path)
-        if not isinstance(payload, dict):
-            return AdapterResult(input_path, "invalid_response", {"data_state": "INVALID_RESPONSE"}, [])
-        observed = self._extract(payload)
-        normalized = []
-        invalid = []
-        retired = []
-        for value in observed:
-            token = value.rsplit("/", 1)[-1].split(":")[-1]
-            if token in IPTC_RETIRED:
-                retired.append(value)
-            elif token in IPTC_LABELS:
-                normalized.append(IPTC_BASE + token)
-            else:
-                invalid.append(value)
-        requested_uri = None
-        if label:
-            token = label.rsplit("/", 1)[-1].split(":")[-1]
-            if token in IPTC_RETIRED:
-                retired.append(label)
-            elif token not in IPTC_LABELS:
-                invalid.append(label)
-            else:
-                requested_uri = IPTC_BASE + token
-        if write and not authorize_write:
-            return AdapterResult(input_path, "blocked", {"data_state": "BLOCKED", "reason": "explicit_write_authorization_required"}, [])
-        if write and not output_path:
-            raise ValueError("--output is required when --write is used")
-        written = None
-        if write:
-            if invalid or retired or not requested_uri:
-                return AdapterResult(input_path, "invalid_response", {"data_state": "INVALID_RESPONSE", "invalid": invalid, "retired": retired}, [])
-            sidecar = dict(payload)
-            sidecar["digital_source_type"] = requested_uri
-            target = Path(str(output_path))
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(json.dumps(sidecar, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            written = str(target)
-        status = "invalid_response" if invalid or retired else "ok"
-        return AdapterResult(
-            source=input_path,
-            status=status,
-            data={
-                "data_state": _state(status),
-                "observed": normalized,
-                "requested": requested_uri,
-                "invalid": invalid,
-                "retired": retired,
-                "written_sidecar": written,
-                "source_mutated": False,
-                "rollback": f"Delete {written}" if written else None,
-            },
-            warnings=["This command validates or writes a JSON sidecar only; it does not modify binary media metadata."],
-        )
-
-
-class TranscriptService:
-    TIMESTAMP = re.compile(r"(?:\d{1,2}:)?\d{2}:\d{2}[.,]\d{3}\s*-->")
-
-    def check(self, input_path: str, *, video_id: str | None = None) -> AdapterResult:
-        text = _bounded_text(input_path)
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        caption_lines = [
-            line for line in lines
-            if not self.TIMESTAMP.search(line) and not line.isdigit() and line.upper() not in {"WEBVTT", "NOTE"}
-        ]
-        words = re.findall(r"\b[\w'-]+\b", " ".join(caption_lines), flags=re.UNICODE)
-        repeated = [line for line, count in Counter(caption_lines).items() if count >= 3 and len(line) > 8]
-        issues: list[dict[str, Any]] = []
-        if not self.TIMESTAMP.search(text):
-            issues.append({"code": "NO_TIMESTAMPS", "severity": "warning"})
-        if len(words) < 50:
-            issues.append({"code": "VERY_SHORT_TRANSCRIPT", "severity": "warning"})
-        if any(len(line) > 160 for line in caption_lines):
-            issues.append({"code": "LONG_CAPTION_LINES", "severity": "info"})
-        if repeated:
-            issues.append({"code": "REPEATED_SEGMENTS", "severity": "warning", "examples": repeated[:5]})
-        placeholders = [token for token in ("[music]", "[inaudible]", "[applause]") if token in text.lower()]
-        status = "ok" if caption_lines else "empty"
-        return AdapterResult(
-            source=input_path,
-            status=status,
-            data={
-                "data_state": _state(status),
-                "video_id": video_id,
-                "word_count": len(words),
-                "caption_line_count": len(caption_lines),
-                "timestamp_evidence": bool(self.TIMESTAMP.search(text)),
-                "placeholder_markers": placeholders,
-                "issues": issues,
-                "semantic_accuracy_verified": False,
-            },
-            warnings=["Structural transcript checks do not verify spoken-word accuracy, speaker identity, or legal accessibility compliance."],
-        )
+    return selected

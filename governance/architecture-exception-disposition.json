@@ -2,77 +2,12 @@
   "schema_version": "1.0.0",
   "source_contract": "governance/architecture-contract.json",
   "overdue_phase": "P9",
-  "disposition": "REAUTHORIZE",
+  "disposition": "RETIRED",
   "target_phase": "P10",
   "reviewed_on": "2026-10-30",
   "review_due": "2027-01-31",
-  "expected_exception_count": 20,
-  "expected_edges_sha256": "65e794ddaeb543e323e153f0d46372249cd3f20ef2959f1db8ec4505f8db98a1",
-  "rationale": "The fresh security remediation preserves the19 exact edges recorded for issue #26 and adds only runtime.llm->security.pinned_http to close private-DNS transport bypasses. These20 exact composition, persistence, provider, asset, PageSpeed and transport-delegation edges remain bounded through P10, owned by Runtime architecture and Security owners with review due2027-01-31. No runtime-to-security layer-wide allowance or static-analysis scope is broadened.",
-  "retirement_plans": [
-    {
-      "id": "configured-llm-public-transport-port",
-      "owner": "Security owner",
-      "edges": ["runtime.llm->security.pinned_http"],
-      "acceptance": "Inject the vetted numeric public transport through a runtime-owned port without restoring hostname dialing, ambient proxies or unverified TLS.",
-      "verification": "python -m pytest tests/test_fresh_scan_resource_bounds.py -k llm_private_endpoint_denied_before_dial; python scripts/validate_architecture_contract.py"
-    },
-    {
-      "id": "explicit-runtime-composition",
-      "owner": "Runtime architecture owner",
-      "edges": ["runtime.tools->adapters.registry"],
-      "acceptance": "All runtime tool construction receives adapter dependencies explicitly and the legacy default composition import is absent.",
-      "verification": "python scripts/validate_architecture_contract.py"
-    },
-    {
-      "id": "canonical-adapter-composition-root",
-      "owner": "Runtime architecture owner",
-      "edges": [
-        "adapters.registry->integrations.authority_media.adapters",
-        "adapters.registry->integrations.content_intelligence.adapters",
-        "adapters.registry->integrations.extensions",
-        "adapters.registry->integrations.google.crux",
-        "adapters.registry->integrations.google.ga4",
-        "adapters.registry->integrations.google.gsc",
-        "adapters.registry->integrations.google.sitemaps",
-        "adapters.registry->integrations.product_proof.adapters",
-        "adapters.registry->integrations.technical.adapters"
-      ],
-      "acceptance": "Concrete integration construction moves to the composition layer and the adapter registry contains contracts only.",
-      "verification": "python scripts/validate_architecture_contract.py"
-    },
-    {
-      "id": "canonical-transport-delegation",
-      "owner": "Security owner",
-      "edges": [
-        "adapters.gsc_live_example->integrations.google.client",
-        "adapters.google_pagespeed_live->integrations.google.client",
-        "adapters.rendered_page->integrations.technical.http"
-      ],
-      "acceptance": "Compatibility adapters are removed or inverted behind contracts while every-hop URL and transport policy remains enforced.",
-      "verification": "python scripts/run_security_mutation_checks.py"
-    },
-    {
-      "id": "integration-persistence-ports",
-      "owner": "Runtime architecture owner",
-      "edges": [
-        "integrations.authority_media.drift->adapters.evidence_store",
-        "integrations.authority_media.drift->adapters.page_drift",
-        "integrations.authority_media.services->adapters.evidence_store",
-        "integrations.extensions.providers->adapters.mcp_extensions"
-      ],
-      "acceptance": "Integration services consume injected persistence, drift, and extension ports without importing concrete adapters.",
-      "verification": "python scripts/validate_architecture_contract.py"
-    },
-    {
-      "id": "asset-and-pagespeed-ports",
-      "owner": "Runtime architecture owner",
-      "edges": [
-        "integrations.product_proof.service->runtime.assets",
-        "integrations.technical.inspection->adapters.google_pagespeed_live"
-      ],
-      "acceptance": "Asset resolution and PageSpeed execution are injected through contracts owned by their consuming integration.",
-      "verification": "python scripts/validate_architecture_contract.py"
-    }
-  ]
+  "expected_exception_count": 0,
+  "expected_edges_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "rationale": "All twenty exact legacy dependency exceptions have been retired through explicit consumer ports and the outer seoctl construction root. Canonical pinned LLM transport, Google provider errors, persistence identity, provider controls, asset paths and PageSpeed construction retain their original governed boundaries. No allowed-layer edge or exception waiver is added; actual network assemblies remain explicitly inventoried. Final candidate verification and publication approval are separate gates.",
+  "retirement_plans": []
 }

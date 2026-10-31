@@ -78,6 +78,12 @@ class GoogleSitemapsAdapter:
             query=query,
             access_token=self.oauth.token(),
         )
+        return self._result(response, operation, property_value, safe_sitemap)
+
+    def _result(
+        self, response: dict[str, Any], operation: str,
+        property_value: str, safe_sitemap: str | None,
+    ) -> AdapterResult:
         raw_items = [response] if operation == "get" else list(response.get("sitemap") or [])
         items = [self._normalize(item) for item in raw_items if isinstance(item, dict)]
         warning_count = sum(item["warning_count"] for item in items)

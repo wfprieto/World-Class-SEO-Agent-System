@@ -12,7 +12,8 @@ class HreflangValidatorAdapter:
     name = "hreflang_validator"
 
     def fetch(self, path: str, source_column: str = "source", target_column: str = "target", lang_column: str = "hreflang", **_: object) -> AdapterResult:
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         pairs = {(row.get(source_column, ""), row.get(target_column, "")) for row in rows}
         missing_return = []
         invalid_lang = []

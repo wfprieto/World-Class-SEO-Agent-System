@@ -11,8 +11,7 @@ from runtime.capability_resolver import CapabilityResolver
 from runtime.execution_limits import ExecutionLimits
 from runtime.finding_registry import FindingRegistry
 from runtime.llm import LLMMessage, LLMResponse
-from runtime.memory import InMemoryStore, JsonlMemoryStore
-from runtime.orchestrator import SEOOrchestrator
+from runtime.memory import JsonlMemoryStore
 from runtime.schema_registry import SchemaRegistry
 from runtime.specialist_decision import SPECIALIST_AGENTS
 from runtime.tools import ToolDispatcher, ToolRequest
@@ -21,6 +20,7 @@ from scripts import consent_mode_diagnostic as cmd
 from scripts import content_brief_evidence as cbe
 from scripts import seo_pdf_report
 from scripts.validate_evidence_binding import validate_output
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
 FAST_RUNTIME_LIMITS = ExecutionLimits(
@@ -559,7 +559,7 @@ def test_consent_diagnostic_uses_recursive_redaction_and_avoids_topology_false_p
         "mode": "advanced",
         "default_set": True,
         "default_before_tags": True,
-        "defaults": {signal: "denied" for signal in cmd.SIGNALS},
+        "defaults": dict.fromkeys(cmd.SIGNALS, "denied"),
         "update_present": True,
         "update_after_default": True,
         "environment": "production",

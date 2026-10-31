@@ -9,7 +9,6 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -73,7 +72,7 @@ def _tag_version(root: Path) -> VersionSource | None:
             text=True,
             timeout=10,
         ).strip()
-    except (subprocess.CalledProcessError, FileNotFoundError, TimeoutError):
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError, TimeoutError):
         return None
     value = tag[1:] if tag.startswith("v") else tag
     if not re.fullmatch(r"\d+\.\d+\.\d+", value):

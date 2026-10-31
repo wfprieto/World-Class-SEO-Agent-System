@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 
 from adapters.base import AdapterResult
-from adapters.registry import default_adapters
 from runtime.tools import ToolDispatcher, ToolRequest
+from seoctl.composition import default_adapters
 
 
 def test_runtime_registry_exposes_content_intelligence_tool():

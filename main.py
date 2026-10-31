@@ -9,11 +9,10 @@ import os
 from pathlib import Path
 
 from runtime.execution_limits import ExecutionLimits
-from runtime.llm import build_llm_client
-from runtime.orchestrator import SEOOrchestrator
 from runtime.public_results import public_result_mapping
 from runtime.run_budget import BudgetExceeded
 from runtime.tools import ToolRequest
+from seoctl.composition import build_orchestrator
 
 
 def parse_tool_request(value: str) -> ToolRequest:
@@ -55,9 +54,9 @@ def main() -> int:
     parser.add_argument("--max-estimated-cost", type=float, default=None)
     args = parser.parse_args()
 
-    orchestrator = SEOOrchestrator(
+    orchestrator = build_orchestrator(
         repo_root=Path(__file__).parent,
-        llm_client=build_llm_client(args.llm_provider, args.model or None),
+        provider=args.llm_provider, model=args.model or None,
     )
     session = orchestrator.start_session(
         request=args.request,

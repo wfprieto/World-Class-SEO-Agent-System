@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -90,7 +90,7 @@ class Handoff:
         self.status = "CONSUMED"
         self.receiving_output_id = output_id
         self.receiving_node_id = node_id
-        self.consumed_at = datetime.now(timezone.utc).isoformat()
+        self.consumed_at = datetime.now(UTC).isoformat()
         self.unresolved_reason = ""
         self.resolution = disposition
 
@@ -106,7 +106,7 @@ class WorkflowEvent:
     node_id: str
     agent: str
     state: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     detail: str = ""
 
 
@@ -128,7 +128,7 @@ class SessionState:
     workflow_events: list[WorkflowEvent] = field(default_factory=list)
     execution_limits: dict[str, Any] = field(default_factory=dict)
     budget_usage: dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @classmethod
     def create(
@@ -139,7 +139,7 @@ class SessionState:
         business_type: str,
         markets: list[str] | None = None,
         goals: list[str] | None = None,
-    ) -> "SessionState":
+    ) -> SessionState:
         return cls(
             session_id=f"seo-session-{uuid4().hex[:12]}",
             request=request,

@@ -65,7 +65,7 @@ jobs:
           python scripts/validate_dependency_lock.py
           python scripts/validate_release_version.py --release-mode
           python scripts/validate_phase6_readiness.py --require-approved
-          python scripts/inventory_comparator.py
+          python -m scripts.inventory_comparator
           python scripts/scan_secrets.py
       - name: Prove exact source integrity
         shell: pwsh

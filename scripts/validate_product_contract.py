@@ -25,7 +25,7 @@ from scripts.generate_capability_evidence_registry import (  # noqa: E402
     build as build_evidence_registry,
 )
 from seoctl.capability_certification import RECEIPT_ROOT, validate_receipt  # noqa: E402
-from seoctl.registry import command_specs  # noqa: E402
+from seoctl.registry import CommandSpec, command_specs  # noqa: E402
 
 CONTRACT_PATH = Path("governance/product-contract.json")
 EVIDENCE_PATH = Path("orchestration/capability-evidence-registry.json")
@@ -243,16 +243,8 @@ def _validate_evidence_row(
         errors.append(f"{kind} {item_id} FIXTURE_VERIFIED has incompatible execution mode")
 
 
-def validate(root: Path = ROOT) -> list[str]:  # noqa: C901 - canonical contract audit
-    root = root.resolve()
+def _authoritative_surface_errors(root: Path, contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    try:
-        contract = _json(root / CONTRACT_PATH)
-        schema = _json(root / "schemas" / "product-contract.schema.json")
-        jsonschema.Draft202012Validator(schema).validate(contract)
-    except (OSError, ValueError, json.JSONDecodeError, jsonschema.ValidationError) as exc:
-        return [f"product contract schema validation failed: {exc}"]
-
     surfaces = contract["authoritative_surfaces"]
     configured = [str(row["path"]) for row in surfaces]
     if len(configured) != len(set(configured)):
@@ -286,11 +278,11 @@ def validate(root: Path = ROOT) -> list[str]:  # noqa: C901 - canonical contract
                     f"{match.group(0)!r}"
                 )
 
-    try:
-        registry, _ = _effective_command_registry(root)
-        specs = command_specs(registry)
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-        return [*errors, f"effective command registry could not be loaded: {exc}"]
+    return errors
+
+
+def _flagship_errors(root: Path, contract: dict[str, Any], specs: list[CommandSpec]) -> list[str]:
+    errors: list[str] = []
     flagship = contract["flagship"]
     matches = [spec for spec in specs if spec.id == flagship["command_id"]]
     if len(matches) != 1:
@@ -304,6 +296,28 @@ def validate(root: Path = ROOT) -> list[str]:  # noqa: C901 - canonical contract
     else:
         if set(flagship["artifacts"]) != runtime_artifacts:
             errors.append("flagship artifact inventory disagrees with runtime ARTIFACT_FILENAMES")
+
+    return errors
+
+
+def validate(root: Path = ROOT) -> list[str]:
+    root = root.resolve()
+    errors: list[str] = []
+    try:
+        contract = _json(root / CONTRACT_PATH)
+        schema = _json(root / "schemas" / "product-contract.schema.json")
+        jsonschema.Draft202012Validator(schema).validate(contract)
+    except (OSError, ValueError, json.JSONDecodeError, jsonschema.ValidationError) as exc:
+        return [f"product contract schema validation failed: {exc}"]
+
+    errors.extend(_authoritative_surface_errors(root, contract))
+
+    try:
+        registry, _ = _effective_command_registry(root)
+        specs = command_specs(registry)
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        return [*errors, f"effective command registry could not be loaded: {exc}"]
+    errors.extend(_flagship_errors(root, contract, specs))
 
     try:
         evidence = _json(root / EVIDENCE_PATH)

@@ -23,7 +23,6 @@ import consent_mode_diagnostic as cmd  # noqa: E402
 import content_brief_evidence as cbe  # noqa: E402
 import vertical_profiles as vp  # noqa: E402
 
-
 # ===================== Scope 1: Desktop Commander governance =====================
 
 def test_desktop_commander_skill_registered_once():

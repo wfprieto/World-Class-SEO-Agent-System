@@ -10,7 +10,6 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from adapters.registry import default_adapters
 from runtime.adapter_contracts import (
     BLOCKING_ADAPTER_STATUSES,
     INVALID_ADAPTER_STATUSES,
@@ -195,7 +194,7 @@ def _unsafe_url_reason(key: str, value: str) -> str | None:
 class ToolDispatcher:
     def __init__(
         self,
-        adapters: Mapping[str, RuntimeAdapter] | None = None,
+        adapters: Mapping[str, object] | None = None,
         *,
         max_telemetry_events: int = 1_000,
         default_timeout_seconds: float = 60.0,
@@ -206,7 +205,9 @@ class ToolDispatcher:
             default_timeout_seconds
         ) <= 600:
             raise ValueError("default_timeout_seconds must be from 0.1 to 600")
-        raw_adapters = adapters if adapters is not None else dict(default_adapters())
+        if adapters is None:
+            raise ValueError("An explicit adapter mapping is required; use seoctl.composition.build_orchestrator.")
+        raw_adapters = adapters
         self.adapters: dict[str, RuntimeAdapter] = {}
         for name, adapter in raw_adapters.items():
             if not isinstance(name, str) or not name.strip():
@@ -298,16 +299,6 @@ class ToolDispatcher:
                 return reason
         return None
 
-    def _timeout_for(self, request: ToolRequest) -> float:
-        timeout = (
-            self.default_timeout_seconds
-            if request.timeout_seconds is None
-            else float(request.timeout_seconds)
-        )
-        if not 0.1 <= timeout <= 600:
-            raise ValueError("Tool timeout must be from 0.1 to 600 seconds.")
-        return timeout
-
     async def _fetch_result(self, adapter: RuntimeAdapter, request: ToolRequest, timeout: float) -> Any:
         return validate_adapter_result(
             await asyncio.wait_for(
@@ -333,17 +324,9 @@ class ToolDispatcher:
         blocked = self._preflight_access(request, trace)
         if blocked is not None:
             return blocked
-        try:
-            timeout = self._timeout_for(request)
-        except ValueError as exc:
-            return self._failure(
-                request,
-                trace,
-                status="FAILED",
-                error_type="InvalidTimeout",
-                message=str(exc),
-                evidence_state="BLOCKED" if request.required else "INVALID",
-            )
+        timeout = self._validated_timeout(request, trace)
+        if isinstance(timeout, ToolDispatchResult):
+            return timeout
 
         try:
             result = await self._fetch_result(adapter, request, timeout)
@@ -396,3 +379,17 @@ class ToolDispatcher:
     async def dispatch_many(self, requests: list[ToolRequest]) -> list[ToolDispatchResult]:
         """Return one result per request; one adapter failure never erases the others."""
         return list(await asyncio.gather(*(self.dispatch(request) for request in requests)))
+
+    def _validated_timeout(
+        self, request: ToolRequest, trace: OperationTelemetry,
+    ) -> float | ToolDispatchResult:
+        try:
+            timeout = self.default_timeout_seconds if request.timeout_seconds is None else float(request.timeout_seconds)
+            if not 0.1 <= timeout <= 600:
+                raise ValueError("Tool timeout must be from 0.1 to 600 seconds.")
+            return timeout
+        except ValueError as exc:
+            return self._failure(
+                request, trace, status="FAILED", error_type="InvalidTimeout",
+                message=str(exc), evidence_state="BLOCKED" if request.required else "INVALID",
+            )

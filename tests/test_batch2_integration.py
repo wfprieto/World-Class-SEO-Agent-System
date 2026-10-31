@@ -80,7 +80,7 @@ def test_spa_detection_flags_hydration_shell():
 def test_rendered_page_falls_back_when_playwright_unavailable(monkeypatch):
     monkeypatch.setattr(rendered_page, "_playwright_available", lambda: False)
     monkeypatch.setattr(rendered_page, "_raw_fetch", lambda u: ("<html>ok</html>", 200, {}))
-    result = RenderedPageAdapter().fetch(url="https://example.com", mode="always")
+    result = RenderedPageAdapter(raw_fetch=rendered_page._raw_fetch).fetch(url="https://example.com", mode="always")
     assert isinstance(result, AdapterResult)
     assert result.data["mode_used"] == "raw"
     assert result.status == "partial"

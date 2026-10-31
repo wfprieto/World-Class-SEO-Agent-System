@@ -12,7 +12,8 @@ class AICitationMonitorAdapter:
     name = "ai_citation_monitor"
 
     def fetch(self, path: str, brand_column: str = "brand", cited_column: str = "cited", **_: object) -> AdapterResult:
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         cited_rows = [row for row in rows if str(row.get(cited_column, "")).lower() in {"true", "1", "yes"}]
         brands = sorted({row.get(brand_column, "") for row in cited_rows if row.get(brand_column)})
         warnings = [] if cited_rows else ["No AI citations found in supplied sample."]

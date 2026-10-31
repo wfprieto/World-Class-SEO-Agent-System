@@ -31,7 +31,7 @@ def test_twenty_priority_packages_are_synchronized_and_anchored():
     registry = payload["packages"]
     document = (ROOT / payload["package_document"]).read_text(encoding="utf-8")
     assert len(registry) == 20
-    for skill, row in registry.items():
+    for _skill, row in registry.items():
         assert f'id="{row["anchor"]}"' in document
         assert row["references"]
         assert payload["defaults"]["quality_gate"]
