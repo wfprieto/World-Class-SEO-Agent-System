@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import subprocess
 from pathlib import Path
@@ -41,17 +42,16 @@ def test_manifest_names_every_certified_python_version(tmp_path: Path) -> None:
     )
 
 
-def test_tag_workflow_uses_module_safe_comparator() -> None:
-    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"))
-    gate = next(
-        step
-        for step in workflow["jobs"]["release"]["steps"]
-        if step.get("name") == "Enforce release and evidence gates"
-    )
-    assert "python -m scripts.inventory_comparator" in gate["run"], (
-        "release comparator must resolve its package imports without ambient PYTHONPATH"
-    )
-    assert "python scripts/inventory_comparator.py" not in gate["run"]
+def test_preparation_uses_module_safe_comparator_before_attestation() -> None:
+    workflow = yaml.safe_load((ROOT / ".github/workflows/prepare-publication.yml").read_text())
+    assert workflow["jobs"]["attest"]["needs"] == "build"
+    source = ast.parse((ROOT / "scripts/publication_prepare.py").read_text())
+    commands = [tuple(ast.literal_eval(arg) for arg in node.args[1:])
+                for node in ast.walk(source) if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name) and node.func.id == "_command"
+                and all(isinstance(arg, ast.Constant) for arg in node.args[1:])]
+    assert ("-m", "scripts.inventory_comparator") in commands
+    assert ("scripts/inventory_comparator.py",) not in commands
 
 
 def test_historical_release_fixture_cannot_silently_become_approval() -> None:
@@ -74,7 +74,9 @@ def test_current_release_state_is_consistent_without_freezing_history() -> None:
         assert "release publication requires release_decision APPROVED" in errors
     else:
         assert record["release_decision"] == "APPROVED"
-        assert errors == [], "future approval must still satisfy every actual final release gate"
+    assert any("authenticated detached completion" in error for error in errors), (
+        "local readiness labels must never become publication authority"
+    )
 
 
 def test_release_artifact_diagnostics_keep_exact_order(tmp_path: Path) -> None:

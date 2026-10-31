@@ -50,8 +50,8 @@ def test_publication_mode_enforces_the_current_decision():
         assert "release publication requires release_decision APPROVED" in result.stdout
     else:
         assert data["release_decision"] == "APPROVED"
-        assert failures == [], "an actual future approval must pass every final gate"
-        assert result.returncode == 0
+        assert any("authenticated detached completion" in error for error in failures)
+        assert result.returncode == 1, "local approval still needs authenticated completion"
 
 
 def test_benchmark_framework_covers_required_scope():
@@ -131,6 +131,8 @@ def test_approved_release_requires_candidate_bound_external_evidence(tmp_path: P
                                "sha256": trust.candidate_blob_sha256(tmp_path, candidate, name)}],
         }
     readiness_path.write_text(json.dumps(readiness), encoding="utf-8")
-    assert validate(require_approved=True, root=tmp_path) == []
+    assert validate(root=tmp_path) == [], "repository hashes establish consistency, not authority"
+    assert any("authenticated detached completion" in error
+               for error in validate(require_approved=True, root=tmp_path))
     (tmp_path / "external-reproduction.txt").write_text("tampered after review\n", encoding="utf-8")
     assert any("changed after candidate freeze" in error for error in validate(require_approved=True, root=tmp_path))

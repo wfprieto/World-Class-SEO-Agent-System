@@ -8,8 +8,14 @@ from typing import Any, TypeGuard
 
 if __package__:
     from scripts import autonomous_seo_review_trust as trust
+    from scripts.publication_policy import REQUIRED_GATES as REQUIRED_GATES
+    from scripts.publication_policy import REVIEWERS as REVIEWERS
+    from scripts.publication_policy import required_gate_values
 else:
     import autonomous_seo_review_trust as trust  # type: ignore[no-redef]
+    from publication_policy import REQUIRED_GATES as REQUIRED_GATES
+    from publication_policy import REVIEWERS as REVIEWERS
+    from publication_policy import required_gate_values
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
@@ -22,16 +28,6 @@ REQUIRED = [
     "evaluation/reviewers/final-scrummaster-3-verdict.json",
     "evaluation/reviewers/final-vp-engineering-verdict.json",
 ]
-REQUIRED_GATES = {
-    "phase4_deterministic", "phase5_deterministic", "phase6_artifact_consistency",
-    "final_push_ci", "dependency_audit", "live_authorized_smokes", "seven_archetype_benchmark",
-    "scrummaster3_verdict", "vp_engineering_verdict", "external_reproduction", "version_tag",
-    "public_release_artifacts",
-}
-REVIEWERS = {
-    "scrummaster3_verdict": ("final-scrummaster-3-verdict.json", "Senior ScrumMaster 3"),
-    "vp_engineering_verdict": ("final-vp-engineering-verdict.json", "VP Engineering"),
-}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -52,7 +48,7 @@ def _readiness_errors(data: dict[str, Any], root: Path) -> list[str]:
     if missing:
         failures.append(f"missing required release gates: {sorted(missing)}")
     if data.get("release_decision") == "APPROVED":
-        expected = {gate: "APPROVE_GREAT" if gate in REVIEWERS else "PASS" for gate in REQUIRED_GATES}
+        expected = required_gate_values()
         if gates != expected:
             failures.append("APPROVED release contains an unresolved or noncanonical gate")
         failures.extend(_approved_evidence_errors(data, root))
@@ -119,6 +115,11 @@ def _valid_evidence_refs(refs: Any) -> TypeGuard[list[dict[str, Any]]]:
 
 def validate(*, require_approved: bool = False, root: Path = ROOT) -> list[str]:
     failures = [f"missing required Phase 6 artifact: {path}" for path in REQUIRED if not (root / path).is_file()]
+    if require_approved:
+        failures.append(
+            "release publication requires authenticated detached completion evidence; "
+            "local readiness labels cannot authorize publication"
+        )
     readiness_path = root / "evaluation/comparative/final-release-readiness.json"
     if readiness_path.is_file():
         try:

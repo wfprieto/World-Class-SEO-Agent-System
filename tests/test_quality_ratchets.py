@@ -320,6 +320,10 @@ def test_repository_settings_cannot_weaken_ruff_coverage_or_ci(tmp_path: Path) -
         (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    (tmp_path / ".github/workflows/prepare-publication.yml").write_text(
+        (ROOT / ".github/workflows/prepare-publication.yml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     errors = _repository_setting_errors(tmp_path, contract)
     assert "pyproject Ruff profile must equal the canonical P3 rule profile" in errors
     assert "repository coverage floor is weaker than the quality contract" in errors
@@ -965,6 +969,10 @@ def test_repository_policy_rejects_risk_script_deletion_and_floor_weakening(
     )
     (tmp_path / ".github/workflows/release.yml").write_text(
         (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (tmp_path / ".github/workflows/prepare-publication.yml").write_text(
+        (ROOT / ".github/workflows/prepare-publication.yml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     contract = json.loads((ROOT / "governance/code-quality-ratchet.json").read_text())
