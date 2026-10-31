@@ -203,7 +203,7 @@ def test_security_is_mandatory_in_ci_coverage_and_real_browser_execution() -> No
 def test_coverage_source_inventory_cannot_drop_security(tmp_path: Path) -> None:
     (tmp_path / ".github/workflows").mkdir(parents=True)
     (tmp_path / "scripts").mkdir()
-    for filename in ("validate.yml", "release.yml"):
+    for filename in ("validate.yml", "release.yml", "prepare-publication.yml"):
         shutil.copy2(ROOT / ".github/workflows" / filename, tmp_path / ".github/workflows" / filename)
     shutil.copy2(ROOT / "scripts/validate_risk_coverage.py", tmp_path / "scripts")
     source = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -492,7 +492,7 @@ def test_checkout_steps_must_exist_be_pinned_and_fetch_full_history() -> None:
         )
 
 
-def test_release_checkout_is_bound_to_tag_event_commit() -> None:
+def test_release_checkout_is_bound_to_dispatched_source_commit() -> None:
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     assert _workflow_errors(workflow, 78.0, release) == []
@@ -509,6 +509,7 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
         ),
     )
     for mutated in mutations:
+        assert mutated != release
         assert _workflow_errors(workflow, 78.0, mutated)
     gate = (
         "      - name: Prove exact source integrity\n"
@@ -537,17 +538,19 @@ def test_release_checkout_is_bound_to_tag_event_commit() -> None:
         for error in _workflow_errors(workflow, 78.0, poisoned)
     )
     containerized = release.replace(
-        "  release:\n    permissions:\n      contents: write\n      id-token: write\n      attestations: write\n    runs-on: ubuntu-latest",
-        "  release:\n    permissions:\n      contents: write\n      id-token: write\n      attestations: write\n    container: python:3.13\n    runs-on: ubuntu-latest",
+        "    runs-on: ubuntu-latest",
+        "    container: python:3.13\n    runs-on: ubuntu-latest",
         1,
     )
+    assert containerized != release
     assert any(
         "containers or services" in error
         for error in _workflow_errors(workflow, 78.0, containerized)
     )
     self_hosted = release.replace("runs-on: ubuntu-latest", "runs-on: self-hosted", 1)
+    assert self_hosted != release
     assert any(
-        "release must use ubuntu-latest" in error
+        "authorize must use ubuntu-latest" in error
         for error in _workflow_errors(workflow, 78.0, self_hosted)
     )
     release_path_env = release.replace(
@@ -729,17 +732,25 @@ def test_fixed_workflow_certification_metadata_catalog_fails_closed() -> None:
         workflow.replace("          path: phase-rollback-receipt.json", "          path: README.md", 1),
     )
     for mutated in workflow_mutations:
+        assert mutated != workflow
         assert _workflow_errors(mutated, 78.0)
     release_mutations = (
-        release.replace('      - "v*"', '      - "release-*"', 1),
+        release.replace("  workflow_dispatch:", "  push:", 1),
         release.replace("id-token: write", "id-token: read", 1),
         release.replace("cancel-in-progress: false", "cancel-in-progress: true", 1),
         release.replace("    permissions:\n      contents: write", "    permissions:\n      contents: read", 1),
-        release.replace("          subject-path: dist/*", "          subject-path: outputs/*", 1),
-        release.replace("          sbom-path: outputs/sbom.cdx.json", "          sbom-path: README.md", 1),
+        release.replace("          subject-path: ${{ runner.temp }}/publication-completion/publication-completion.json", "          subject-path: README.md", 1),
+        release.replace("          path: ${{ runner.temp }}/publication-completion/publication-completion.json", "          path: README.md", 1),
     )
     for mutated in release_mutations:
+        assert mutated != release
         assert _workflow_errors(workflow, 78.0, mutated)
+    preparation = (ROOT / ".github/workflows/prepare-publication.yml").read_text(encoding="utf-8")
+    for original, changed in (("          subject-path: ${{ runner.temp }}/publication-candidate/*.whl", "          subject-path: README.md"),
+                              ("          sbom-path: ${{ runner.temp }}/publication-candidate/sbom.cdx.json", "          sbom-path: README.md")):
+        mutated = preparation.replace(original, changed, 1)
+        assert mutated != preparation
+        assert _workflow_errors(workflow, 78.0, release, mutated)
 
 
 def test_step_environment_and_constructed_file_commands_fail_closed() -> None:
