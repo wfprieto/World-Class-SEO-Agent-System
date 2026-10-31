@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 import subprocess
 from pathlib import Path
 
@@ -41,6 +42,8 @@ def _evidence_repository(root: Path, mutation: str = "") -> tuple[str, str, byte
         (root / "publication-evidence/extra.json").write_bytes(b"{}")
     _git(root, "add", ".")
     if mutation == "executable":
+        mode = stat.S_IMODE(entry_path.stat().st_mode)
+        entry_path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         _git(root, "update-index", "--chmod=+x", "publication-evidence/evidence.json")
     elif mutation == "deletion":
         _git(root, "rm", "README.md")
@@ -69,7 +72,12 @@ def test_read_evidence_uses_exact_git_blobs_without_checking_out_e(tmp_path: Pat
 def test_read_evidence_rejects_unsafe_or_changed_subjects(tmp_path: Path, mutation: str) -> None:
     source, evidence, *_ = _evidence_repository(tmp_path, mutation)
 
-    with pytest.raises(ValueError):
+    assert _git(tmp_path, "rev-parse", "HEAD") == source
+    if mutation == "executable":
+        entry = _git(tmp_path, "ls-tree", evidence, "--", "publication-evidence/evidence.json")
+        assert entry.split()[:2] == ["100755", "blob"]
+
+    with pytest.raises(ValueError, match="unsafe modes" if mutation == "executable" else None):
         read_evidence(tmp_path, source, evidence)
 
     assert _git(tmp_path, "rev-parse", "HEAD") == source
