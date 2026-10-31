@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import io
 import json
 import subprocess
 import urllib.error
 from pathlib import Path
+
+import pytest
 
 from scripts.validate_pytest_temp_isolation import validate as validate_temp_isolation
 from scripts.validate_remediation_program import (
@@ -78,6 +81,25 @@ def test_frozen_in_progress_package_runs_completion_preflight() -> None:
     assert any("evidence class AUTOMATED has no structured record" in error for error in errors)
 
 
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+def test_fixture_copy_preserves_immutable_reviewer_schema_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line_ending: bytes,
+) -> None:
+    source = ROOT / "schemas" / "reviewer-verdict.schema.json"
+    expected = source.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", line_ending)
+    original_open = Path.open
+
+    def selected_source_open(path: Path, mode: str = "r", *args, **kwargs):
+        if path == source and mode in {"r", "rb"}:
+            raw = io.BytesIO(expected)
+            return raw if mode == "rb" else io.TextIOWrapper(raw, encoding="utf-8", newline=None)
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", selected_source_open)
+    _write_fixture(tmp_path, _program())
+    assert (tmp_path / "schemas" / source.name).read_bytes() == expected
+
+
 def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     fixture_payload = copy.deepcopy(payload)
     for finding in fixture_payload["audit_findings"]:
@@ -96,10 +118,7 @@ def _write_fixture(tmp_path: Path, payload: dict) -> Path:
     program_path.write_text(json.dumps(fixture_payload, indent=2), encoding="utf-8")
     schema_path.write_bytes(SCHEMA_PATH.read_bytes())
     reviewer_path = tmp_path / "schemas" / "reviewer-verdict.schema.json"
-    reviewer_path.write_text(
-        (ROOT / "schemas" / "reviewer-verdict.schema.json").read_text(encoding="utf-8"),
-        encoding="utf-8",
-    )
+    reviewer_path.write_bytes((ROOT / "schemas" / "reviewer-verdict.schema.json").read_bytes())
     reviewer_registry = tmp_path / "evaluation" / "reviewer-registry.json"
     reviewer_registry.parent.mkdir(parents=True, exist_ok=True)
     reviewer_registry.write_bytes((ROOT / "evaluation" / "reviewer-registry.json").read_bytes())
