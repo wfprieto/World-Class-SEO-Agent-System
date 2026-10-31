@@ -518,7 +518,7 @@
       "status": "GAP_OPEN",
       "gap_disposition": "EXTERNAL_EVIDENCE_REQUIRED",
       "owner": "Extension integrations owner",
-      "next_action": "Run authorized Bing and IndexNow smokes against owner-controlled non-production targets.",
+      "next_action": "First complete a protected review of the current Bing contract and any required implementation, preserving BLOCKED_BY_CONTRACT until a genuine CONFIGURABLE preflight is supported; then capture authorized Bing preflight and IndexNow validation plus separately consented IndexNow submission evidence for agreeing URL sets on owner-controlled non-production targets.",
       "implementation_refs": ["integrations/extensions/indexnow.py", "adapters/mcp_extensions.py", "seoctl/extensions_cli.py"],
       "test_refs": ["tests/test_optional_integrations.py", "tests/test_libhunt_adapter_hardening.py"],
       "rollback_trigger": "Reopen code remediation if dry-run defaults, explicit write approval, retry bounds, or secret-redaction tests regress; never promote without owner-controlled live evidence.",
