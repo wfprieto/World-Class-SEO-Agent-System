@@ -1,28 +1,42 @@
-name: Publish verified release
+name: Publish verified prepared bytes
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      prepare_run_id:
+        description: Completed preparation run ID
+        required: true
+        type: string
+      artifact_id:
+        description: Exact publication-candidate artifact ID
+        required: true
+        type: string
+      evidence_pr:
+        description: Data-only evidence pull request number
+        required: true
+        type: string
+      owner_comment_id:
+        description: Unedited structured owner decision comment ID
+        required: true
+        type: string
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: trusted-publication-${{ github.repository }}
   cancel-in-progress: false
 
 env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
-  release:
+  authorize:
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: read
+      actions: read
+      pull-requests: read
+      attestations: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -51,83 +65,138 @@ jobs:
           $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
           $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
           if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Install locked release toolchain
-        run: python -m pip install -r requirements-dev.txt
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Enforce release and evidence gates
-        run: |
-          python scripts/validate_dependency_lock.py
-          python scripts/validate_release_version.py --release-mode
-          python scripts/validate_phase6_readiness.py --require-approved
-          python -m scripts.inventory_comparator
-          python scripts/scan_secrets.py
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Build and verify distributions
-        run: |
-          python -m build
-          wheel="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
-          test -n "$wheel"
-          python scripts/verify_clean_wheel.py "$wheel"
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Generate release evidence and checksums
-        run: |
-          mkdir -p outputs
-          python scripts/generate_sbom.py --out outputs/sbom.cdx.json
-          python scripts/generate_release_manifest.py --sbom outputs/sbom.cdx.json --out outputs/release-manifest.json
-          python scripts/validate_release_artifacts.py --manifest outputs/release-manifest.json --sbom outputs/sbom.cdx.json
-          sha256sum dist/* outputs/sbom.cdx.json outputs/release-manifest.json > outputs/SHA256SUMS
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Attest build provenance
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
-        with:
-          subject-path: dist/*
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Attest wheel SBOM
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
-        with:
-          subject-path: dist/*.whl
-          sbom-path: outputs/sbom.cdx.json
-      - name: Prove exact source integrity
-        shell: pwsh
-        run: >-
-          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
-          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
-          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
-          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
-      - name: Publish immutable GitHub release assets
+      - name: Authenticate exact publication authorization
         env:
           GH_TOKEN: ${{ github.token }}
+          PUBLICATION_LIVE_READ_TOKEN: ${{ secrets.PUBLICATION_LIVE_READ_TOKEN }}
+          PUBLICATION_BENCHMARK_READ_TOKEN: ${{ secrets.PUBLICATION_BENCHMARK_READ_TOKEN }}
+          PUBLICATION_REPRODUCTION_READ_TOKEN: ${{ secrets.PUBLICATION_REPRODUCTION_READ_TOKEN }}
+          PUB_PREPARE_RUN: ${{ inputs.prepare_run_id }}
+          PUB_ARTIFACT: ${{ inputs.artifact_id }}
+          PUB_EVIDENCE_PR: ${{ inputs.evidence_pr }}
+          PUB_OWNER_COMMENT: ${{ inputs.owner_comment_id }}
         run: >-
-          gh release create "$GITHUB_REF_NAME" dist/* outputs/sbom.cdx.json
-          outputs/release-manifest.json outputs/SHA256SUMS --verify-tag
-          --title "$GITHUB_REF_NAME" --generate-notes
+          python -B -m scripts.publication_cli authorize --prepare-run-id "$PUB_PREPARE_RUN" --artifact-id "$PUB_ARTIFACT" --evidence-pr "$PUB_EVIDENCE_PR" --owner-comment-id "$PUB_OWNER_COMMENT"
+
+  publish:
+    needs: authorize
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+      attestations: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Publish only approved prepared bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLICATION_LIVE_READ_TOKEN: ${{ secrets.PUBLICATION_LIVE_READ_TOKEN }}
+          PUBLICATION_BENCHMARK_READ_TOKEN: ${{ secrets.PUBLICATION_BENCHMARK_READ_TOKEN }}
+          PUBLICATION_REPRODUCTION_READ_TOKEN: ${{ secrets.PUBLICATION_REPRODUCTION_READ_TOKEN }}
+          PUB_PREPARE_RUN: ${{ inputs.prepare_run_id }}
+          PUB_ARTIFACT: ${{ inputs.artifact_id }}
+          PUB_EVIDENCE_PR: ${{ inputs.evidence_pr }}
+          PUB_OWNER_COMMENT: ${{ inputs.owner_comment_id }}
+        run: >-
+          python -B -m scripts.publication_cli publish --prepare-run-id "$PUB_PREPARE_RUN" --artifact-id "$PUB_ARTIFACT" --evidence-pr "$PUB_EVIDENCE_PR" --owner-comment-id "$PUB_OWNER_COMMENT"
+
+  complete:
+    needs: publish
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Capture trusted Python interpreter
+        id: trusted_python
+        shell: pwsh
+        run: |-
+          $resolved = Get-Command python -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          $git = Get-Command git -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if (-not [IO.Path]::IsPathFullyQualified($resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) { throw 'trusted Python path is not one absolute file' }
+          if (-not [IO.Path]::IsPathFullyQualified($git) -or -not (Test-Path -LiteralPath $git -PathType Leaf)) { throw 'trusted Git path is not one absolute file' }
+          "path=$resolved" >> $env:GITHUB_OUTPUT
+          "git_path=$git" >> $env:GITHUB_OUTPUT
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Observe actual publication completion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLICATION_LIVE_READ_TOKEN: ${{ secrets.PUBLICATION_LIVE_READ_TOKEN }}
+          PUBLICATION_BENCHMARK_READ_TOKEN: ${{ secrets.PUBLICATION_BENCHMARK_READ_TOKEN }}
+          PUBLICATION_REPRODUCTION_READ_TOKEN: ${{ secrets.PUBLICATION_REPRODUCTION_READ_TOKEN }}
+          PUB_PREPARE_RUN: ${{ inputs.prepare_run_id }}
+          PUB_ARTIFACT: ${{ inputs.artifact_id }}
+          PUB_EVIDENCE_PR: ${{ inputs.evidence_pr }}
+          PUB_OWNER_COMMENT: ${{ inputs.owner_comment_id }}
+        run: >-
+          python -B -m scripts.publication_cli observe --prepare-run-id "$PUB_PREPARE_RUN" --artifact-id "$PUB_ARTIFACT" --evidence-pr "$PUB_EVIDENCE_PR" --owner-comment-id "$PUB_OWNER_COMMENT" --out "$RUNNER_TEMP/publication-completion"
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Attest detached completion observation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: ${{ runner.temp }}/publication-completion/publication-completion.json
+      - name: Prove exact source integrity
+        shell: pwsh
+        run: >-
+          $env:PATH = Split-Path -Parent '${{ steps.trusted_python.outputs.git_path }}';
+          $raw = & '${{ steps.trusted_python.outputs.path }}' -I -E -S scripts/validate_source_integrity.py --expected-sha ${{ github.sha }};
+          $exitCode = $LASTEXITCODE; $proof = $raw | ConvertFrom-Json;
+          if ($exitCode -or $proof.status -ne 'PASS' -or @($proof.errors).Count) { throw 'source-integrity proof did not return structured PASS' }
+      - name: Preserve detached completion observation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: publication-completion
+          path: ${{ runner.temp }}/publication-completion/publication-completion.json
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: false

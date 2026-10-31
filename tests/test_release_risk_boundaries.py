@@ -349,19 +349,21 @@ def test_dependency_lock_requires_pip_tools_build_dependencies(tmp_path: Path):
 
 
 def test_release_workflow_fails_closed_before_publication():
-    root = Path(__file__).resolve().parents[1]
-    workflow = yaml.safe_load((root / ".github/workflows/release.yml").read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["release"]["steps"]
-    names = [step.get("name", "") for step in steps]
-    gate = steps[names.index("Enforce release and evidence gates")]["run"]
-    publish_index = names.index("Publish immutable GitHub release assets")
+    from scripts.publication_workflow_contract import publication_workflow_errors
 
-    assert "validate_release_version.py --release-mode" in gate
-    assert "validate_phase6_readiness.py --require-approved" in gate
-    assert "python -m scripts.inventory_comparator" in gate
-    assert names.index("Build and verify distributions") < publish_index
-    assert names.index("Attest build provenance") < publish_index
-    assert names.index("Attest wheel SBOM") < publish_index
+    root = Path(__file__).resolve().parents[1]
+    release = (root / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    preparation = (root / ".github/workflows/prepare-publication.yml").read_text(encoding="utf-8")
+    assert publication_workflow_errors(release, kind="release") == []
+    assert publication_workflow_errors(preparation, kind="prepare") == []
+    workflow = yaml.safe_load(release)
+    assert workflow["jobs"]["publish"]["needs"] == "authorize"
+    assert workflow["jobs"]["complete"]["needs"] == "publish"
+    assert yaml.safe_load(preparation)["jobs"]["attest"]["needs"] == "build"
+    publisher = "\n".join(str(step.get("run", "")) for step in workflow["jobs"]["publish"]["steps"])
+    assert "scripts.publication_cli publish" in publisher
+    assert "pip install" not in publisher and " -m build" not in publisher
+    assert "--require-approved" not in release, "local JSON approval is not authorization"
 
 
 def test_validation_workflow_fetches_history_for_comparative_ancestry():

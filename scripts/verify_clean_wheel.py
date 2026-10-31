@@ -66,6 +66,7 @@ def verify(wheel: Path) -> None:
         support_root = Path(prefix) / "share/world-class-seo"
         for relative in (
             "SYSTEM_SPEC.md",
+            "docs/adr/trusted-publication.md",
             "governance/architecture-contract.json",
             "requirements-dev.in",
             "requirements-dev.txt",

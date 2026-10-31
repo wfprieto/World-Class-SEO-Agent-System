@@ -10,6 +10,14 @@ This project follows semantic versioning where possible:
 
 ## [Unreleased]
 
+## [1.7.2] - Unreleased
+
+### Trusted publication
+
+- Separate read-only preparation/build from byte-only signing and publication; bind immutable evidence, actual producer provenance, review decisions, targets, inputs, jobs and validity intervals before release writes.
+- Derive final publication approval only from a detached consumer after successful producer completion and actual public-byte verification. Missing real evidence and the current blocked Bing contract remain fail-closed.
+- Reserve a new candidate version because the existing `v1.7.1` tag is preserved. Version metadata is not a tag, public release, live validation or publication approval.
+
 ### Security and runtime maintenance
 
 - Fresh deep-scan remediation adds canonical asset-root containment, numeric public-only model/RDAP sockets, bounded HTML/URL/CrUX work and total HTTP response deadlines.

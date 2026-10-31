@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from importlib import import_module
 from typing import Any
 
 import yaml
@@ -37,7 +38,7 @@ VALIDATE_JOBS = ("validation_matrix", "provider_authentication", "validate", "qu
                  "clean_wheel_install", "phase0_rollback_certification", "phase_rollback_certification", "certification_status")
 CHECKOUT_JOBS = set(VALIDATE_JOBS) - {"validate", "certification_status"}
 WORKFLOW_CONTRACT_SHA = "5c2bc7c6125067d627dda91d6dfdc8c41eb3e01b20aa41b37a05e82790104c6e"
-RELEASE_CONTRACT_SHA = "a1ce6894d773f0b959d60131227967ae36dacac1b1880f148c61d0d8c778d3d4"
+RELEASE_CONTRACT_SHA = "7d5257d922c714e9c211b9fe044ef32a268764e42bcd569041858c4288b2ded5"
 CONTRACT_RUN_STEPS = {
     "Enforce validation matrix", "Enforce provider authentication", "Enforce aggregate certification",
     "Rehearse exact-head Phase 0 rollback", "Rehearse exact-head current-phase rollback",
@@ -370,7 +371,8 @@ def _workflow_contract_errors(workflow: str, expected_sha: str) -> list[str]:
     ]
 
 def workflow_errors(
-    workflow: str, coverage_floor: float, release_workflow: str | None = None
+    workflow: str, coverage_floor: float, release_workflow: str | None = None,
+    preparation_workflow: str | None = None,
 ) -> list[str]:
     """Reject shallow checkout and any masked or weakened quality command."""
     coverage = (
@@ -388,10 +390,9 @@ def workflow_errors(
     errors += _source_integrity_errors(job_map, CANDIDATE_REF, CHECKOUT_JOBS)
     errors += _quality_step_errors(list(job_map.values()), coverage, risk)
     if release_workflow is not None:
-        release_jobs, release_errors = _jobs(release_workflow)
-        errors += release_errors
+        publication = import_module(f"{__package__ + '.' if __package__ else ''}publication_workflow_contract")
         errors += _workflow_contract_errors(release_workflow, RELEASE_CONTRACT_SHA)
-        errors += _canonical_job_errors(release_jobs, ("release",))
-        errors += _checkout_errors(release_jobs, RELEASE_REF, {"release"})
-        errors += _source_integrity_errors(release_jobs, RELEASE_REF, {"release"})
+        errors += publication.publication_workflow_errors(release_workflow, kind="release")
+        if preparation_workflow is not None:
+            errors += publication.publication_workflow_errors(preparation_workflow, kind="prepare")
     return errors

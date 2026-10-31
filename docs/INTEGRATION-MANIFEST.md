@@ -1,10 +1,10 @@
 # Integration Record
 
-**Status:** Integrated into `main` through v1.7.1 packaging-readiness remediation
-**Version:** 1.7.1
-**Last reviewed:** 2026-08-13
+**Status:** Integrated baseline v1.7.1; v1.7.2 publication-readiness candidate
+**Version:** 1.7.2
+**Last reviewed:** 2026-10-31
 
-This file records capabilities already integrated into the canonical `main` branch. It does not claim that a Git tag, marketplace publication, package distribution, deployment, or live provider validation exists. See `CHANGELOG.md` for the running history and Unreleased work.
+This file records the integrated capability baseline and current candidate version. Candidate source is integrated only when its protected main delivery actually succeeds; candidate metadata does not claim a new Git tag, marketplace publication, package distribution, deployment, or live provider validation. See `CHANGELOG.md` for the running history and Unreleased work.
 
 ## Integrated capability map
 
@@ -39,7 +39,7 @@ This file records capabilities already integrated into the canonical `main` bran
 - `runtime/executor.py` is the canonical agent-file name registry used by executable routing.
 - Every indexed skill retains one exact `## <skill-id>` entry in `skills/deep-skill-procedures.md`.
 - Detailed specialist rules live in their canonical skill files; the deep-procedure catalog must not become a competing rulebook.
-- `adapters/url_safety.py` is the single outbound URL-safety policy.
+- `security/url_safety.py` is the canonical outbound URL-safety policy; `adapters/url_safety.py` only re-exports its compatibility API.
 - `adapters/evidence_store.py` is the single durable SEO evidence store. Runtime event memory is separate and must not replace it.
 - `adapters/mcp_extensions.py` is the machine-readable optional-provider capability registry.
 - Generated reports, databases, caches, screenshots, credentials, and client artifacts remain outside source control.
@@ -86,4 +86,4 @@ These states are distinct:
 - **Published or distributed:** a package, plugin, or marketplace artifact is available.
 - **Deployed:** a running environment uses the release.
 
-This record currently attests only to integration into `main` through v1.7.1.
+The historical integrated baseline is v1.7.1. Version 1.7.2 adds staged publication safeguards; its code integration is established by actual protected-main CI, while release/distribution still requires the separate real evidence and authorization in [RELEASING](RELEASING.md).
