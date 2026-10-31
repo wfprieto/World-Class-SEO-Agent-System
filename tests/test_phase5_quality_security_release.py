@@ -3,10 +3,14 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from adapters.base import AdapterResult
 from runtime.telemetry import OperationTelemetry, redact
 from runtime.tools import ToolDispatcher, ToolRequest
+from scripts import run_performance_benchmarks as performance_benchmarks
 from scripts.generate_release_manifest import build_manifest
 from scripts.generate_sbom import build_sbom
 from scripts.run_performance_benchmarks import run as run_benchmarks
@@ -128,10 +132,112 @@ def test_sbom_models_unresolved_optional_dependencies_without_fake_versions(
 
 def test_performance_budgets_are_bounded():
     payload = run_benchmarks(iterations=3)
-    assert payload["status"] == "PASS"
+    assert payload["status"] == "PASS", json.dumps(payload, sort_keys=True)
     assert all(
         row["max_ms"] <= row["budget_ms"] for row in payload["results"].values()
+    ), json.dumps(payload, sort_keys=True)
+
+
+@pytest.mark.parametrize(
+    ("case", "status"),
+    [
+        ("command_registry", "FAIL"),
+        ("skill_index_render", "FAIL"),
+        ("prompt_manifest", "FAIL"),
+        ("command_registry", "PASS"),
+        ("skill_index_render", "PASS"),
+        ("prompt_manifest", "PASS"),
+        pytest.param(None, "PASS", id="ordinary-pass"),
+    ],
+)
+def test_performance_failure_exposes_full_payload(
+    monkeypatch: pytest.MonkeyPatch, case: str | None, status: str
+) -> None:
+    """Synthetic packets test both real assertion paths, not runtime performance."""
+    payload: dict[str, object] = {
+        "status": status,
+        "iterations": 3,
+        "results": {
+            name: {
+                "median_ms": 1.0,
+                "max_ms": 251.0 if name == case else 1.0,
+                "budget_ms": 250.0,
+                "passed": name != case,
+            }
+            for name in ("command_registry", "skill_index_render", "prompt_manifest")
+        },
+    }
+    iterations_seen: list[int] = []
+
+    def synthetic_benchmark(*, iterations: int) -> dict[str, object]:
+        iterations_seen.append(iterations)
+        return payload
+
+    monkeypatch.setitem(globals(), "run_benchmarks", synthetic_benchmark)
+    if case is None:
+        assert test_performance_budgets_are_bounded() is None
+    else:
+        with pytest.raises(AssertionError) as failure:
+            test_performance_budgets_are_bounded()
+        assert json.dumps(payload, sort_keys=True) in str(failure.value)
+    assert iterations_seen == [3]
+
+
+def test_measure_keeps_first_slow_sample_and_exact_iterations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The real sampler retains its first slow call; only its clock is synthetic."""
+    ticks = iter((0.0, 0.251, 1.0, 1.001, 2.0, 2.001))
+    monkeypatch.setattr(
+        performance_benchmarks, "time", SimpleNamespace(perf_counter=lambda: next(ticks))
     )
+    calls: list[int] = []
+
+    def operation() -> None:
+        calls.append(len(calls))
+
+    metrics = performance_benchmarks._measure(operation, iterations=3)
+
+    assert metrics == {"median_ms": 1.0, "max_ms": 251.0}
+    assert calls == [0, 1, 2]
+    with pytest.raises(StopIteration):
+        next(ticks)
+
+
+@pytest.mark.parametrize("case", ("command_registry", "skill_index_render", "prompt_manifest"))
+@pytest.mark.parametrize("maximum_ms", (250.0, 250.001))
+def test_performance_maximum_is_inclusive_and_aggregated(
+    monkeypatch: pytest.MonkeyPatch, case: str, maximum_ms: float,
+) -> None:
+    """Real run/sampler/metadata logic; finite fake ticks prove policy, not speed."""
+    cases = ("command_registry", "skill_index_render", "prompt_manifest")
+    samples = [
+        maximum_ms if name == case and iteration == 0 else 1.0
+        for name in cases
+        for iteration in range(3)
+    ]
+    ticks = iter(
+        tick
+        for index, duration_ms in enumerate(samples)
+        for tick in (float(index), index + duration_ms / 1000)
+    )
+    monkeypatch.setattr(
+        performance_benchmarks, "time", SimpleNamespace(perf_counter=lambda: next(ticks))
+    )
+
+    payload = performance_benchmarks.run(iterations=3)
+
+    assert payload["iterations"] == 3
+    assert set(payload["results"]) == set(cases)
+    for name, row in payload["results"].items():
+        expected_maximum = maximum_ms if name == case else 1.0
+        assert row["median_ms"] == 1.0
+        assert row["max_ms"] == expected_maximum
+        assert row["budget_ms"] == 250.0
+        assert row["passed"] is (expected_maximum <= 250.0)
+    assert payload["status"] == ("PASS" if maximum_ms <= 250.0 else "FAIL")
+    with pytest.raises(StopIteration):
+        next(ticks)
 
 
 def test_secret_redaction_policy_kills_unredacted_secret_behavior():

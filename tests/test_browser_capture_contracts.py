@@ -145,6 +145,64 @@ def sdk_contract(monkeypatch):
     return contract
 
 
+def test_driver_entry_precedes_egress_and_browser_launch(sdk_contract):
+    browser_capture.render_browser("https://example.com", timeout_ms=5000)
+    events = sdk_contract.events
+    assert events.index("sdk.enter") < events.index("egress.create")
+    assert events.index("egress.enter") < events.index("browser.launch")
+    assert events[-4:] == ["context.close", "browser.close", "egress.exit", "sdk.exit"]
+
+
+@pytest.mark.parametrize(("timeout_ms", "error"), [
+    (0, ValueError), (999, ValueError), (120_001, ValueError), (True, ValueError),
+    (float("nan"), ValueError), (float("inf"), ValueError),
+    (None, TypeError), ("5000", TypeError),
+])
+def test_invalid_direct_timeout_rejected_before_sdk_or_proxy(sdk_contract, monkeypatch, timeout_ms, error):
+    from security.browser_proxy import BrowserEgress
+
+    # Use the existing real constructor policy, never an absent new helper.
+    monkeypatch.setattr(browser_capture, "BrowserEgress", BrowserEgress)
+    message = "outside supported bounds" if error is ValueError else None
+    with pytest.raises(error, match=message):
+        browser_capture.render_browser("https://example.com", timeout_ms=timeout_ms)
+    assert sdk_contract.events == []
+
+
+@pytest.mark.parametrize(("options", "error"), [
+    ({}, None), ({"timeout": 1}, None), ({"timeout": 120}, None),
+    ({"max_bytes": 1}, None), ({"max_bytes": 50_000_000}, None),
+    ({"max_requests": 1}, None), ({"max_requests": 1000}, None),
+    ({"timeout": True, "max_bytes": True, "max_requests": True}, None),
+    ({"timeout": 1.5, "max_bytes": 1.5, "max_requests": 1.5}, None),
+    ({"timeout": 0}, ValueError), ({"timeout": 120.001}, ValueError),
+    ({"timeout": float("nan")}, ValueError), ({"timeout": float("inf")}, ValueError),
+    ({"max_bytes": 0}, ValueError), ({"max_bytes": 50_000_001}, ValueError),
+    ({"max_requests": 0}, ValueError), ({"max_requests": 1001}, ValueError),
+    ({"timeout": "1"}, TypeError), ({"max_bytes": "1"}, TypeError),
+    ({"max_requests": "1"}, TypeError),
+])
+def test_egress_constructor_bounds_remain_compatible(options, error):
+    from security.browser_proxy import BrowserEgress
+
+    # Characterize the real pre-existing policy, including numeric acceptance.
+    if error is not None:
+        message = "outside supported bounds" if error is ValueError else None
+        with pytest.raises(error, match=message):
+            unexpected = BrowserEgress(**options)
+            unexpected.server_close()
+        return
+    proxy = BrowserEgress(**options)
+    try:
+        assert not proxy.thread.is_alive()
+        for name, default in (("max_bytes", 50_000_000), ("max_requests", 1000)):
+            expected = options.get(name, default)
+            assert getattr(proxy, name) == expected
+            assert type(getattr(proxy, name)) is type(expected)
+    finally:
+        proxy.server_close()  # No serving thread or browser was started.
+
+
 @pytest.mark.parametrize("timeout_ms", [5000, 30_000])
 def test_render_enforces_sdk_isolation_options_before_navigation(sdk_contract, timeout_ms):
     result = browser_capture.render_browser(
@@ -175,7 +233,7 @@ def test_render_enforces_sdk_isolation_options_before_navigation(sdk_contract, t
     for event in ("context.route", "page.on.console", "page.on.pageerror", "context.on.requestfailed"):
         assert state.events.index(event) < state.events.index("page.goto")
     assert state.events.index("cdp.detach") < state.events.index("egress.assert_budget")
-    assert state.events[-4:] == ["context.close", "browser.close", "sdk.exit", "egress.exit"]
+    assert state.events[-4:] == ["context.close", "browser.close", "egress.exit", "sdk.exit"]
     assert state.exit_errors == {"sdk": None, "egress": None}
     assert result["screenshot_bytes"] == state.image and result["accessibility_tree"] == state.tree
 
@@ -220,13 +278,13 @@ def test_private_final_url_cannot_produce_successful_capture(sdk_contract):
     with pytest.raises(ValueError, match="non-public"):
         browser_capture.render_browser("https://example.com")
     assert "page.content" not in sdk_contract.events and "egress.evidence" not in sdk_contract.events
-    assert sdk_contract.events[-4:] == ["context.close", "browser.close", "sdk.exit", "egress.exit"]
+    assert sdk_contract.events[-4:] == ["context.close", "browser.close", "egress.exit", "sdk.exit"]
 
 
 @pytest.mark.parametrize("stage", [
-    "sdk.create", "sdk.enter", "browser.launch", "context.create", "context.route",
+    "sdk.create", "sdk.enter", "egress.create", "egress.enter", "browser.launch", "context.create", "context.route",
     "page.create", "page.goto", "page.content", "body.inner_text", "page.screenshot",
-    "cdp.create", "cdp.send", "egress.assert_budget", "context.close", "browser.close",
+    "cdp.create", "cdp.send", "egress.assert_budget", "context.close", "browser.close", "egress.exit", "sdk.exit",
 ])
 def test_sdk_failures_propagate_and_release_every_acquired_owner(sdk_contract, stage):
     sdk_contract.failure_at = stage
@@ -234,12 +292,20 @@ def test_sdk_failures_propagate_and_release_every_acquired_owner(sdk_contract, s
         browser_capture.render_browser("https://example.com", include_screenshot=True,
                                        full_page=True, accessibility=True)
     events = sdk_contract.events
-    assert events[-1] == "egress.exit"
-    if stage not in {"sdk.create", "sdk.enter"}:
-        assert "sdk.exit" in events
-    if stage not in {"sdk.create", "sdk.enter", "browser.launch"}:
+    if stage in {"sdk.create", "sdk.enter"}:
+        expected = ["sdk.create"] if stage == "sdk.create" else ["sdk.create", "sdk.enter"]
+        assert events == expected
+        assert sdk_contract.exit_errors == {}
+        return
+    assert events[-1] == "sdk.exit"
+    if stage in {"egress.create", "egress.enter"}:
+        assert "browser.launch" not in events and "egress.exit" not in events
+        assert sdk_contract.exit_errors == {"sdk": RuntimeError}
+        return  # Python does not exit a context whose entry failed.
+    assert events[-2:] == ["egress.exit", "sdk.exit"]
+    if stage != "browser.launch":
         assert "browser.close" in events
-    if stage not in {"sdk.create", "sdk.enter", "browser.launch", "context.create"}:
+    if stage not in {"browser.launch", "context.create"}:
         assert "context.close" in events
         assert events.index("context.close") < events.index("browser.close")
     if stage == "cdp.send":

@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from security.browser_proxy import BrowserEgress
+from security.browser_proxy import BrowserEgress, validate_egress_limits
 from security.url_safety import (
     sanitize_text_for_evidence,
     sanitize_url_for_evidence,
@@ -210,9 +210,11 @@ def render_browser(
         )
     safe_url = validate_public_url(url)
     started = time.monotonic()
+    network_timeout = timeout_ms / 1000
+    validate_egress_limits(timeout=network_timeout)
     with (
-        BrowserEgress(timeout=timeout_ms / 1000) as egress,
         sync_playwright() as playwright,
+        BrowserEgress(timeout=network_timeout) as egress,
         _browser_context(
             playwright,
             egress,
