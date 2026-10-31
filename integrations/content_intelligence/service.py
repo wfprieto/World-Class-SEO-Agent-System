@@ -61,7 +61,6 @@ class ContentIntelligenceService:
             reviewed_by=reviewed_by,
             sources=sources,
             risk_class=risk_class,
-            **_,
         )
 
     def verify(
@@ -71,7 +70,7 @@ class ContentIntelligenceService:
         sources: list[dict[str, Any]],
         **_: Any,
     ) -> AdapterResult:
-        return verify(self.name, claims=claims, sources=sources, **_)
+        return verify(self.name, claims=claims, sources=sources)
 
     def entities(
         self,
@@ -192,7 +191,7 @@ class ContentIntelligenceService:
         **_: Any,
     ) -> AdapterResult:
         return decay(
-            self.name, current=current, prior=prior, decline_threshold=decline_threshold, **_
+            self.name, current=current, prior=prior, decline_threshold=decline_threshold
         )
 
     def compare(
