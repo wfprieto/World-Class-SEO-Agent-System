@@ -70,12 +70,20 @@ def test_content_heading_whitespace_is_bounded() -> None:
     )
 
 
+@pytest.mark.parametrize('client_setup_delay', [0.0, 0.35])
 @pytest.mark.parametrize('phase', ['headers', 'body', 'error'])
-def test_http_total_deadline_closes_active_socket(monkeypatch, phase) -> None:
+def test_http_total_deadline_closes_active_socket(monkeypatch, phase, client_setup_delay) -> None:
     from integrations.technical.http import BoundedHttpClient
 
+    def create_client() -> BoundedHttpClient:
+        if client_setup_delay:
+            time.sleep(client_setup_delay)
+        return BoundedHttpClient(timeout=.08)
+
+    client = create_client()
     client_socket, server_socket = socket.socketpair()
     stopped = threading.Event()
+    peer_disconnect = threading.Event()
 
     def server() -> None:
         try:
@@ -89,7 +97,7 @@ def test_http_total_deadline_closes_active_socket(monkeypatch, phase) -> None:
                 server_socket.sendall(bytes([byte]))
                 time.sleep(.015)
         except OSError:
-            pass
+            peer_disconnect.set()
         finally:
             server_socket.close()
             stopped.set()
@@ -104,8 +112,10 @@ def test_http_total_deadline_closes_active_socket(monkeypatch, phase) -> None:
     started = time.monotonic()
     try:
         with pytest.raises((TimeoutError, OSError), match='deadline|timed out|closed'):
-            BoundedHttpClient(timeout=.08).get('http://93.184.216.34/')
+            client.get('http://93.184.216.34/')
         assert time.monotonic() - started < .3
+        assert stopped.wait(1)
+        assert peer_disconnect.is_set()
     finally:
         client_socket.close()
         server_socket.close()
