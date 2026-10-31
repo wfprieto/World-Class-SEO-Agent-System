@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import Protocol
 
 from scripts.publication_credentials import child_environment
-from scripts.publication_policy import MAX_API_BYTES
+from scripts.publication_policy import MAX_API_BYTES, MAX_MEMBER_BYTES, REPOSITORY
 from scripts.publication_process_windows import WindowsJob, WindowsPipe
 
 CLEANUP_SECONDS = 2.0
@@ -22,6 +23,10 @@ _LAUNCHER = (
     "gate=os.read(0,1);"
     "sys.exit(125) if gate!=b'\\x01' else None;"
     "sys.exit(subprocess.Popen(sys.argv[1:],stdin=sys.stdin.buffer).wait())"
+)
+_UPLOAD_ENDPOINT = re.compile(
+    re.escape(f"https://uploads.github.com/repos/{REPOSITORY}/releases/")
+    + r"[1-9][0-9]*/assets\?name=[A-Za-z0-9][A-Za-z0-9_.-]{0,255}"
 )
 
 
@@ -138,11 +143,23 @@ def _wait_group(group: int, deadline: float) -> None:
         time.sleep(0.005)
 
 
-def _arguments(limit: int, body: bytes | None, timeout: float) -> None:
+def _input_limit(args: list[str], body: bytes) -> int:
+    """A size allowance only: callers still own executable and role authority."""
+    if (len(args) == 13 and args[1:4] == ["api", "--hostname", "github.com"]
+            and isinstance(args[4], str) and _UPLOAD_ENDPOINT.fullmatch(args[4]) is not None
+            and args[5:12] == ["--method", "POST", "--input", "-", "--header",
+                              "Content-Type: application/octet-stream", "--header"]
+            and args[12] == f"Content-Length: {len(body)}" and bool(body)):
+        return MAX_MEMBER_BYTES
+    return MAX_API_BYTES
+
+
+def _arguments(args: list[str], limit: int, body: bytes | None, timeout: float) -> None:
     if (not isinstance(limit, int) or isinstance(limit, bool) or limit < 1
             or not isinstance(timeout, (int, float)) or isinstance(timeout, bool)
             or timeout <= 0 or timeout > sys.float_info.max or not math.isfinite(timeout)
-            or (body is not None and (not isinstance(body, bytes) or len(body) > MAX_API_BYTES))):
+            or (body is not None and (not isinstance(body, bytes)
+                                     or len(body) > _input_limit(args, body)))):
         raise ValueError("Provider command has invalid finite time/size boundaries")
     if os.name not in {"nt", "posix"}:
         raise ValueError("Process-tree containment is unavailable on this platform")
@@ -150,7 +167,7 @@ def _arguments(limit: int, body: bytes | None, timeout: float) -> None:
 
 def bounded_process(args: list[str], *, limit: int, cwd: Path | None,
                     body: bytes | None, timeout: float, github_token: str | None = None) -> bytes:
-    _arguments(limit, body, timeout)
+    _arguments(args, limit, body, timeout)
     deadline = time.monotonic() + timeout
     job: WindowsJob | None = None
     process: subprocess.Popen[bytes] | None = None

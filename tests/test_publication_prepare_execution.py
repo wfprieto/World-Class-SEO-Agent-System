@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import sys
 from copy import deepcopy
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -26,6 +26,15 @@ RUN_ID = 45
 ARTIFACT_ID = 88
 JOBS_PATH = PREFIX + "/actions/runs/45/attempts/1/jobs?per_page=100&page=1"
 ARTIFACT_PATH = PREFIX + "/actions/artifacts/88"
+
+
+class PreparationFixtureClock:
+    """Explicit clock IO for this synthetic dated universe, never source policy."""
+
+    @classmethod
+    def now(cls, zone: object) -> datetime:
+        assert zone is UTC
+        return NOW
 
 
 class PreparationAPI:
@@ -111,6 +120,8 @@ class BuildIO:
 
 
 def source_context(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, job: str) -> Path:
+    # Dedicated expiry/rollback tests can override this seam after setup.
+    monkeypatch.setattr(prepare, "datetime", PreparationFixtureClock)
     root = tmp_path / "source"
     root.mkdir()
     (root / "docs").mkdir()
