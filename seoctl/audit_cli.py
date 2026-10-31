@@ -4,27 +4,30 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
+from adapters.base import AdapterResult
 from integrations.product_proof.service import ProductProofTechnicalAudit
 from runtime.assets import resolve_asset_root
 from scripts.validate_product_claims import validate as validate_product_claims
 from scripts.validate_seo_claims import validate as validate_claims
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, envelope, exit_code_for_status
+from seoctl.composition import build_product_proof_service
 
 ROOT = resolve_asset_root(Path(__file__).resolve().parents[1])
 
 
 def _service() -> ProductProofTechnicalAudit:
-    return ProductProofTechnicalAudit()
+    return build_product_proof_service(ROOT)
 
 
-def _result(command: str, result):
+def _result(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _technical(args: argparse.Namespace):
+def _technical(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "audit.technical",
         _service().run(
@@ -38,7 +41,7 @@ def _technical(args: argparse.Namespace):
     )
 
 
-def _claims(args: argparse.Namespace):
+def _claims(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     registry = json.loads(
         (ROOT / "knowledge" / "seo-claim-registry.json").read_text(encoding="utf-8-sig")
     )
@@ -59,7 +62,7 @@ def _claims(args: argparse.Namespace):
     ), EXIT_OK
 
 
-def _product_claims(args: argparse.Namespace):
+def _product_claims(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     inventory = json.loads(
         (ROOT / "knowledge" / "product-claim-inventory.json").read_text(encoding="utf-8-sig")
     )
@@ -73,7 +76,7 @@ def _product_claims(args: argparse.Namespace):
     ), EXIT_OK
 
 
-def _knowledge_validate(args: argparse.Namespace):
+def _knowledge_validate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     failures = [*validate_claims(ROOT), *validate_product_claims(ROOT)]
     status = "ok" if not failures else "failed"
     code = EXIT_OK if not failures else EXIT_FAILED
@@ -140,7 +143,7 @@ def build_parser(family: str) -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if not arguments or arguments[0] not in {"audit", "knowledge"}:
         return envelope(

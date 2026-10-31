@@ -2,6 +2,15 @@
 
 Adapters connect SEO tools and exports to the runtime without tying the system to one vendor or one LLM.
 
+Construct the default 47-entry registry with `seoctl.composition.default_adapters()`;
+`adapters.registry` now exports neutral contracts only. Aliases retain their original
+classes and distinct instances. For a fully wired runtime, use
+`seoctl.composition.build_orchestrator(repo_root)`.
+
+Live library adapters require explicit transport or service ports. A raw adapter is
+not a promise of configured live access. See `docs/construction-migration.md` for
+the constructor and import migration; the CLI uses the composed factories.
+
 ## Contract
 
 Every adapter follows the `SEOAdapter` protocol in `base.py`:
@@ -19,7 +28,7 @@ Every adapter returns `AdapterResult`:
 ```python
 AdapterResult(
     source="durable source label",
-    status="ok | needs-review | invalid | unavailable",
+    status="ok | needs-review | invalid | not_configured | blocked | failed",
     data={},
     warnings=[]
 )
@@ -30,7 +39,7 @@ AdapterResult(
 1. Keep credentials out of the repository.
 2. Accept local exports whenever possible so tests can run without paid tools.
 3. Normalize vendor-specific field names into stable data keys.
-4. Treat missing data as `unavailable` or `needs-review`, never as clean.
+4. Preserve missing, empty, partial and blocked states using the canonical contract in `contracts.adapter`; never report missing evidence as clean.
 5. Return warnings for stale, sampled, incomplete or ambiguous data.
 6. Keep destructive actions out of adapters. Adapters fetch, parse and validate.
 7. Add tests for every adapter path that the runtime can call.
@@ -76,7 +85,7 @@ The canonical metadata lives in `runtime.tools.TOOL_ACCESS_REQUIREMENTS`.
 1. Create `adapters/my_tool.py`.
 2. Implement `name` and `fetch`.
 3. Return `AdapterResult`.
-4. Add the adapter to `adapters/registry.py`.
+4. Inject its dependencies and add the adapter in `seoctl/composition.py`.
 5. Add at least one test in `tests/test_adapters.py`.
 6. Document the tool in `TOOLS.md` when it is a recommended connection.
 

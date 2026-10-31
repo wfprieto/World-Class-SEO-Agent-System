@@ -15,6 +15,7 @@ from adapters.mcp_extensions import (
 from integrations.extensions.indexnow import IndexNowService, normalize
 from integrations.extensions.providers import image_generation_service
 from seoctl import extensions_cli
+from seoctl.composition import build_provider_service
 
 
 class Response:
@@ -66,7 +67,7 @@ def test_cost_gate_rejects_non_finite_ceiling(ceiling):
 
 def test_image_generation_plan_requires_provider_cost_rights_and_review(monkeypatch):
     monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
-    result = image_generation_service().plan(
+    result = image_generation_service(build_provider_service()).plan(
         request={
             "prompt": "A truthful editorial illustration of a technical SEO audit.",
             "alt_text": "Analyst reviewing a technical SEO audit dashboard.",
@@ -91,7 +92,7 @@ def test_image_generation_plan_requires_provider_cost_rights_and_review(monkeypa
 def test_image_generation_plan_fails_closed_without_rights_or_cost(monkeypatch):
     monkeypatch.setenv("IMAGE_GEN_API_KEY", "provider-secret")
     with pytest.raises(ValueError, match="rights_basis"):
-        image_generation_service().plan(
+        image_generation_service(build_provider_service()).plan(
             request={
                 "prompt": "Image",
                 "alt_text": "Description",
@@ -145,7 +146,7 @@ def test_indexnow_authorized_submit_uses_post_but_redacts_key(monkeypatch):
 
 def test_installed_wiring_is_declared():
     entrypoint = (Path(__file__).resolve().parents[1] / "seoctl" / "entrypoint.py").read_text(encoding="utf-8")
-    registry = (Path(__file__).resolve().parents[1] / "adapters" / "registry.py").read_text(encoding="utf-8")
+    registry = (Path(__file__).resolve().parents[1] / "seoctl" / "composition.py").read_text(encoding="utf-8")
     assert "extensions_cli.main" in entrypoint
     assert "IndexNowAdapter" in registry and "ExtensionAdapter" in registry
 

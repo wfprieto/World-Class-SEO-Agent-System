@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from adapters.base import AdapterNotConfigured
-from adapters.google_pagespeed_live import GooglePageSpeedLiveAdapter
 from integrations.google.client import GoogleAPIError
 from integrations.google.crux import CrUXCurrentAdapter, CrUXHistoryAdapter
 from integrations.google.ga4 import GoogleAnalyticsDataAdapter
@@ -21,9 +21,10 @@ from seoctl.cli import (
     envelope,
     exit_code_for_status,
 )
+from seoctl.composition import build_pagespeed_adapter
 
 
-def _gsc_query(args: argparse.Namespace):
+def _gsc_query(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = GoogleSearchConsoleAdapter().query(
         site_url=args.site_url,
         start_date=args.start_date,
@@ -38,7 +39,7 @@ def _gsc_query(args: argparse.Namespace):
     return envelope("google.gsc-query", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _gsc_aggregate(args: argparse.Namespace):
+def _gsc_aggregate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = GoogleSearchConsoleAdapter().aggregate(
         site_url=args.site_url,
         start_date=args.start_date,
@@ -50,7 +51,7 @@ def _gsc_aggregate(args: argparse.Namespace):
     return envelope("google.gsc-aggregate", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _url_inspection(args: argparse.Namespace):
+def _url_inspection(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = GoogleSearchConsoleAdapter().inspect(
         inspection_url=args.url,
         site_url=args.site_url,
@@ -59,7 +60,7 @@ def _url_inspection(args: argparse.Namespace):
     return envelope("google.url-inspection", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _sitemap_status(args: argparse.Namespace):
+def _sitemap_status(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = GoogleSitemapsAdapter().fetch(
         site_url=args.site_url,
         sitemap_url=args.sitemap_url,
@@ -68,7 +69,7 @@ def _sitemap_status(args: argparse.Namespace):
     return envelope("google.sitemap-status", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _ga4_report(args: argparse.Namespace):
+def _ga4_report(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = GoogleAnalyticsDataAdapter().fetch(
         property_id=args.property_id,
         start_date=args.start_date,
@@ -82,8 +83,8 @@ def _ga4_report(args: argparse.Namespace):
     return envelope("google.ga4-report", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _pagespeed(args: argparse.Namespace):
-    result = GooglePageSpeedLiveAdapter().fetch(
+def _pagespeed(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    result = build_pagespeed_adapter().fetch(
         url=args.url,
         strategy=args.strategy,
         include_crux=not args.no_crux,
@@ -91,7 +92,7 @@ def _pagespeed(args: argparse.Namespace):
     return envelope("google.pagespeed", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _crux_current(args: argparse.Namespace):
+def _crux_current(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = CrUXCurrentAdapter().fetch(
         target=args.target,
         target_type=args.target_type,
@@ -101,7 +102,7 @@ def _crux_current(args: argparse.Namespace):
     return envelope("google.crux-current", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _crux_history(args: argparse.Namespace):
+def _crux_history(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = CrUXHistoryAdapter().fetch(
         target=args.target,
         target_type=args.target_type,
@@ -112,7 +113,7 @@ def _crux_history(args: argparse.Namespace):
     return envelope("google.crux-history", result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _lcp_subparts(args: argparse.Namespace):
+def _lcp_subparts(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     metrics = [
         "largest_contentful_paint",
         "largest_contentful_paint_image_time_to_first_byte",
@@ -248,7 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     parser = build_parser()
     args = parser.parse_args(argv)
     handler_name = getattr(args, "handler", None)

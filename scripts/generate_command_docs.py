@@ -10,13 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from seoctl.registry import command_specs, load_registry, validate_registry
 
 DEFAULT_OUT = ROOT / "docs" / "COMMANDS.md"
 EVIDENCE_REGISTRY = ROOT / "orchestration" / "capability-evidence-registry.json"
 
 
 def render() -> str:
+    from seoctl.registry import command_specs, load_registry, validate_registry
+
     registry = load_registry()
     evidence = json.loads(EVIDENCE_REGISTRY.read_text(encoding="utf-8-sig"))["commands"]
     errors = validate_registry(registry)

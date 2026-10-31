@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validate_reference_freshness import validate
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -4,32 +4,27 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any, cast
 
+from evaluation.tracer.run_tracer import evaluate as evaluate_tracer
+from runtime.business_profile_resolver import resolve_business_profile
+from runtime.execution_limits import ExecutionLimits
 from runtime.public_results import PublicSession, public_result_mapping
+from scripts.consent_mode_diagnostic import diagnose as diagnose_consent
+from scripts.content_brief_evidence import assess_relevance, assess_serp, brief_decision
+from scripts.inventory_comparator import validate_all as validate_comparison
+from scripts.seo_pdf_report import write_report
+from scripts.serp_cluster import cluster as cluster_serps
+from seoctl.composition import build_orchestrator
+from seoctl.registry import load_registry, validate_registry
 from seoctl.result_contract import exit_code_for_status as exit_code_for_status
 from seoctl.result_contract import normalize_error
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from evaluation.tracer.run_tracer import evaluate as evaluate_tracer
-from runtime.business_profile_resolver import resolve_business_profile
-from runtime.execution_limits import ExecutionLimits
-from runtime.llm import build_llm_client
-from runtime.orchestrator import SEOOrchestrator
-from scripts.content_brief_evidence import assess_relevance, assess_serp, brief_decision
-from scripts.inventory_comparator import validate_all as validate_comparison
-from scripts.serp_cluster import cluster as cluster_serps
-from scripts.seo_pdf_report import write_report
-from scripts.consent_mode_diagnostic import diagnose as diagnose_consent
-from seoctl.registry import load_registry, validate_registry
 
 EXIT_OK = 0
 EXIT_INPUT = 2
@@ -70,7 +65,7 @@ def envelope(command: str, status: str, data: Any = None, *, warnings: list[str]
 
 
 def _system_route(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
-    orchestrator = SEOOrchestrator(ROOT)
+    orchestrator = build_orchestrator(ROOT)
     session = orchestrator.start_session(
         request=args.request,
         mode=args.mode,
@@ -89,8 +84,7 @@ def _system_route(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
 
 def _system_run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
-    client = build_llm_client(args.llm_provider, args.model or None)
-    orchestrator = SEOOrchestrator(ROOT, llm_client=client)
+    orchestrator = build_orchestrator(ROOT, provider=args.llm_provider, model=args.model or None)
     session = orchestrator.start_session(
         request=args.request,
         mode=args.mode,

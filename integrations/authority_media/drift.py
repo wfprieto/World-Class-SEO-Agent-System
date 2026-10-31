@@ -6,9 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adapters.evidence_store import canonicalize_url
-from adapters.page_drift import PageDrift
 from contracts.adapter import AdapterResult
+from contracts.construction import PageDriftFactory, URLIdentity
 
 MAX_STATE_BYTES = 10_000_000
 
@@ -17,6 +16,10 @@ class DriftService:
     """Capture and compare bounded page-state snapshots in the evidence store."""
 
     ALLOWED_FIELDS = {"title", "canonical", "robots", "h1", "status_code", "html", "schema_json"}
+
+    def __init__(self, drift_factory: PageDriftFactory, canonicalize_url: URLIdentity) -> None:
+        self._drift_factory = drift_factory
+        self._canonicalize_url = canonicalize_url
 
     @classmethod
     def _state_file(cls, path: str) -> dict[str, Any]:
@@ -33,14 +36,14 @@ class DriftService:
 
     def baseline(self, url: str, state_path: str, *, db_path: str | None = None) -> AdapterResult:
         fields = self._state_file(state_path)
-        with PageDrift(db_path) as drift:
+        with self._drift_factory(db_path) as drift:
             snapshot_id = drift.capture(url, fields, source=state_path, status="ok")
         return AdapterResult(
             source=state_path,
             status="ok",
             data={
                 "data_state": "AVAILABLE",
-                "url": canonicalize_url(url),
+                "url": self._canonicalize_url(url),
                 "snapshot_id": snapshot_id,
                 "action": "baseline_recorded",
             },
@@ -48,7 +51,7 @@ class DriftService:
         )
 
     def compare(self, url: str, *, db_path: str | None = None) -> AdapterResult:
-        with PageDrift(db_path) as drift:
+        with self._drift_factory(db_path) as drift:
             result = drift.compare(url)
         status = "ok" if result.get("status") == "ok" else "partial"
         data_state = "AVAILABLE" if status == "ok" else "PARTIAL"
@@ -57,7 +60,7 @@ class DriftService:
     def history(self, url: str, *, db_path: str | None = None, limit: int = 20) -> AdapterResult:
         if not 1 <= limit <= 1000:
             raise ValueError("limit must be from 1 to 1000")
-        with PageDrift(db_path) as drift:
+        with self._drift_factory(db_path) as drift:
             rows = drift.history(url, limit=limit)
         status = "ok" if rows else "empty"
         data_state = "AVAILABLE" if status == "ok" else "EMPTY"
@@ -66,7 +69,7 @@ class DriftService:
             status,
             {
                 "data_state": data_state,
-                "url": canonicalize_url(url),
+                "url": self._canonicalize_url(url),
                 "history": rows,
                 "count": len(rows),
             },
@@ -93,7 +96,7 @@ class DriftService:
 
     def watch(self, url: str, state_path: str, *, db_path: str | None = None) -> AdapterResult:
         fields = self._state_file(state_path)
-        with PageDrift(db_path) as drift:
+        with self._drift_factory(db_path) as drift:
             snapshot_id = drift.capture(url, fields, source=state_path, status="ok")
             result = drift.compare(url)
         status = "ok" if result.get("status") == "ok" else "partial"

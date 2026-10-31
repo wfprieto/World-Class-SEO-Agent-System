@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "examples" / "bad-seo-fixtures" / "fixtures.json"
 DOC = ROOT / "docs" / "BAD-SEO-FIXTURE-PACK.md"
@@ -29,10 +28,10 @@ def _payload() -> dict:
 def test_bad_seo_fixture_pack_covers_core_failure_classes():
     payload = _payload()
     assert payload["fixture_is_live_proof"] is False
-    assert EXPECTED_CATEGORIES <= set(payload["categories"])
+    assert set(payload["categories"]) >= EXPECTED_CATEGORIES
 
     categories = {fixture["category"] for fixture in payload["fixtures"]}
-    assert EXPECTED_CATEGORIES <= categories
+    assert categories >= EXPECTED_CATEGORIES
 
 
 def test_bad_seo_fixtures_have_expected_findings_with_evidence():

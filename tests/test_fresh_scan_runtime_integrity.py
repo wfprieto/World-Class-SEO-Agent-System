@@ -14,12 +14,12 @@ from runtime.capability_resolver import CapabilityResolutionError, CapabilityRes
 from runtime.execution_limits import ExecutionLimits, InvalidExecutionLimits
 from runtime.executor import AgentExecutor
 from runtime.llm import EchoLLMClient, LLMResponse
-from runtime.orchestrator import SEOOrchestrator
 from runtime.run_budget import BudgetExceeded, RunBudget
 from runtime.safe_paths import UnsafeRepositoryPath
 from runtime.state import SessionState
 from runtime.structured_output import StructuredOutputService
 from scripts import seo_pdf_report
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -282,8 +282,14 @@ async def test_single_agent_preserves_supplied_monetary_ceiling():
 
 
 def test_stream_cli_preserves_monetary_ceiling(monkeypatch, capsys):
+    from seoctl.composition import build_orchestrator
+
     client = _UnpricedClient()
-    monkeypatch.setattr(legacy_cli, "build_llm_client", lambda *_args: client)
+
+    def fixture_orchestrator(*args, **kwargs):
+        return build_orchestrator(*args, llm_client=client, **kwargs)
+
+    monkeypatch.setattr(legacy_cli, "build_orchestrator", fixture_orchestrator)
     monkeypatch.setattr("sys.argv", [
         "main.py", "Audit fixture", "--execute", "--stream", "--execution-mode",
         "single-agent", "--max-estimated-cost", "0",

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterator
 from html.parser import HTMLParser
 from typing import Any
 
@@ -100,6 +101,21 @@ def decode_http_body(hop: HttpHop) -> str:
         return hop.body.decode("utf-8", "replace")
 
 
+def _robots_directives(text: str) -> Iterator[tuple[str, str, str]]:
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        name, value = (part.strip() for part in line.split(":", 1))
+        yield name.lower(), value, line
+
+
+def _append_robots_group(groups: list[dict[str, Any]], agents: list[str],
+                         rules: list[dict[str, str]]) -> None:
+    if agents:
+        groups.append({"user_agents": agents, "rules": rules})
+
+
 def parse_robots(
     text: str,
 ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
@@ -112,18 +128,12 @@ def parse_robots(
 
     def flush() -> None:
         nonlocal agents, rules, rules_started
-        if agents:
-            groups.append({"user_agents": agents, "rules": rules})
+        _append_robots_group(groups, agents, rules)
         agents = []
         rules = []
         rules_started = False
 
-    for raw in text.splitlines():
-        line = raw.split("#", 1)[0].strip()
-        if not line or ":" not in line:
-            continue
-        name, value = (part.strip() for part in line.split(":", 1))
-        directive = name.lower()
+    for directive, value, line in _robots_directives(text):
         if directive == "user-agent":
             if rules_started:
                 flush()

@@ -6,11 +6,12 @@ import pytest
 
 from integrations.content_intelligence.service import ContentIntelligenceService
 from scripts.content_brief_evidence import assess_relevance, assess_serp
+from seoctl.composition import build_content_service
 
 
 @pytest.fixture()
 def service() -> ContentIntelligenceService:
-    return ContentIntelligenceService()
+    return build_content_service()
 
 
 def test_quality_scores_only_measurable_editorial_signals(service):

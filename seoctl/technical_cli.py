@@ -4,15 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from adapters.base import AdapterNotConfigured
+from adapters.base import AdapterNotConfigured, AdapterResult
 from integrations.technical.browser import RenderedPageService
 from integrations.technical.inspection import TechnicalInspectionService
 from seoctl import cli as cli_contract
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, envelope
+from seoctl.composition import build_technical_service
 
 
 def _browser() -> RenderedPageService:
@@ -20,21 +22,21 @@ def _browser() -> RenderedPageService:
 
 
 def _technical() -> TechnicalInspectionService:
-    return TechnicalInspectionService()
+    return build_technical_service()
 
 
-def _result(command: str, result):
+def _result(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(command, result.status, result.data, warnings=result.warnings), cli_contract.exit_code_for_status(result.status)
 
 
-def _render_health(args: argparse.Namespace):
+def _render_health(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     health = _browser().health()
     status = "ok" if health.state == "AVAILABLE" else "not_configured"
     code = EXIT_OK if health.state == "AVAILABLE" else EXIT_UNAVAILABLE
     return envelope("render.health", status, asdict(health)), code
 
 
-def _render_page(args: argparse.Namespace):
+def _render_page(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _browser().render(
         args.url,
         wait_until=args.wait_until,
@@ -46,7 +48,7 @@ def _render_page(args: argparse.Namespace):
     return _result("render.page", result)
 
 
-def _render_screenshot(args: argparse.Namespace):
+def _render_screenshot(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     result = _browser().screenshot(
         args.url,
         output=args.output,
@@ -60,34 +62,34 @@ def _render_screenshot(args: argparse.Namespace):
     return _result("render.screenshot", result)
 
 
-def _robots(args: argparse.Namespace):
+def _robots(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("technical.robots", _technical().robots(args.url))
 
 
-def _sitemap(args: argparse.Namespace):
+def _sitemap(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("technical.sitemap", _technical().sitemap(args.url))
 
 
-def _hreflang(args: argparse.Namespace):
+def _hreflang(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("technical.hreflang", _technical().hreflang(args.url))
 
 
-def _preload(args: argparse.Namespace):
+def _preload(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("technical.preload", _technical().preload(args.url))
 
 
-def _redirect_chain(args: argparse.Namespace):
+def _redirect_chain(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "technical.redirect-chain",
         _technical().redirect_chain(args.url, max_redirects=args.max_redirects),
     )
 
 
-def _indexability(args: argparse.Namespace):
+def _indexability(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("technical.indexability", _technical().indexability(args.url))
 
 
-def _cwv(args: argparse.Namespace):
+def _cwv(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "technical.cwv",
         _technical().cwv(
@@ -98,7 +100,7 @@ def _cwv(args: argparse.Namespace):
     )
 
 
-def _schema_detect(args: argparse.Namespace):
+def _schema_detect(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     html = Path(args.html_file).read_text(encoding="utf-8-sig") if args.html_file else None
     return _result(
         "schema.detect",
@@ -110,7 +112,7 @@ def _schema_detect(args: argparse.Namespace):
     )
 
 
-def _schema_validate(args: argparse.Namespace):
+def _schema_validate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     raw = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.json
     return _result("schema.validate", _technical().schema_validate(jsonld=raw))
 
@@ -134,7 +136,7 @@ def _parse_values(values: list[str]) -> dict[str, Any]:
     return output
 
 
-def _schema_generate(args: argparse.Namespace):
+def _schema_generate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "schema.generate",
         _technical().schema_generate(
@@ -232,7 +234,7 @@ def build_parser(family: str) -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if not arguments or arguments[0] not in {"render", "technical", "schema"}:
         return envelope(

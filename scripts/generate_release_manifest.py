@@ -66,7 +66,7 @@ def build_manifest(root: Path = ROOT, *, sbom_path: Path | None = None) -> dict:
         "schema_version": "1.0.0",
         "project": "world-class-seo-agent-system",
         "version": _version(root),
-        "supported_python": ["3.11", "3.13"],
+        "supported_python": ["3.11", "3.12", "3.13"],
         "command_count": len(registry.get("commands", [])),
         "skill_count": sum(
             len(row.get("skills", [])) for row in skills.get("categories", [])

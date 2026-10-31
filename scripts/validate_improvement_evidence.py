@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from jsonschema import Draft202012Validator
 
@@ -13,8 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from runtime.schema_registry import SchemaRegistry
-from scripts.run_improvement_cycle import evaluate_cycle
+if TYPE_CHECKING or __package__:
+    from scripts.run_improvement_cycle import evaluate_cycle
+else:
+    from run_improvement_cycle import evaluate_cycle
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -22,6 +24,27 @@ def _load(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return payload
+
+
+def _reviewer_authority_errors(root: Path, reviewer: dict[str, Any], reviewer_id: str) -> list[str]:
+    errors: list[str] = []
+    instructions = root / str(reviewer.get("instructions", ""))
+    output_schema = root / str(reviewer.get("output_schema", ""))
+    if not instructions.is_file():
+        errors.append(f"missing reviewer instructions: {instructions}")
+    if not output_schema.is_file():
+        errors.append(f"missing reviewer output schema: {output_schema}")
+    if reviewer.get("can_modify_code") is not False:
+        errors.append(f"{reviewer_id} cannot modify code")
+    if reviewer.get("can_modify_scorecard") is not False:
+        errors.append(f"{reviewer_id} cannot modify the scorecard")
+    if reviewer.get("can_merge") is not False:
+        errors.append(f"{reviewer_id} cannot merge")
+    if reviewer.get("requires_fresh_context") is not True:
+        errors.append(f"{reviewer_id} must require a fresh context")
+    if reviewer.get("requires_three_objections") is not True:
+        errors.append(f"{reviewer_id} must require at least three objections")
+    return errors
 
 
 def validate_reviewer_registry(root: Path = ROOT) -> list[str]:
@@ -41,22 +64,7 @@ def validate_reviewer_registry(root: Path = ROOT) -> list[str]:
             errors.append(f"duplicate reviewer id: {reviewer_id}")
         ids.add(reviewer_id)
         roles.add(role)
-        instructions = root / str(reviewer.get("instructions", ""))
-        output_schema = root / str(reviewer.get("output_schema", ""))
-        if not instructions.is_file():
-            errors.append(f"missing reviewer instructions: {instructions}")
-        if not output_schema.is_file():
-            errors.append(f"missing reviewer output schema: {output_schema}")
-        if reviewer.get("can_modify_code") is not False:
-            errors.append(f"{reviewer_id} cannot modify code")
-        if reviewer.get("can_modify_scorecard") is not False:
-            errors.append(f"{reviewer_id} cannot modify the scorecard")
-        if reviewer.get("can_merge") is not False:
-            errors.append(f"{reviewer_id} cannot merge")
-        if reviewer.get("requires_fresh_context") is not True:
-            errors.append(f"{reviewer_id} must require a fresh context")
-        if reviewer.get("requires_three_objections") is not True:
-            errors.append(f"{reviewer_id} must require at least three objections")
+        errors.extend(_reviewer_authority_errors(root, reviewer, reviewer_id))
 
     if roles != {"SENIOR_SCRUMMASTER_3", "VP_ENGINEERING"}:
         errors.append(f"unexpected reviewer roles: {sorted(roles)}")
@@ -80,6 +88,8 @@ def validate_reviewer_registry(root: Path = ROOT) -> list[str]:
 
 
 def validate_schemas(root: Path = ROOT) -> list[str]:
+    from runtime.schema_registry import SchemaRegistry
+
     errors: list[str] = []
     registry = SchemaRegistry(root)
     for schema_name in ("reviewer-verdict", "improvement-cycle"):
@@ -92,6 +102,8 @@ def validate_schemas(root: Path = ROOT) -> list[str]:
 
 
 def validate_cycle_files(root: Path = ROOT) -> list[str]:
+    from runtime.schema_registry import SchemaRegistry
+
     errors: list[str] = []
     directory = root / "evaluation" / "cycles"
     if not directory.exists():

@@ -14,7 +14,7 @@ class LogParserAdapter:
 
     def fetch(self, path: str, **_: object) -> AdapterResult:
         lines = Path(path).read_text(encoding="utf-8", errors="ignore").splitlines()
-        counts = {marker: 0 for marker in self.BOT_MARKERS}
+        counts = dict.fromkeys(self.BOT_MARKERS, 0)
         for line in lines:
             lower = line.lower()
             for marker in self.BOT_MARKERS:

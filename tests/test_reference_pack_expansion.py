@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validate_reference_freshness import validate
 
-
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "knowledge" / "reference-registry.json"
 
@@ -29,7 +28,7 @@ def _registry() -> dict:
 
 def test_expanded_reference_packs_are_registry_connected():
     registry = _registry()
-    assert EXPANDED_PACKS <= set(registry["packs"])
+    assert set(registry["packs"]) >= EXPANDED_PACKS
 
     entries_by_pack: dict[str, list[dict]] = {pack: [] for pack in EXPANDED_PACKS}
     for entry in registry["entries"]:

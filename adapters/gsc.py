@@ -19,7 +19,8 @@ class GSCExportAdapter:
     def fetch(self, path: str = "", **_: object) -> AdapterResult:
         if not path:
             raise AdapterNotConfigured("Provide a GSC CSV export path or implement live OAuth fetching.")
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         clicks = sum(self._number(row.get("Clicks") or row.get("clicks")) for row in rows)
         impressions = sum(self._number(row.get("Impressions") or row.get("impressions")) for row in rows)
         return AdapterResult(

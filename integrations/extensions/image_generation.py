@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable
 from typing import Any
 
 from contracts.adapter import AdapterResult
+from contracts.construction import ProviderServicePort
 
 _LABELS = {
     "digitalCreation",
@@ -73,11 +73,8 @@ def _gate_result(state: str, cost: dict[str, Any] | None = None) -> AdapterResul
 class ImageGenerationService:
     """Build a provider request while keeping generation and publication behind later gates."""
 
-    def __init__(
-        self, preflight: Callable[..., dict[str, Any]], estimate_cost: Callable[..., dict[str, Any]]
-    ) -> None:
-        self._preflight = preflight
-        self._estimate_cost = estimate_cost
+    def __init__(self, providers: ProviderServicePort) -> None:
+        self.providers = providers
 
     def plan(
         self,
@@ -88,15 +85,22 @@ class ImageGenerationService:
         approved_ceiling: float | None,
         approved: bool,
     ) -> AdapterResult:
-        if self._preflight("image-gen")["state"] != "AVAILABLE":
+        preflight = self.providers.preflight(provider="image-gen")
+        state = preflight.data["state"]
+        if state == "NOT_CONFIGURED":
             return _gate_result("NOT_CONFIGURED")
-        cost = self._estimate_cost(
-            "image-gen",
+        if state != "AVAILABLE":
+            return AdapterResult(
+                source="optional-integrations:image-gen", status=preflight.status,
+                data={**preflight.data, "provider": "image-gen"}, warnings=list(preflight.warnings),
+            )
+        cost = self.providers.estimate(
+            provider="image-gen",
             units=units,
             unit_cost=unit_cost,
             approved_ceiling=approved_ceiling,
             approved=approved,
-        )
+        ).data
         if cost["state"] != "APPROVED":
             return _gate_result("BLOCKED", cost)
         normalized = _validated_request(request)

@@ -4,28 +4,29 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
+from adapters.base import AdapterResult
 from integrations.authority_media.services import (
     BacklinkProfileService,
-    CommonCrawlService,
     DomainHistoryService,
-    DriftService,
     IPTCLabelService,
     TranscriptService,
     YouTubeSearchService,
 )
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, envelope, exit_code_for_status
+from seoctl.composition import build_commoncrawl_service, build_drift_service
 from seoctl.media_image_cli import add_image_plan_parser, image_plan
 
 
-def _result(command: str, result):
+def _result(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
-def _links_commoncrawl(args: argparse.Namespace):
+def _links_commoncrawl(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "links.commoncrawl",
-        CommonCrawlService().search(
+        build_commoncrawl_service().search(
             args.domain,
             fixture_path=args.fixture,
             index=args.index,
@@ -35,18 +36,18 @@ def _links_commoncrawl(args: argparse.Namespace):
     )
 
 
-def _links_profile(args: argparse.Namespace):
+def _links_profile(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("links.profile", BacklinkProfileService().profile(args.input))
 
-def _links_gap(args: argparse.Namespace):
+def _links_gap(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("links.gap", BacklinkProfileService().gap(args.target, args.competitor))
 
 
-def _domain_history(args: argparse.Namespace):
+def _domain_history(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("domain.history", DomainHistoryService().history(args.domain, fixture_path=args.fixture))
 
 
-def _youtube_search(args: argparse.Namespace):
+def _youtube_search(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "media.youtube-search",
         YouTubeSearchService().search(
@@ -62,7 +63,7 @@ def _youtube_search(args: argparse.Namespace):
     )
 
 
-def _iptc_label(args: argparse.Namespace):
+def _iptc_label(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result(
         "media.iptc-label",
         IPTCLabelService().inspect(
@@ -75,27 +76,27 @@ def _iptc_label(args: argparse.Namespace):
     )
 
 
-def _transcript_check(args: argparse.Namespace):
+def _transcript_check(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _result("media.transcript-check", TranscriptService().check(args.input, video_id=args.video_id))
 
-def _drift_baseline(args: argparse.Namespace):
-    return _result("drift.baseline", DriftService().baseline(args.url, args.state, db_path=args.db))
+def _drift_baseline(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    return _result("drift.baseline", build_drift_service().baseline(args.url, args.state, db_path=args.db))
 
 
-def _drift_compare(args: argparse.Namespace):
-    return _result("drift.compare", DriftService().compare(args.url, db_path=args.db))
+def _drift_compare(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    return _result("drift.compare", build_drift_service().compare(args.url, db_path=args.db))
 
 
-def _drift_history(args: argparse.Namespace):
-    return _result("drift.history", DriftService().history(args.url, db_path=args.db, limit=args.limit))
+def _drift_history(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    return _result("drift.history", build_drift_service().history(args.url, db_path=args.db, limit=args.limit))
 
 
-def _drift_report(args: argparse.Namespace):
-    return _result("drift.report", DriftService().report(args.url, db_path=args.db, output_path=args.output))
+def _drift_report(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    return _result("drift.report", build_drift_service().report(args.url, db_path=args.db, output_path=args.output))
 
 
-def _drift_watch(args: argparse.Namespace):
-    return _result("drift.watch", DriftService().watch(args.url, args.state, db_path=args.db))
+def _drift_watch(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    return _result("drift.watch", build_drift_service().watch(args.url, args.state, db_path=args.db))
 
 
 HANDLERS: dict[str, Callable[[argparse.Namespace], tuple[dict[str, Any], int]]] = {
@@ -190,7 +191,7 @@ def build_parser(family: str) -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if not arguments or arguments[0] not in {"links", "domain", "media", "drift"}:
         return envelope(

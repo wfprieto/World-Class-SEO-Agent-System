@@ -6,6 +6,7 @@ import pytest
 
 from adapters.gsc_live_example import GSCLiveExampleAdapter
 from integrations.google.client import GoogleAPIError
+from seoctl.composition import build_gsc_example_adapter
 
 
 class _OAuth:
@@ -47,6 +48,6 @@ def test_gsc_example_rejects_unapproved_oauth_host_before_network(
     monkeypatch.setenv("GSC_TOKEN_URI", "https://attacker.invalid/token")
 
     with pytest.raises(GoogleAPIError, match="approved HTTPS Google OAuth host") as captured:
-        GSCLiveExampleAdapter()._access_token()
+        build_gsc_example_adapter()._access_token()
 
     assert captured.value.state == "BLOCKED"

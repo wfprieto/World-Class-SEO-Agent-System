@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from scripts.validate_canonical_skill_consistency import indexed_skills, procedure_sections, validate
+from scripts.validate_canonical_skill_consistency import (
+    indexed_skills,
+    procedure_sections,
+    validate,
+)
 
 
 def test_every_indexed_skill_heading_survives_source_convergence():

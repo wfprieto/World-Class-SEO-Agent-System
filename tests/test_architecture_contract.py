@@ -58,9 +58,8 @@ def test_canonical_architecture_contract_passes() -> None:
 def test_llm_numeric_transport_exception_does_not_open_runtime_layer() -> None:
     contract = json.loads((Path(__file__).parents[1] / "governance/architecture-contract.json").read_text())
     edges = [item for item in contract["exceptions"] if item["source"] == "runtime.llm"]
-    assert [(item["source"], item["target"]) for item in edges] == [
-        ("runtime.llm", "security.pinned_http")
-    ]
+    assert edges == []
+    assert contract["exceptions"] == []
     assert {"source": "runtime", "target": "security"} not in contract["allowed_layer_edges"]
 
 

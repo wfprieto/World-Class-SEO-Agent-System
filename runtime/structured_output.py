@@ -226,6 +226,21 @@ class StructuredOutputService:
             synthetic=True,
         )
 
+    def _validated_response(
+        self, response: LLMResponse, agent_name: str,
+        skills: list[str], knowledge: list[str],
+    ) -> tuple[dict[str, Any] | None, list[str]]:
+        try:
+            output = _extract_json(response.content)
+        except (ValueError, json.JSONDecodeError) as exc:
+            return None, [str(exc)]
+        else:
+            output.setdefault("output_id", f"{_slug(agent_name)}-output")
+            output.setdefault("skills_used", skills)
+            output.setdefault("knowledge_used", knowledge)
+            errors = self._errors(output, expected_agent=agent_name)
+        return output, errors
+
     async def complete_agent_output(
         self,
         client: LLMClient,
@@ -271,24 +286,11 @@ class StructuredOutputService:
                 )
             attempts += 1
             last_response = await client.complete(active_messages)
-            try:
-                output = _extract_json(last_response.content)
-            except (ValueError, json.JSONDecodeError) as exc:
-                errors = [str(exc)]
-                output = None
-            else:
-                output.setdefault("output_id", f"{_slug(agent_name)}-output")
-                output.setdefault("skills_used", skills)
-                output.setdefault("knowledge_used", knowledge)
-                errors = self._errors(output, expected_agent=agent_name)
-                if not errors:
-                    return StructuredOutputResult(
-                        status="ok",
-                        output=output,
-                        errors=[],
-                        attempts=attempts,
-                        response=last_response,
-                    )
+            output, errors = self._validated_response(last_response, agent_name, skills, knowledge)
+            if not errors:
+                return StructuredOutputResult(
+                    status="ok", output=output, errors=[], attempts=attempts, response=last_response,
+                )
 
             if correction >= budget.limits.max_correction_attempts:
                 break

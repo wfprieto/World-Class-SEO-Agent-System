@@ -48,7 +48,26 @@ def _string_list(value: object, *, label: str) -> list[str]:
     return value
 
 
-def _effective_command_registry(root: Path) -> tuple[dict[str, Any], set[str]]:  # noqa: C901
+def _merge_overlay_agents(agents: dict[str, Any], execution_classes: dict[str, Any], agent_commands: dict[str, Any]) -> None:
+    for agent, execution_class in execution_classes.items():
+        if agent not in agents:
+            raise ValueError(f"command overlay references unknown agent: {agent}")
+        _object(agents[agent], label=f"command agent {agent}")["execution_class"] = str(
+            execution_class
+        )
+    for agent, command_ids in agent_commands.items():
+        if agent not in agents:
+            raise ValueError(f"command overlay references unknown agent: {agent}")
+        additions = _string_list(command_ids, label=f"command overlay assignments for {agent}")
+        row = _object(agents[agent], label=f"command agent {agent}")
+        commands = _string_list(row.get("commands"), label=f"command assignments for {agent}")
+        for command_id in additions:
+            if command_id not in commands:
+                commands.append(command_id)
+        row["commands"] = commands
+
+
+def _effective_command_registry(root: Path) -> tuple[dict[str, Any], set[str]]:
     """Load base plus overlay relative to *root*, never relative to this module."""
     base_path = root / "seoctl" / "command-registry.json"
     overlay_path = root / "seoctl" / "command-registry-overlay.json"
@@ -79,22 +98,7 @@ def _effective_command_registry(root: Path) -> tuple[dict[str, Any], set[str]]: 
     agent_commands = _object(
         overlay.get("agent_commands", {}), label="command overlay agent_commands"
     )
-    for agent, execution_class in execution_classes.items():
-        if agent not in agents:
-            raise ValueError(f"command overlay references unknown agent: {agent}")
-        _object(agents[agent], label=f"command agent {agent}")["execution_class"] = str(
-            execution_class
-        )
-    for agent, command_ids in agent_commands.items():
-        if agent not in agents:
-            raise ValueError(f"command overlay references unknown agent: {agent}")
-        additions = _string_list(command_ids, label=f"command overlay assignments for {agent}")
-        row = _object(agents[agent], label=f"command agent {agent}")
-        commands = _string_list(row.get("commands"), label=f"command assignments for {agent}")
-        for command_id in additions:
-            if command_id not in commands:
-                commands.append(command_id)
-        row["commands"] = commands
+    _merge_overlay_agents(agents, execution_classes, agent_commands)
 
     ids = [spec.id for spec in command_specs(active)]
     if len(ids) != len(set(ids)):

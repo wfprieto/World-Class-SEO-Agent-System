@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from adapters.crawler_csv import CrawlerCSVAdapter
-from runtime.orchestrator import SEOOrchestrator
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 
 def test_mock_end_to_end_diagnostic_flow(tmp_path: Path):

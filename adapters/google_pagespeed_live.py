@@ -8,12 +8,13 @@ strings, so provider errors, proxies, and logs do not receive credential URLs.
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
 
 from adapters.base import AdapterNotConfigured, AdapterResult
 from adapters.url_safety import validate_public_url
-from integrations.google.client import GoogleAPIError, GoogleJsonClient
+from contracts.google import GoogleAPIError, JsonClient
 
 __all__ = [
     "CRUX_ENDPOINT",
@@ -38,27 +39,20 @@ class GooglePageSpeedLiveAdapter:
         timeout: float = 60,
         max_retries: int = 2,
         max_response_bytes: int = 12_000_000,
-        sleep=None,
-        client: GoogleJsonClient | None = None,
+        sleep: Callable[[float], None] | None = None,
+        client: JsonClient | None = None,
     ) -> None:
         self._psi_api_key = api_key or os.environ.get("GOOGLE_PAGESPEED_API_KEY")
         self._crux_api_key = (
-            crux_api_key
-            or os.environ.get("GOOGLE_CRUX_API_KEY")
-            or self._psi_api_key
+            crux_api_key or os.environ.get("GOOGLE_CRUX_API_KEY") or self._psi_api_key
         )
-        client_kwargs: dict[str, Any] = {
-            "allowed_hosts": {
-                "pagespeedonline.googleapis.com",
-                "chromeuxreport.googleapis.com",
-            },
-            "timeout": timeout,
-            "max_retries": max_retries,
-            "max_response_bytes": max_response_bytes,
-        }
-        if sleep is not None:
-            client_kwargs["sleep"] = sleep
-        self._client = client or GoogleJsonClient(**client_kwargs)
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        if not isinstance(max_retries, int) or not 0 <= max_retries <= 5:
+            raise ValueError("max_retries must be an integer from 0 to 5")
+        if not isinstance(max_response_bytes, int) or max_response_bytes < 1:
+            raise ValueError("max_response_bytes must be positive")
+        self._client = client
 
     def fetch(
         self,
@@ -96,55 +90,15 @@ class GooglePageSpeedLiveAdapter:
                 "strategy": normalized_strategy,
                 "crux_form_factor": _ALLOWED_STRATEGIES[normalized_strategy],
                 "schema_version": "google_pagespeed_live.v3",
-                "captured_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "captured_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "credential_transport": "X-Goog-Api-Key header",
             }
         )
 
-        if not include_crux:
-            data["crux_status"] = "skipped"
-            data["crux_field"] = None
-        elif not self._crux_api_key:
-            data["crux_status"] = "not_configured"
-            data["crux_field"] = None
-            warnings.append("CrUX skipped because no CrUX-capable API key is configured.")
-        else:
-            try:
-                crux = self._request_json(
-                    CRUX_ENDPOINT,
-                    params={},
-                    api_key=self._crux_api_key,
-                    post_body={
-                        "url": safe_url,
-                        "formFactor": _ALLOWED_STRATEGIES[normalized_strategy],
-                        "metrics": [
-                            "largest_contentful_paint",
-                            "interaction_to_next_paint",
-                            "cumulative_layout_shift",
-                            "experimental_time_to_first_byte",
-                        ],
-                    },
-                )
-                data["crux_field"] = self._parse_crux(crux)
-                data["crux_status"] = "available"
-            except GoogleAPIError as exc:
-                data["crux_field"] = None
-                if exc.status == 404:
-                    data["crux_status"] = "not_found"
-                    warnings.append(
-                        "CrUX has no eligible field record for this URL and form factor."
-                    )
-                else:
-                    data["crux_status"] = "unavailable"
-                    warnings.append(f"CrUX field request unavailable: {exc}")
-            except (TypeError, ValueError) as exc:
-                data["crux_field"] = None
-                data["crux_status"] = "invalid_response"
-                warnings.append(f"CrUX response could not be normalized: {exc}")
+        self._crux_data(safe_url, normalized_strategy, include_crux, data, warnings)
 
         has_valid_lab = (
-            data.get("performance_score") is not None
-            and data.get("runtime_error") is None
+            data.get("performance_score") is not None and data.get("runtime_error") is None
         )
         crux_complete = data.get("crux_status") in {"available", "skipped"}
         status = "ok" if has_valid_lab and crux_complete else "partial"
@@ -171,8 +125,7 @@ class GooglePageSpeedLiveAdapter:
         run_warnings = lighthouse.get("runWarnings") or []
         if runtime_error:
             warnings.append(
-                "Lighthouse runtime error: "
-                + str(runtime_error.get("code") or "unknown")
+                "Lighthouse runtime error: " + str(runtime_error.get("code") or "unknown")
             )
         if run_warnings:
             warnings.append(f"Lighthouse reported {len(run_warnings)} run warning(s).")
@@ -226,6 +179,10 @@ class GooglePageSpeedLiveAdapter:
             raise ValueError("endpoint is not an approved Google API endpoint")
         if not api_key:
             raise AdapterNotConfigured("A Google API key is required.")
+        if self._client is None:
+            raise AdapterNotConfigured(
+                "PageSpeed transport is not configured; use seoctl.composition."
+            )
         return self._client.request(
             endpoint,
             service=("crux" if endpoint == CRUX_ENDPOINT else "pagespeed"),
@@ -246,3 +203,52 @@ class GooglePageSpeedLiveAdapter:
     def _validate_public_url(url: str) -> str:
         """Delegate to the kit's single canonical URL-safety policy."""
         return validate_public_url(url)
+
+    def _crux_data(
+        self,
+        safe_url: str,
+        normalized_strategy: str,
+        include_crux: bool,
+        data: dict[str, Any],
+        warnings: list[str],
+    ) -> None:
+        if not include_crux:
+            data["crux_status"] = "skipped"
+            data["crux_field"] = None
+        elif not self._crux_api_key:
+            data["crux_status"] = "not_configured"
+            data["crux_field"] = None
+            warnings.append("CrUX skipped because no CrUX-capable API key is configured.")
+        else:
+            try:
+                crux = self._request_json(
+                    CRUX_ENDPOINT,
+                    params={},
+                    api_key=self._crux_api_key,
+                    post_body={
+                        "url": safe_url,
+                        "formFactor": _ALLOWED_STRATEGIES[normalized_strategy],
+                        "metrics": [
+                            "largest_contentful_paint",
+                            "interaction_to_next_paint",
+                            "cumulative_layout_shift",
+                            "experimental_time_to_first_byte",
+                        ],
+                    },
+                )
+                data["crux_field"] = self._parse_crux(crux)
+                data["crux_status"] = "available"
+            except GoogleAPIError as exc:
+                data["crux_field"] = None
+                if exc.status == 404:
+                    data["crux_status"] = "not_found"
+                    warnings.append(
+                        "CrUX has no eligible field record for this URL and form factor."
+                    )
+                else:
+                    data["crux_status"] = "unavailable"
+                    warnings.append(f"CrUX field request unavailable: {exc}")
+            except (TypeError, ValueError) as exc:
+                data["crux_field"] = None
+                data["crux_status"] = "invalid_response"
+                warnings.append(f"CrUX response could not be normalized: {exc}")

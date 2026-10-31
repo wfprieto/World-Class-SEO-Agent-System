@@ -4,13 +4,14 @@ import argparse
 import ast
 import copy
 import hashlib
+import importlib
 import json
 import subprocess
 import sys
 import tomllib
 from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 try:
     from scripts.workflow_quality_contract import COVERAGE_TARGETS
@@ -28,17 +29,12 @@ FUNCTION_DEFAULTS = {"max_span": 75, "max_complexity": 15, "max_missing_annotati
 FILE_METRICS = (("lines", "max_lines"), ("complexity_total", "max_complexity_total"), ("missing_annotations_total", "max_missing_annotations"))
 FUNCTION_METRICS = (("span", "max_span"), ("complexity", "max_complexity"), ("missing_annotations", "max_missing_annotations"))
 MINIMUM_REPOSITORY_COVERAGE = 78.0
-MINIMUM_CRITICAL_COVERAGE = {
-    "adapters/evidence_store.py": 67.0, "adapters/google_pagespeed_live.py": 83.0,
-    "adapters/url_safety.py": 87.0, "integrations/authority_media/transport.py": 67.0,
-    "integrations/google/client.py": 68.0, "integrations/google/gsc.py": 62.0,
-    "integrations/technical/browser.py": 45.0, "integrations/technical/http.py": 72.0,
-    "runtime/executor.py": 96.0, "runtime/llm.py": 64.0,
-    "runtime/structured_output.py": 89.0, "runtime/tools.py": 83.0,
-    "runtime/workflow_runner.py": 93.0,
-    "security/url_safety.py": 84.0, "security/pinned_http.py": 95.0,
-    "security/browser_proxy.py": 90.0, "security/browser_capture.py": 100.0,
-}
+if TYPE_CHECKING:
+    from scripts.critical_coverage_policy import MINIMUM_CRITICAL_COVERAGE
+else:
+    MINIMUM_CRITICAL_COVERAGE = importlib.import_module(
+        "scripts.critical_coverage_policy" if __package__ else "critical_coverage_policy"
+    ).MINIMUM_CRITICAL_COVERAGE
 def _complexity(node: ast.AST) -> int:
     score = 1
     for child in ast.walk(node):
@@ -108,9 +104,11 @@ def measure(root: Path = ROOT) -> tuple[dict[str, dict[str, int]], dict[str, dic
 def _ruff_counts(root: Path = ROOT) -> Counter[str]:
     command = [
         sys.executable,
+        "-B",
         "-m",
         "ruff",
         "check",
+        "--no-cache",
         *PACKAGES,
         "--select",
         ",".join(RUFF_RULES),

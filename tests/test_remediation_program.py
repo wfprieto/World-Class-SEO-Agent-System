@@ -7,21 +7,21 @@ import subprocess
 import urllib.error
 from pathlib import Path
 
+from scripts.validate_pytest_temp_isolation import validate as validate_temp_isolation
 from scripts.validate_remediation_program import (
     PROGRAM_PATH,
     ROOT,
     SCHEMA_PATH,
-    evidence_package_hash,
-    canonical_text_digest,
     _closure_delta_errors,
     _evidence_errors,
     _load_object_at_commit,
     _rollback_evidence_errors,
     _validate_candidate_complete_phase,
     _validate_complete_phase,
+    canonical_text_digest,
+    evidence_package_hash,
     validate,
 )
-from scripts.validate_pytest_temp_isolation import validate as validate_temp_isolation
 
 
 def _program() -> dict:
@@ -404,7 +404,7 @@ def test_phase_completion_requires_every_gate_evidence_and_independent_review(
         criterion["evidence_refs"] = []
     payload["phases"][0]["evidence_status"]["AUTOMATED"] = "NOT_RUN"
     payload["phases"][0]["evidence_status"]["CI"] = "NOT_RUN"
-    payload["phases"][0]["gates"] = {key: "NOT_RUN" for key in payload["phases"][0]["gates"]}
+    payload["phases"][0]["gates"] = dict.fromkeys(payload["phases"][0]["gates"], "NOT_RUN")
     payload["phases"][0]["review"] = {"evidence_package_hash": None, "verdicts": []}
     _set_current_phase(payload, "P1")
 

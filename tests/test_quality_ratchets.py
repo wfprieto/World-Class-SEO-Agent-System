@@ -239,9 +239,14 @@ def test_security_is_explicit_in_bound_ci_lint_and_type_commands(name: str) -> N
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
     steps = yaml.safe_load(workflow)["jobs"]["quality_security_release"]["steps"]
     command = next(s["run"] for s in steps if s.get("name") == name)
-    assert "security" in command.split()
+    if name == "Lint canonical P3 profile":
+        assert command == "ruff check . --no-cache"
+        replacement = "ruff check runtime adapters integrations seoctl scripts --no-cache"
+    else:
+        assert "security" in command.split()
+        replacement = command.replace(" security", "")
     assert _workflow_errors(workflow, 78.0) == []
-    mutated = workflow.replace(command, command.replace(" security", ""), 1)
+    mutated = workflow.replace(command, replacement, 1)
     assert mutated != workflow
     assert _workflow_errors(mutated, 78.0)
 

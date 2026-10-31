@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validate_libhunt_source_matrix import validate as validate_libhunt_matrix
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

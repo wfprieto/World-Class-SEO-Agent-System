@@ -220,7 +220,9 @@ def test_llm_clients_cover_offline_dispatch_and_bounded_response(monkeypatch):
     with pytest.raises(LLMConfigurationError, match="ANTHROPIC_API_KEY"):
         AnthropicClient(api_key=None)
 
-    client = OpenAICompatibleClient(api_key="x")
+    from adapters.llm_transport import build_llm_opener
+
+    client = OpenAICompatibleClient(api_key="x", opener=build_llm_opener())
     monkeypatch.setattr(
         client, "_post_json", lambda _url, _payload: {"choices": [{"message": {"content": "ok"}}]}
     )
@@ -356,7 +358,7 @@ def test_release_workflow_fails_closed_before_publication():
 
     assert "validate_release_version.py --release-mode" in gate
     assert "validate_phase6_readiness.py --require-approved" in gate
-    assert "inventory_comparator.py" in gate
+    assert "python -m scripts.inventory_comparator" in gate
     assert names.index("Build and verify distributions") < publish_index
     assert names.index("Attest build provenance") < publish_index
     assert names.index("Attest wheel SBOM") < publish_index

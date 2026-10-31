@@ -14,8 +14,8 @@ class ContentIntelligenceAdapter:
 
     name = "content_intelligence"
 
-    def __init__(self, service: ContentIntelligenceService | None = None) -> None:
-        self.service = service or ContentIntelligenceService()
+    def __init__(self, service: ContentIntelligenceService) -> None:
+        self.service = service
 
     def fetch(self, operation: str, **kwargs: Any) -> AdapterResult:
         normalized = operation.strip().lower().replace("_", "-")

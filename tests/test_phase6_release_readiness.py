@@ -9,14 +9,15 @@ from pathlib import Path
 from scripts.validate_phase6_readiness import REQUIRED, validate
 
 ROOT = Path(__file__).resolve().parents[1]
+HISTORICAL_READINESS = Path(__file__).parent / "fixtures/release_readiness_20260801.json"
 
 
 def test_phase6_artifacts_are_consistent():
     assert validate() == []
 
 
-def test_release_is_truthfully_blocked_until_external_gates_pass():
-    data = json.loads((ROOT / "evaluation/comparative/final-release-readiness.json").read_text(encoding="utf-8"))
+def test_historical_release_was_truthfully_blocked_without_external_evidence():
+    data = json.loads(HISTORICAL_READINESS.read_text(encoding="utf-8"))
     assert data["release_decision"] == "BLOCKED"
     assert data["gates"]["final_push_ci"] == "NOT_RUN"
     assert data["gates"]["dependency_audit"] == "PASS"
@@ -31,10 +32,11 @@ def test_release_is_truthfully_blocked_until_external_gates_pass():
     }
 
 
-def test_publication_mode_rejects_the_current_blocked_decision():
-    assert "release publication requires release_decision APPROVED" in validate(
-        require_approved=True
+def test_publication_mode_enforces_the_current_decision():
+    data = json.loads(
+        (ROOT / "evaluation/comparative/final-release-readiness.json").read_text(encoding="utf-8")
     )
+    failures = validate(require_approved=True)
     result = subprocess.run(
         [sys.executable, "scripts/validate_phase6_readiness.py", "--require-approved"],
         cwd=ROOT,
@@ -42,8 +44,14 @@ def test_publication_mode_rejects_the_current_blocked_decision():
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 1
-    assert "release publication requires release_decision APPROVED" in result.stdout
+    if data["release_decision"] == "BLOCKED":
+        assert "release publication requires release_decision APPROVED" in failures
+        assert result.returncode == 1
+        assert "release publication requires release_decision APPROVED" in result.stdout
+    else:
+        assert data["release_decision"] == "APPROVED"
+        assert failures == [], "an actual future approval must pass every final gate"
+        assert result.returncode == 0
 
 
 def test_benchmark_framework_covers_required_scope():
@@ -67,7 +75,10 @@ def test_approved_release_requires_complete_gates_and_actual_evidence(tmp_path: 
     assert any("missing" in error and "gate" in error for error in errors), (
         "an empty gate mapping must not authorize publication"
     )
-    readiness["gates"] = {key: "PASS" for key in json.loads((ROOT / "evaluation/comparative/final-release-readiness.json").read_text())["gates"]}
+    readiness["gates"] = dict.fromkeys(
+        json.loads((ROOT / "evaluation/comparative/final-release-readiness.json").read_text())["gates"],
+        "PASS",
+    )
     readiness["gates"].update(scrummaster3_verdict="APPROVE_GREAT", vp_engineering_verdict="APPROVE_GREAT")
     readiness_path.write_text(json.dumps(readiness), encoding="utf-8")
     errors = validate(require_approved=True, root=tmp_path)
@@ -94,7 +105,7 @@ def test_approved_release_requires_candidate_bound_external_evidence(tmp_path: P
     readiness_path = tmp_path / "evaluation/comparative/final-release-readiness.json"
     readiness = json.loads(readiness_path.read_text())
     readiness.update(release_decision="APPROVED", evaluated_target_commit=candidate)
-    readiness["gates"] = {key: "PASS" for key in readiness["gates"]}
+    readiness["gates"] = dict.fromkeys(readiness["gates"], "PASS")
     readiness["gates"].update(scrummaster3_verdict="APPROVE_GREAT", vp_engineering_verdict="APPROVE_GREAT")
     readiness["verification_state"] = dict.fromkeys(readiness["verification_state"], "PASS")
     readiness["verified_ci"]["commit"] = candidate

@@ -58,7 +58,7 @@ class AgentExecutor:
         memory: MemoryStore | None = None,
     ) -> None:
         self.llm_client = llm_client
-        self.tool_dispatcher = tool_dispatcher or ToolDispatcher()
+        self.tool_dispatcher = tool_dispatcher if tool_dispatcher is not None else ToolDispatcher({})
         self.memory = memory or InMemoryStore()
         self.capabilities = CapabilityResolver(repo_root)
         self.repo_root = self.capabilities.repo_root

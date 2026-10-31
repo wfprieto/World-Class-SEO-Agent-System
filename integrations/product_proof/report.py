@@ -3,12 +3,18 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
-from typing import Any
+
+from integrations.product_proof.rule_types import (
+    CrawlEvidence,
+    FindingEvidence,
+    RuleEvaluation,
+    TrustSummary,
+)
 
 SEVERITY_WEIGHT = {"Critical": 5, "High": 4, "Medium": 3, "Low": 2, "Info": 1}
 
 
-def trust_summary(crawl: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
+def trust_summary(crawl: CrawlEvidence, result: RuleEvaluation) -> TrustSummary:
     findings = result["findings"]
     verified = sum(row["evidence_state"] in {"VERIFIED", "STRONGLY_SUPPORTED"} for row in findings)
     inferred = sum(row["evidence_state"] not in {"VERIFIED", "STRONGLY_SUPPORTED", "REQUIRES_VERIFICATION"} for row in findings)
@@ -28,12 +34,12 @@ def trust_summary(crawl: dict[str, Any], result: dict[str, Any]) -> dict[str, An
     }
 
 
-def _priority(row: dict[str, Any]) -> int:
+def _priority(row: FindingEvidence) -> int:
     return SEVERITY_WEIGHT.get(row["severity"], 0)
 
 
 def executive_markdown(
-    target: str, result: dict[str, Any], trust: dict[str, Any], evidence_mode: str
+    target: str, result: RuleEvaluation, trust: TrustSummary, evidence_mode: str
 ) -> str:
     findings = result["findings"]
     critical = [row for row in findings if row["severity"] == "Critical"]
@@ -73,9 +79,9 @@ def executive_markdown(
 
 def technical_markdown(
     target: str,
-    crawl: dict[str, Any],
-    result: dict[str, Any],
-    trust: dict[str, Any],
+    crawl: CrawlEvidence,
+    result: RuleEvaluation,
+    trust: TrustSummary,
     evidence_mode: str,
 ) -> str:
     lines = [
@@ -114,7 +120,7 @@ def technical_markdown(
     return "\n".join(lines)
 
 
-def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+def write_csv(path: Path, rows: list[FindingEvidence]) -> None:
     fields = ["finding_id", "severity", "category", "title", "owner", "recommended_action", "verification", "affected_url_count"]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)

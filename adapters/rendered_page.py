@@ -34,13 +34,11 @@ from adapters.url_safety import (
     sanitize_url_for_evidence,
     validate_public_url,
 )
-from integrations.technical.http import BoundedHttpClient
+from contracts.construction import RawFetch, RawPageClient
 from security.browser_capture import guard_request, render_browser
 from security.html_analysis import html_facts
 
 _SPA_MARKERS = ('id="root"', 'id="app"', 'id="__next"', "data-reactroot", "ng-version")
-_HTTP_TIMEOUT = 30
-_MAX_RESPONSE_BYTES = 12_000_000
 _RENDER_TIMEOUT_MS = 30_000
 _SPA_TEXT_WORD_FLOOR = 120
 _MODES = ("auto", "always", "never")
@@ -51,19 +49,13 @@ FETCH_FAILED = "fetch_failed"
 
 def _raw_fetch(
     url: str,
-    client: BoundedHttpClient | None = None,
+    client: RawPageClient,
 ) -> tuple[str, int | None, dict[str, str]]:
-    transport = client or BoundedHttpClient(
-        timeout=_HTTP_TIMEOUT,
-        max_response_bytes=_MAX_RESPONSE_BYTES,
-        max_redirects=10,
-        user_agent="Mozilla/5.0 (compatible; SEO-Kit-Render/1.0)",
-    )
-    hop = transport.get(url)
+    hop = client.get(url)
     return (
         hop.body.decode("utf-8", "replace"),
         hop.status_code,
-        sanitize_headers_for_evidence(hop.headers),
+        sanitize_headers_for_evidence(dict(hop.headers)),
     )
 
 
@@ -128,6 +120,7 @@ def fetch(
     mode: str = "auto",
     block: tuple[str, ...] = (),
     render_fn: Callable[..., dict[str, Any]] | None = None,
+    raw_fetch: RawFetch | None = None,
     **_: Any,
 ) -> AdapterResult:
     """Fetch and optionally render a URL.
@@ -149,11 +142,17 @@ def fetch(
             warnings=[sanitize_text_for_evidence(exc)],
         )
 
+    if raw_fetch is None:
+        return AdapterResult(
+            source="rendered_page", status="not_configured",
+            data=blank_evidence(safe_url, "", None, {}, is_spa=False),
+            warnings=["Raw-fetch transport is not configured; use seoctl.composition.default_adapters."],
+        )
     raw_html: str = ""
     status: int | None = None
     headers: dict[str, str] = {}
     try:
-        raw_html, status, headers = _raw_fetch(safe_url)
+        raw_html, status, headers = raw_fetch(safe_url)
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"{FETCH_FAILED}: {sanitize_text_for_evidence(exc)}")
 
@@ -196,5 +195,8 @@ def fetch(
 class RenderedPageAdapter:
     name = "rendered_page"
 
+    def __init__(self, raw_fetch: RawFetch | None = None) -> None:
+        self.raw_fetch = raw_fetch
+
     def fetch(self, url: str, mode: str = "auto", **kwargs: Any) -> AdapterResult:
-        return fetch(url, mode=mode, **kwargs)
+        return fetch(url, mode=mode, raw_fetch=self.raw_fetch, **kwargs)

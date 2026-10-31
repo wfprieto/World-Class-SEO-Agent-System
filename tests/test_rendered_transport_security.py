@@ -176,6 +176,7 @@ def test_exported_url_headers_console_and_errors_are_sanitized(monkeypatch) -> N
         f"{PUBLIC}/page?campaign=full-url-secret",
         mode="always",
         render_fn=renderer,
+        raw_fetch=rendered_page._raw_fetch,
     )
     exported = str(result.data) + str(result.warnings)
     assert "full-url-secret" not in exported
@@ -193,7 +194,7 @@ def test_fetch_failure_warning_strips_secret_url_and_cookie(monkeypatch) -> None
         )
 
     monkeypatch.setattr(rendered_page, "_raw_fetch", fail)
-    result = rendered_page.fetch(PUBLIC, mode="never")
+    result = rendered_page.fetch(PUBLIC, mode="never", raw_fetch=rendered_page._raw_fetch)
     warning = " ".join(result.warnings)
     assert result.status == "partial"
     assert "url-secret" not in warning

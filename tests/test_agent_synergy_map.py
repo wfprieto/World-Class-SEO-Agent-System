@@ -38,8 +38,8 @@ def test_synergy_map_references_known_agents_workflows_and_proof_units() -> None
     known_agents = set(capability["agents"])
     proof_units = {unit["id"] for unit in proof["proof_units"]}
 
-    assert REQUIRED_GLOBAL_STEPS <= set(synergy["global_loop"])
-    assert REQUIRED_GOVERNANCE_AGENTS <= set(synergy["required_governance_agents"])
+    assert set(synergy["global_loop"]) >= REQUIRED_GLOBAL_STEPS
+    assert set(synergy["required_governance_agents"]) >= REQUIRED_GOVERNANCE_AGENTS
 
     for agent in synergy["required_governance_agents"]:
         assert agent in known_agents

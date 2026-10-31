@@ -12,7 +12,8 @@ class RankTrackingCSVAdapter:
     name = "rank_tracking_csv"
 
     def fetch(self, path: str, keyword_column: str = "keyword", rank_column: str = "rank", **_: object) -> AdapterResult:
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         ranks = []
         for row in rows:
             try:

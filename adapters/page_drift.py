@@ -30,6 +30,8 @@ from adapters.evidence_store import (
     DEFAULT_DB,
     EvidenceIntegrityError,
     EvidenceStore,
+)
+from adapters.evidence_store import (
     _sha256 as _payload_sha256,
 )
 
@@ -174,7 +176,7 @@ class PageDrift:
     def close(self) -> None:
         self._store.close()
 
-    def __enter__(self) -> "PageDrift":
+    def __enter__(self) -> PageDrift:
         return self
 
     def __exit__(self, *_: Any) -> None:

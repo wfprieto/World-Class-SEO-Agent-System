@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 
 from adapters.base import AdapterResult
-from adapters.registry import default_adapters
 from integrations.technical.browser import PlaywrightRenderer
 from runtime.tools import ToolDispatcher, ToolRequest
+from seoctl.composition import default_adapters
 
 
 def test_browser_health_handles_parent_module_probe_failure(monkeypatch):

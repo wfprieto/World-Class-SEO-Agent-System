@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 
 from adapters.base import AdapterResult
-from runtime.orchestrator import SEOOrchestrator
 from runtime.safe_paths import UnsafeRepositoryPath, resolve_repository_path
 from runtime.tools import ToolDispatcher, ToolRequest
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 
 class GoodAdapter:

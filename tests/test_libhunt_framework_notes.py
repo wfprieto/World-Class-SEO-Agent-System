@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validate_reference_freshness import validate as validate_references
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "knowledge" / "reference-packs" / "framework-seo-implementation-expanded.md"
 

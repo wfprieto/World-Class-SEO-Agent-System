@@ -32,7 +32,7 @@ from adapters.mcp_extensions import (  # noqa: E402
     validate_registry,
 )
 from adapters.page_drift import PageDrift, verify_untampered  # noqa: E402
-from adapters.registry import default_adapters  # noqa: E402
+from seoctl.composition import default_adapters  # noqa: E402
 
 # ============ Pass 13: optional-dependency success paths (injected, not faked live) ====
 
@@ -50,7 +50,7 @@ def test_render_success_path_via_injected_renderer(monkeypatch):
                 "accessibility_tree": {"role": "document"}, "console_errors": [],
                 "render_ms": 12, "render_engine": "injected"}
 
-    result = rendered_page.fetch("https://example.com", mode="always", render_fn=fake_render)
+    result = rendered_page.fetch("https://example.com", mode="always", render_fn=fake_render, raw_fetch=rendered_page._raw_fetch)
     assert result.status == "ok"
     assert result.data["mode_used"] == "rendered"
     assert result.data["accessibility_tree"] == {"role": "document"}
@@ -64,7 +64,7 @@ def test_render_failure_is_classified_and_never_claims_rendered_evidence(monkeyp
     def boom(url, block):
         raise RuntimeError("browser launch failed")
 
-    result = rendered_page.fetch("https://example.com", mode="always", render_fn=boom)
+    result = rendered_page.fetch("https://example.com", mode="always", render_fn=boom, raw_fetch=rendered_page._raw_fetch)
     assert result.status == "partial"
     assert any(w.startswith(rendered_page.RENDER_FAILED) for w in result.warnings)
     assert result.data["evidence"]["rendered"] == "Not Run"
@@ -74,7 +74,7 @@ def test_render_failure_is_classified_and_never_claims_rendered_evidence(monkeyp
 def test_missing_playwright_is_classified_as_dependency_missing(monkeypatch):
     monkeypatch.setattr(rendered_page, "_playwright_available", lambda: False)
     monkeypatch.setattr(rendered_page, "_raw_fetch", lambda u: ("<html>raw</html>", 200, {}))
-    result = rendered_page.fetch("https://example.com", mode="always")
+    result = rendered_page.fetch("https://example.com", mode="always", raw_fetch=rendered_page._raw_fetch)
     assert any(w.startswith(rendered_page.DEPENDENCY_MISSING) for w in result.warnings)
     assert result.data["evidence"]["rendered"] == "Not Run"
 

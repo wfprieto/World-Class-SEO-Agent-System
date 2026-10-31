@@ -14,7 +14,8 @@ class GA4ExportAdapter:
     def fetch(self, path: str = "", **_: object) -> AdapterResult:
         if not path:
             raise AdapterNotConfigured("Provide a GA4 CSV export path or implement live GA4 API fetching.")
-        rows = list(csv.DictReader(Path(path).open(newline="", encoding="utf-8-sig")))
+        with Path(path).open(newline="", encoding="utf-8-sig") as export_file:
+            rows = list(csv.DictReader(export_file))
         sessions = sum(self._number(row.get("Sessions") or row.get("sessions")) for row in rows)
         conversions = sum(self._number(row.get("Conversions") or row.get("conversions")) for row in rows)
         return AdapterResult(

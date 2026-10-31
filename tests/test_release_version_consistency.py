@@ -4,7 +4,6 @@ from pathlib import Path
 
 from scripts.validate_release_version import state_legend, validate
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
+from adapters.base import AdapterResult
 from integrations.product_proof.intelligence import (
     AICitationOpportunityAnalyzer,
     AITimeoutAnalyzer,
@@ -14,23 +16,23 @@ from integrations.product_proof.intelligence import (
 from seoctl.cli import EXIT_FAILED, EXIT_INPUT, envelope, exit_code_for_status
 
 
-def _wrap(command: str, result):
+def _wrap(command: str, result: AdapterResult) -> tuple[dict[str, Any], int]:
     return envelope(command, result.status, result.data, warnings=result.warnings), exit_code_for_status(result.status)
 
 
-def _timeouts(args: argparse.Namespace):
+def _timeouts(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _wrap("intelligence.ai-timeouts", AITimeoutAnalyzer().analyze(log_path=args.log, server_stack=args.server_stack))
 
 
-def _citations(args: argparse.Namespace):
+def _citations(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _wrap("intelligence.ai-citations", AICitationOpportunityAnalyzer().analyze(observations_path=args.observations))
 
 
-def _reviews(args: argparse.Namespace):
+def _reviews(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _wrap("intelligence.review-compliance", ReviewComplianceAnalyzer().analyze(input_path=args.input))
 
 
-def _narrative(args: argparse.Namespace):
+def _narrative(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return _wrap("intelligence.performance-narrative", PerformanceNarrativeAnalyzer().analyze(input_path=args.input))
 
 
@@ -61,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run(argv: list[str] | None = None):
+def run(argv: list[str] | None = None) -> tuple[dict[str, Any], int]:
     arguments = list(argv or [])
     if arguments and arguments[0] == "intelligence":
         arguments.pop(0)

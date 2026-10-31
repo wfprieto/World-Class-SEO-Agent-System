@@ -98,15 +98,7 @@ def validate_registry(registry: dict[str, Any] | None = None) -> list[str]:
             f"runtime_only={sorted(runtime_agents - canonical_agents)}"
         )
 
-    for spec in specs:
-        if len(spec.path) != 2:
-            errors.append(f"{spec.id} must use exactly two path segments")
-        if spec.owner not in canonical_agents:
-            errors.append(f"{spec.id} has unknown canonical owner {spec.owner!r}")
-        if spec.execution_class != "executable":
-            errors.append(f"command {spec.id} must be executable")
-        if spec.network not in ALLOWED_NETWORK:
-            errors.append(f"{spec.id} has invalid network class {spec.network!r}")
+    errors.extend(_spec_errors(specs, canonical_agents))
 
     agents = active.get("agents")
     if not isinstance(agents, dict):
@@ -117,23 +109,7 @@ def validate_registry(registry: dict[str, Any] | None = None) -> list[str]:
         errors.append(f"agent registry mismatch; missing={missing}; extra={extra}")
     command_ids = set(ids)
     for agent, row in agents.items():
-        if not isinstance(row, dict):
-            errors.append(f"agent {agent} entry must be an object")
-            continue
-        execution_class = str(row.get("execution_class", ""))
-        if execution_class not in ALLOWED_EXECUTION_CLASSES:
-            errors.append(f"agent {agent} has invalid execution_class {execution_class!r}")
-        commands = row.get("commands")
-        if not isinstance(commands, list):
-            errors.append(f"agent {agent} commands must be a list")
-            continue
-        unknown = sorted(set(str(item) for item in commands) - command_ids)
-        if unknown:
-            errors.append(f"agent {agent} references unknown commands {unknown}")
-        if execution_class in {"executable", "governance"} and not commands:
-            errors.append(f"agent {agent} is {execution_class} but has no command")
-        if execution_class == "advisory" and commands:
-            errors.append(f"agent {agent} is advisory but has executable commands")
+        errors.extend(_agent_errors(agent, row, command_ids))
     return errors
 
 
@@ -142,3 +118,43 @@ def spec_by_id(command_id: str) -> CommandSpec:
         if spec.id == command_id:
             return spec
     raise KeyError(command_id)
+
+
+
+def _spec_errors(specs: list[CommandSpec], canonical_agents: set[str]) -> list[str]:
+    errors: list[str] = []
+    for spec in specs:
+        if len(spec.path) != 2:
+            errors.append(f"{spec.id} must use exactly two path segments")
+        if spec.owner not in canonical_agents:
+            errors.append(f"{spec.id} has unknown canonical owner {spec.owner!r}")
+        if spec.execution_class != "executable":
+            errors.append(f"command {spec.id} must be executable")
+        if spec.network not in ALLOWED_NETWORK:
+            errors.append(f"{spec.id} has invalid network class {spec.network!r}")
+
+
+    return errors
+
+
+def _agent_errors(agent: str, row: object, command_ids: set[str]) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(row, dict):
+        errors.append(f"agent {agent} entry must be an object")
+        return errors
+    execution_class = str(row.get("execution_class", ""))
+    if execution_class not in ALLOWED_EXECUTION_CLASSES:
+        errors.append(f"agent {agent} has invalid execution_class {execution_class!r}")
+    commands = row.get("commands")
+    if not isinstance(commands, list):
+        errors.append(f"agent {agent} commands must be a list")
+        return errors
+    unknown = sorted({str(item) for item in commands} - command_ids)
+    if unknown:
+        errors.append(f"agent {agent} references unknown commands {unknown}")
+    if execution_class in {"executable", "governance"} and not commands:
+        errors.append(f"agent {agent} is {execution_class} but has no command")
+    if execution_class == "advisory" and commands:
+        errors.append(f"agent {agent} is advisory but has executable commands")
+
+    return errors

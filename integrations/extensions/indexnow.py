@@ -10,7 +10,8 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any
+from email.message import Message
+from typing import IO, Any
 
 from contracts.adapter import AdapterNotConfigured, AdapterResult
 from integrations.extensions.indexnow_result import response_result
@@ -24,7 +25,10 @@ _KEY = re.compile(r"^[A-Za-z0-9-]{8,128}$")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
+    def redirect_request(
+        self, req: urllib.request.Request, fp: IO[bytes], code: int,
+        msg: str, headers: Message, newurl: str,
+    ) -> None:
         raise urllib.error.HTTPError(req.full_url, code, "redirects are not allowed", headers, fp)
 
 

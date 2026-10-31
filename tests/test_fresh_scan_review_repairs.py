@@ -14,10 +14,10 @@ import yaml
 from test_fresh_scan_brief_integrity import producer_assessments
 
 from adapters import rendered_page
-from integrations.content_intelligence.service import ContentIntelligenceService
 from scripts.seo_pdf_report import build_html
 from scripts.workflow_quality_contract import _jobs, workflow_errors
 from seoctl import cli
+from seoctl.composition import build_content_service
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -52,7 +52,7 @@ def test_bounded_spa_analysis_preserves_raw_fallback_and_render_modes(monkeypatc
         calls.append(True)
         return {"content": "<main>Rendered fixture</main>", "render_engine": "injected-fixture"}
 
-    result = rendered_page.fetch("https://example.com/", mode=mode, render_fn=render)
+    result = rendered_page.fetch("https://example.com/", mode=mode, render_fn=render, raw_fetch=rendered_page._raw_fetch)
     assert result.data["raw_content"] == raw
     assert result.data["is_spa"] is None
     assert any(warning.startswith("analysis_failed:") for warning in result.warnings)
@@ -76,7 +76,7 @@ def test_brief_cli_must_not_stringify_malformed_information_gain(monkeypatch, in
 @pytest.mark.parametrize("invalid_gain", [None, {}, False])
 def test_brief_service_must_not_stringify_malformed_information_gain(invalid_gain):
     relevance, serp = producer_assessments()
-    result = ContentIntelligenceService().brief(
+    result = build_content_service().brief(
         relevance=relevance, serp=serp, information_gains=[invalid_gain],
         sources=[{"id": "fixture-source", "title": "Supplied source"}],
         audience="Facility managers", intent="informational", primary_question="What evidence?",

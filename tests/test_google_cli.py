@@ -118,7 +118,7 @@ def test_google_commands_route_to_real_connector_boundaries(monkeypatch):
     monkeypatch.setattr(google_cli, "GoogleSearchConsoleAdapter", FakeGSC)
     monkeypatch.setattr(google_cli, "GoogleSitemapsAdapter", FakeSitemaps)
     monkeypatch.setattr(google_cli, "GoogleAnalyticsDataAdapter", FakeGA4)
-    monkeypatch.setattr(google_cli, "GooglePageSpeedLiveAdapter", FakePageSpeed)
+    monkeypatch.setattr(google_cli, "build_pagespeed_adapter", FakePageSpeed)
     monkeypatch.setattr(google_cli, "CrUXCurrentAdapter", FakeCrUXCurrent)
     monkeypatch.setattr(google_cli, "CrUXHistoryAdapter", FakeCrUXHistory)
 

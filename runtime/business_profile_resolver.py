@@ -9,9 +9,8 @@ requirement rather than silently selecting a specialist profile.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
-
 
 PROFILES = (
     "generic",
@@ -109,14 +108,7 @@ def _normalize_profile(value: str) -> str:
     return ALIASES.get(normalized, normalized)
 
 
-def _explicit_profiles(value: str) -> tuple[str, ...]:
-    normalized = " ".join(value.strip().lower().split())
-    if normalized in {"", "unknown", "unconfirmed", "auto"}:
-        return ()
-    direct = _normalize_profile(normalized)
-    if direct in PROFILES:
-        return (direct,)
-
+def _matched_profiles(normalized: str) -> tuple[str, ...]:
     found: list[tuple[int, str]] = []
     for label in _EXPLICIT_LABELS:
         pattern = rf"(?<![a-z0-9_-]){re.escape(label)}(?![a-z0-9_-])"
@@ -129,6 +121,20 @@ def _explicit_profiles(value: str) -> tuple[str, ...]:
             if profile not in profiles:
                 profiles.append(profile)
         return tuple(profiles)
+    return ()
+
+
+def _explicit_profiles(value: str) -> tuple[str, ...]:
+    normalized = " ".join(value.strip().lower().split())
+    if normalized in {"", "unknown", "unconfirmed", "auto"}:
+        return ()
+    direct = _normalize_profile(normalized)
+    if direct in PROFILES:
+        return (direct,)
+
+    matched = _matched_profiles(normalized)
+    if matched:
+        return matched
 
     parts = re.split(r"\s*(?:\+|,|/|\band\b)\s*", normalized)
     profiles = []
@@ -160,7 +166,7 @@ def resolve_business_profile(
             profiles=explicit,
             route="HYBRID" if len(explicit) > 1 else "SINGLE",
             confidence="High",
-            scores={profile: 0 for profile in explicit},
+            scores=dict.fromkeys(explicit, 0),
             observed_signals=observed,
             user_override=explicit,
             missing_evidence=(),

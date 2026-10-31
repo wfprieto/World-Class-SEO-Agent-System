@@ -4,8 +4,6 @@ import asyncio
 import json
 from pathlib import Path
 
-import pytest
-
 from adapters.base import AdapterResult
 from runtime.telemetry import OperationTelemetry, redact
 from runtime.tools import ToolDispatcher, ToolRequest

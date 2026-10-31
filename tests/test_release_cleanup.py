@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from runtime.orchestrator import SEOOrchestrator
 from runtime.schema_registry import SchemaRegistry
-
+from seoctl.composition import build_orchestrator as SEOOrchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,9 +14,12 @@ def test_legacy_output_feature_flag_is_absent_before_release():
     occurrences = []
     for directory in roots:
         for path in directory.rglob("*"):
-            if path.is_file() and path.suffix in {".py", ".md", ".yml", ".yaml", ".json"}:
-                if forbidden in path.read_text(encoding="utf-8", errors="ignore"):
-                    occurrences.append(path.relative_to(ROOT).as_posix())
+            if (
+                path.is_file()
+                and path.suffix in {".py", ".md", ".yml", ".yaml", ".json"}
+                and forbidden in path.read_text(encoding="utf-8", errors="ignore")
+            ):
+                occurrences.append(path.relative_to(ROOT).as_posix())
     assert occurrences == []
 
 

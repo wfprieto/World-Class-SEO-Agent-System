@@ -11,7 +11,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from typing import Any
+from email.message import Message
+from typing import IO, Any
 
 from security.http_deadline import check_deadline, request_deadline, validate_timeout
 from security.pinned_http import PinnedHTTPHandler, PinnedHTTPSHandler
@@ -25,7 +26,10 @@ _REDIRECTS = {301, 302, 303, 307, 308}
 
 
 class _NoRedirects(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
+    def redirect_request(
+        self, req: urllib.request.Request, fp: IO[bytes], code: int,
+        msg: str, headers: Message, newurl: str,
+    ) -> None:
         return None
 
 
@@ -57,7 +61,7 @@ class BoundedHttpClient:
         timeout: float = 30,
         max_response_bytes: int = 12_000_000,
         max_redirects: int = 10,
-        opener: Any | None = None,
+        opener: urllib.request.OpenerDirector | None = None,
         user_agent: str = "World-Class-SEO-Technical/1.0",
     ) -> None:
         if timeout <= 0 or timeout > 120:

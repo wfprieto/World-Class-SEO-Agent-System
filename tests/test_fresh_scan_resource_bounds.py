@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import socket
 import subprocess
 import sys
-import socket
 import threading
 import time
 import urllib.error
@@ -36,6 +36,7 @@ def test_spa_unterminated_script_is_bounded() -> None:
 
 
 def test_llm_private_endpoint_denied_before_dial(monkeypatch) -> None:
+    from adapters.llm_transport import build_llm_opener
     from runtime.llm import OpenAICompatibleClient
 
     def forbid_socket(*_args, **_kwargs):
@@ -44,7 +45,8 @@ def test_llm_private_endpoint_denied_before_dial(monkeypatch) -> None:
     monkeypatch.setattr('socket.socket', forbid_socket)
     client = OpenAICompatibleClient(api_key='fixture-key',
                                    base_url='https://127.0.0.1/v1',
-                                   allow_custom_base_url=True)
+                                   allow_custom_base_url=True,
+                                   opener=build_llm_opener())
     with pytest.raises(ValueError, match='non-public'):
         client._post_json_with_retry('https://127.0.0.1/v1/chat/completions', {})
 

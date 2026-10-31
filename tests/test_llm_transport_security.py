@@ -8,11 +8,11 @@ import urllib.request
 
 import pytest
 
+from adapters.llm_transport import RejectCredentialRedirects as _RejectCredentialRedirects
 from runtime.llm import (
     AnthropicClient,
     LLMConfigurationError,
     OpenAICompatibleClient,
-    _RejectCredentialRedirects,
     _retryable_transport_failure,
 )
 
