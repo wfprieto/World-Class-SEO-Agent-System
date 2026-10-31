@@ -113,13 +113,29 @@ class WindowsJob:
 
     def capture(self, deadline: float) -> None:
         # Retain real process handles: active=0 accounting can precede process signaling.
-        buffer = c.create_string_buffer(8 + 4096 * c.sizeof(c.c_size_t))
-        if not self.kernel.QueryInformationJobObject(
-                self.handle, 3, buffer, c.sizeof(buffer), None):
-            raise OSError("Complete process membership is unavailable")
-        assigned, count = (c.c_uint32.from_buffer(buffer, offset).value for offset in (0, 4))
-        if assigned != count or count > 4096 or len(self.members) + count > 8192:
-            raise ValueError("Process membership exceeds its finite boundary")
+        for _ in range(3):
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Process membership capture exceeded deadline")
+            buffer = c.create_string_buffer(8 + 4096 * c.sizeof(c.c_size_t))
+            if not self.kernel.QueryInformationJobObject(
+                    self.handle, 3, buffer, c.sizeof(buffer), None):
+                raise OSError("Complete process membership is unavailable")
+            assigned, count = (c.c_uint32.from_buffer(buffer, offset).value for offset in (0, 4))
+            if (assigned < count or assigned > 4096 or count > 4096
+                    or len(self.members) + count > 8192):
+                raise ValueError("Process membership exceeds its finite boundary")
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Process membership capture exceeded deadline")
+            # Returned entries are valid even when the snapshot is incomplete.
+            # Keep those handles, but require a complete query before returning.
+            self._retain_members(buffer, count, deadline)
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Process membership capture exceeded deadline")
+            if assigned == count:
+                return
+        raise ValueError("Process membership exceeds its finite boundary")
+
+    def _retain_members(self, buffer: c.Array[c.c_char], count: int, deadline: float) -> None:
         for pid in (c.c_size_t * count).from_buffer(buffer, 8):
             if time.monotonic() >= deadline:
                 raise TimeoutError("Process membership capture exceeded deadline")

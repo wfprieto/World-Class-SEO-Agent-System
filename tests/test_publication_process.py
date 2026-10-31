@@ -253,3 +253,27 @@ def test_input_size_limit_fails_before_launch(tmp_path: Path) -> None:
         run_bounded([sys.executable, "-B", "-c", code], limit=4,
                     body=b"x" * (4 * 1024 * 1024 + 1), timeout=1)
     assert not marker.exists()
+
+
+def test_bounded_process_captures_eight_sequential_children(tmp_path: Path) -> None:
+    """Real portable process control; no synthetic API/clock or fallback PID killer."""
+    pid_file = tmp_path / "eight-sequential.pids"
+    code = (
+        "import os,subprocess,sys\nfrom pathlib import Path\n"
+        f"log=Path({str(pid_file)!r})\n"
+        "log.write_text(str(os.getpid())+'\\n',encoding='ascii')\n"
+        "if os.name=='nt':\n"
+        " with log.open('a',encoding='ascii') as h: h.write(str(os.getppid())+'\\n')\n"
+        "for number in range(8):\n"
+        " child=subprocess.Popen([sys.executable,'-B','-c','pass'])\n"
+        " with log.open('a',encoding='ascii') as h: h.write(str(child.pid)+'\\n')\n"
+        " if child.wait()!=0: raise SystemExit(1)\n"
+        "sys.stdout.write('eight-done')\n"
+    )
+    assert run_bounded([sys.executable, "-B", "-c", code], limit=64, timeout=5) == b"eight-done"
+    owned_pids = [int(value) for value in pid_file.read_text(encoding="ascii").splitlines()]
+    # Target + eight sequential children; Windows also has the actual waiting launcher.
+    assert len(owned_pids) == (10 if os.name == "nt" else 9)
+    assert all(pid > 0 and not _running(pid) for pid in owned_pids)
+    # This pre-fixture-cleanup proof never signals a possibly reused PID. Production
+    # cleanup and the outer owned Job are responsible for failures; no manual kill.
