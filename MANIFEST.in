@@ -1,0 +1,6 @@
+recursive-include tests *.py
+include tests/baselines/pre-remediation-runtime.json
+include tests/fixtures/architecture_c5a47c3/README.md
+include tests/fixtures/architecture_c5a47c3/architecture-contract.json
+include tests/fixtures/architecture_c5a47c3/architecture-exception-disposition.json
+include tests/fixtures/release_readiness_20260801.json
