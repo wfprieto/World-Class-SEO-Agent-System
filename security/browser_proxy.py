@@ -234,6 +234,18 @@ class _Handler(BaseHTTPRequestHandler):
     do_GET = do_HEAD = do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = _forward
 
 
+def validate_egress_limits(
+    *, timeout: float = 30, max_bytes: int = 50_000_000, max_requests: int = 1000
+) -> None:
+    """Pure shared policy; reject invalid limits before acquiring any owner."""
+    if (
+        not 1 <= timeout <= 120
+        or not 1 <= max_bytes <= 50_000_000
+        or not 1 <= max_requests <= 1000
+    ):
+        raise ValueError("browser egress limits are outside supported bounds")
+
+
 class BrowserEgress(ThreadingHTTPServer):
     """One context's finite egress budget; always bind only the loopback listener."""
 
@@ -243,12 +255,7 @@ class BrowserEgress(ThreadingHTTPServer):
     def __init__(
         self, *, timeout: float = 30, max_bytes: int = 50_000_000, max_requests: int = 1000
     ) -> None:
-        if (
-            not 1 <= timeout <= 120
-            or not 1 <= max_bytes <= 50_000_000
-            or not 1 <= max_requests <= 1000
-        ):
-            raise ValueError("browser egress limits are outside supported bounds")
+        validate_egress_limits(timeout=timeout, max_bytes=max_bytes, max_requests=max_requests)
         self.deadline = time.monotonic() + timeout
         self.max_bytes, self.max_requests = max_bytes, max_requests
         self.bytes_seen = self.requests_seen = self.blocked_requests = 0

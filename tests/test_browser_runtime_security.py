@@ -14,6 +14,7 @@ import os
 import socket
 import struct
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
@@ -211,16 +212,115 @@ def browser_site(monkeypatch):
             thread.join(timeout=2)
 
 
-def test_real_browser_blocks_private_redirect_before_connection(browser_site):
+def _observe_driver_entries(monkeypatch, delay_seconds):
+    import playwright.sync_api as sdk
+
+    original = sdk.sync_playwright
+    events = []
+
+    class ObservedDriver:
+        def __init__(self):
+            self.real = original()
+
+        def __enter__(self):
+            events.append(("enter", time.monotonic()))
+            # Unconditional for every entry, regardless of egress ownership/order.
+            time.sleep(delay_seconds)
+            events.append(("delay", time.monotonic()))
+            result = self.real.__enter__()
+            events.append(("ready", time.monotonic()))
+            return result
+
+        def __exit__(self, *args):
+            result = self.real.__exit__(*args)
+            events.append(("closed", time.monotonic()))
+            return result
+
+    monkeypatch.setattr(sdk, "sync_playwright", ObservedDriver)
+    return events
+
+
+@pytest.mark.parametrize("driver_delay", [0.0, 5.25], ids=["ordinary-driver", "slow-driver"])
+def test_real_browser_blocks_private_redirect_before_connection(
+    browser_site, monkeypatch, driver_delay
+):
     from playwright.sync_api import Error as PlaywrightError
 
     url, requests, forbidden = browser_site
     renderer = PlaywrightRenderer()
     assert renderer.health().state == "AVAILABLE"
+    # Render still performs its own genuine health and capture SDK entries.
+    events = _observe_driver_entries(monkeypatch, driver_delay)
     with pytest.raises(PlaywrightError, match="ERR_EMPTY_RESPONSE"):
         renderer.render(url + "/redirect", timeout_ms=5_000)
+    assert [event for event, _ in events] == ["enter", "delay", "ready", "closed"] * 2
+    for offset in (0, 4):
+        assert events[offset + 1][1] - events[offset][1] >= driver_delay
+        assert events[offset + 3][1] >= events[offset + 2][1] >= events[offset + 1][1]
     assert any(path == "/redirect" for path, _ in requests)
     assert forbidden == []
+
+
+def test_real_browser_slow_launch_expires_before_origin(browser_site, monkeypatch):
+    from playwright.sync_api import BrowserType
+    from playwright.sync_api import Error as PlaywrightError
+
+    from security import browser_capture
+
+    url, requests, forbidden = browser_site
+    renderer = PlaywrightRenderer()
+    assert renderer.health().state == "AVAILABLE"
+    proxies, settings, launches, numeric_dials = [], [], [], []
+    original_egress = browser_capture.BrowserEgress
+    original_launch = BrowserType.launch
+    original_connect = socket.socket.connect
+
+    def observe_egress(**kwargs):
+        settings.append(dict(kwargs))
+        proxy = original_egress(**kwargs)
+        proxies.append(proxy)
+        return proxy
+
+    def observe_connect(sock, address):
+        if address[0] == "93.184.216.34":
+            numeric_dials.append(address)
+        return original_connect(sock, address)
+
+    def slow_launch(browser_type, **kwargs):
+        assert len(proxies) == 1
+        proxy = proxies[0]
+        assert proxy.thread.is_alive() and not proxy.stopping.is_set()
+        assert kwargs["timeout"] == 5_000
+        assert kwargs["proxy"]["server"] == proxy.proxy["server"]
+        assert kwargs["proxy"]["bypass"] == "<-loopback>"
+        started = time.monotonic()
+        assert proxy.deadline > started
+        time.sleep(5.25)
+        finished = time.monotonic()
+        launches.append((started, finished))
+        assert finished - started >= 5.25
+        assert proxy.deadline < finished
+        # Launch genuinely, with the original settings, after that same window.
+        return original_launch(browser_type, **kwargs)
+
+    monkeypatch.setattr(browser_capture, "BrowserEgress", observe_egress)
+    monkeypatch.setattr(socket.socket, "connect", observe_connect)
+    monkeypatch.setattr(BrowserType, "launch", slow_launch)
+    with pytest.raises(PlaywrightError, match="ERR_EMPTY_RESPONSE"):
+        renderer.render(url + "/redirect", timeout_ms=5_000)
+
+    assert settings == [{"timeout": 5.0}]
+    assert len(launches) == len(proxies) == 1
+    proxy = proxies[0]
+    assert proxy.failure == "browser network deadline exceeded"
+    assert proxy.requests_seen == proxy.bytes_seen == 0
+    assert proxy.blocked_requests >= 1
+    assert proxy.max_bytes == 50_000_000 and proxy.max_requests == 1000
+    assert numeric_dials == [] and requests == [] and forbidden == []
+    # Assert quiescence while browser_site still owns both live fixture servers.
+    assert proxy.stopping.is_set()
+    assert not proxy.thread.is_alive()
+    assert not proxy.connections
 
 
 def test_real_browser_preserves_public_redirect_and_javascript(browser_site):
