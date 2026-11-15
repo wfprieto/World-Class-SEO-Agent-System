@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from pathlib import Path
 
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_canonical_render_components_use_the_optional_browser_lock():
+    lock_text = (ROOT / "requirements-browser.txt").read_text(encoding="utf-8")
     payload = build_sbom(ROOT)
     render = {
         component["name"].lower(): component
@@ -22,7 +24,11 @@ def test_canonical_render_components_use_the_optional_browser_lock():
         if {"name": "wcseo:optional_group", "value": "render"} in component["properties"]
     }
     assert set(render) == {"playwright", "pyee"}
-    for name, version in {"playwright": "1.64.1", "pyee": "13.0.1"}.items():
+    for name in ("playwright", "pyee"):
+        # Read the lock independently of the SBOM generator to catch version drift.
+        pins = re.findall(rf"(?m)^{name}==([^\s;\\]+)[ \t]*(?:\\[ \t]*)?$", lock_text)
+        assert len(pins) == 1, f"expected exactly one browser lock pin for {name}"
+        (version,) = pins
         assert render[name].get("version") == version
         assert render[name]["purl"] == f"pkg:pypi/{name}@{version}"
         assert {"name": "wcseo:resolution", "value": "LOCKED"} in render[name]["properties"]
