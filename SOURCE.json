@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "name": "world-class-seo-agent-system",
+  "package_kind": "Agensi instruction wrapper; external full runtime required for CLI",
+  "source_repository": "https://github.com/wfprieto/World-Class-SEO-Agent-System",
+  "source_commit": "44a95767e18b954b0060c4a913e262a5d19d7108",
+  "source_tree": "2be2b2b45d7ce9411e0355e61e07d997ada912b0",
+  "source_version": "1.7.2",
+  "immutable_raw_base": "https://raw.githubusercontent.com/wfprieto/World-Class-SEO-Agent-System/44a95767e18b954b0060c4a913e262a5d19d7108/",
+  "standalone_runtime_included": false,
+  "compiled_or_installed_dependencies_included": false,
+  "provider_credentials_included": false,
+  "marketplace_uploaded": false,
+  "marketplace_execution_verified": false,
+  "packaging_guidance": "https://www.agensi.io/docs/packaging",
+  "guidance_checked_date": "2026-11-21",
+  "license": "MIT; included LICENSE retains upstream notice",
+  "known_limits": "Agensi delivery supports up to 200 supporting text files. The 832-file application is not reconstructed from temporary scripts."
+}
